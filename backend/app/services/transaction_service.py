@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import HTTPException, status
 
 from app.models.transaction import Transaction
@@ -17,6 +19,9 @@ class TransactionService:
         direction: str | None = None,
         category: str | None = None,
         source: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        search: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[Transaction]:
@@ -24,6 +29,9 @@ class TransactionService:
             direction=direction,
             category=category,
             source=source,
+            date_from=date_from,
+            date_to=date_to,
+            search=search,
             limit=limit,
             offset=offset,
         )

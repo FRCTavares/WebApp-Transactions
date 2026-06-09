@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
@@ -29,9 +31,12 @@ def create_transaction(
 
 @router.get("", response_model=list[TransactionRead])
 def list_transactions(
-    direction: str | None = Query(default=None),
+    direction: str | None = Query(default=None, pattern="^(in|out)$"),
     category: str | None = Query(default=None),
     source: str | None = Query(default=None),
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
+    search: str | None = Query(default=None, min_length=1),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: TransactionService = Depends(get_transaction_service),
@@ -40,6 +45,9 @@ def list_transactions(
         direction=direction,
         category=category,
         source=source,
+        date_from=date_from,
+        date_to=date_to,
+        search=search,
         limit=limit,
         offset=offset,
     )

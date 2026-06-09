@@ -1,6 +1,7 @@
+from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import extract, func, select
+from sqlalchemy import extract, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.transaction import Transaction
@@ -23,6 +24,9 @@ class TransactionRepository:
         direction: str | None = None,
         category: str | None = None,
         source: str | None = None,
+        date_from: date | None = None,
+        date_to: date | None = None,
+        search: str | None = None,
         limit: int = 100,
         offset: int = 0,
         uncategorised_only: bool = False,
@@ -39,6 +43,21 @@ class TransactionRepository:
 
         if source is not None:
             statement = statement.where(Transaction.source == source)
+
+        if date_from is not None:
+            statement = statement.where(Transaction.date >= date_from)
+
+        if date_to is not None:
+            statement = statement.where(Transaction.date <= date_to)
+
+        if search is not None:
+            search_pattern = f"%{search.strip()}%"
+            statement = statement.where(
+                or_(
+                    Transaction.description.ilike(search_pattern),
+                    Transaction.raw_description.ilike(search_pattern),
+                )
+            )
 
         statement = statement.offset(offset).limit(limit)
 
