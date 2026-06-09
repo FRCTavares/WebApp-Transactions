@@ -7,6 +7,7 @@ from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.import_batch import ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
+from app.schemas.transaction import TransactionRead
 from app.services.category_rule_service import CategoryRuleService
 from app.services.import_service import ImportService
 
@@ -48,6 +49,20 @@ def get_import_batch(
     service: ImportService = Depends(get_import_service),
 ):
     return service.get_import_batch(batch_id)
+
+
+@router.get("/batches/{batch_id}/transactions", response_model=list[TransactionRead])
+def list_import_batch_transactions(
+    batch_id: int,
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: ImportService = Depends(get_import_service),
+):
+    return service.list_import_batch_transactions(
+        import_batch_id=batch_id,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("/preview", response_model=ImportPreviewResponse)

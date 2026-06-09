@@ -63,6 +63,22 @@ class TransactionRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_by_import_batch(
+        self,
+        import_batch_id: int,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        statement = (
+            select(Transaction)
+            .where(Transaction.import_batch_id == import_batch_id)
+            .order_by(Transaction.date.desc(), Transaction.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(self.db.scalars(statement).all())
+
     def list_uncategorised(
         self,
         limit: int = 1000,

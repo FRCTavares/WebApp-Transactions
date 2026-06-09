@@ -50,6 +50,20 @@ class ImportService:
 
         return import_batch
 
+    def list_import_batch_transactions(
+        self,
+        import_batch_id: int,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Transaction]:
+        self.get_import_batch(import_batch_id)
+
+        return self.transaction_repository.list_by_import_batch(
+            import_batch_id=import_batch_id,
+            limit=limit,
+            offset=offset,
+        )
+
     def preview_import_from_file(
         self,
         source: str,
