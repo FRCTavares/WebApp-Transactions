@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repositories.category_rule_repository import CategoryRuleRepository
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.import_batch import ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
 from app.services.category_rule_service import CategoryRuleService
 from app.services.import_service import ImportService
@@ -27,6 +28,26 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
         import_batch_repository=import_batch_repository,
         category_rule_service=category_rule_service,
     )
+
+
+@router.get("/batches", response_model=list[ImportBatchRead])
+def list_import_batches(
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: ImportService = Depends(get_import_service),
+):
+    return service.list_import_batches(
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/batches/{batch_id}", response_model=ImportBatchRead)
+def get_import_batch(
+    batch_id: int,
+    service: ImportService = Depends(get_import_service),
+):
+    return service.get_import_batch(batch_id)
 
 
 @router.post("/preview", response_model=ImportPreviewResponse)

@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.import_batch import ImportBatch
@@ -29,6 +30,20 @@ class ImportBatchRepository:
         self.db.commit()
         self.db.refresh(import_batch)
         return import_batch
+
+    def list(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ImportBatch]:
+        statement = (
+            select(ImportBatch)
+            .order_by(ImportBatch.imported_at.desc(), ImportBatch.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        return list(self.db.scalars(statement).all())
 
     def get_by_id(self, import_batch_id: int) -> ImportBatch | None:
         return self.db.get(ImportBatch, import_batch_id)

@@ -4,6 +4,7 @@ from app.importers.activobank import ActivoBankImporter
 from app.importers.base import NormalisedTransaction
 from app.importers.revolut import RevolutImporter
 from app.importers.trading212 import Trading212Importer
+from app.models.import_batch import ImportBatch
 from app.models.transaction import Transaction
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -27,6 +28,27 @@ class ImportService:
         self.import_batch_repository = import_batch_repository
         self.category_rule_service = category_rule_service
         self.dedupe_service = DedupeService(transaction_repository)
+
+    def list_import_batches(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[ImportBatch]:
+        return self.import_batch_repository.list(
+            limit=limit,
+            offset=offset,
+        )
+
+    def get_import_batch(self, import_batch_id: int) -> ImportBatch:
+        import_batch = self.import_batch_repository.get_by_id(import_batch_id)
+
+        if import_batch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Import batch not found",
+            )
+
+        return import_batch
 
     def preview_import_from_file(
         self,
