@@ -1,0 +1,44 @@
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.repositories.summary_repository import SummaryRepository
+from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.summary import CategorySummaryResponse, MonthlySummary
+from app.services.summary_service import SummaryService
+
+
+router = APIRouter(prefix="/api/summary", tags=["summary"])
+
+
+def get_summary_service(db: Session = Depends(get_db)) -> SummaryService:
+    summary_repository = SummaryRepository(db)
+    transaction_repository = TransactionRepository(db)
+
+    return SummaryService(
+        repository=summary_repository,
+        transaction_repository=transaction_repository,
+    )
+
+
+@router.get("", response_model=MonthlySummary)
+def get_monthly_summary(
+    year: int | None = Query(default=None, ge=2000, le=2100),
+    month: int | None = Query(default=None, ge=1, le=12),
+    service: SummaryService = Depends(get_summary_service),
+):
+    return service.get_monthly_summary(year=year, month=month)
+
+
+@router.get("/categories", response_model=CategorySummaryResponse)
+def get_category_summary(
+    year: int | None = Query(default=None, ge=2000, le=2100),
+    month: int | None = Query(default=None, ge=1, le=12),
+    direction: str | None = Query(default=None, pattern="^(in|out)$"),
+    service: SummaryService = Depends(get_summary_service),
+):
+    return service.get_category_summary(
+        year=year,
+        month=month,
+        direction=direction,
+    )

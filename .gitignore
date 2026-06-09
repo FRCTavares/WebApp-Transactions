@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Local databases
+backend/data/*.db
+backend/data/*.sqlite
+backend/data/*.sqlite3
+
+# Private bank/export files
+*.csv
+*.xlsx
+*.xls
+*.pdf
+
+# Runtime/log files
+*.log
