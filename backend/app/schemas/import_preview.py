@@ -11,6 +11,7 @@ class ImportPreviewTransaction(BaseModel):
     description: str
     amount: Decimal
     direction: str
+    cashflow_type: str
     source: str
     account: str | None = None
     currency: str

@@ -256,6 +256,7 @@ class ImportService:
                     raw_description=preview_transaction.raw_description,
                     amount=preview_transaction.amount,
                     direction=preview_transaction.direction,
+                    cashflow_type=preview_transaction.cashflow_type,
                     source=preview_transaction.source,
                     account=preview_transaction.account,
                     category=preview_transaction.category,
@@ -298,6 +299,7 @@ class ImportService:
             description=transaction.description,
             amount=transaction.amount,
             direction=transaction.direction,
+            cashflow_type=self._get_cashflow_type(transaction),
             source=transaction.source,
             account=transaction.account,
             currency=transaction.currency,
@@ -307,6 +309,15 @@ class ImportService:
             is_duplicate=is_duplicate,
             category=category,
         )
+
+    def _get_cashflow_type(self, transaction: NormalisedTransaction) -> str:
+        if transaction.cashflow_type is not None:
+            return transaction.cashflow_type
+
+        if transaction.direction == "in":
+            return "income"
+
+        return "expense"
 
     def _guess_category(
         self,

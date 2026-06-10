@@ -24,6 +24,7 @@ class Trading212Importer:
         amount_text = self._get_required_value(row, "Total")
         currency = self._get_required_value(row, "Currency (Total)")
         external_id = self._get_optional_value(row, "ID")
+        action = self._get_optional_value(row, "Action")
 
         description = self._get_description(row)
         raw_description = self._build_raw_description(
@@ -32,6 +33,11 @@ class Trading212Importer:
         )
         amount = self._parse_amount(amount_text)
         direction = "in" if amount > 0 else "out"
+        cashflow_type = self._get_cashflow_type(
+            action=action,
+            description=description,
+            direction=direction,
+        )
 
         return NormalisedTransaction(
             date=self._parse_date(time),
@@ -39,12 +45,48 @@ class Trading212Importer:
             description=description,
             amount=abs(amount),
             direction=direction,
+            cashflow_type=cashflow_type,
             source=self.source,
             account="Trading 212",
             currency=currency.upper(),
             external_id=external_id,
-            notes=self._get_optional_value(row, "Action"),
+            notes=action,
         )
+
+    def _get_cashflow_type(
+        self,
+        action: str | None,
+        description: str,
+        direction: str,
+    ) -> str:
+        action_text = (action or "").strip().lower()
+        description_text = description.strip().lower()
+
+        if "market buy" in action_text or "market buy" in description_text:
+            return "investment"
+
+        if (
+            "bank transfer" in action_text
+            or "bank transfer" in description_text
+            or "withdrawal" in action_text
+            or "withdrawal" in description_text
+            or description_text.startswith("transaction id:")
+        ):
+            return "internal_transfer"
+
+        if "interest on cash" in action_text or "interest on cash" in description_text:
+            return "income"
+
+        if "spending cashback" in action_text or "spending cashback" in description_text:
+            return "income"
+
+        if "card debit" in action_text:
+            return "expense"
+
+        if direction == "in":
+            return "income"
+
+        return "expense"
 
     def _build_raw_description(
         self,

@@ -14,6 +14,7 @@ class NormalisedTransaction:
     source: str
     account: str | None
     currency: str
+    cashflow_type: str | None = None
     external_id: str | None = None
     notes: str | None = None
 

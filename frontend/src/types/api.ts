@@ -147,6 +147,7 @@ export type ImportPreviewTransaction = {
   description: string
   amount: string
   direction: Direction
+  cashflow_type: CashflowType
   source: string
   account: string | null
   currency: string
