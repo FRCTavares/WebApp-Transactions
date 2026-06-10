@@ -173,3 +173,84 @@ def test_inactive_description_rules_are_not_applied(db_session):
     }
     assert updated_transaction is not None
     assert updated_transaction.description == "TGTG aqwt6rwqmw7b0 LISBOA PT"
+
+
+def test_description_rule_suggestions_group_transactions(db_session):
+    transaction_repository = TransactionRepository(db_session)
+    description_rule_repository = DescriptionRuleRepository(db_session)
+    service = DescriptionRuleService(
+        description_rule_repository=description_rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    for external_suffix in ["one", "two"]:
+        transaction_repository.create(
+            TransactionCreate(
+                date=date(2026, 5, 4),
+                description="TGTG aqwt6rwqmw7b0 LISBOA PT",
+                raw_description="TGTG aqwt6rwqmw7b0 LISBOA PT",
+                amount=Decimal("3.99"),
+                direction="out",
+                source="revolut",
+                account="Revolut",
+                currency="EUR",
+                external_id=external_suffix,
+                notes="Card payment",
+            )
+        )
+
+    transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 5),
+            description="Salary",
+            raw_description="Salary May",
+            amount=Decimal("1000.00"),
+            direction="in",
+            source="manual",
+            account="Manual",
+            currency="EUR",
+        )
+    )
+
+    suggestions = service.get_rule_suggestions(direction="out")
+
+    assert len(suggestions) == 1
+    assert suggestions[0].raw_description == "TGTG aqwt6rwqmw7b0 LISBOA PT"
+    assert suggestions[0].description == "TGTG aqwt6rwqmw7b0 LISBOA PT"
+    assert suggestions[0].source == "revolut"
+    assert suggestions[0].direction == "out"
+    assert suggestions[0].count == 2
+    assert suggestions[0].total == Decimal("7.98")
+
+
+def test_description_rule_suggestions_endpoint(client):
+    create_payload = {
+        "date": "2026-05-04",
+        "description": "TGTG aqwt6rwqmw7b0 LISBOA PT",
+        "raw_description": "TGTG aqwt6rwqmw7b0 LISBOA PT",
+        "amount": "3.99",
+        "direction": "out",
+        "source": "revolut",
+        "account": "Revolut",
+        "currency": "EUR",
+        "notes": "Card payment",
+    }
+
+    create_response = client.post("/api/transactions", json=create_payload)
+    assert create_response.status_code == 201
+
+    suggestions_response = client.get("/api/description-rules/suggestions?direction=out")
+    assert suggestions_response.status_code == 200
+
+    suggestions = suggestions_response.json()
+
+    assert suggestions == [
+        {
+            "raw_description": "TGTG aqwt6rwqmw7b0 LISBOA PT",
+            "description": "TGTG aqwt6rwqmw7b0 LISBOA PT",
+            "source": "revolut",
+            "direction": "out",
+            "count": 1,
+            "total": "3.99",
+        }
+    ]

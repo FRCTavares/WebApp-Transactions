@@ -4,7 +4,11 @@ from app.models.description_rule import DescriptionRule
 from app.models.transaction import Transaction
 from app.repositories.description_rule_repository import DescriptionRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
-from app.schemas.description_rule import DescriptionRuleCreate, DescriptionRuleUpdate
+from app.schemas.description_rule import (
+    DescriptionRuleCreate,
+    DescriptionRuleSuggestion,
+    DescriptionRuleUpdate,
+)
 
 
 class DescriptionRuleService:
@@ -88,6 +92,34 @@ class DescriptionRuleService:
             "checked": len(transactions),
             "updated": updated_count,
         }
+
+    def get_rule_suggestions(
+        self,
+        direction: str | None = None,
+        limit: int = 50,
+    ) -> list[DescriptionRuleSuggestion]:
+        if self.transaction_repository is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Transaction repository is required for description rule suggestions",
+            )
+
+        rows = self.transaction_repository.get_description_rule_suggestions(
+            direction=direction,
+            limit=limit,
+        )
+
+        return [
+            DescriptionRuleSuggestion(
+                raw_description=raw_description,
+                description=description,
+                source=source,
+                direction=row_direction,
+                count=count,
+                total=total,
+            )
+            for raw_description, description, source, row_direction, count, total in rows
+        ]
 
     def _get_cleaned_description(
         self,

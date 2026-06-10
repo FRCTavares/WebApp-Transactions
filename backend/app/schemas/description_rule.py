@@ -1,4 +1,5 @@
 from datetime import datetime as DateTimeType
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -42,3 +43,12 @@ class DescriptionRuleRead(DescriptionRuleBase):
     id: int
     created_at: DateTimeType
     updated_at: DateTimeType
+
+
+class DescriptionRuleSuggestion(BaseModel):
+    raw_description: str
+    description: str
+    source: str
+    direction: DirectionFilter
+    count: int
+    total: Decimal

@@ -225,3 +225,35 @@ class TransactionRepository:
             statement = statement.where(Transaction.direction == direction)
 
         return list(self.db.execute(statement).all())
+
+    def get_description_rule_suggestions(
+        self,
+        direction: str | None = None,
+        limit: int = 50,
+    ) -> list[tuple[str, str, str, str, int, Decimal]]:
+        total_amount = func.sum(Transaction.amount)
+        transaction_count = func.count(Transaction.id)
+
+        statement = (
+            select(
+                Transaction.raw_description,
+                Transaction.description,
+                Transaction.source,
+                Transaction.direction,
+                transaction_count.label("count"),
+                total_amount.label("total"),
+            )
+            .group_by(
+                Transaction.raw_description,
+                Transaction.description,
+                Transaction.source,
+                Transaction.direction,
+            )
+            .order_by(transaction_count.desc(), total_amount.desc())
+            .limit(limit)
+        )
+
+        if direction is not None:
+            statement = statement.where(Transaction.direction == direction)
+
+        return list(self.db.execute(statement).all())

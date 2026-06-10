@@ -7,6 +7,7 @@ from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.description_rule import (
     DescriptionRuleCreate,
     DescriptionRuleRead,
+    DescriptionRuleSuggestion,
     DescriptionRuleUpdate,
 )
 from app.services.description_rule_service import DescriptionRuleService
@@ -55,6 +56,18 @@ def apply_description_rules(
     service: DescriptionRuleService = Depends(get_description_rule_service),
 ):
     return service.apply_rules_to_existing_transactions(limit=limit)
+
+
+@router.get("/suggestions", response_model=list[DescriptionRuleSuggestion])
+def list_description_rule_suggestions(
+    direction: str | None = Query(default=None, pattern="^(in|out)$"),
+    limit: int = Query(default=50, ge=1, le=200),
+    service: DescriptionRuleService = Depends(get_description_rule_service),
+):
+    return service.get_rule_suggestions(
+        direction=direction,
+        limit=limit,
+    )
 
 
 @router.get("/{rule_id}", response_model=DescriptionRuleRead)
