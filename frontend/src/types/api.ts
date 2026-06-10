@@ -25,6 +25,7 @@ export type Transaction = {
 
 export type TransactionFilters = {
   direction?: Direction
+  cashflow_type?: CashflowType
   category?: string
   source?: string
   date_from?: string

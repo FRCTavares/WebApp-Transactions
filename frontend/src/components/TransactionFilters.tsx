@@ -1,9 +1,11 @@
+import type { CashflowType } from '../types/api'
 import { CategorySelect } from './CategorySelect'
 
 export type TransactionFilterState = {
   search: string
   category: string
   source: string
+  cashflowType: CashflowType | ''
   dateFrom: string
   dateTo: string
 }
@@ -14,6 +16,14 @@ const sourceOptions = [
   { value: 'revolut', label: 'Revolut' },
   { value: 'activobank', label: 'ActivoBank' },
   { value: 'trading212', label: 'Trading 212' },
+]
+
+const cashflowTypeOptions = [
+  { value: '', label: 'All cashflow types' },
+  { value: 'income', label: 'Income' },
+  { value: 'expense', label: 'Expense' },
+  { value: 'internal_transfer', label: 'Internal transfer' },
+  { value: 'investment', label: 'Investment' },
 ]
 
 type TransactionFiltersProps = {
@@ -56,6 +66,20 @@ export function TransactionFilters({
             onChange={(event) => onChange('source', event.target.value)}
           >
             {sourceOptions.map((option) => (
+              <option key={option.value || 'all'} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Cashflow Type
+          <select
+            value={filters.cashflowType}
+            onChange={(event) => onChange('cashflowType', event.target.value)}
+          >
+            {cashflowTypeOptions.map((option) => (
               <option key={option.value || 'all'} value={option.value}>
                 {option.label}
               </option>

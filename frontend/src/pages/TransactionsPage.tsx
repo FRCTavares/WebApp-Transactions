@@ -44,11 +44,12 @@ function getInitialFormState(direction: Direction): TransactionFormState {
   }
 }
 
-function getInitialFilterState(): TransactionFilterState {
+function getInitialFilterState(direction: Direction): TransactionFilterState {
   return {
     search: '',
     category: '',
     source: '',
+    cashflowType: getDefaultCashflowType(direction),
     dateFrom: '',
     dateTo: '',
   }
@@ -72,7 +73,9 @@ function getTransactionsTotal(transactions: Transaction[]) {
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [filters, setFilters] = useState<TransactionFilterState>(getInitialFilterState)
+  const [filters, setFilters] = useState<TransactionFilterState>(() =>
+    getInitialFilterState(direction),
+  )
   const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
   const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -84,6 +87,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
     listTransactions({
       direction,
+      cashflow_type: activeFilters.cashflowType || undefined,
       search: activeFilters.search || undefined,
       category: activeFilters.category || undefined,
       source: activeFilters.source || undefined,
@@ -98,10 +102,13 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   }
 
   useEffect(() => {
+    const initialFilters = getInitialFilterState(direction)
+
     setForm(getInitialFormState(direction))
     setEditForm(getInitialFormState(direction))
+    setFilters(initialFilters)
     setEditingTransaction(null)
-    loadTransactions()
+    loadTransactions(initialFilters)
   }, [direction])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -119,7 +126,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   }
 
   function clearFilters() {
-    const initialFilters = getInitialFilterState()
+    const initialFilters = getInitialFilterState(direction)
     setFilters(initialFilters)
     loadTransactions(initialFilters)
   }
