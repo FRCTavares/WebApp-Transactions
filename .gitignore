@@ -17,5 +17,12 @@ backend/data/*.sqlite3
 *.xls
 *.pdf
 
+# Frontend dependencies/build output
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/node_modules/.tmp/
+
 # Runtime/log files
 *.log
