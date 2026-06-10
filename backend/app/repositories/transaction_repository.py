@@ -92,6 +92,18 @@ class TransactionRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_for_description_rule_application(
+        self,
+        limit: int = 1000,
+    ) -> list[Transaction]:
+        statement = (
+            select(Transaction)
+            .order_by(Transaction.date.desc(), Transaction.id.desc())
+            .limit(limit)
+        )
+
+        return list(self.db.scalars(statement).all())
+
     def get_by_id(self, transaction_id: int) -> Transaction | None:
         return self.db.get(Transaction, transaction_id)
 
@@ -118,6 +130,18 @@ class TransactionRepository:
     ) -> Transaction:
         transaction.category = category
         transaction.subcategory = subcategory
+
+        self.db.add(transaction)
+        self.db.commit()
+        self.db.refresh(transaction)
+        return transaction
+
+    def update_description(
+        self,
+        transaction: Transaction,
+        description: str,
+    ) -> Transaction:
+        transaction.description = description
 
         self.db.add(transaction)
         self.db.commit()
