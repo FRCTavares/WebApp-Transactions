@@ -35,13 +35,13 @@ class SummaryService:
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
 
-        money_in = self.repository.get_total_by_direction(
-            direction="in",
+        money_in = self.repository.get_total_by_cashflow_type(
+            cashflow_type="income",
             start_date=start_date,
             end_date=end_date,
         )
-        money_out = self.repository.get_total_by_direction(
-            direction="out",
+        money_out = self.repository.get_total_by_cashflow_type(
+            cashflow_type="expense",
             start_date=start_date,
             end_date=end_date,
         )
@@ -70,6 +70,7 @@ class SummaryService:
         year: int | None = None,
         month: int | None = None,
         direction: str | None = None,
+        cashflow_type: str | None = None,
     ) -> CategorySummaryResponse:
         if self.transaction_repository is None:
             raise RuntimeError("Transaction repository is required for category summary")
@@ -78,6 +79,7 @@ class SummaryService:
             year=year,
             month=month,
             direction=direction,
+            cashflow_type=cashflow_type,
         )
 
         items = [

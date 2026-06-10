@@ -34,6 +34,10 @@ def list_transactions(
     direction: str | None = Query(default=None, pattern="^(in|out)$"),
     category: str | None = Query(default=None),
     source: str | None = Query(default=None),
+    cashflow_type: str | None = Query(
+        default=None,
+        pattern="^(income|expense|internal_transfer|investment)$",
+    ),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
     search: str | None = Query(default=None, min_length=1),
@@ -45,6 +49,7 @@ def list_transactions(
         direction=direction,
         category=category,
         source=source,
+        cashflow_type=cashflow_type,
         date_from=date_from,
         date_to=date_to,
         search=search,

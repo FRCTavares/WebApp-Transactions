@@ -1,6 +1,6 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy import Date, DateTime, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -15,6 +15,13 @@ def utc_now() -> datetime:
 class Transaction(Base):
     __tablename__ = "transactions"
 
+    def __init__(self, **kwargs: Any) -> None:
+        if kwargs.get("cashflow_type") is None:
+            direction = kwargs.get("direction")
+            kwargs["cashflow_type"] = "income" if direction == "in" else "expense"
+
+        super().__init__(**kwargs)
+
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
     date: Mapped[date] = mapped_column(Date, index=True)
@@ -23,6 +30,7 @@ class Transaction(Base):
 
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     direction: Mapped[str] = mapped_column(String(10), index=True)
+    cashflow_type: Mapped[str] = mapped_column(String(30), index=True)
 
     source: Mapped[str] = mapped_column(String(50), index=True, default="manual")
     account: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

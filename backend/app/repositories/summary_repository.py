@@ -12,15 +12,15 @@ class SummaryRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def get_total_by_direction(
+    def get_total_by_cashflow_type(
         self,
-        direction: str,
+        cashflow_type: str,
         start_date: date,
         end_date: date,
     ) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(Transaction.amount), 0))
-            .where(Transaction.direction == direction)
+            .where(Transaction.cashflow_type == cashflow_type)
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
         )
@@ -38,7 +38,7 @@ class SummaryRepository:
                 func.coalesce(Transaction.category, "Uncategorised"),
                 func.coalesce(func.sum(Transaction.amount), 0),
             )
-            .where(Transaction.direction == "out")
+            .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
             .group_by(func.coalesce(Transaction.category, "Uncategorised"))

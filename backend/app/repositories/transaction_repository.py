@@ -24,6 +24,7 @@ class TransactionRepository:
         direction: str | None = None,
         category: str | None = None,
         source: str | None = None,
+        cashflow_type: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         search: str | None = None,
@@ -43,6 +44,9 @@ class TransactionRepository:
 
         if source is not None:
             statement = statement.where(Transaction.source == source)
+
+        if cashflow_type is not None:
+            statement = statement.where(Transaction.cashflow_type == cashflow_type)
 
         if date_from is not None:
             statement = statement.where(Transaction.date >= date_from)
@@ -170,6 +174,7 @@ class TransactionRepository:
         year: int | None = None,
         month: int | None = None,
         direction: str | None = None,
+        cashflow_type: str | None = None,
     ) -> list[tuple[str, str | None, Decimal, int]]:
         category_label = func.coalesce(Transaction.category, "Uncategorised")
 
@@ -192,6 +197,9 @@ class TransactionRepository:
 
         if direction is not None:
             statement = statement.where(Transaction.direction == direction)
+
+        if cashflow_type is not None:
+            statement = statement.where(Transaction.cashflow_type == cashflow_type)
 
         return list(self.db.execute(statement).all())
 

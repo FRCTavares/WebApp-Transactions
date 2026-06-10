@@ -35,10 +35,15 @@ def get_category_summary(
     year: int | None = Query(default=None, ge=2000, le=2100),
     month: int | None = Query(default=None, ge=1, le=12),
     direction: str | None = Query(default=None, pattern="^(in|out)$"),
+    cashflow_type: str | None = Query(
+        default=None,
+        pattern="^(income|expense|internal_transfer|investment)$",
+    ),
     service: SummaryService = Depends(get_summary_service),
 ):
     return service.get_category_summary(
         year=year,
         month=month,
         direction=direction,
+        cashflow_type=cashflow_type,
     )

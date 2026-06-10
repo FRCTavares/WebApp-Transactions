@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
+from app.database_migrations import run_startup_migrations
 from app.models import CategoryRule, DescriptionRule, ImportBatch, OwedItem, Transaction
 from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router
@@ -12,6 +13,7 @@ from app.routers.transactions import router as transactions_router
 
 
 Base.metadata.create_all(bind=engine)
+run_startup_migrations(engine)
 
 app = FastAPI(title="F - Transactions API")
 

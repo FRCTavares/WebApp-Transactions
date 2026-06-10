@@ -3,10 +3,18 @@ from datetime import datetime as DateTimeType
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 Direction = Literal["in", "out"]
+CashflowType = Literal["income", "expense", "internal_transfer", "investment"]
+
+
+def default_cashflow_type(direction: Direction) -> CashflowType:
+    if direction == "in":
+        return "income"
+
+    return "expense"
 
 
 class TransactionBase(BaseModel):
@@ -15,6 +23,7 @@ class TransactionBase(BaseModel):
     raw_description: str = Field(min_length=1)
     amount: Decimal = Field(gt=0)
     direction: Direction
+    cashflow_type: CashflowType | None = None
     source: str = "manual"
     account: str | None = None
     category: str | None = None
@@ -22,6 +31,13 @@ class TransactionBase(BaseModel):
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     merchant: str | None = None
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def set_default_cashflow_type(self):
+        if self.cashflow_type is None:
+            self.cashflow_type = default_cashflow_type(self.direction)
+
+        return self
 
 
 class TransactionCreate(TransactionBase):
@@ -34,6 +50,7 @@ class TransactionUpdate(BaseModel):
     raw_description: str | None = Field(default=None, min_length=1)
     amount: Decimal | None = Field(default=None, gt=0)
     direction: Direction | None = None
+    cashflow_type: CashflowType | None = None
     source: str | None = None
     account: str | None = None
     category: str | None = None
