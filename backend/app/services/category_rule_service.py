@@ -22,6 +22,7 @@ class CategoryRuleService:
         self.transaction_repository = transaction_repository
 
     def create_rule(self, rule_data: CategoryRuleCreate) -> CategoryRule:
+        self._raise_if_duplicate_rule(rule_data)
         return self.category_rule_repository.create(rule_data)
 
     def list_rules(
@@ -53,6 +54,7 @@ class CategoryRuleService:
         rule_data: CategoryRuleUpdate,
     ) -> CategoryRule:
         rule = self.get_rule(rule_id)
+        self._raise_if_duplicate_rule_update(rule, rule_data)
         return self.category_rule_repository.update(rule, rule_data)
 
     def delete_rule(self, rule_id: int) -> None:
@@ -126,6 +128,86 @@ class CategoryRuleService:
             "checked": len(transactions),
             "updated": updated_count,
         }
+
+    def _raise_if_duplicate_rule(
+        self,
+        rule_data: CategoryRuleCreate,
+        exclude_rule_id: int | None = None,
+    ) -> None:
+        new_fingerprint = self._rule_fingerprint(
+            match_text=rule_data.match_text,
+            match_field=rule_data.match_field,
+            direction=rule_data.direction,
+            source=rule_data.source,
+            category=rule_data.category,
+            subcategory=rule_data.subcategory,
+        )
+
+        for existing_rule in self.category_rule_repository.list_all():
+            if exclude_rule_id is not None and existing_rule.id == exclude_rule_id:
+                continue
+
+            existing_fingerprint = self._rule_fingerprint(
+                match_text=existing_rule.match_text,
+                match_field=existing_rule.match_field,
+                direction=existing_rule.direction,
+                source=existing_rule.source,
+                category=existing_rule.category,
+                subcategory=existing_rule.subcategory,
+            )
+
+            if existing_fingerprint == new_fingerprint:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="An equivalent category rule already exists",
+                )
+
+    def _raise_if_duplicate_rule_update(
+        self,
+        rule: CategoryRule,
+        rule_data: CategoryRuleUpdate,
+    ) -> None:
+        update_data = rule_data.model_dump(exclude_unset=True)
+
+        candidate_rule_data = CategoryRuleCreate(
+            name=update_data.get("name", rule.name),
+            category=update_data.get("category", rule.category),
+            subcategory=update_data.get("subcategory", rule.subcategory),
+            match_text=update_data.get("match_text", rule.match_text),
+            match_field=update_data.get("match_field", rule.match_field),
+            direction=update_data.get("direction", rule.direction),
+            source=update_data.get("source", rule.source),
+            is_active=update_data.get("is_active", rule.is_active),
+        )
+
+        self._raise_if_duplicate_rule(
+            candidate_rule_data,
+            exclude_rule_id=rule.id,
+        )
+
+    def _rule_fingerprint(
+        self,
+        match_text: str,
+        match_field: str,
+        direction: str | None,
+        source: str | None,
+        category: str,
+        subcategory: str | None,
+    ) -> tuple[str, str, str | None, str | None, str, str | None]:
+        return (
+            self._normalise_rule_value(match_text) or "",
+            self._normalise_rule_value(match_field) or "",
+            self._normalise_rule_value(direction),
+            self._normalise_rule_value(source),
+            self._normalise_rule_value(category) or "",
+            self._normalise_rule_value(subcategory),
+        )
+
+    def _normalise_rule_value(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        return value.strip().casefold()
 
     def _normalise_existing_transaction(
         self,

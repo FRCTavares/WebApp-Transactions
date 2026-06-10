@@ -31,6 +31,10 @@ class CategoryRuleRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_all(self) -> list[CategoryRule]:
+        statement = select(CategoryRule).order_by(CategoryRule.id.asc())
+        return list(self.db.scalars(statement).all())
+
     def get_by_id(self, rule_id: int) -> CategoryRule | None:
         return self.db.get(CategoryRule, rule_id)
 
