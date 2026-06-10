@@ -8,23 +8,14 @@ import {
   listCategoryRules,
   updateCategoryRule,
 } from '../api/categoryRules'
+import {
+  CategoryRuleForm,
+  type RuleFormState,
+} from '../components/CategoryRuleForm'
 import { CategorySelect } from '../components/CategorySelect'
 import { StatusMessage } from '../components/StatusMessage'
-import type { CategoryRule, CategoryRuleSuggestion, Direction } from '../types/api'
+import type { CategoryRule, CategoryRuleSuggestion } from '../types/api'
 import { formatMoney } from '../utils/format'
-
-type MatchField = 'description' | 'raw_description' | 'merchant'
-
-type RuleFormState = {
-  name: string
-  category: string
-  subcategory: string
-  match_text: string
-  match_field: MatchField
-  direction: Direction | ''
-  source: string
-  is_active: boolean
-}
 
 const INITIAL_RULE_FORM: RuleFormState = {
   name: '',
@@ -36,14 +27,6 @@ const INITIAL_RULE_FORM: RuleFormState = {
   source: '',
   is_active: true,
 }
-
-const SOURCE_OPTIONS = [
-  '',
-  'manual',
-  'revolut',
-  'activobank',
-  'trading212',
-]
 
 function getSuggestionKey(suggestion: CategoryRuleSuggestion) {
   return `${suggestion.description}-${suggestion.source}-${suggestion.direction}`
@@ -150,6 +133,11 @@ export function CategoryRulesPage() {
     setMessage(null)
   }
 
+  function handleCancelEditRule() {
+    setEditingRule(null)
+    setEditRuleForm(INITIAL_RULE_FORM)
+  }
+
   async function handleSaveEditRule(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -181,8 +169,7 @@ export function CategoryRulesPage() {
         is_active: editRuleForm.is_active,
       })
 
-      setEditingRule(null)
-      setEditRuleForm(INITIAL_RULE_FORM)
+      handleCancelEditRule()
       setMessage('Rule updated.')
       loadData()
     } catch (caughtError: unknown) {
@@ -269,8 +256,7 @@ export function CategoryRulesPage() {
       await deleteCategoryRule(rule.id)
 
       if (editingRule?.id === rule.id) {
-        setEditingRule(null)
-        setEditRuleForm(INITIAL_RULE_FORM)
+        handleCancelEditRule()
       }
 
       setMessage('Rule deleted.')
@@ -293,205 +279,29 @@ export function CategoryRulesPage() {
       <StatusMessage error={error} message={message} />
 
       <h2>New Rule</h2>
-      <form className="filter-panel" onSubmit={handleCreateManualRule}>
-        <div className="form-grid">
-          <label>
-            Name
-            <input
-              value={ruleForm.name}
-              onChange={(event) => updateRuleForm('name', event.target.value)}
-              placeholder="Auchan groceries"
-            />
-          </label>
-
-          <CategorySelect
-            label="Category"
-            value={ruleForm.category}
-            onChange={(category) => updateRuleForm('category', category)}
-          />
-
-          <label>
-            Subcategory
-            <input
-              value={ruleForm.subcategory}
-              onChange={(event) => updateRuleForm('subcategory', event.target.value)}
-              placeholder="Optional"
-            />
-          </label>
-
-          <label>
-            Match text
-            <input
-              value={ruleForm.match_text}
-              onChange={(event) => updateRuleForm('match_text', event.target.value)}
-              placeholder="AUCHAN"
-            />
-          </label>
-
-          <label>
-            Match field
-            <select
-              value={ruleForm.match_field}
-              onChange={(event) => updateRuleForm('match_field', event.target.value as MatchField)}
-            >
-              <option value="description">description</option>
-              <option value="raw_description">raw_description</option>
-              <option value="merchant">merchant</option>
-            </select>
-          </label>
-
-          <label>
-            Direction
-            <select
-              value={ruleForm.direction}
-              onChange={(event) => updateRuleForm('direction', event.target.value as Direction | '')}
-            >
-              <option value="">Any</option>
-              <option value="in">in</option>
-              <option value="out">out</option>
-            </select>
-          </label>
-
-          <label>
-            Source
-            <select
-              value={ruleForm.source}
-              onChange={(event) => updateRuleForm('source', event.target.value)}
-            >
-              {SOURCE_OPTIONS.map((source) => (
-                <option key={source || 'any'} value={source}>
-                  {source || 'Any'}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={ruleForm.is_active}
-              onChange={(event) => updateRuleForm('is_active', event.target.checked)}
-            />
-            Active
-          </label>
-        </div>
-
-        <div className="toolbar">
-          <button type="submit">Create rule</button>
-          <button
-            type="button"
-            onClick={() => {
-              setRuleForm(INITIAL_RULE_FORM)
-              setError(null)
-              setMessage(null)
-            }}
-          >
-            Clear
-          </button>
-        </div>
-      </form>
+      <CategoryRuleForm
+        form={ruleForm}
+        submitLabel="Create rule"
+        onSubmit={handleCreateManualRule}
+        onChange={updateRuleForm}
+        onClear={() => {
+          setRuleForm(INITIAL_RULE_FORM)
+          setError(null)
+          setMessage(null)
+        }}
+      />
 
       {editingRule && (
         <>
           <h2>Edit Rule</h2>
-          <form className="filter-panel" onSubmit={handleSaveEditRule}>
-            <p className="muted small">
-              Editing rule #{editingRule.id}
-            </p>
-
-            <div className="form-grid">
-              <label>
-                Name
-                <input
-                  value={editRuleForm.name}
-                  onChange={(event) => updateEditRuleForm('name', event.target.value)}
-                />
-              </label>
-
-              <CategorySelect
-                label="Category"
-                value={editRuleForm.category}
-                onChange={(category) => updateEditRuleForm('category', category)}
-              />
-
-              <label>
-                Subcategory
-                <input
-                  value={editRuleForm.subcategory}
-                  onChange={(event) => updateEditRuleForm('subcategory', event.target.value)}
-                  placeholder="Optional"
-                />
-              </label>
-
-              <label>
-                Match text
-                <input
-                  value={editRuleForm.match_text}
-                  onChange={(event) => updateEditRuleForm('match_text', event.target.value)}
-                />
-              </label>
-
-              <label>
-                Match field
-                <select
-                  value={editRuleForm.match_field}
-                  onChange={(event) => updateEditRuleForm('match_field', event.target.value as MatchField)}
-                >
-                  <option value="description">description</option>
-                  <option value="raw_description">raw_description</option>
-                  <option value="merchant">merchant</option>
-                </select>
-              </label>
-
-              <label>
-                Direction
-                <select
-                  value={editRuleForm.direction}
-                  onChange={(event) => updateEditRuleForm('direction', event.target.value as Direction | '')}
-                >
-                  <option value="">Any</option>
-                  <option value="in">in</option>
-                  <option value="out">out</option>
-                </select>
-              </label>
-
-              <label>
-                Source
-                <select
-                  value={editRuleForm.source}
-                  onChange={(event) => updateEditRuleForm('source', event.target.value)}
-                >
-                  {SOURCE_OPTIONS.map((source) => (
-                    <option key={source || 'any'} value={source}>
-                      {source || 'Any'}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={editRuleForm.is_active}
-                  onChange={(event) => updateEditRuleForm('is_active', event.target.checked)}
-                />
-                Active
-              </label>
-            </div>
-
-            <div className="toolbar">
-              <button type="submit">Save changes</button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingRule(null)
-                  setEditRuleForm(INITIAL_RULE_FORM)
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+          <CategoryRuleForm
+            form={editRuleForm}
+            submitLabel="Save changes"
+            editingRuleId={editingRule.id}
+            onSubmit={handleSaveEditRule}
+            onChange={updateEditRuleForm}
+            onCancel={handleCancelEditRule}
+          />
         </>
       )}
 
