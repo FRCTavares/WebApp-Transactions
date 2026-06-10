@@ -4,6 +4,21 @@ import type { CategorySummaryResponse, MonthlySummary } from '../types/api'
 import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 
+const monthOptions = [
+  { value: 1, label: 'January' },
+  { value: 2, label: 'February' },
+  { value: 3, label: 'March' },
+  { value: 4, label: 'April' },
+  { value: 5, label: 'May' },
+  { value: 6, label: 'June' },
+  { value: 7, label: 'July' },
+  { value: 8, label: 'August' },
+  { value: 9, label: 'September' },
+  { value: 10, label: 'October' },
+  { value: 11, label: 'November' },
+  { value: 12, label: 'December' },
+]
+
 function getCurrentYearMonth() {
   const now = new Date()
 
@@ -14,12 +29,16 @@ function getCurrentYearMonth() {
 }
 
 export function DashboardPage() {
+  const currentYearMonth = getCurrentYearMonth()
+  const [year, setYear] = useState(currentYearMonth.year)
+  const [month, setMonth] = useState(currentYearMonth.month)
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [categories, setCategories] = useState<CategorySummaryResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { year, month } = getCurrentYearMonth()
 
   useEffect(() => {
+    setError(null)
+
     Promise.all([getMonthlySummary(year, month), getCategorySummary('out', year, month)])
       .then(([summaryData, categoryData]) => {
         setSummary(summaryData)
@@ -36,6 +55,38 @@ export function DashboardPage() {
       <p className="muted page-subtitle">
         Showing {String(month).padStart(2, '0')}/{year}
       </p>
+
+      <div className="filter-panel">
+        <h2>Period</h2>
+
+        <div className="form-row">
+          <label>
+            Month
+            <select
+              value={month}
+              onChange={(event) => setMonth(Number(event.target.value))}
+            >
+              {monthOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Year
+            <input
+              type="number"
+              min="2000"
+              max="2100"
+              value={year}
+              onChange={(event) => setYear(Number(event.target.value))}
+            />
+          </label>
+        </div>
+      </div>
+
       <StatusMessage error={error} />
 
       {summary && (
