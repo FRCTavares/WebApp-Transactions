@@ -15,12 +15,74 @@ export function buildQuery(params: Record<string, QueryValue>): string {
   return query ? `?${query}` : ''
 }
 
+async function raiseForBadResponse(
+  response: Response,
+  method: string,
+  path: string,
+): Promise<void> {
+  if (response.ok) {
+    return
+  }
+
+  const detail = await readErrorDetail(response)
+
+  if (detail) {
+    throw new Error(detail)
+  }
+
+  throw new Error(`${method} ${path} failed with ${response.status}`)
+}
+
+async function readErrorDetail(response: Response): Promise<string | null> {
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('application/json')) {
+    return null
+  }
+
+  try {
+    const body = (await response.json()) as unknown
+
+    if (
+      typeof body === 'object' &&
+      body !== null &&
+      'detail' in body
+    ) {
+      const detail = body.detail
+
+      if (typeof detail === 'string') {
+        return detail
+      }
+
+      if (Array.isArray(detail)) {
+        return detail
+          .map((item) => {
+            if (
+              typeof item === 'object' &&
+              item !== null &&
+              'msg' in item &&
+              typeof item.msg === 'string'
+            ) {
+              return item.msg
+            }
+
+            return null
+          })
+          .filter((message): message is string => message !== null)
+          .join(', ')
+      }
+    }
+  } catch {
+    return null
+  }
+
+  return null
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`)
 
-  if (!response.ok) {
-    throw new Error(`GET ${path} failed with ${response.status}`)
-  }
+  await raiseForBadResponse(response, 'GET', path)
 
   return response.json() as Promise<T>
 }
@@ -34,9 +96,7 @@ export async function apiPostForm<T>(
     body: formData,
   })
 
-  if (!response.ok) {
-    throw new Error(`POST ${path} failed with ${response.status}`)
-  }
+  await raiseForBadResponse(response, 'POST', path)
 
   return response.json() as Promise<T>
 }
@@ -51,13 +111,10 @@ export async function apiPostJson<T>(
     body: JSON.stringify(payload),
   })
 
-  if (!response.ok) {
-    throw new Error(`POST ${path} failed with ${response.status}`)
-  }
+  await raiseForBadResponse(response, 'POST', path)
 
   return response.json() as Promise<T>
 }
-
 
 export async function apiPatchJson<T>(
   path: string,
@@ -69,9 +126,7 @@ export async function apiPatchJson<T>(
     body: JSON.stringify(payload),
   })
 
-  if (!response.ok) {
-    throw new Error(`PATCH ${path} failed with ${response.status}`)
-  }
+  await raiseForBadResponse(response, 'PATCH', path)
 
   return response.json() as Promise<T>
 }
@@ -81,7 +136,5 @@ export async function apiDelete(path: string): Promise<void> {
     method: 'DELETE',
   })
 
-  if (!response.ok) {
-    throw new Error(`DELETE ${path} failed with ${response.status}`)
-  }
+  await raiseForBadResponse(response, 'DELETE', path)
 }
