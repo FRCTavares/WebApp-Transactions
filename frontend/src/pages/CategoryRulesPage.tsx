@@ -9,6 +9,11 @@ import {
   updateCategoryRule,
 } from '../api/categoryRules'
 import {
+  applyCashflowRules,
+  createCashflowRule,
+  listCashflowRules,
+} from '../api/cashflowRules'
+import {
   applyDescriptionRules,
   createDescriptionRule,
   listDescriptionRuleSuggestions,
@@ -21,6 +26,8 @@ import {
 import { CategorySelect } from '../components/CategorySelect'
 import { StatusMessage } from '../components/StatusMessage'
 import type {
+  CashflowRule,
+  CashflowType,
   CategoryRule,
   CategoryRuleSuggestion,
   DescriptionRule,
@@ -34,6 +41,26 @@ const INITIAL_RULE_FORM: RuleFormState = {
   subcategory: '',
   match_text: '',
   match_field: 'description',
+  direction: '',
+  source: '',
+  is_active: true,
+}
+
+type CashflowRuleFormState = {
+  name: string
+  cashflow_type: CashflowType
+  match_text: string
+  match_field: 'description' | 'raw_description' | 'merchant'
+  direction: '' | 'in' | 'out'
+  source: string
+  is_active: boolean
+}
+
+const INITIAL_CASHFLOW_RULE_FORM: CashflowRuleFormState = {
+  name: '',
+  cashflow_type: 'internal_transfer',
+  match_text: '',
+  match_field: 'raw_description',
   direction: '',
   source: '',
   is_active: true,
@@ -63,11 +90,13 @@ function getRuleFormFromRule(rule: CategoryRule): RuleFormState {
 export function CategoryRulesPage() {
   const [rules, setRules] = useState<CategoryRule[]>([])
   const [descriptionRules, setDescriptionRules] = useState<DescriptionRule[]>([])
+  const [cashflowRules, setCashflowRules] = useState<CashflowRule[]>([])
   const [suggestions, setSuggestions] = useState<CategoryRuleSuggestion[]>([])
   const [descriptionSuggestions, setDescriptionSuggestions] = useState<DescriptionRuleSuggestion[]>([])
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, string>>({})
   const [suggestionDescriptions, setSuggestionDescriptions] = useState<Record<string, string>>({})
   const [ruleForm, setRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
+  const [cashflowRuleForm, setCashflowRuleForm] = useState<CashflowRuleFormState>(INITIAL_CASHFLOW_RULE_FORM)
   const [editRuleForm, setEditRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
   const [editingRule, setEditingRule] = useState<CategoryRule | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -79,12 +108,14 @@ export function CategoryRulesPage() {
       listCategoryRuleSuggestions(),
       listDescriptionRules(),
       listDescriptionRuleSuggestions('out'),
+      listCashflowRules(),
     ])
-      .then(([rulesData, suggestionData, descriptionRulesData, descriptionSuggestionData]) => {
+      .then(([rulesData, suggestionData, descriptionRulesData, descriptionSuggestionData, cashflowRulesData]) => {
         setRules(rulesData)
         setSuggestions(suggestionData)
         setDescriptionRules(descriptionRulesData)
         setDescriptionSuggestions(descriptionSuggestionData)
+        setCashflowRules(cashflowRulesData)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load rules')
@@ -104,6 +135,16 @@ export function CategoryRulesPage() {
 
   function updateEditRuleForm(field: keyof RuleFormState, value: string | boolean) {
     setEditRuleForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }))
+  }
+
+  function updateCashflowRuleForm(
+    field: keyof CashflowRuleFormState,
+    value: string | boolean,
+  ) {
+    setCashflowRuleForm((currentForm) => ({
       ...currentForm,
       [field]: value,
     }))
@@ -212,6 +253,39 @@ export function CategoryRulesPage() {
     }
   }
 
+  async function handleCreateCashflowRule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const name = cashflowRuleForm.name.trim()
+    const matchText = cashflowRuleForm.match_text.trim()
+
+    if (!name || !matchText) {
+      setError('Name and match text are required for cashflow rules.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      await createCashflowRule({
+        name,
+        cashflow_type: cashflowRuleForm.cashflow_type,
+        match_text: matchText,
+        match_field: cashflowRuleForm.match_field,
+        direction: cashflowRuleForm.direction || null,
+        source: cashflowRuleForm.source.trim() || null,
+        is_active: cashflowRuleForm.is_active,
+      })
+
+      setCashflowRuleForm(INITIAL_CASHFLOW_RULE_FORM)
+      setMessage('Cashflow rule created.')
+      loadData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create cashflow rule')
+    }
+  }
+
   async function addRuleFromSuggestion(suggestion: CategoryRuleSuggestion) {
     const suggestionKey = getSuggestionKey(suggestion)
     const category = suggestionCategories[suggestionKey]?.trim()
@@ -310,6 +384,19 @@ export function CategoryRulesPage() {
     }
   }
 
+  async function handleApplyCashflowRules() {
+    setError(null)
+    setMessage(null)
+
+    try {
+      await applyCashflowRules()
+      setMessage('Cashflow rules applied.')
+      loadData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to apply cashflow rules')
+    }
+  }
+
   async function handleToggleRule(rule: CategoryRule) {
     setError(null)
     setMessage(null)
@@ -360,6 +447,9 @@ export function CategoryRulesPage() {
         </button>
         <button type="button" onClick={handleApplyDescriptionRules}>
           Apply description rules
+        </button>
+        <button type="button" onClick={handleApplyCashflowRules}>
+          Apply cashflow rules
         </button>
       </div>
 
@@ -439,6 +529,128 @@ export function CategoryRulesPage() {
                 <td>{rule.name}</td>
                 <td>{rule.match_text}</td>
                 <td>{rule.cleaned_description}</td>
+                <td>{rule.direction ?? '-'}</td>
+                <td>{rule.source ?? '-'}</td>
+                <td>{rule.is_active ? 'yes' : 'no'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>New Cashflow Rule</h2>
+      <form className="manual-form" onSubmit={handleCreateCashflowRule}>
+        <div className="form-row">
+          <label>
+            Name
+            <input
+              value={cashflowRuleForm.name}
+              onChange={(event) => updateCashflowRuleForm('name', event.target.value)}
+              placeholder="Trading 212 investment"
+            />
+          </label>
+
+          <label>
+            Cashflow Type
+            <select
+              value={cashflowRuleForm.cashflow_type}
+              onChange={(event) => updateCashflowRuleForm('cashflow_type', event.target.value)}
+            >
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+              <option value="internal_transfer">Internal Transfer</option>
+              <option value="investment">Investment</option>
+            </select>
+          </label>
+
+          <label>
+            Match Text
+            <input
+              value={cashflowRuleForm.match_text}
+              onChange={(event) => updateCashflowRuleForm('match_text', event.target.value)}
+              placeholder="Trading 212"
+            />
+          </label>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Match Field
+            <select
+              value={cashflowRuleForm.match_field}
+              onChange={(event) => updateCashflowRuleForm('match_field', event.target.value)}
+            >
+              <option value="raw_description">Raw Description</option>
+              <option value="description">Description</option>
+              <option value="merchant">Merchant</option>
+            </select>
+          </label>
+
+          <label>
+            Direction
+            <select
+              value={cashflowRuleForm.direction}
+              onChange={(event) => updateCashflowRuleForm('direction', event.target.value)}
+            >
+              <option value="">Any</option>
+              <option value="in">In</option>
+              <option value="out">Out</option>
+            </select>
+          </label>
+
+          <label>
+            Source
+            <input
+              value={cashflowRuleForm.source}
+              onChange={(event) => updateCashflowRuleForm('source', event.target.value)}
+              placeholder="Optional"
+            />
+          </label>
+        </div>
+
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={cashflowRuleForm.is_active}
+            onChange={(event) => updateCashflowRuleForm('is_active', event.target.checked)}
+          />
+          Active
+        </label>
+
+        <div className="action-group">
+          <button type="submit">Create cashflow rule</button>
+          <button
+            type="button"
+            onClick={() => {
+              setCashflowRuleForm(INITIAL_CASHFLOW_RULE_FORM)
+              setError(null)
+              setMessage(null)
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      </form>
+
+      <h2>Cashflow Rules</h2>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Match</th>
+              <th>Type</th>
+              <th>Direction</th>
+              <th>Source</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cashflowRules.map((rule) => (
+              <tr key={rule.id}>
+                <td>{rule.name}</td>
+                <td>{rule.match_text}</td>
+                <td>{rule.cashflow_type.replace('_', ' ')}</td>
                 <td>{rule.direction ?? '-'}</td>
                 <td>{rule.source ?? '-'}</td>
                 <td>{rule.is_active ? 'yes' : 'no'}</td>

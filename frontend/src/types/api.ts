@@ -227,3 +227,17 @@ export type DescriptionRuleSuggestion = {
   total: string
 }
 
+
+
+export type CashflowRule = {
+  id: number
+  name: string
+  cashflow_type: CashflowType
+  match_text: string
+  match_field: 'description' | 'raw_description' | 'merchant'
+  direction: Direction | null
+  source: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
