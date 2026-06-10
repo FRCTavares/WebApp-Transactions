@@ -203,7 +203,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       await updateTransaction(editingTransaction.id, {
         date: editForm.date,
         description: editForm.description,
-        raw_description: editForm.description,
         amount: amount.toFixed(2),
         cashflow_type: editForm.cashflow_type,
         category: editForm.category || null,
