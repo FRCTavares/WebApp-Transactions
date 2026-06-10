@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
-import { commitImport, listImportBatches, previewImport } from '../api/imports'
+import {
+  commitImport,
+  listImportBatches,
+  listImportBatchTransactions,
+  previewImport,
+} from '../api/imports'
 import { StatusMessage } from '../components/StatusMessage'
+import { TransactionTable } from '../components/TransactionTable'
 import type {
   ImportBatch,
   ImportInvalidRow,
   ImportPreviewResponse,
   ImportPreviewTransaction,
+  Transaction,
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
@@ -103,6 +110,9 @@ export function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ImportPreviewResponse | null>(null)
   const [batches, setBatches] = useState<ImportBatch[]>([])
+  const [selectedBatch, setSelectedBatch] = useState<ImportBatch | null>(null)
+  const [batchTransactions, setBatchTransactions] = useState<Transaction[]>([])
+  const [isLoadingBatchTransactions, setIsLoadingBatchTransactions] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -130,7 +140,12 @@ export function ImportPage() {
 
     setError(null)
     setMessage(null)
-    setPreview(await previewImport(source, file))
+
+    try {
+      setPreview(await previewImport(source, file))
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to preview import')
+    }
   }
 
   async function handleCommit() {
@@ -151,10 +166,33 @@ export function ImportPage() {
 
     setError(null)
     setMessage(null)
-    await commitImport(source, file)
-    setMessage('Import committed.')
-    setPreview(null)
-    loadBatches()
+
+    try {
+      await commitImport(source, file)
+      setMessage('Import committed.')
+      setPreview(null)
+      setSelectedBatch(null)
+      setBatchTransactions([])
+      loadBatches()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to commit import')
+    }
+  }
+
+  async function handleSelectBatch(batch: ImportBatch) {
+    setError(null)
+    setMessage(null)
+    setSelectedBatch(batch)
+    setBatchTransactions([])
+    setIsLoadingBatchTransactions(true)
+
+    try {
+      setBatchTransactions(await listImportBatchTransactions(batch.id))
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to load batch transactions')
+    } finally {
+      setIsLoadingBatchTransactions(false)
+    }
   }
 
   return (
@@ -258,6 +296,7 @@ export function ImportPage() {
               <th>Inserted</th>
               <th>Skipped</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -271,11 +310,31 @@ export function ImportPage() {
                 <td>{batch.rows_inserted}</td>
                 <td>{batch.rows_skipped}</td>
                 <td>{batch.status}</td>
+                <td>
+                  <button type="button" onClick={() => handleSelectBatch(batch)}>
+                    {selectedBatch?.id === batch.id ? 'Refresh' : 'View'}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {selectedBatch && (
+        <>
+          <h2>Batch {selectedBatch.id} Transactions</h2>
+          <p className="muted small">
+            {selectedBatch.filename} · {selectedBatch.source} · imported {formatDate(selectedBatch.imported_at)}
+          </p>
+
+          {isLoadingBatchTransactions ? (
+            <p className="muted">Loading batch transactions...</p>
+          ) : (
+            <TransactionTable transactions={batchTransactions} />
+          )}
+        </>
+      )}
     </section>
   )
 }
