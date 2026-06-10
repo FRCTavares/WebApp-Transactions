@@ -200,3 +200,26 @@ export type CategoryRuleSuggestion = {
   count: number
   total: string
 }
+
+export type DescriptionRule = {
+  id: number
+  name: string
+  cleaned_description: string
+  match_text: string
+  match_field: 'description' | 'raw_description' | 'merchant'
+  direction: Direction | null
+  source: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type DescriptionRuleSuggestion = {
+  raw_description: string
+  description: string
+  source: string
+  direction: Direction
+  count: number
+  total: string
+}
+

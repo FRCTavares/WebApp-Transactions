@@ -9,12 +9,23 @@ import {
   updateCategoryRule,
 } from '../api/categoryRules'
 import {
+  applyDescriptionRules,
+  createDescriptionRule,
+  listDescriptionRuleSuggestions,
+  listDescriptionRules,
+} from '../api/descriptionRules'
+import {
   CategoryRuleForm,
   type RuleFormState,
 } from '../components/CategoryRuleForm'
 import { CategorySelect } from '../components/CategorySelect'
 import { StatusMessage } from '../components/StatusMessage'
-import type { CategoryRule, CategoryRuleSuggestion } from '../types/api'
+import type {
+  CategoryRule,
+  CategoryRuleSuggestion,
+  DescriptionRule,
+  DescriptionRuleSuggestion,
+} from '../types/api'
 import { formatMoney } from '../utils/format'
 
 const INITIAL_RULE_FORM: RuleFormState = {
@@ -32,6 +43,10 @@ function getSuggestionKey(suggestion: CategoryRuleSuggestion) {
   return `${suggestion.description}-${suggestion.source}-${suggestion.direction}`
 }
 
+function getDescriptionSuggestionKey(suggestion: DescriptionRuleSuggestion) {
+  return `${suggestion.raw_description}-${suggestion.source}-${suggestion.direction}`
+}
+
 function getRuleFormFromRule(rule: CategoryRule): RuleFormState {
   return {
     name: rule.name,
@@ -47,8 +62,11 @@ function getRuleFormFromRule(rule: CategoryRule): RuleFormState {
 
 export function CategoryRulesPage() {
   const [rules, setRules] = useState<CategoryRule[]>([])
+  const [descriptionRules, setDescriptionRules] = useState<DescriptionRule[]>([])
   const [suggestions, setSuggestions] = useState<CategoryRuleSuggestion[]>([])
+  const [descriptionSuggestions, setDescriptionSuggestions] = useState<DescriptionRuleSuggestion[]>([])
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, string>>({})
+  const [suggestionDescriptions, setSuggestionDescriptions] = useState<Record<string, string>>({})
   const [ruleForm, setRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
   const [editRuleForm, setEditRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
   const [editingRule, setEditingRule] = useState<CategoryRule | null>(null)
@@ -56,13 +74,20 @@ export function CategoryRulesPage() {
   const [error, setError] = useState<string | null>(null)
 
   function loadData() {
-    Promise.all([listCategoryRules(), listCategoryRuleSuggestions()])
-      .then(([rulesData, suggestionData]) => {
+    Promise.all([
+      listCategoryRules(),
+      listCategoryRuleSuggestions(),
+      listDescriptionRules(),
+      listDescriptionRuleSuggestions('out'),
+    ])
+      .then(([rulesData, suggestionData, descriptionRulesData, descriptionSuggestionData]) => {
         setRules(rulesData)
         setSuggestions(suggestionData)
+        setDescriptionRules(descriptionRulesData)
+        setDescriptionSuggestions(descriptionSuggestionData)
       })
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load category rules')
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load rules')
       })
   }
 
@@ -88,6 +113,16 @@ export function CategoryRulesPage() {
     setSuggestionCategories((currentCategories) => ({
       ...currentCategories,
       [getSuggestionKey(suggestion)]: category,
+    }))
+  }
+
+  function updateSuggestionDescription(
+    suggestion: DescriptionRuleSuggestion,
+    cleanedDescription: string,
+  ) {
+    setSuggestionDescriptions((currentDescriptions) => ({
+      ...currentDescriptions,
+      [getDescriptionSuggestionKey(suggestion)]: cleanedDescription,
     }))
   }
 
@@ -213,6 +248,42 @@ export function CategoryRulesPage() {
     }
   }
 
+  async function addDescriptionRuleFromSuggestion(suggestion: DescriptionRuleSuggestion) {
+    const suggestionKey = getDescriptionSuggestionKey(suggestion)
+    const cleanedDescription = suggestionDescriptions[suggestionKey]?.trim()
+
+    if (!cleanedDescription) {
+      setError('Write a cleaned description before creating the rule.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      await createDescriptionRule({
+        name: cleanedDescription,
+        cleaned_description: cleanedDescription,
+        match_text: suggestion.raw_description,
+        match_field: 'raw_description',
+        direction: suggestion.direction,
+        source: suggestion.source,
+        is_active: true,
+      })
+
+      setSuggestionDescriptions((currentDescriptions) => {
+        const nextDescriptions = { ...currentDescriptions }
+        delete nextDescriptions[suggestionKey]
+        return nextDescriptions
+      })
+
+      setMessage('Description rule created.')
+      loadData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create description rule')
+    }
+  }
+
   async function handleApplyRules() {
     setError(null)
     setMessage(null)
@@ -223,6 +294,19 @@ export function CategoryRulesPage() {
       loadData()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to apply rules')
+    }
+  }
+
+  async function handleApplyDescriptionRules() {
+    setError(null)
+    setMessage(null)
+
+    try {
+      await applyDescriptionRules()
+      setMessage('Description rules applied.')
+      loadData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to apply description rules')
     }
   }
 
@@ -272,13 +356,99 @@ export function CategoryRulesPage() {
 
       <div className="toolbar">
         <button type="button" onClick={handleApplyRules}>
-          Apply rules to existing transactions
+          Apply category rules
+        </button>
+        <button type="button" onClick={handleApplyDescriptionRules}>
+          Apply description rules
         </button>
       </div>
 
       <StatusMessage error={error} message={message} />
 
-      <h2>New Rule</h2>
+      <h2>Description Suggestions</h2>
+      {descriptionSuggestions.length === 0 ? (
+        <p className="muted">No description suggestions found.</p>
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Raw Description</th>
+                <th>Current Description</th>
+                <th>Source</th>
+                <th>Direction</th>
+                <th>Count</th>
+                <th className="right">Total</th>
+                <th>Clean Description</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {descriptionSuggestions.map((suggestion) => {
+                const suggestionKey = getDescriptionSuggestionKey(suggestion)
+                const cleanedDescription = suggestionDescriptions[suggestionKey] ?? ''
+
+                return (
+                  <tr key={suggestionKey}>
+                    <td>{suggestion.raw_description}</td>
+                    <td>{suggestion.description}</td>
+                    <td>{suggestion.source}</td>
+                    <td>{suggestion.direction}</td>
+                    <td>{suggestion.count}</td>
+                    <td className="right">{formatMoney(suggestion.total)}</td>
+                    <td>
+                      <input
+                        value={cleanedDescription}
+                        onChange={(event) => updateSuggestionDescription(suggestion, event.target.value)}
+                        placeholder={suggestion.description}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        disabled={!cleanedDescription}
+                        onClick={() => addDescriptionRuleFromSuggestion(suggestion)}
+                      >
+                        Add rule
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2>Description Rules</h2>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Match</th>
+              <th>Clean Description</th>
+              <th>Direction</th>
+              <th>Source</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {descriptionRules.map((rule) => (
+              <tr key={rule.id}>
+                <td>{rule.name}</td>
+                <td>{rule.match_text}</td>
+                <td>{rule.cleaned_description}</td>
+                <td>{rule.direction ?? '-'}</td>
+                <td>{rule.source ?? '-'}</td>
+                <td>{rule.is_active ? 'yes' : 'no'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>New Category Rule</h2>
       <CategoryRuleForm
         form={ruleForm}
         submitLabel="Create rule"
@@ -293,7 +463,7 @@ export function CategoryRulesPage() {
 
       {editingRule && (
         <>
-          <h2>Edit Rule</h2>
+          <h2>Edit Category Rule</h2>
           <CategoryRuleForm
             form={editRuleForm}
             submitLabel="Save changes"
@@ -305,7 +475,7 @@ export function CategoryRulesPage() {
         </>
       )}
 
-      <h2>Suggestions</h2>
+      <h2>Category Suggestions</h2>
       {suggestions.length === 0 ? (
         <p className="muted">No uncategorised suggestions found.</p>
       ) : (
@@ -358,7 +528,7 @@ export function CategoryRulesPage() {
         </div>
       )}
 
-      <h2>Rules</h2>
+      <h2>Category Rules</h2>
       <div className="table-wrap">
         <table>
           <thead>
