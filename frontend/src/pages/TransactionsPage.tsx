@@ -16,7 +16,7 @@ import {
 } from '../components/TransactionForm'
 import { TransactionTable } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
-import type { Direction, Transaction } from '../types/api'
+import type { CashflowType, Direction, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 type TransactionsPageProps = {
@@ -28,11 +28,16 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function getInitialFormState(): TransactionFormState {
+function getDefaultCashflowType(direction: Direction): CashflowType {
+  return direction === 'in' ? 'income' : 'expense'
+}
+
+function getInitialFormState(direction: Direction): TransactionFormState {
   return {
     date: getTodayDate(),
     description: '',
     amount: '',
+    cashflow_type: getDefaultCashflowType(direction),
     category: '',
     subcategory: '',
     notes: '',
@@ -54,6 +59,7 @@ function getFormStateFromTransaction(transaction: Transaction): TransactionFormS
     date: transaction.date,
     description: transaction.description,
     amount: transaction.amount,
+    cashflow_type: transaction.cashflow_type,
     category: transaction.category ?? '',
     subcategory: transaction.subcategory ?? '',
     notes: transaction.notes ?? '',
@@ -67,8 +73,8 @@ function getTransactionsTotal(transactions: Transaction[]) {
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(getInitialFilterState)
-  const [form, setForm] = useState<TransactionFormState>(getInitialFormState)
-  const [editForm, setEditForm] = useState<TransactionFormState>(getInitialFormState)
+  const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
+  const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -92,6 +98,9 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   }
 
   useEffect(() => {
+    setForm(getInitialFormState(direction))
+    setEditForm(getInitialFormState(direction))
+    setEditingTransaction(null)
     loadTransactions()
   }, [direction])
 
@@ -141,6 +150,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         raw_description: form.description,
         amount: amount.toFixed(2),
         direction,
+        cashflow_type: form.cashflow_type,
         source: 'manual',
         account: null,
         category: form.category || null,
@@ -150,7 +160,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         notes: form.notes || null,
       })
 
-      setForm(getInitialFormState())
+      setForm(getInitialFormState(direction))
       setMessage('Transaction created.')
       loadTransactions()
     } catch (caughtError: unknown) {
@@ -188,13 +198,14 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         description: editForm.description,
         raw_description: editForm.description,
         amount: amount.toFixed(2),
+        cashflow_type: editForm.cashflow_type,
         category: editForm.category || null,
         subcategory: editForm.subcategory || null,
         notes: editForm.notes || null,
       })
 
       setEditingTransaction(null)
-      setEditForm(getInitialFormState())
+      setEditForm(getInitialFormState(direction))
       setMessage('Transaction updated.')
       loadTransactions()
     } catch (caughtError: unknown) {

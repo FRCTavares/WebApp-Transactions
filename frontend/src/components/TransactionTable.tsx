@@ -7,6 +7,10 @@ type TransactionTableProps = {
   onDelete?: (transaction: Transaction) => void
 }
 
+function formatCashflowType(cashflowType: string) {
+  return cashflowType.replace('_', ' ')
+}
+
 export function TransactionTable({ transactions, onEdit, onDelete }: TransactionTableProps) {
   const showActions = Boolean(onEdit || onDelete)
 
@@ -21,6 +25,7 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
           <tr>
             <th>Date</th>
             <th>Description</th>
+            <th>Type</th>
             <th>Category</th>
             <th>Source</th>
             <th className="right">Amount</th>
@@ -35,6 +40,7 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
                 <div>{transaction.description}</div>
                 <div className="muted small">{transaction.raw_description}</div>
               </td>
+              <td>{formatCashflowType(transaction.cashflow_type)}</td>
               <td>{transaction.category ?? '-'}</td>
               <td>{transaction.source}</td>
               <td className="right">

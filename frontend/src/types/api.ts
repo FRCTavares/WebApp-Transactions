@@ -1,4 +1,5 @@
 export type Direction = 'in' | 'out'
+export type CashflowType = 'income' | 'expense' | 'internal_transfer' | 'investment'
 
 export type Transaction = {
   id: number
@@ -7,6 +8,7 @@ export type Transaction = {
   raw_description: string
   amount: string
   direction: Direction
+  cashflow_type: CashflowType
   source: string
   account: string | null
   category: string | null
@@ -38,6 +40,7 @@ export type TransactionCreatePayload = {
   raw_description: string
   amount: string
   direction: Direction
+  cashflow_type: CashflowType
   source: string
   account?: string | null
   category?: string | null
@@ -53,6 +56,7 @@ export type TransactionUpdatePayload = {
   raw_description?: string
   amount?: string
   direction?: Direction
+  cashflow_type?: CashflowType
   source?: string
   account?: string | null
   category?: string | null

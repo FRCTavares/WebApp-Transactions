@@ -1,11 +1,12 @@
 import type { FormEvent } from 'react'
 import { CategorySelect } from './CategorySelect'
-import type { Direction } from '../types/api'
+import type { CashflowType, Direction } from '../types/api'
 
 export type TransactionFormState = {
   date: string
   description: string
   amount: string
+  cashflow_type: CashflowType
   category: string
   subcategory: string
   notes: string
@@ -75,6 +76,19 @@ export function TransactionForm({
       </div>
 
       <div className="form-row">
+        <label>
+          Cashflow Type
+          <select
+            value={form.cashflow_type}
+            onChange={(event) => onChange('cashflow_type', event.target.value)}
+          >
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+            <option value="internal_transfer">Internal Transfer</option>
+            <option value="investment">Investment</option>
+          </select>
+        </label>
+
         <CategorySelect
           label="Category"
           value={form.category}
@@ -89,7 +103,9 @@ export function TransactionForm({
             placeholder="Optional"
           />
         </label>
+      </div>
 
+      <div className="form-row">
         <label>
           Notes
           <input
