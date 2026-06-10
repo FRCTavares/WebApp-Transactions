@@ -560,6 +560,8 @@ export function CategoryRulesPage() {
               <option value="expense">Expense</option>
               <option value="internal_transfer">Internal Transfer</option>
               <option value="investment">Investment</option>
+              <option value="reimbursement">Reimbursement</option>
+              <option value="reimbursed_expense">Reimbursed Expense</option>
             </select>
           </label>
 

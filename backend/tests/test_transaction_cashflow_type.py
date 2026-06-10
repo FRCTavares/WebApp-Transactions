@@ -87,3 +87,66 @@ def test_transactions_can_be_filtered_by_cashflow_type(client):
     assert len(rows) == 1
     assert rows[0]["description"] == "ActivoBank to Revolut"
     assert Decimal(rows[0]["amount"]) == Decimal("100.00")
+
+
+def test_transaction_can_be_marked_as_reimbursement(client):
+    response = client.post(
+        "/api/transactions",
+        json={
+            "date": "2026-06-01",
+            "description": "Mother reimbursement",
+            "raw_description": "TRF MOTHER",
+            "amount": "65.00",
+            "direction": "in",
+            "cashflow_type": "reimbursement",
+            "source": "activobank",
+            "currency": "EUR",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["cashflow_type"] == "reimbursement"
+
+
+def test_transaction_can_be_marked_as_reimbursed_expense(client):
+    response = client.post(
+        "/api/transactions",
+        json={
+            "date": "2026-06-01",
+            "description": "Psychologist appointment",
+            "raw_description": "SOFIA PAYMENT",
+            "amount": "65.00",
+            "direction": "out",
+            "cashflow_type": "reimbursed_expense",
+            "source": "activobank",
+            "currency": "EUR",
+            "category": "Health",
+            "subcategory": "Psychology",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["cashflow_type"] == "reimbursed_expense"
+
+
+def test_transactions_can_be_filtered_by_reimbursed_expense(client):
+    client.post(
+        "/api/transactions",
+        json={
+            "date": "2026-06-01",
+            "description": "Psychologist appointment",
+            "raw_description": "SOFIA PAYMENT",
+            "amount": "65.00",
+            "direction": "out",
+            "cashflow_type": "reimbursed_expense",
+            "source": "activobank",
+            "currency": "EUR",
+        },
+    )
+
+    response = client.get("/api/transactions?cashflow_type=reimbursed_expense")
+
+    assert response.status_code == 200
+    rows = response.json()
+    assert len(rows) == 1
+    assert rows[0]["cashflow_type"] == "reimbursed_expense"

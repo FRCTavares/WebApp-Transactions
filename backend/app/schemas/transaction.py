@@ -7,7 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 Direction = Literal["in", "out"]
-CashflowType = Literal["income", "expense", "internal_transfer", "investment"]
+CashflowType = Literal[
+    "income",
+    "expense",
+    "internal_transfer",
+    "investment",
+    "reimbursement",
+    "reimbursed_expense",
+]
 
 
 def default_cashflow_type(direction: Direction) -> CashflowType:

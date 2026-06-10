@@ -6,7 +6,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 MatchField = Literal["description", "raw_description", "merchant"]
 DirectionFilter = Literal["in", "out"]
-CashflowType = Literal["income", "expense", "internal_transfer", "investment"]
+CashflowType = Literal[
+    "income",
+    "expense",
+    "internal_transfer",
+    "investment",
+    "reimbursement",
+    "reimbursed_expense",
+]
 
 
 class CashflowRuleBase(BaseModel):

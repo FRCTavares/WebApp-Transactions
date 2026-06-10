@@ -1,5 +1,11 @@
 export type Direction = 'in' | 'out'
-export type CashflowType = 'income' | 'expense' | 'internal_transfer' | 'investment'
+export type CashflowType =
+  | 'income'
+  | 'expense'
+  | 'internal_transfer'
+  | 'investment'
+  | 'reimbursement'
+  | 'reimbursed_expense'
 
 export type Transaction = {
   id: number

@@ -7,7 +7,7 @@ from app.services.summary_service import SummaryService
 from app.repositories.summary_repository import SummaryRepository
 
 
-def test_summary_counts_income_and_expense_but_excludes_internal_transfer(db_session):
+def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(db_session):
     transaction_repository = TransactionRepository(db_session)
     summary_repository = SummaryRepository(db_session)
     service = SummaryService(
@@ -49,6 +49,32 @@ def test_summary_counts_income_and_expense_but_excludes_internal_transfer(db_ses
             source="activobank",
             currency="EUR",
             category="Transfers",
+        )
+    )
+    transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 4),
+            description="Mother reimbursement",
+            raw_description="TRF MOTHER",
+            amount=Decimal("65.00"),
+            direction="in",
+            cashflow_type="reimbursement",
+            source="activobank",
+            currency="EUR",
+            category="Refund",
+        )
+    )
+    transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 5),
+            description="Psychologist appointment",
+            raw_description="SOFIA PAYMENT",
+            amount=Decimal("65.00"),
+            direction="out",
+            cashflow_type="reimbursed_expense",
+            source="activobank",
+            currency="EUR",
+            category="Health",
         )
     )
 

@@ -36,7 +36,7 @@ def list_transactions(
     source: str | None = Query(default=None),
     cashflow_type: str | None = Query(
         default=None,
-        pattern="^(income|expense|internal_transfer|investment)$",
+        pattern="^(income|expense|internal_transfer|investment|reimbursement|reimbursed_expense)$",
     ),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),

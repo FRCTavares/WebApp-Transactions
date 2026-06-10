@@ -37,7 +37,7 @@ def get_category_summary(
     direction: str | None = Query(default=None, pattern="^(in|out)$"),
     cashflow_type: str | None = Query(
         default=None,
-        pattern="^(income|expense|internal_transfer|investment)$",
+        pattern="^(income|expense|internal_transfer|investment|reimbursement|reimbursed_expense)$",
     ),
     service: SummaryService = Depends(get_summary_service),
 ):

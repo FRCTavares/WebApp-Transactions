@@ -161,3 +161,39 @@ def test_cashflow_rules_endpoint_create_and_apply(client):
     transactions = transactions_response.json()
     assert len(transactions) == 1
     assert transactions[0]["cashflow_type"] == "investment"
+
+
+def test_cashflow_rule_can_set_reimbursement_type(db_session):
+    repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(repository)
+
+    rule = service.create_rule(
+        CashflowRuleCreate(
+            name="Mother reimbursement",
+            cashflow_type="reimbursement",
+            match_text="MOTHER",
+            match_field="raw_description",
+            direction="in",
+            source="activobank",
+        )
+    )
+
+    assert rule.cashflow_type == "reimbursement"
+
+
+def test_cashflow_rule_can_set_reimbursed_expense_type(db_session):
+    repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(repository)
+
+    rule = service.create_rule(
+        CashflowRuleCreate(
+            name="Reimbursed health expense",
+            cashflow_type="reimbursed_expense",
+            match_text="SOFIA",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        )
+    )
+
+    assert rule.cashflow_type == "reimbursed_expense"
