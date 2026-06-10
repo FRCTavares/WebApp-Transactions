@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import {
   applyCategoryRules,
   createCategoryRule,
@@ -48,11 +49,26 @@ function getSuggestionKey(suggestion: CategoryRuleSuggestion) {
   return `${suggestion.description}-${suggestion.source}-${suggestion.direction}`
 }
 
+function getRuleFormFromRule(rule: CategoryRule): RuleFormState {
+  return {
+    name: rule.name,
+    category: rule.category,
+    subcategory: rule.subcategory ?? '',
+    match_text: rule.match_text,
+    match_field: rule.match_field,
+    direction: rule.direction ?? '',
+    source: rule.source ?? '',
+    is_active: rule.is_active,
+  }
+}
+
 export function CategoryRulesPage() {
   const [rules, setRules] = useState<CategoryRule[]>([])
   const [suggestions, setSuggestions] = useState<CategoryRuleSuggestion[]>([])
   const [suggestionCategories, setSuggestionCategories] = useState<Record<string, string>>({})
   const [ruleForm, setRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
+  const [editRuleForm, setEditRuleForm] = useState<RuleFormState>(INITIAL_RULE_FORM)
+  const [editingRule, setEditingRule] = useState<CategoryRule | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,6 +94,13 @@ export function CategoryRulesPage() {
     }))
   }
 
+  function updateEditRuleForm(field: keyof RuleFormState, value: string | boolean) {
+    setEditRuleForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }))
+  }
+
   function updateSuggestionCategory(suggestion: CategoryRuleSuggestion, category: string) {
     setSuggestionCategories((currentCategories) => ({
       ...currentCategories,
@@ -85,7 +108,7 @@ export function CategoryRulesPage() {
     }))
   }
 
-  async function handleCreateManualRule(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateManualRule(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const name = ruleForm.name.trim()
@@ -117,6 +140,53 @@ export function CategoryRulesPage() {
       loadData()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to create rule')
+    }
+  }
+
+  function handleStartEditRule(rule: CategoryRule) {
+    setEditingRule(rule)
+    setEditRuleForm(getRuleFormFromRule(rule))
+    setError(null)
+    setMessage(null)
+  }
+
+  async function handleSaveEditRule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (!editingRule) {
+      return
+    }
+
+    const name = editRuleForm.name.trim()
+    const category = editRuleForm.category.trim()
+    const matchText = editRuleForm.match_text.trim()
+
+    if (!name || !category || !matchText) {
+      setError('Name, category, and match text are required.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      await updateCategoryRule(editingRule.id, {
+        name,
+        category,
+        subcategory: editRuleForm.subcategory.trim() || null,
+        match_text: matchText,
+        match_field: editRuleForm.match_field,
+        direction: editRuleForm.direction || null,
+        source: editRuleForm.source.trim() || null,
+        is_active: editRuleForm.is_active,
+      })
+
+      setEditingRule(null)
+      setEditRuleForm(INITIAL_RULE_FORM)
+      setMessage('Rule updated.')
+      loadData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to update rule')
     }
   }
 
@@ -197,6 +267,12 @@ export function CategoryRulesPage() {
 
     try {
       await deleteCategoryRule(rule.id)
+
+      if (editingRule?.id === rule.id) {
+        setEditingRule(null)
+        setEditRuleForm(INITIAL_RULE_FORM)
+      }
+
       setMessage('Rule deleted.')
       loadData()
     } catch (caughtError: unknown) {
@@ -315,6 +391,110 @@ export function CategoryRulesPage() {
         </div>
       </form>
 
+      {editingRule && (
+        <>
+          <h2>Edit Rule</h2>
+          <form className="filter-panel" onSubmit={handleSaveEditRule}>
+            <p className="muted small">
+              Editing rule #{editingRule.id}
+            </p>
+
+            <div className="form-grid">
+              <label>
+                Name
+                <input
+                  value={editRuleForm.name}
+                  onChange={(event) => updateEditRuleForm('name', event.target.value)}
+                />
+              </label>
+
+              <CategorySelect
+                label="Category"
+                value={editRuleForm.category}
+                onChange={(category) => updateEditRuleForm('category', category)}
+              />
+
+              <label>
+                Subcategory
+                <input
+                  value={editRuleForm.subcategory}
+                  onChange={(event) => updateEditRuleForm('subcategory', event.target.value)}
+                  placeholder="Optional"
+                />
+              </label>
+
+              <label>
+                Match text
+                <input
+                  value={editRuleForm.match_text}
+                  onChange={(event) => updateEditRuleForm('match_text', event.target.value)}
+                />
+              </label>
+
+              <label>
+                Match field
+                <select
+                  value={editRuleForm.match_field}
+                  onChange={(event) => updateEditRuleForm('match_field', event.target.value as MatchField)}
+                >
+                  <option value="description">description</option>
+                  <option value="raw_description">raw_description</option>
+                  <option value="merchant">merchant</option>
+                </select>
+              </label>
+
+              <label>
+                Direction
+                <select
+                  value={editRuleForm.direction}
+                  onChange={(event) => updateEditRuleForm('direction', event.target.value as Direction | '')}
+                >
+                  <option value="">Any</option>
+                  <option value="in">in</option>
+                  <option value="out">out</option>
+                </select>
+              </label>
+
+              <label>
+                Source
+                <select
+                  value={editRuleForm.source}
+                  onChange={(event) => updateEditRuleForm('source', event.target.value)}
+                >
+                  {SOURCE_OPTIONS.map((source) => (
+                    <option key={source || 'any'} value={source}>
+                      {source || 'Any'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={editRuleForm.is_active}
+                  onChange={(event) => updateEditRuleForm('is_active', event.target.checked)}
+                />
+                Active
+              </label>
+            </div>
+
+            <div className="toolbar">
+              <button type="submit">Save changes</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingRule(null)
+                  setEditRuleForm(INITIAL_RULE_FORM)
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+
       <h2>Suggestions</h2>
       {suggestions.length === 0 ? (
         <p className="muted">No uncategorised suggestions found.</p>
@@ -393,6 +573,9 @@ export function CategoryRulesPage() {
                 <td>{rule.is_active ? 'yes' : 'no'}</td>
                 <td>
                   <div className="action-group">
+                    <button type="button" onClick={() => handleStartEditRule(rule)}>
+                      Edit
+                    </button>
                     <button type="button" onClick={() => handleToggleRule(rule)}>
                       {rule.is_active ? 'Deactivate' : 'Activate'}
                     </button>
