@@ -17,6 +17,7 @@ import {
 import { TransactionTable } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
 import type { Direction, Transaction } from '../types/api'
+import { formatMoney } from '../utils/format'
 
 type TransactionsPageProps = {
   direction: Direction
@@ -57,6 +58,10 @@ function getFormStateFromTransaction(transaction: Transaction): TransactionFormS
     subcategory: transaction.subcategory ?? '',
     notes: transaction.notes ?? '',
   }
+}
+
+function getTransactionsTotal(transactions: Transaction[]) {
+  return transactions.reduce((total, transaction) => total + Number(transaction.amount), 0)
 }
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
@@ -223,6 +228,8 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }
   }
 
+  const transactionTotal = getTransactionsTotal(transactions)
+
   return (
     <section>
       <h1>{title}</h1>
@@ -256,6 +263,10 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         onApply={() => loadTransactions()}
         onClear={clearFilters}
       />
+
+      <p className="muted small">
+        {transactions.length} transactions · {formatMoney(transactionTotal)} total
+      </p>
 
       <TransactionTable
         transactions={transactions}
