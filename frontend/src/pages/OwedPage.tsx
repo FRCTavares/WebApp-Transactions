@@ -6,6 +6,8 @@ import {
   updateOwedItem,
 } from '../api/owed'
 import { listTransactions } from '../api/transactions'
+import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
+import { OwedSummaryCards } from '../components/owed/OwedSummaryCards'
 import { StatusMessage } from '../components/StatusMessage'
 import type { OwedItem, OwedStatus, Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
@@ -19,14 +21,6 @@ type OwedFormState = {
   linkedTransactionId: string
   notes: string
 }
-
-const statusOptions: Array<{ value: '' | OwedStatus; label: string }> = [
-  { value: '', label: 'All statuses' },
-  { value: 'open', label: 'Open' },
-  { value: 'partially_paid', label: 'Partially paid' },
-  { value: 'paid', label: 'Paid' },
-  { value: 'cancelled', label: 'Cancelled' },
-]
 
 function getInitialFormState(): OwedFormState {
   return {
@@ -331,81 +325,23 @@ export function OwedPage() {
 
       <StatusMessage error={error} message={message} />
 
-      <div className="summary-grid">
-        <article className="summary-card">
-          <h2>Still owed to me</h2>
-          <strong>{formatMoney(totalStillOwed.toFixed(2))}</strong>
-        </article>
+      <OwedSummaryCards
+        activeItems={activeItems}
+        paidItems={paidItems}
+        cancelledItems={cancelledItems}
+        totalStillOwed={totalStillOwed}
+        totalAlreadyReimbursed={totalAlreadyReimbursed}
+        totalOriginalAmount={totalOriginalAmount}
+      />
 
-        <article className="summary-card">
-          <h2>Already reimbursed</h2>
-          <strong>{formatMoney(totalAlreadyReimbursed.toFixed(2))}</strong>
-        </article>
-
-        <article className="summary-card">
-          <h2>Total original amount</h2>
-          <strong>{formatMoney(totalOriginalAmount.toFixed(2))}</strong>
-        </article>
-
-        <article className="summary-card">
-          <h2>Active owed items</h2>
-          <strong>{activeItems.length}</strong>
-        </article>
-      </div>
-
-      <div className="toolbar">
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value as '' | OwedStatus)}
-        >
-          {statusOptions.map((option) => (
-            <option key={option.value || 'all'} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={() => {
-            loadItems()
-            loadLinkedTransactions()
-          }}
-        >
-          Refresh
-        </button>
-
-        <button type="button" onClick={() => setStatusFilter('')}>
-          All
-        </button>
-
-        <button type="button" onClick={() => setStatusFilter('open')}>
-          Open
-        </button>
-
-        <button type="button" onClick={() => setStatusFilter('partially_paid')}>
-          Partially Paid
-        </button>
-
-        <button type="button" onClick={() => setStatusFilter('paid')}>
-          Paid
-        </button>
-      </div>
-
-      <div className="cards">
-        <div className="card">
-          <span>Open / partially paid</span>
-          <strong>{activeItems.length}</strong>
-        </div>
-        <div className="card">
-          <span>Paid</span>
-          <strong>{paidItems.length}</strong>
-        </div>
-        <div className="card">
-          <span>Cancelled</span>
-          <strong>{cancelledItems.length}</strong>
-        </div>
-      </div>
+      <OwedStatusToolbar
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        onRefresh={() => {
+          loadItems()
+          loadLinkedTransactions()
+        }}
+      />
 
       <div className="table-wrap">
         <table>
