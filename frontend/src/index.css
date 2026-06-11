@@ -561,3 +561,37 @@ td[colspan] {
   background: #f3f4f6;
   color: #4b5563;
 }
+
+/* Summary cards */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 18px 0 24px;
+}
+
+.summary-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.summary-card h2 {
+  margin: 0 0 10px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.summary-card strong {
+  display: block;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.summary-card p {
+  margin: 8px 0 0;
+}

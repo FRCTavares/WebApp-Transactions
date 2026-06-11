@@ -19,43 +19,36 @@ export function OwedSummaryCards({
   totalOriginalAmount,
 }: OwedSummaryCardsProps) {
   return (
-    <>
-      <div className="summary-grid">
-        <article className="summary-card">
-          <h2>Still owed to me</h2>
-          <strong>{formatMoney(totalStillOwed.toFixed(2))}</strong>
-        </article>
+    <div className="summary-grid">
+      <article className="summary-card">
+        <h2>Still owed to me</h2>
+        <strong>{formatMoney(totalStillOwed.toFixed(2))}</strong>
+      </article>
 
-        <article className="summary-card">
-          <h2>Already reimbursed</h2>
-          <strong>{formatMoney(totalAlreadyReimbursed.toFixed(2))}</strong>
-        </article>
+      <article className="summary-card">
+        <h2>Already reimbursed</h2>
+        <strong>{formatMoney(totalAlreadyReimbursed.toFixed(2))}</strong>
+      </article>
 
-        <article className="summary-card">
-          <h2>Total original amount</h2>
-          <strong>{formatMoney(totalOriginalAmount.toFixed(2))}</strong>
-        </article>
+      <article className="summary-card">
+        <h2>Total original amount</h2>
+        <strong>{formatMoney(totalOriginalAmount.toFixed(2))}</strong>
+      </article>
 
-        <article className="summary-card">
-          <h2>Active owed items</h2>
-          <strong>{activeItems.length}</strong>
-        </article>
-      </div>
+      <article className="summary-card">
+        <h2>Open / partially paid</h2>
+        <strong>{activeItems.length}</strong>
+      </article>
 
-      <div className="cards">
-        <div className="card">
-          <span>Open / partially paid</span>
-          <strong>{activeItems.length}</strong>
-        </div>
-        <div className="card">
-          <span>Paid</span>
-          <strong>{paidItems.length}</strong>
-        </div>
-        <div className="card">
-          <span>Cancelled</span>
-          <strong>{cancelledItems.length}</strong>
-        </div>
-      </div>
-    </>
+      <article className="summary-card">
+        <h2>Paid</h2>
+        <strong>{paidItems.length}</strong>
+      </article>
+
+      <article className="summary-card">
+        <h2>Cancelled</h2>
+        <strong>{cancelledItems.length}</strong>
+      </article>
+    </div>
   )
 }
