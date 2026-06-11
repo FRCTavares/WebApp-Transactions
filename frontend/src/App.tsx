@@ -9,15 +9,30 @@ import { CleanupPage } from './pages/CleanupPage'
 
 type Page = 'dashboard' | 'money-in' | 'money-out' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
 
-const NAV_ITEMS: { id: Page; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'money-in', label: 'Money In' },
-  { id: 'money-out', label: 'Money Out' },
-  { id: 'investments', label: 'Investments' },
-  { id: 'owed', label: 'Money Owed To Me' },
-  { id: 'cleanup', label: 'Monthly Review' },
-  { id: 'import', label: 'Import CSV/XLSX' },
-  { id: 'categories', label: 'Categories / Rules' },
+const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
+  {
+    title: 'Overview',
+    items: [
+      { id: 'dashboard', label: 'Dashboard' },
+      { id: 'cleanup', label: 'Monthly Review' },
+    ],
+  },
+  {
+    title: 'Money',
+    items: [
+      { id: 'money-in', label: 'Money In' },
+      { id: 'money-out', label: 'Money Out' },
+      { id: 'investments', label: 'Investments' },
+      { id: 'owed', label: 'Money Owed To Me' },
+    ],
+  },
+  {
+    title: 'Tools',
+    items: [
+      { id: 'import', label: 'Import CSV/XLSX' },
+      { id: 'categories', label: 'Categories / Rules' },
+    ],
+  },
 ]
 
 function App() {
@@ -26,17 +41,28 @@ function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h2>F - Transactions</h2>
-        <nav>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={page === item.id ? 'active' : ''}
-              onClick={() => setPage(item.id)}
-            >
-              {item.label}
-            </button>
+        <div className="sidebar-header">
+          <h2>F - Transactions</h2>
+          <p>Local finance tracker</p>
+        </div>
+
+        <nav className="sidebar-nav">
+          {NAV_GROUPS.map((group) => (
+            <section key={group.title} className="nav-group">
+              <h3>{group.title}</h3>
+              <div className="nav-items">
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={page === item.id ? 'active' : ''}
+                    onClick={() => setPage(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
         </nav>
       </aside>

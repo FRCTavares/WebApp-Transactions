@@ -16,6 +16,7 @@
 
 body {
   margin: 0;
+  min-width: 320px;
 }
 
 button,
@@ -86,22 +87,49 @@ th {
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   border-right: 1px solid #d1d5db;
   background: #ffffff;
   padding: 20px;
+  overflow-y: auto;
 }
 
-.sidebar h2 {
-  margin-top: 0;
+.sidebar-header {
+  margin-bottom: 24px;
 }
 
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.sidebar-header h2 {
+  margin: 0 0 4px;
+}
+
+.sidebar-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 22px;
+}
+
+.nav-group h3 {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav-items {
+  display: grid;
+  gap: 6px;
 }
 
 .sidebar button {
+  width: 100%;
   text-align: left;
 }
 
@@ -111,6 +139,8 @@ th {
 }
 
 main {
+  width: 100%;
+  max-width: 1440px;
   padding: 24px;
   overflow-x: auto;
 }
@@ -205,8 +235,39 @@ main {
   }
 
   .sidebar {
+    position: static;
+    height: auto;
     border-right: 0;
     border-bottom: 1px solid #d1d5db;
+    padding: 14px;
+  }
+
+  .sidebar-header {
+    margin-bottom: 12px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .nav-group {
+    min-width: max-content;
+  }
+
+  .nav-items {
+    display: flex;
+    gap: 6px;
+  }
+
+  .sidebar button {
+    white-space: nowrap;
+  }
+
+  main {
+    padding: 16px;
   }
 
   .cards {
