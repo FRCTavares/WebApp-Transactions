@@ -23,10 +23,11 @@ import {
   CategoryRuleForm,
   type RuleFormState,
 } from '../components/CategoryRuleForm'
-import { CategorySelect } from '../components/CategorySelect'
 import { StatusMessage } from '../components/StatusMessage'
 import { CashflowRulesTable } from '../components/rules/CashflowRulesTable'
+import { CategorySuggestionsTable } from '../components/rules/CategorySuggestionsTable'
 import { CategoryRulesTable } from '../components/rules/CategoryRulesTable'
+import { DescriptionSuggestionsTable } from '../components/rules/DescriptionSuggestionsTable'
 import { DescriptionRulesTable } from '../components/rules/DescriptionRulesTable'
 import type {
   CashflowRule,
@@ -36,7 +37,6 @@ import type {
   DescriptionRule,
   DescriptionRuleSuggestion,
 } from '../types/api'
-import { formatMoney } from '../utils/format'
 
 const INITIAL_RULE_FORM: RuleFormState = {
   name: '',
@@ -459,59 +459,13 @@ export function CategoryRulesPage() {
       <StatusMessage error={error} message={message} />
 
       <h2>Description Suggestions</h2>
-      {descriptionSuggestions.length === 0 ? (
-        <p className="muted">No description suggestions found.</p>
-      ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Raw Description</th>
-                <th>Current Description</th>
-                <th>Source</th>
-                <th>Direction</th>
-                <th>Count</th>
-                <th className="right">Total</th>
-                <th>Clean Description</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {descriptionSuggestions.map((suggestion) => {
-                const suggestionKey = getDescriptionSuggestionKey(suggestion)
-                const cleanedDescription = suggestionDescriptions[suggestionKey] ?? ''
-
-                return (
-                  <tr key={suggestionKey}>
-                    <td>{suggestion.raw_description}</td>
-                    <td>{suggestion.description}</td>
-                    <td>{suggestion.source}</td>
-                    <td>{suggestion.direction}</td>
-                    <td>{suggestion.count}</td>
-                    <td className="right">{formatMoney(suggestion.total)}</td>
-                    <td>
-                      <input
-                        value={cleanedDescription}
-                        onChange={(event) => updateSuggestionDescription(suggestion, event.target.value)}
-                        placeholder={suggestion.description}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        disabled={!cleanedDescription}
-                        onClick={() => addDescriptionRuleFromSuggestion(suggestion)}
-                      >
-                        Add rule
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DescriptionSuggestionsTable
+        suggestions={descriptionSuggestions}
+        descriptionsByKey={suggestionDescriptions}
+        getSuggestionKey={getDescriptionSuggestionKey}
+        onDescriptionChange={updateSuggestionDescription}
+        onAddRule={addDescriptionRuleFromSuggestion}
+      />
 
       <h2>Description Rules</h2>
       <DescriptionRulesTable rules={descriptionRules} />
@@ -643,57 +597,13 @@ export function CategoryRulesPage() {
       )}
 
       <h2>Category Suggestions</h2>
-      {suggestions.length === 0 ? (
-        <p className="muted">No uncategorised suggestions found.</p>
-      ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Source</th>
-                <th>Direction</th>
-                <th>Count</th>
-                <th className="right">Total</th>
-                <th>Category</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suggestions.map((suggestion) => {
-                const suggestionKey = getSuggestionKey(suggestion)
-                const selectedCategory = suggestionCategories[suggestionKey] ?? ''
-
-                return (
-                  <tr key={suggestionKey}>
-                    <td>{suggestion.description}</td>
-                    <td>{suggestion.source}</td>
-                    <td>{suggestion.direction}</td>
-                    <td>{suggestion.count}</td>
-                    <td className="right">{formatMoney(suggestion.total)}</td>
-                    <td>
-                      <CategorySelect
-                        label="Category"
-                        value={selectedCategory}
-                        onChange={(category) => updateSuggestionCategory(suggestion, category)}
-                      />
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        disabled={!selectedCategory}
-                        onClick={() => addRuleFromSuggestion(suggestion)}
-                      >
-                        Add rule
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <CategorySuggestionsTable
+        suggestions={suggestions}
+        categoriesByKey={suggestionCategories}
+        getSuggestionKey={getSuggestionKey}
+        onCategoryChange={updateSuggestionCategory}
+        onAddRule={addRuleFromSuggestion}
+      />
 
       <h2>Category Rules</h2>
       <CategoryRulesTable
