@@ -43,7 +43,7 @@ export function CategoryRuleForm({
   editingRuleId,
 }: CategoryRuleFormProps) {
   return (
-    <form className="filter-panel" onSubmit={onSubmit}>
+    <form className="rule-form" onSubmit={onSubmit}>
       {editingRuleId !== undefined && (
         <p className="muted small">
           Editing rule #{editingRuleId}
@@ -132,7 +132,7 @@ export function CategoryRuleForm({
         </label>
       </div>
 
-      <div className="toolbar">
+      <div className="action-group">
         <button type="submit">{submitLabel}</button>
 
         {onClear && (

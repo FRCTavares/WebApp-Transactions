@@ -441,37 +441,73 @@ export function CategoryRulesPage() {
   }
 
   return (
-    <section>
-      <h1>Categories / Rules</h1>
+    <section className="rules-page">
+      <div className="page-header">
+        <div>
+          <h1>Categories / Rules</h1>
+          <p className="muted small">
+            Clean descriptions, categorise transactions, and mark transfers or investments.
+          </p>
+        </div>
 
-      <div className="toolbar">
-        <button type="button" onClick={handleApplyRules}>
-          Apply category rules
-        </button>
-        <button type="button" onClick={handleApplyDescriptionRules}>
-          Apply description rules
-        </button>
-        <button type="button" onClick={handleApplyCashflowRules}>
-          Apply cashflow rules
-        </button>
+        <div className="action-group">
+          <button type="button" onClick={handleApplyRules}>
+            Apply category rules
+          </button>
+          <button type="button" onClick={handleApplyDescriptionRules}>
+            Apply description rules
+          </button>
+          <button type="button" onClick={handleApplyCashflowRules}>
+            Apply cashflow rules
+          </button>
+        </div>
       </div>
 
       <StatusMessage error={error} message={message} />
 
-      <h2>Description Suggestions</h2>
-      <DescriptionSuggestionsTable
-        suggestions={descriptionSuggestions}
-        descriptionsByKey={suggestionDescriptions}
-        getSuggestionKey={getDescriptionSuggestionKey}
-        onDescriptionChange={updateSuggestionDescription}
-        onAddRule={addDescriptionRuleFromSuggestion}
-      />
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Description Suggestions</h2>
+            <p className="muted small">
+              Create cleaning rules from repeated raw bank descriptions.
+            </p>
+          </div>
+        </div>
 
-      <h2>Description Rules</h2>
-      <DescriptionRulesTable rules={descriptionRules} />
+        <DescriptionSuggestionsTable
+          suggestions={descriptionSuggestions}
+          descriptionsByKey={suggestionDescriptions}
+          getSuggestionKey={getDescriptionSuggestionKey}
+          onDescriptionChange={updateSuggestionDescription}
+          onAddRule={addDescriptionRuleFromSuggestion}
+        />
+      </section>
 
-      <h2>New Cashflow Rule</h2>
-      <form className="manual-form" onSubmit={handleCreateCashflowRule}>
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Description Rules</h2>
+            <p className="muted small">
+              Existing rules that normalise raw descriptions.
+            </p>
+          </div>
+        </div>
+
+        <DescriptionRulesTable rules={descriptionRules} />
+      </section>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>New Cashflow Rule</h2>
+            <p className="muted small">
+              Mark matching transactions as income, expense, transfer, investment, or reimbursement.
+            </p>
+          </div>
+        </div>
+
+        <form className="rule-form" onSubmit={handleCreateCashflowRule}>
         <div className="form-row">
           <label>
             Name
@@ -564,27 +600,56 @@ export function CategoryRulesPage() {
             Clear
           </button>
         </div>
-      </form>
+        </form>
+      </section>
 
-      <h2>Cashflow Rules</h2>
-      <CashflowRulesTable rules={cashflowRules} />
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Cashflow Rules</h2>
+            <p className="muted small">
+              Existing rules that control whether transactions count as normal cashflow.
+            </p>
+          </div>
+        </div>
 
-      <h2>New Category Rule</h2>
-      <CategoryRuleForm
-        form={ruleForm}
-        submitLabel="Create rule"
-        onSubmit={handleCreateManualRule}
-        onChange={updateRuleForm}
-        onClear={() => {
-          setRuleForm(INITIAL_RULE_FORM)
-          setError(null)
-          setMessage(null)
-        }}
-      />
+        <CashflowRulesTable rules={cashflowRules} />
+      </section>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>New Category Rule</h2>
+            <p className="muted small">
+              Create a manual category rule from a known match text.
+            </p>
+          </div>
+        </div>
+
+        <CategoryRuleForm
+          form={ruleForm}
+          submitLabel="Create rule"
+          onSubmit={handleCreateManualRule}
+          onChange={updateRuleForm}
+          onClear={() => {
+            setRuleForm(INITIAL_RULE_FORM)
+            setError(null)
+            setMessage(null)
+          }}
+        />
+      </section>
 
       {editingRule && (
-        <>
-          <h2>Edit Category Rule</h2>
+        <section className="panel-card">
+          <div className="section-header">
+            <div>
+              <h2>Edit Category Rule</h2>
+              <p className="muted small">
+                Update the selected category rule.
+              </p>
+            </div>
+          </div>
+
           <CategoryRuleForm
             form={editRuleForm}
             submitLabel="Save changes"
@@ -593,25 +658,45 @@ export function CategoryRulesPage() {
             onChange={updateEditRuleForm}
             onCancel={handleCancelEditRule}
           />
-        </>
+        </section>
       )}
 
-      <h2>Category Suggestions</h2>
-      <CategorySuggestionsTable
-        suggestions={suggestions}
-        categoriesByKey={suggestionCategories}
-        getSuggestionKey={getSuggestionKey}
-        onCategoryChange={updateSuggestionCategory}
-        onAddRule={addRuleFromSuggestion}
-      />
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Category Suggestions</h2>
+            <p className="muted small">
+              Create category rules from repeated uncategorised descriptions.
+            </p>
+          </div>
+        </div>
 
-      <h2>Category Rules</h2>
-      <CategoryRulesTable
-        rules={rules}
-        onEdit={handleStartEditRule}
-        onToggle={handleToggleRule}
-        onDelete={handleDeleteRule}
-      />
+        <CategorySuggestionsTable
+          suggestions={suggestions}
+          categoriesByKey={suggestionCategories}
+          getSuggestionKey={getSuggestionKey}
+          onCategoryChange={updateSuggestionCategory}
+          onAddRule={addRuleFromSuggestion}
+        />
+      </section>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Category Rules</h2>
+            <p className="muted small">
+              Existing rules that assign categories and subcategories.
+            </p>
+          </div>
+        </div>
+
+        <CategoryRulesTable
+          rules={rules}
+          onEdit={handleStartEditRule}
+          onToggle={handleToggleRule}
+          onDelete={handleDeleteRule}
+        />
+      </section>
     </section>
   )
 }

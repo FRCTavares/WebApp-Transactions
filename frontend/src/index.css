@@ -684,3 +684,56 @@ td[colspan] {
 .table-wrap td {
   word-break: break-word;
 }
+
+/* Rules page layout */
+.rules-page {
+  display: grid;
+  gap: 18px;
+}
+
+.rules-page .panel-card {
+  margin-bottom: 0;
+}
+
+.rules-page .section-header h2 {
+  margin-top: 0;
+}
+
+.rule-form {
+  display: grid;
+  gap: 14px;
+}
+
+.rule-form .form-grid {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.rule-form .form-grid label {
+  min-width: 0;
+}
+
+.rule-form input,
+.rule-form select {
+  width: 100%;
+  min-width: 0;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  font-weight: 700;
+}
+
+.checkbox-label input {
+  width: auto;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .rule-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
