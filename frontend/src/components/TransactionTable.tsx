@@ -11,7 +11,11 @@ type TransactionTableProps = {
 }
 
 function formatCashflowType(cashflowType: string) {
-  return cashflowType.replace('_', ' ')
+  return cashflowType.replaceAll('_', ' ')
+}
+
+function getCashflowBadgeClass(cashflowType: string) {
+  return `badge badge-${cashflowType.replaceAll('_', '-')}`
 }
 
 export function TransactionTable({
@@ -22,10 +26,6 @@ export function TransactionTable({
   onDelete,
 }: TransactionTableProps) {
   const showActions = Boolean(onEdit || onDelete || createRow || editRow)
-
-  if (transactions.length === 0 && !createRow) {
-    return <p className="muted">No transactions found.</p>
-  }
 
   return (
     <div className="table-wrap">
@@ -44,6 +44,14 @@ export function TransactionTable({
         <tbody>
           {createRow}
 
+          {transactions.length === 0 && !createRow && (
+            <tr>
+              <td colSpan={showActions ? 7 : 6}>
+                <p className="muted">No transactions found.</p>
+              </td>
+            </tr>
+          )}
+
           {transactions.map((transaction) => {
             const customEditRow = editRow?.(transaction)
 
@@ -52,39 +60,51 @@ export function TransactionTable({
             }
 
             return (
-            <tr key={transaction.id}>
-              <td>{formatDate(transaction.date)}</td>
-              <td>
-                <div>{transaction.description}</div>
-                <div className="muted small">{transaction.raw_description}</div>
-              </td>
-              <td>{formatCashflowType(transaction.cashflow_type)}</td>
-              <td>{transaction.category ?? '-'}</td>
-              <td>{transaction.source}</td>
-              <td className="right">
-                {formatMoney(transaction.amount, transaction.currency)}
-              </td>
-              {showActions && (
+              <tr key={transaction.id}>
+                <td>{formatDate(transaction.date)}</td>
                 <td>
-                  <div className="action-group">
-                    {onEdit && (
-                      <button type="button" onClick={() => onEdit(transaction)}>
-                        Edit
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button
-                        type="button"
-                        className="danger-button"
-                        onClick={() => onDelete(transaction)}
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
+                  <div>{transaction.description}</div>
+                  <div className="muted small">{transaction.raw_description}</div>
                 </td>
-              )}
-            </tr>
+                <td>
+                  <span className={getCashflowBadgeClass(transaction.cashflow_type)}>
+                    {formatCashflowType(transaction.cashflow_type)}
+                  </span>
+                </td>
+                <td>
+                  {transaction.category ? (
+                    <span className="badge badge-neutral">{transaction.category}</span>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
+                <td>
+                  <span className="badge badge-source">{transaction.source}</span>
+                </td>
+                <td className="right">
+                  {formatMoney(transaction.amount, transaction.currency)}
+                </td>
+                {showActions && (
+                  <td>
+                    <div className="action-group">
+                      {onEdit && (
+                        <button type="button" onClick={() => onEdit(transaction)}>
+                          Edit
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() => onDelete(transaction)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                )}
+              </tr>
             )
           })}
         </tbody>
