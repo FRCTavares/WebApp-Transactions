@@ -1,15 +1,22 @@
 from fastapi import HTTPException, status
 
 from app.importers.activobank import ActivoBankImporter
-from app.importers.base import NormalisedTransaction
+from app.importers.base import (
+    ImportParseResult,
+    NormalisedInvestmentEvent,
+    NormalisedTransaction,
+)
 from app.importers.revolut import RevolutImporter
 from app.importers.trading212 import Trading212Importer
 from app.models.import_batch import ImportBatch
+from app.models.investment_event import InvestmentEvent
 from app.models.transaction import Transaction
 from app.repositories.import_batch_repository import ImportBatchRepository
+from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.import_preview import (
     ImportInvalidRow,
+    ImportPreviewInvestmentEvent,
     ImportPreviewResponse,
     ImportPreviewTransaction,
 )
@@ -23,11 +30,16 @@ class ImportService:
         transaction_repository: TransactionRepository,
         import_batch_repository: ImportBatchRepository,
         category_rule_service: CategoryRuleService | None = None,
+        investment_event_repository: InvestmentEventRepository | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
         self.category_rule_service = category_rule_service
-        self.dedupe_service = DedupeService(transaction_repository)
+        self.investment_event_repository = investment_event_repository
+        self.dedupe_service = DedupeService(
+            transaction_repository=transaction_repository,
+            investment_event_repository=investment_event_repository,
+        )
 
     def list_import_batches(
         self,
@@ -67,6 +79,15 @@ class ImportService:
     def delete_import_batch(self, import_batch_id: int) -> dict[str, int | str]:
         import_batch = self.get_import_batch(import_batch_id)
 
+        deleted_investment_events = 0
+
+        if self.investment_event_repository is not None:
+            deleted_investment_events = (
+                self.investment_event_repository.delete_by_import_batch(
+                    import_batch_id=import_batch_id,
+                )
+            )
+
         deleted_transactions = self.transaction_repository.delete_by_import_batch(
             import_batch_id=import_batch_id,
         )
@@ -75,6 +96,7 @@ class ImportService:
         return {
             "import_batch_id": import_batch_id,
             "deleted_transactions": deleted_transactions,
+            "deleted_investment_events": deleted_investment_events,
             "status": "deleted",
         }
 
@@ -84,7 +106,7 @@ class ImportService:
         file_content: bytes,
         filename: str,
     ) -> ImportPreviewResponse:
-        normalised_transactions = self._parse_file(
+        parse_result = self._parse_file(
             source=source,
             file_content=file_content,
             filename=filename,
@@ -92,18 +114,18 @@ class ImportService:
 
         return self._build_preview_response(
             source=source,
-            normalised_transactions=normalised_transactions,
+            parse_result=parse_result,
         )
 
     def preview_import(self, source: str, csv_content: str) -> ImportPreviewResponse:
-        normalised_transactions = self._parse_csv(
+        parse_result = self._parse_csv(
             source=source,
             csv_content=csv_content,
         )
 
         return self._build_preview_response(
             source=source,
-            normalised_transactions=normalised_transactions,
+            parse_result=parse_result,
         )
 
     def commit_import_from_file(
@@ -143,14 +165,15 @@ class ImportService:
         source: str,
         file_content: bytes,
         filename: str,
-    ) -> list[NormalisedTransaction]:
+    ) -> ImportParseResult:
         source = source.strip().lower()
 
         if source == "activobank":
-            return self._parse_activobank_file(
+            transactions = self._parse_activobank_file(
                 file_content=file_content,
                 filename=filename,
             )
+            return ImportParseResult(transactions=transactions)
 
         csv_content = file_content.decode("utf-8-sig")
         return self._parse_csv(source=source, csv_content=csv_content)
@@ -178,11 +201,15 @@ class ImportService:
         self,
         source: str,
         csv_content: str,
-    ) -> list[NormalisedTransaction]:
+    ) -> ImportParseResult:
+        source = source.strip().lower()
         importer = self._get_csv_importer(source)
 
         try:
-            return importer.parse(csv_content)
+            if source == "trading212":
+                return importer.parse_full(csv_content)
+
+            return ImportParseResult(transactions=importer.parse(csv_content))
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -192,21 +219,42 @@ class ImportService:
     def _build_preview_response(
         self,
         source: str,
-        normalised_transactions: list[NormalisedTransaction],
+        parse_result: ImportParseResult,
     ) -> ImportPreviewResponse:
         preview_transactions: list[ImportPreviewTransaction] = []
+        preview_investment_events: list[ImportPreviewInvestmentEvent] = []
         invalid_rows: list[ImportInvalidRow] = []
-        seen_hashes: set[str] = set()
+        seen_transaction_hashes: set[str] = set()
+        seen_event_hashes: set[str] = set()
 
-        for index, transaction in enumerate(normalised_transactions, start=1):
+        for index, transaction in enumerate(parse_result.transactions, start=1):
             try:
                 preview_row = self._build_preview_row(
                     row_number=index,
                     transaction=transaction,
-                    seen_hashes=seen_hashes,
+                    seen_hashes=seen_transaction_hashes,
                 )
                 preview_transactions.append(preview_row)
-                seen_hashes.add(preview_row.dedupe_hash)
+                seen_transaction_hashes.add(preview_row.dedupe_hash)
+            except ValueError as error:
+                invalid_rows.append(
+                    ImportInvalidRow(
+                        row_number=index,
+                        error=str(error),
+                    )
+                )
+
+        event_start_index = len(parse_result.transactions) + 1
+
+        for index, event in enumerate(parse_result.investment_events, start=event_start_index):
+            try:
+                preview_event = self._build_preview_investment_event(
+                    row_number=index,
+                    event=event,
+                    seen_hashes=seen_event_hashes,
+                )
+                preview_investment_events.append(preview_event)
+                seen_event_hashes.add(preview_event.dedupe_hash)
             except ValueError as error:
                 invalid_rows.append(
                     ImportInvalidRow(
@@ -217,15 +265,21 @@ class ImportService:
 
         rows_duplicates = sum(
             1 for transaction in preview_transactions if transaction.is_duplicate
+        ) + sum(
+            1 for event in preview_investment_events if event.is_duplicate
         )
+
+        rows_total = len(parse_result.transactions) + len(parse_result.investment_events)
+        rows_valid = len(preview_transactions) + len(preview_investment_events)
 
         return ImportPreviewResponse(
             source=source,
-            rows_total=len(normalised_transactions),
-            rows_valid=len(preview_transactions),
+            rows_total=rows_total,
+            rows_valid=rows_valid,
             rows_duplicates=rows_duplicates,
             rows_invalid=len(invalid_rows),
             transactions=preview_transactions,
+            investment_events=preview_investment_events,
             invalid_rows=invalid_rows,
         )
 
@@ -235,12 +289,20 @@ class ImportService:
         filename: str,
         preview: ImportPreviewResponse,
     ) -> dict[str, int | str]:
+        self._raise_for_pending_fx(preview)
+
         rows_skipped = preview.rows_duplicates + preview.rows_invalid
         rows_inserted = len(
             [
                 preview_transaction
                 for preview_transaction in preview.transactions
                 if not preview_transaction.is_duplicate
+            ]
+        ) + len(
+            [
+                preview_event
+                for preview_event in preview.investment_events
+                if not preview_event.is_duplicate
             ]
         )
 
@@ -257,6 +319,66 @@ class ImportService:
             ),
         )
 
+        transactions_to_insert = self._build_transactions_to_insert(
+            import_batch_id=import_batch.id,
+            preview=preview,
+        )
+        investment_events_to_insert = self._build_investment_events_to_insert(
+            import_batch_id=import_batch.id,
+            preview=preview,
+        )
+
+        if transactions_to_insert:
+            self.transaction_repository.bulk_insert(transactions_to_insert)
+
+        if investment_events_to_insert and self.investment_event_repository is not None:
+            self.investment_event_repository.bulk_insert(investment_events_to_insert)
+
+        return {
+            "import_batch_id": import_batch.id,
+            "source": source,
+            "rows_total": preview.rows_total,
+            "rows_inserted": len(transactions_to_insert) + len(investment_events_to_insert),
+            "rows_skipped": rows_skipped,
+            "transactions_inserted": len(transactions_to_insert),
+            "investment_events_inserted": len(investment_events_to_insert),
+        }
+
+    def _raise_for_pending_fx(self, preview: ImportPreviewResponse) -> None:
+        pending_transaction_rows = [
+            preview_transaction.row_number
+            for preview_transaction in preview.transactions
+            if (
+                not preview_transaction.is_duplicate
+                and preview_transaction.fx_rate_source == "pending"
+            )
+        ]
+        pending_event_rows = [
+            preview_event.row_number
+            for preview_event in preview.investment_events
+            if (
+                not preview_event.is_duplicate
+                and preview_event.fx_rate_source == "pending"
+            )
+        ]
+
+        if not pending_transaction_rows and not pending_event_rows:
+            return
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": "Import contains rows with pending FX conversion. Preview is allowed, but commit is blocked until EUR conversion is resolved.",
+                "pending_transaction_rows": pending_transaction_rows,
+                "pending_investment_event_rows": pending_event_rows,
+            },
+        )
+
+    def _build_transactions_to_insert(
+        self,
+        import_batch_id: int,
+        preview: ImportPreviewResponse,
+    ) -> list[Transaction]:
         transactions_to_insert: list[Transaction] = []
 
         for preview_transaction in preview.transactions:
@@ -269,6 +391,10 @@ class ImportService:
                     description=preview_transaction.description,
                     raw_description=preview_transaction.raw_description,
                     amount=preview_transaction.amount,
+                    original_amount=preview_transaction.original_amount,
+                    original_currency=preview_transaction.original_currency,
+                    fx_rate_to_eur=preview_transaction.fx_rate_to_eur,
+                    fx_rate_source=preview_transaction.fx_rate_source,
                     direction=preview_transaction.direction,
                     cashflow_type=preview_transaction.cashflow_type,
                     source=preview_transaction.source,
@@ -277,21 +403,54 @@ class ImportService:
                     currency=preview_transaction.currency,
                     external_id=preview_transaction.external_id,
                     dedupe_hash=preview_transaction.dedupe_hash,
-                    import_batch_id=import_batch.id,
+                    import_batch_id=import_batch_id,
                     notes=preview_transaction.notes,
                 )
             )
 
-        if transactions_to_insert:
-            self.transaction_repository.bulk_insert(transactions_to_insert)
+        return transactions_to_insert
 
-        return {
-            "import_batch_id": import_batch.id,
-            "source": source,
-            "rows_total": preview.rows_total,
-            "rows_inserted": len(transactions_to_insert),
-            "rows_skipped": rows_skipped,
-        }
+    def _build_investment_events_to_insert(
+        self,
+        import_batch_id: int,
+        preview: ImportPreviewResponse,
+    ) -> list[InvestmentEvent]:
+        events_to_insert: list[InvestmentEvent] = []
+
+        for preview_event in preview.investment_events:
+            if preview_event.is_duplicate:
+                continue
+
+            events_to_insert.append(
+                InvestmentEvent(
+                    date=preview_event.date,
+                    source=preview_event.source,
+                    account=preview_event.account,
+                    event_type=preview_event.event_type,
+                    description=preview_event.description,
+                    raw_description=preview_event.raw_description,
+                    instrument_name=preview_event.instrument_name,
+                    ticker=preview_event.ticker,
+                    isin=preview_event.isin,
+                    quantity=preview_event.quantity,
+                    price=preview_event.price,
+                    fees=preview_event.fees,
+                    taxes=preview_event.taxes,
+                    amount=preview_event.amount,
+                    currency=preview_event.currency,
+                    original_amount=preview_event.original_amount,
+                    original_currency=preview_event.original_currency,
+                    fx_rate_to_eur=preview_event.fx_rate_to_eur,
+                    fx_rate_source=preview_event.fx_rate_source,
+                    transaction_id=preview_event.transaction_id,
+                    external_id=preview_event.external_id,
+                    dedupe_hash=preview_event.dedupe_hash,
+                    import_batch_id=import_batch_id,
+                    notes=preview_event.notes,
+                )
+            )
+
+        return events_to_insert
 
     def _build_preview_row(
         self,
@@ -312,6 +471,10 @@ class ImportService:
             raw_description=transaction.raw_description,
             description=transaction.description,
             amount=transaction.amount,
+            original_amount=transaction.original_amount,
+            original_currency=transaction.original_currency,
+            fx_rate_to_eur=transaction.fx_rate_to_eur,
+            fx_rate_source=transaction.fx_rate_source,
             direction=transaction.direction,
             cashflow_type=self._get_cashflow_type(transaction),
             source=transaction.source,
@@ -322,6 +485,46 @@ class ImportService:
             dedupe_hash=dedupe_hash,
             is_duplicate=is_duplicate,
             category=category,
+        )
+
+    def _build_preview_investment_event(
+        self,
+        row_number: int,
+        event: NormalisedInvestmentEvent,
+        seen_hashes: set[str],
+    ) -> ImportPreviewInvestmentEvent:
+        dedupe_hash = self.dedupe_service.create_investment_event_hash(event)
+        is_duplicate = (
+            self.dedupe_service.is_duplicate_investment_event(dedupe_hash)
+            or dedupe_hash in seen_hashes
+        )
+
+        return ImportPreviewInvestmentEvent(
+            row_number=row_number,
+            date=event.date,
+            source=event.source,
+            account=event.account,
+            event_type=event.event_type,
+            description=event.description,
+            raw_description=event.raw_description,
+            instrument_name=event.instrument_name,
+            ticker=event.ticker,
+            isin=event.isin,
+            quantity=event.quantity,
+            price=event.price,
+            fees=event.fees,
+            taxes=event.taxes,
+            amount=event.amount,
+            currency=event.currency,
+            original_amount=event.original_amount,
+            original_currency=event.original_currency,
+            fx_rate_to_eur=event.fx_rate_to_eur,
+            fx_rate_source=event.fx_rate_source,
+            transaction_id=event.transaction_id,
+            external_id=event.external_id,
+            notes=event.notes,
+            dedupe_hash=dedupe_hash,
+            is_duplicate=is_duplicate,
         )
 
     def _get_cashflow_type(self, transaction: NormalisedTransaction) -> str:

@@ -153,6 +153,10 @@ export type ImportPreviewTransaction = {
   raw_description: string
   description: string
   amount: string
+  original_amount: string | null
+  original_currency: string | null
+  fx_rate_to_eur: string | null
+  fx_rate_source: string | null
   direction: Direction
   cashflow_type: CashflowType
   source: string
@@ -163,6 +167,34 @@ export type ImportPreviewTransaction = {
   dedupe_hash: string
   is_duplicate: boolean
   category: string | null
+}
+
+export type ImportPreviewInvestmentEvent = {
+  row_number: number
+  date: string
+  source: string
+  account: string | null
+  event_type: string
+  description: string
+  raw_description: string
+  amount: string
+  currency: string
+  instrument_name: string | null
+  ticker: string | null
+  isin: string | null
+  quantity: string | null
+  price: string | null
+  fees: string | null
+  taxes: string | null
+  original_amount: string | null
+  original_currency: string | null
+  fx_rate_to_eur: string | null
+  fx_rate_source: string | null
+  transaction_id: number | null
+  external_id: string | null
+  notes: string | null
+  dedupe_hash: string
+  is_duplicate: boolean
 }
 
 export type ImportInvalidRow = {
@@ -177,6 +209,7 @@ export type ImportPreviewResponse = {
   rows_duplicates: number
   rows_invalid: number
   transactions: ImportPreviewTransaction[]
+  investment_events: ImportPreviewInvestmentEvent[]
   invalid_rows: ImportInvalidRow[]
 }
 

@@ -71,6 +71,28 @@ async function readErrorDetail(response: Response): Promise<string | null> {
           .filter((message): message is string => message !== null)
           .join(', ')
       }
+
+      if (typeof detail === 'object' && detail !== null) {
+        if (
+          'message' in detail &&
+          typeof detail.message === 'string'
+        ) {
+          return detail.message
+        }
+
+        return JSON.stringify(detail)
+      }
+
+      if (typeof detail === 'object' && detail !== null) {
+        if (
+          'message' in detail &&
+          typeof detail.message === 'string'
+        ) {
+          return detail.message
+        }
+
+        return JSON.stringify(detail)
+      }
     }
   } catch {
     return null

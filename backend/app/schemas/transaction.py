@@ -29,6 +29,10 @@ class TransactionBase(BaseModel):
     description: str = Field(min_length=1, max_length=255)
     raw_description: str = Field(min_length=1)
     amount: Decimal = Field(gt=0)
+    original_amount: Decimal | None = Field(default=None, gt=0)
+    original_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    fx_rate_to_eur: Decimal | None = Field(default=None, gt=0)
+    fx_rate_source: str | None = None
     direction: Direction
     cashflow_type: CashflowType | None = None
     source: str = "manual"
@@ -56,6 +60,10 @@ class TransactionUpdate(BaseModel):
     description: str | None = Field(default=None, min_length=1, max_length=255)
     raw_description: str | None = Field(default=None, min_length=1)
     amount: Decimal | None = Field(default=None, gt=0)
+    original_amount: Decimal | None = Field(default=None, gt=0)
+    original_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    fx_rate_to_eur: Decimal | None = Field(default=None, gt=0)
+    fx_rate_source: str | None = None
     direction: Direction | None = None
     cashflow_type: CashflowType | None = None
     source: str | None = None

@@ -11,6 +11,7 @@ import { TransactionTable } from '../components/TransactionTable'
 import type {
   ImportBatch,
   ImportInvalidRow,
+  ImportPreviewInvestmentEvent,
   ImportPreviewResponse,
   ImportPreviewTransaction,
   Transaction,
@@ -21,6 +22,40 @@ const SOURCES = ['revolut', 'activobank', 'trading212']
 
 function getStatusBadgeClass(status: string) {
   return `badge badge-status-${status.replaceAll('_', '-')}`
+}
+
+function hasPendingFx(
+  rows: Array<{ is_duplicate: boolean; fx_rate_source: string | null }>,
+) {
+  return rows.some((row) => !row.is_duplicate && row.fx_rate_source === 'pending')
+}
+
+function getPendingFxRowNumbers(
+  rows: Array<{ row_number: number; is_duplicate: boolean; fx_rate_source: string | null }>,
+) {
+  return rows
+    .filter((row) => !row.is_duplicate && row.fx_rate_source === 'pending')
+    .map((row) => row.row_number)
+}
+
+function formatFxStatus(row: {
+  original_amount: string | null
+  original_currency: string | null
+  fx_rate_source: string | null
+}) {
+  if (!row.fx_rate_source) {
+    return '-'
+  }
+
+  if (row.fx_rate_source === 'pending') {
+    return 'Pending'
+  }
+
+  if (row.original_amount && row.original_currency) {
+    return `${row.fx_rate_source}: ${row.original_amount} ${row.original_currency}`
+  }
+
+  return row.fx_rate_source
 }
 
 function PreviewTransactionsTable({
@@ -46,6 +81,7 @@ function PreviewTransactionsTable({
               <th>Description</th>
               <th>Category</th>
               <th>Direction</th>
+              <th>FX</th>
               <th className="right">Amount</th>
             </tr>
           </thead>
@@ -70,6 +106,13 @@ function PreviewTransactionsTable({
                     {transaction.direction}
                   </span>
                 </td>
+                <td>
+                  {transaction.fx_rate_source === 'pending' ? (
+                    <span className="badge badge-status-failed">Pending</span>
+                  ) : (
+                    <span className="muted small">{formatFxStatus(transaction)}</span>
+                  )}
+                </td>
                 <td className="right">
                   {formatMoney(transaction.amount, transaction.currency)}
                 </td>
@@ -81,6 +124,67 @@ function PreviewTransactionsTable({
 
       {transactions.length > 50 && (
         <p className="muted small">Showing first 50 of {transactions.length} rows.</p>
+      )}
+    </>
+  )
+}
+
+function PreviewInvestmentEventsTable({
+  title,
+  events,
+}: {
+  title: string
+  events: ImportPreviewInvestmentEvent[]
+}) {
+  if (events.length === 0) {
+    return null
+  }
+
+  return (
+    <>
+      <h2>{title}</h2>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Description</th>
+              <th>FX</th>
+              <th className="right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.slice(0, 50).map((event) => (
+              <tr key={`${event.row_number}-${event.dedupe_hash}`}>
+                <td>{event.row_number}</td>
+                <td>{event.date}</td>
+                <td>
+                  <span className="badge badge-neutral">{event.event_type}</span>
+                </td>
+                <td>
+                  <div>{event.description}</div>
+                  <div className="muted small">{event.raw_description}</div>
+                </td>
+                <td>
+                  {event.fx_rate_source === 'pending' ? (
+                    <span className="badge badge-status-failed">Pending</span>
+                  ) : (
+                    <span className="muted small">{formatFxStatus(event)}</span>
+                  )}
+                </td>
+                <td className="right">
+                  {formatMoney(event.amount, event.currency)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {events.length > 50 && (
+        <p className="muted small">Showing first 50 of {events.length} investment events.</p>
       )}
     </>
   )
@@ -132,13 +236,31 @@ export function ImportPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const previewInvestmentEvents = preview?.investment_events ?? []
   const newTransactions = preview?.transactions.filter(
     (transaction) => !transaction.is_duplicate,
   ) ?? []
   const duplicateTransactions = preview?.transactions.filter(
     (transaction) => transaction.is_duplicate,
   ) ?? []
-  const canCommit = Boolean(file && preview && newTransactions.length > 0 && !isCommitting)
+  const newInvestmentEvents = previewInvestmentEvents.filter(
+    (event) => !event.is_duplicate,
+  )
+  const duplicateInvestmentEvents = previewInvestmentEvents.filter(
+    (event) => event.is_duplicate,
+  )
+  const rowsToImportCount = newTransactions.length + newInvestmentEvents.length
+  const pendingFxTransactionRows = getPendingFxRowNumbers(newTransactions)
+  const pendingFxEventRows = getPendingFxRowNumbers(newInvestmentEvents)
+  const hasPendingFxRows =
+    hasPendingFx(newTransactions) || hasPendingFx(newInvestmentEvents)
+  const canCommit = Boolean(
+    file &&
+    preview &&
+    rowsToImportCount > 0 &&
+    !hasPendingFxRows &&
+    !isCommitting,
+  )
 
   function loadBatches() {
     listImportBatches().then(setBatches).catch(() => undefined)
@@ -179,8 +301,13 @@ export function ImportPage() {
       return
     }
 
-    if (newTransactions.length === 0) {
+    if (rowsToImportCount === 0) {
       setError('There are no new rows to import.')
+      return
+    }
+
+    if (hasPendingFxRows) {
+      setError('This import has pending FX conversion. Resolve EUR conversion before committing.')
       return
     }
 
@@ -220,7 +347,7 @@ export function ImportPage() {
 
   async function handleDeleteBatch(batch: ImportBatch) {
     const confirmed = window.confirm(
-      `Rollback import batch ${batch.id}? This will delete ${batch.rows_inserted} imported transactions from "${batch.filename}".`,
+      `Rollback import batch ${batch.id}? This will delete ${batch.rows_inserted} imported rows from "${batch.filename}".`,
     )
 
     if (!confirmed) {
@@ -334,7 +461,15 @@ export function ImportPage() {
             </article>
             <article className="summary-card">
               <h2>Rows to import</h2>
+              <strong>{rowsToImportCount}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Transactions</h2>
               <strong>{newTransactions.length}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Investment events</h2>
+              <strong>{newInvestmentEvents.length}</strong>
             </article>
             <article className="summary-card">
               <h2>Duplicates</h2>
@@ -346,20 +481,38 @@ export function ImportPage() {
             </article>
           </div>
 
-          {newTransactions.length === 0 && (
+          {rowsToImportCount === 0 && (
             <p className="status status-error">
               This file has no new rows to import. It may already have been imported.
             </p>
           )}
 
+          {hasPendingFxRows && (
+            <p className="status status-error">
+              This import has pending FX conversion. Commit is disabled until EUR conversion is resolved.
+              Transaction rows: {pendingFxTransactionRows.join(', ') || 'none'}.
+              Investment event rows: {pendingFxEventRows.join(', ') || 'none'}.
+            </p>
+          )}
+
           <PreviewTransactionsTable
-            title="Rows To Import"
+            title="Transactions To Import"
             transactions={newTransactions}
           />
 
+          <PreviewInvestmentEventsTable
+            title="Investment Events To Import"
+            events={newInvestmentEvents}
+          />
+
           <PreviewTransactionsTable
-            title="Duplicate Rows"
+            title="Duplicate Transaction Rows"
             transactions={duplicateTransactions}
+          />
+
+          <PreviewInvestmentEventsTable
+            title="Duplicate Investment Event Rows"
+            events={duplicateInvestmentEvents}
           />
 
           <InvalidRowsTable rows={preview.invalid_rows} />

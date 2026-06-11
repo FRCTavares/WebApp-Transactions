@@ -3,26 +3,43 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from io import StringIO
 
-from app.importers.base import NormalisedTransaction
+from app.importers.base import (
+    ImportParseResult,
+    NormalisedInvestmentEvent,
+    NormalisedTransaction,
+)
 
 
 class Trading212Importer:
     source = "trading212"
+    account = "Trading 212"
 
     def parse(self, csv_content: str) -> list[NormalisedTransaction]:
+        return self.parse_full(csv_content).transactions
+
+    def parse_full(self, csv_content: str) -> ImportParseResult:
         reader = csv.DictReader(StringIO(csv_content))
         transactions: list[NormalisedTransaction] = []
+        investment_events: list[NormalisedInvestmentEvent] = []
 
         for row in reader:
-            transaction = self._parse_row(row)
-            transactions.append(transaction)
+            action = self._get_optional_value(row, "Action")
+            description = self._get_description(row)
 
-        return transactions
+            if self._is_investment_event(action=action, description=description):
+                investment_events.append(self._parse_investment_event(row))
+            else:
+                transactions.append(self._parse_transaction(row))
 
-    def _parse_row(self, row: dict[str, str]) -> NormalisedTransaction:
+        return ImportParseResult(
+            transactions=transactions,
+            investment_events=investment_events,
+        )
+
+    def _parse_transaction(self, row: dict[str, str]) -> NormalisedTransaction:
         time = self._get_required_value(row, "Time")
         amount_text = self._get_required_value(row, "Total")
-        currency = self._get_required_value(row, "Currency (Total)")
+        currency = self._get_required_value(row, "Currency (Total)").upper()
         external_id = self._get_optional_value(row, "ID")
         action = self._get_optional_value(row, "Action")
 
@@ -31,8 +48,14 @@ class Trading212Importer:
             description=description,
             external_id=external_id,
         )
-        amount = self._parse_amount(amount_text)
-        direction = "in" if amount > 0 else "out"
+        signed_amount = self._parse_amount(amount_text)
+        amount = abs(signed_amount)
+
+        direction = self._get_transaction_direction(
+            action=action,
+            description=description,
+            signed_amount=signed_amount,
+        )
         cashflow_type = self._get_cashflow_type(
             action=action,
             description=description,
@@ -43,15 +66,119 @@ class Trading212Importer:
             date=self._parse_date(time),
             raw_description=raw_description,
             description=description,
-            amount=abs(amount),
+            amount=amount,
             direction=direction,
-            cashflow_type=cashflow_type,
             source=self.source,
-            account="Trading 212",
-            currency=currency.upper(),
+            account=self.account,
+            currency=currency,
+            original_amount=amount,
+            original_currency=currency,
+            fx_rate_to_eur=Decimal("1") if currency == "EUR" else None,
+            fx_rate_source="source_currency" if currency == "EUR" else "pending",
+            cashflow_type=cashflow_type,
             external_id=external_id,
             notes=action,
         )
+
+    def _parse_investment_event(self, row: dict[str, str]) -> NormalisedInvestmentEvent:
+        time = self._get_required_value(row, "Time")
+        amount_text = self._get_required_value(row, "Total")
+        currency = self._get_required_value(row, "Currency (Total)").upper()
+        external_id = self._get_optional_value(row, "ID")
+        action = self._get_optional_value(row, "Action")
+
+        description = self._get_description(row)
+        raw_description = self._build_raw_description(
+            description=description,
+            external_id=external_id,
+        )
+        amount = abs(self._parse_amount(amount_text))
+
+        return NormalisedInvestmentEvent(
+            date=self._parse_date(time),
+            source=self.source,
+            account=self.account,
+            event_type=self._get_event_type(action=action, description=description),
+            description=description,
+            raw_description=raw_description,
+            amount=amount,
+            currency=currency,
+            original_amount=amount,
+            original_currency=currency,
+            fx_rate_to_eur=Decimal("1") if currency == "EUR" else None,
+            fx_rate_source="source_currency" if currency == "EUR" else "pending",
+            external_id=external_id,
+            notes=action,
+        )
+
+    def _is_investment_event(
+        self,
+        action: str | None,
+        description: str,
+    ) -> bool:
+        action_text = (action or "").strip().lower()
+        description_text = description.strip().lower()
+        combined_text = f"{action_text} {description_text}"
+
+        investment_markers = (
+            "market buy",
+            "market sell",
+            "dividend",
+            "interest on cash",
+            "fx conversion",
+            "currency conversion",
+        )
+
+        return any(marker in combined_text for marker in investment_markers)
+
+    def _get_event_type(
+        self,
+        action: str | None,
+        description: str,
+    ) -> str:
+        action_text = (action or "").strip().lower()
+        description_text = description.strip().lower()
+        combined_text = f"{action_text} {description_text}"
+
+        if "market buy" in combined_text:
+            return "market_buy"
+
+        if "market sell" in combined_text:
+            return "market_sell"
+
+        if "dividend" in combined_text:
+            return "dividend"
+
+        if "interest on cash" in combined_text:
+            return "interest"
+
+        if "fx conversion" in combined_text or "currency conversion" in combined_text:
+            return "fx_conversion"
+
+        return "broker_event"
+
+    def _get_transaction_direction(
+        self,
+        action: str | None,
+        description: str,
+        signed_amount: Decimal,
+    ) -> str:
+        action_text = (action or "").strip().lower()
+        description_text = description.strip().lower()
+
+        if (
+            "bank transfer" in action_text
+            or "bank transfer" in description_text
+            or "deposit" in action_text
+            or "deposit" in description_text
+            or description_text.startswith("transaction id:")
+        ):
+            return "out" if signed_amount > 0 else "in"
+
+        if "withdrawal" in action_text or "withdrawal" in description_text:
+            return "in" if signed_amount < 0 else "out"
+
+        return "in" if signed_amount > 0 else "out"
 
     def _get_cashflow_type(
         self,
@@ -62,20 +189,16 @@ class Trading212Importer:
         action_text = (action or "").strip().lower()
         description_text = description.strip().lower()
 
-        if "market buy" in action_text or "market buy" in description_text:
-            return "investment"
-
         if (
             "bank transfer" in action_text
             or "bank transfer" in description_text
+            or "deposit" in action_text
+            or "deposit" in description_text
             or "withdrawal" in action_text
             or "withdrawal" in description_text
             or description_text.startswith("transaction id:")
         ):
-            return "internal_transfer"
-
-        if "interest on cash" in action_text or "interest on cash" in description_text:
-            return "income"
+            return "investment"
 
         if "spending cashback" in action_text or "spending cashback" in description_text:
             return "income"

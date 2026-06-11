@@ -3,7 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 from app.database_migrations import run_startup_migrations
-from app.models import CashflowRule, CategoryRule, DescriptionRule, ImportBatch, OwedItem, Transaction
+from app.models import (
+    CashflowRule,
+    CategoryRule,
+    DescriptionRule,
+    ImportBatch,
+    InvestmentEvent,
+    OwedItem,
+    Transaction,
+)
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router

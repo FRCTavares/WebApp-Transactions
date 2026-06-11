@@ -26,3 +26,25 @@ def create_dedupe_hash(
     )
 
     return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
+
+
+def create_investment_event_dedupe_hash(
+    source: str,
+    event_date,
+    amount: Decimal,
+    event_type: str,
+    raw_description: str,
+    currency: str,
+) -> str:
+    hash_input = "|".join(
+        [
+            source.strip().lower(),
+            event_date.isoformat(),
+            normalise_decimal_for_hash(amount),
+            event_type.strip().lower(),
+            raw_description.strip(),
+            currency.strip().upper(),
+        ]
+    )
+
+    return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()

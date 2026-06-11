@@ -1,11 +1,17 @@
-from app.importers.base import NormalisedTransaction
+from app.importers.base import NormalisedInvestmentEvent, NormalisedTransaction
+from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
-from app.utils.hashing import create_dedupe_hash
+from app.utils.hashing import create_dedupe_hash, create_investment_event_dedupe_hash
 
 
 class DedupeService:
-    def __init__(self, transaction_repository: TransactionRepository) -> None:
+    def __init__(
+        self,
+        transaction_repository: TransactionRepository,
+        investment_event_repository: InvestmentEventRepository | None = None,
+    ) -> None:
         self.transaction_repository = transaction_repository
+        self.investment_event_repository = investment_event_repository
 
     def create_hash(self, transaction: NormalisedTransaction) -> str:
         return create_dedupe_hash(
@@ -17,5 +23,21 @@ class DedupeService:
             currency=transaction.currency,
         )
 
+    def create_investment_event_hash(self, event: NormalisedInvestmentEvent) -> str:
+        return create_investment_event_dedupe_hash(
+            source=event.source,
+            event_date=event.date,
+            amount=event.amount,
+            event_type=event.event_type,
+            raw_description=event.raw_description,
+            currency=event.currency,
+        )
+
     def is_duplicate(self, dedupe_hash: str) -> bool:
         return self.transaction_repository.exists_by_dedupe_hash(dedupe_hash)
+
+    def is_duplicate_investment_event(self, dedupe_hash: str) -> bool:
+        if self.investment_event_repository is None:
+            return False
+
+        return self.investment_event_repository.exists_by_dedupe_hash(dedupe_hash)

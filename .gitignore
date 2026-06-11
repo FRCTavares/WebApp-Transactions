@@ -26,3 +26,4 @@ frontend/node_modules/.tmp/
 
 # Runtime/log files
 *.log
+backups/

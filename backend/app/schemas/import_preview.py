@@ -10,6 +10,10 @@ class ImportPreviewTransaction(BaseModel):
     raw_description: str
     description: str
     amount: Decimal
+    original_amount: Decimal | None = None
+    original_currency: str | None = None
+    fx_rate_to_eur: Decimal | None = None
+    fx_rate_source: str | None = None
     direction: str
     cashflow_type: str
     source: str
@@ -20,6 +24,34 @@ class ImportPreviewTransaction(BaseModel):
     dedupe_hash: str
     is_duplicate: bool = False
     category: str | None = None
+
+
+class ImportPreviewInvestmentEvent(BaseModel):
+    row_number: int
+    date: DateType
+    source: str
+    account: str | None = None
+    event_type: str
+    description: str
+    raw_description: str
+    amount: Decimal
+    currency: str
+    instrument_name: str | None = None
+    ticker: str | None = None
+    isin: str | None = None
+    quantity: Decimal | None = None
+    price: Decimal | None = None
+    fees: Decimal | None = None
+    taxes: Decimal | None = None
+    original_amount: Decimal | None = None
+    original_currency: str | None = None
+    fx_rate_to_eur: Decimal | None = None
+    fx_rate_source: str | None = None
+    transaction_id: int | None = None
+    external_id: str | None = None
+    notes: str | None = None
+    dedupe_hash: str
+    is_duplicate: bool = False
 
 
 class ImportInvalidRow(BaseModel):
@@ -34,4 +66,5 @@ class ImportPreviewResponse(BaseModel):
     rows_duplicates: int
     rows_invalid: int
     transactions: list[ImportPreviewTransaction]
+    investment_events: list[ImportPreviewInvestmentEvent] = []
     invalid_rows: list[ImportInvalidRow]
