@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react'
 import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
 type TransactionTableProps = {
   transactions: Transaction[]
+  createRow?: ReactNode
   onEdit?: (transaction: Transaction) => void
   onDelete?: (transaction: Transaction) => void
 }
@@ -11,10 +13,15 @@ function formatCashflowType(cashflowType: string) {
   return cashflowType.replace('_', ' ')
 }
 
-export function TransactionTable({ transactions, onEdit, onDelete }: TransactionTableProps) {
-  const showActions = Boolean(onEdit || onDelete)
+export function TransactionTable({
+  transactions,
+  createRow,
+  onEdit,
+  onDelete,
+}: TransactionTableProps) {
+  const showActions = Boolean(onEdit || onDelete || createRow)
 
-  if (transactions.length === 0) {
+  if (transactions.length === 0 && !createRow) {
     return <p className="muted">No transactions found.</p>
   }
 
@@ -33,6 +40,8 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
           </tr>
         </thead>
         <tbody>
+          {createRow}
+
           {transactions.map((transaction) => (
             <tr key={transaction.id}>
               <td>{formatDate(transaction.date)}</td>

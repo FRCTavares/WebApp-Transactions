@@ -162,8 +162,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }))
   }
 
-  async function handleCreateTransaction(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function createTransactionFromForm() {
     setError(null)
     setMessage(null)
 
@@ -291,18 +290,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         </button>
       </div>
 
-      {isCreateFormOpen && (
-        <TransactionForm
-          title={`New ${title} Transaction`}
-          form={form}
-          submitLabel="Add"
-          direction={direction}
-          onSubmit={handleCreateTransaction}
-          onChange={updateForm}
-          onCancel={() => setIsCreateFormOpen(false)}
-        />
-      )}
-
       {editingTransaction && (
         <TransactionForm
           title="Edit Transaction"
@@ -326,6 +313,94 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
       <TransactionTable
         transactions={transactions}
+        createRow={
+          isCreateFormOpen ? (
+            <tr className="inline-create-row">
+              <td>
+                <input
+                  className="table-input"
+                  type="date"
+                  value={form.date}
+                  onChange={(event) => updateForm('date', event.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  className="table-input"
+                  value={form.description}
+                  onChange={(event) => updateForm('description', event.target.value)}
+                  placeholder="Description"
+                />
+                <input
+                  className="table-input table-input-secondary"
+                  value={form.notes}
+                  onChange={(event) => updateForm('notes', event.target.value)}
+                  placeholder="Notes"
+                />
+              </td>
+              <td>
+                <select
+                  className="table-input"
+                  value={form.cashflow_type}
+                  onChange={(event) => updateForm('cashflow_type', event.target.value)}
+                >
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                  <option value="internal_transfer">Internal Transfer</option>
+                  <option value="investment">Investment</option>
+                  <option value="reimbursement">Reimbursement</option>
+                  <option value="reimbursed_expense">Reimbursed Expense</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  className="table-input"
+                  value={form.category}
+                  onChange={(event) => updateForm('category', event.target.value)}
+                  placeholder="Category"
+                />
+                <input
+                  className="table-input table-input-secondary"
+                  value={form.subcategory}
+                  onChange={(event) => updateForm('subcategory', event.target.value)}
+                  placeholder="Subcategory"
+                />
+              </td>
+              <td>manual</td>
+              <td className="right">
+                <input
+                  className="table-input right"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amount}
+                  onChange={(event) => updateForm('amount', event.target.value)}
+                  placeholder="0.00"
+                />
+              </td>
+              <td>
+                <div className="action-group">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={createTransactionFromForm}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm(getInitialFormState(direction))
+                      setIsCreateFormOpen(false)
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ) : null
+        }
         onEdit={handleStartEdit}
         onDelete={handleDeleteTransaction}
       />

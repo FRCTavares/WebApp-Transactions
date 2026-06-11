@@ -349,3 +349,22 @@ main {
   }
 }
 
+.inline-create-row td {
+  background: #f0fdf4;
+  border-bottom: 1px solid #bbf7d0;
+}
+
+.table-input {
+  min-width: 0;
+  width: 100%;
+  padding: 6px 8px;
+}
+
+.table-input-secondary {
+  margin-top: 6px;
+}
+
+.inline-create-row .action-group {
+  flex-wrap: nowrap;
+}
+
