@@ -6,6 +6,7 @@ export type TransactionFilterState = {
   category: string
   source: string
   cashflowType: CashflowType | ''
+  month: string
   dateFrom: string
   dateTo: string
 }
@@ -91,6 +92,15 @@ export function TransactionFilters({
       </div>
 
       <div className="form-row">
+        <label>
+          Month
+          <input
+            type="month"
+            value={filters.month}
+            onChange={(event) => onChange('month', event.target.value)}
+          />
+        </label>
+
         <label>
           Date From
           <input

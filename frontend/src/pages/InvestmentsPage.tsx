@@ -21,9 +21,29 @@ function getInvestmentOutflowTotal(transactions: Transaction[]) {
     .reduce((total, transaction) => total + Number(transaction.amount), 0)
 }
 
+function getMonthDateRange(month: string) {
+  if (!month) {
+    return {
+      dateFrom: '',
+      dateTo: '',
+    }
+  }
+
+  const [year, monthNumber] = month.split('-').map(Number)
+  const startDate = `${year}-${String(monthNumber).padStart(2, '0')}-01`
+  const nextMonthDate = new Date(year, monthNumber, 1)
+  const endDate = nextMonthDate.toISOString().slice(0, 10)
+
+  return {
+    dateFrom: startDate,
+    dateTo: endDate,
+  }
+}
+
 export function InvestmentsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [search, setSearch] = useState('')
+  const [month, setMonth] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [source, setSource] = useState('')
@@ -34,12 +54,14 @@ export function InvestmentsPage() {
     setError(null)
     setMessage(null)
 
+    const monthDateRange = getMonthDateRange(month)
+
     listTransactions({
       cashflow_type: 'investment',
       search: search || undefined,
       source: source || undefined,
-      date_from: dateFrom || undefined,
-      date_to: dateTo || undefined,
+      date_from: dateFrom || monthDateRange.dateFrom || undefined,
+      date_to: dateTo || monthDateRange.dateTo || undefined,
       limit: 100,
     })
       .then(setTransactions)
@@ -54,6 +76,7 @@ export function InvestmentsPage() {
 
   function clearFilters() {
     setSearch('')
+    setMonth('')
     setDateFrom('')
     setDateTo('')
     setSource('')
@@ -120,6 +143,15 @@ export function InvestmentsPage() {
               <option value="activobank">ActivoBank</option>
               <option value="trading212">Trading 212</option>
             </select>
+          </label>
+
+          <label>
+            Month
+            <input
+              type="month"
+              value={month}
+              onChange={(event) => setMonth(event.target.value)}
+            />
           </label>
 
           <label>

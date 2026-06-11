@@ -50,6 +50,7 @@ function getInitialFilterState(direction: Direction): TransactionFilterState {
     category: '',
     source: '',
     cashflowType: getDefaultCashflowType(direction),
+    month: '',
     dateFrom: '',
     dateTo: '',
   }
@@ -71,6 +72,25 @@ function getTransactionsTotal(transactions: Transaction[]) {
   return transactions.reduce((total, transaction) => total + Number(transaction.amount), 0)
 }
 
+function getMonthDateRange(month: string) {
+  if (!month) {
+    return {
+      dateFrom: '',
+      dateTo: '',
+    }
+  }
+
+  const [year, monthNumber] = month.split('-').map(Number)
+  const startDate = `${year}-${String(monthNumber).padStart(2, '0')}-01`
+  const nextMonthDate = new Date(year, monthNumber, 1)
+  const endDate = nextMonthDate.toISOString().slice(0, 10)
+
+  return {
+    dateFrom: startDate,
+    dateTo: endDate,
+  }
+}
+
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
@@ -85,14 +105,16 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   function loadTransactions(activeFilters = filters) {
     setError(null)
 
+    const monthDateRange = getMonthDateRange(activeFilters.month)
+
     listTransactions({
       direction,
       cashflow_type: activeFilters.cashflowType || undefined,
       search: activeFilters.search || undefined,
       category: activeFilters.category || undefined,
       source: activeFilters.source || undefined,
-      date_from: activeFilters.dateFrom || undefined,
-      date_to: activeFilters.dateTo || undefined,
+      date_from: activeFilters.dateFrom || monthDateRange.dateFrom || undefined,
+      date_to: activeFilters.dateTo || monthDateRange.dateTo || undefined,
       limit: 100,
     })
       .then(setTransactions)
