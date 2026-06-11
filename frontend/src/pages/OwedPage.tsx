@@ -7,21 +7,12 @@ import {
   updateOwedItem,
 } from '../api/owed'
 import { listTransactions } from '../api/transactions'
+import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItemsTable'
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { OwedSummaryCards } from '../components/owed/OwedSummaryCards'
 import { StatusMessage } from '../components/StatusMessage'
 import type { OwedItem, OwedStatus, Transaction } from '../types/api'
-import { formatDate, formatMoney } from '../utils/format'
-
-type OwedFormState = {
-  person: string
-  reason: string
-  amountTotal: string
-  amountPaid: string
-  dueDate: string
-  linkedTransactionId: string
-  notes: string
-}
+import { formatMoney } from '../utils/format'
 
 function getInitialFormState(): OwedFormState {
   return {
@@ -377,263 +368,32 @@ export function OwedPage() {
         }}
       />
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Person</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Due</th>
-              <th>Linked Tx</th>
-              <th className="right">Total</th>
-              <th className="right">Paid</th>
-              <th className="right">Remaining</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isCreateRowOpen && (
-              <tr className="inline-create-row">
-                <td>
-                  <input
-                    className="table-input"
-                    value={form.person}
-                    onChange={(event) => updateForm('person', event.target.value)}
-                    placeholder="Person"
-                  />
-                </td>
-                <td>
-                  <input
-                    className="table-input"
-                    value={form.reason}
-                    onChange={(event) => updateForm('reason', event.target.value)}
-                    placeholder="Reason"
-                  />
-                  <input
-                    className="table-input table-input-secondary"
-                    value={form.notes}
-                    onChange={(event) => updateForm('notes', event.target.value)}
-                    placeholder="Notes"
-                  />
-                </td>
-                <td>open</td>
-                <td>
-                  <input
-                    className="table-input"
-                    type="date"
-                    value={form.dueDate}
-                    onChange={(event) => updateForm('dueDate', event.target.value)}
-                  />
-                </td>
-                <td>
-                  <select
-                    className="table-input"
-                    value={form.linkedTransactionId}
-                    onChange={(event) => updateFormLinkedTransactionId(event.target.value)}
-                  >
-                    <option value="">Choose transaction</option>
-                    {linkedTransactions.map((transaction) => (
-                      <option key={transaction.id} value={transaction.id}>
-                        {formatLinkedTransactionOption(transaction)}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    className="table-input table-input-secondary"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={form.linkedTransactionId}
-                    onChange={(event) => updateForm('linkedTransactionId', event.target.value)}
-                    placeholder="Manual Tx ID"
-                  />
-                </td>
-                <td className="right">
-                  <input
-                    className="table-input right"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.amountTotal}
-                    onChange={(event) => updateForm('amountTotal', event.target.value)}
-                    placeholder="0.00"
-                  />
-                </td>
-                <td className="right">
-                  <input
-                    className="table-input right"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.amountPaid}
-                    onChange={(event) => updateForm('amountPaid', event.target.value)}
-                    placeholder="0.00"
-                  />
-                </td>
-                <td className="right">-</td>
-                <td>
-                  <div className="action-group">
-                    <button type="button" className="primary-button" onClick={createItemFromForm}>
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setForm(getInitialFormState())
-                        setIsCreateRowOpen(false)
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )}
-
-            {items.length === 0 && !isCreateRowOpen ? (
-              <tr>
-                <td colSpan={9}>
-                  <p className="muted">No owed items found.</p>
-                </td>
-              </tr>
-            ) : (
-              items.map((item) => (
-                editingItem?.id === item.id ? (
-                  <tr key={item.id} className="inline-edit-row">
-                    <td>
-                      <input
-                        className="table-input"
-                        value={editForm.person}
-                        onChange={(event) => updateEditForm('person', event.target.value)}
-                        placeholder="Person"
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="table-input"
-                        value={editForm.reason}
-                        onChange={(event) => updateEditForm('reason', event.target.value)}
-                        placeholder="Reason"
-                      />
-                      <input
-                        className="table-input table-input-secondary"
-                        value={editForm.notes}
-                        onChange={(event) => updateEditForm('notes', event.target.value)}
-                        placeholder="Notes"
-                      />
-                    </td>
-                    <td>{item.status}</td>
-                    <td>
-                      <input
-                        className="table-input"
-                        type="date"
-                        value={editForm.dueDate}
-                        onChange={(event) => updateEditForm('dueDate', event.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <select
-                        className="table-input"
-                        value={editForm.linkedTransactionId}
-                        onChange={(event) => updateEditFormLinkedTransactionId(event.target.value)}
-                      >
-                        <option value="">Choose transaction</option>
-                        {linkedTransactions.map((transaction) => (
-                          <option key={transaction.id} value={transaction.id}>
-                            {formatLinkedTransactionOption(transaction)}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        className="table-input table-input-secondary"
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={editForm.linkedTransactionId}
-                        onChange={(event) => updateEditForm('linkedTransactionId', event.target.value)}
-                        placeholder="Manual Tx ID"
-                      />
-                    </td>
-                    <td className="right">
-                      <input
-                        className="table-input right"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={editForm.amountTotal}
-                        onChange={(event) => updateEditForm('amountTotal', event.target.value)}
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="right">
-                      <input
-                        className="table-input right"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={editForm.amountPaid}
-                        onChange={(event) => updateEditForm('amountPaid', event.target.value)}
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="right">{formatMoney(item.amount_remaining)}</td>
-                    <td>
-                      <div className="action-group">
-                        <button type="button" className="primary-button" onClick={saveEditFromForm}>
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingItem(null)
-                            setEditForm(getInitialFormState())
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={item.id}>
-                    <td>{item.person}</td>
-                    <td>
-                      <div>{item.reason}</div>
-                      {item.notes && <div className="muted small">{item.notes}</div>}
-                    </td>
-                    <td>{item.status}</td>
-                    <td>{formatDate(item.due_date)}</td>
-                    <td>{item.linked_transaction_id ?? '-'}</td>
-                    <td className="right">{formatMoney(item.amount_total)}</td>
-                    <td className="right">{formatMoney(item.amount_paid)}</td>
-                    <td className="right">{formatMoney(item.amount_remaining)}</td>
-                    <td>
-                      <div className="action-group">
-                        <button type="button" onClick={() => handleStartEdit(item)}>
-                          Edit
-                        </button>
-                        {item.status !== 'paid' && item.status !== 'cancelled' && (
-                          <button type="button" onClick={() => handleMarkPaid(item)}>
-                            Mark Paid
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="danger-button"
-                          onClick={() => handleDelete(item)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <OwedItemsTable
+        items={items}
+        linkedTransactions={linkedTransactions}
+        isCreateRowOpen={isCreateRowOpen}
+        form={form}
+        editForm={editForm}
+        editingItem={editingItem}
+        onCreateItem={createItemFromForm}
+        onStartEdit={handleStartEdit}
+        onSaveEdit={saveEditFromForm}
+        onMarkPaid={handleMarkPaid}
+        onDelete={handleDelete}
+        onFormChange={updateForm}
+        onEditFormChange={updateEditForm}
+        onLinkedTransactionChange={updateFormLinkedTransactionId}
+        onEditLinkedTransactionChange={updateEditFormLinkedTransactionId}
+        onCancelCreate={() => {
+          setForm(getInitialFormState())
+          setIsCreateRowOpen(false)
+        }}
+        onCancelEdit={() => {
+          setEditingItem(null)
+          setEditForm(getInitialFormState())
+        }}
+        formatLinkedTransactionOption={formatLinkedTransactionOption}
+      />
     </section>
   )
 }
