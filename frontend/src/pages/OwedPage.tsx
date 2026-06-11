@@ -15,6 +15,7 @@ type OwedFormState = {
   amountTotal: string
   amountPaid: string
   dueDate: string
+  linkedTransactionId: string
   notes: string
 }
 
@@ -33,6 +34,7 @@ function getInitialFormState(): OwedFormState {
     amountTotal: '',
     amountPaid: '',
     dueDate: '',
+    linkedTransactionId: '',
     notes: '',
   }
 }
@@ -44,6 +46,7 @@ function getFormStateFromItem(item: OwedItem): OwedFormState {
     amountTotal: item.amount_total,
     amountPaid: item.amount_paid,
     dueDate: item.due_date ?? '',
+    linkedTransactionId: item.linked_transaction_id?.toString() ?? '',
     notes: item.notes ?? '',
   }
 }
@@ -64,6 +67,20 @@ function getPaidItems(items: OwedItem[]) {
 
 function getCancelledItems(items: OwedItem[]) {
   return items.filter((item) => item.status === 'cancelled')
+}
+
+function parseLinkedTransactionId(value: string) {
+  if (!value.trim()) {
+    return null
+  }
+
+  const parsedValue = Number(value)
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    throw new Error('Linked transaction ID must be a positive whole number.')
+  }
+
+  return parsedValue
 }
 
 export function OwedPage() {
@@ -114,6 +131,15 @@ export function OwedPage() {
     const amountTotal = Math.abs(Number(form.amountTotal))
     const amountPaid = form.amountPaid ? Math.abs(Number(form.amountPaid)) : 0
 
+    let linkedTransactionId: number | null = null
+
+    try {
+      linkedTransactionId = parseLinkedTransactionId(form.linkedTransactionId)
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Invalid linked transaction ID.')
+      return
+    }
+
     if (!form.person || !form.reason || !amountTotal) {
       setError('Person, reason, and a positive total amount are required.')
       return
@@ -131,6 +157,7 @@ export function OwedPage() {
         amount_total: amountTotal.toFixed(2),
         amount_paid: amountPaid.toFixed(2),
         due_date: form.dueDate || null,
+        linked_transaction_id: linkedTransactionId,
         notes: form.notes || null,
       })
 
@@ -162,6 +189,15 @@ export function OwedPage() {
     const amountTotal = Math.abs(Number(editForm.amountTotal))
     const amountPaid = editForm.amountPaid ? Math.abs(Number(editForm.amountPaid)) : 0
 
+    let linkedTransactionId: number | null = null
+
+    try {
+      linkedTransactionId = parseLinkedTransactionId(editForm.linkedTransactionId)
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Invalid linked transaction ID.')
+      return
+    }
+
     if (!editForm.person || !editForm.reason || !amountTotal) {
       setError('Person, reason, and a positive total amount are required.')
       return
@@ -179,6 +215,7 @@ export function OwedPage() {
         amount_total: amountTotal.toFixed(2),
         amount_paid: amountPaid.toFixed(2),
         due_date: editForm.dueDate || null,
+        linked_transaction_id: linkedTransactionId,
         notes: editForm.notes || null,
       })
 
@@ -339,6 +376,7 @@ export function OwedPage() {
               <th>Reason</th>
               <th>Status</th>
               <th>Due</th>
+              <th>Linked Tx</th>
               <th className="right">Total</th>
               <th className="right">Paid</th>
               <th className="right">Remaining</th>
@@ -377,6 +415,17 @@ export function OwedPage() {
                     type="date"
                     value={form.dueDate}
                     onChange={(event) => updateForm('dueDate', event.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    className="table-input"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={form.linkedTransactionId}
+                    onChange={(event) => updateForm('linkedTransactionId', event.target.value)}
+                    placeholder="Tx ID"
                   />
                 </td>
                 <td className="right">
@@ -423,7 +472,7 @@ export function OwedPage() {
 
             {items.length === 0 && !isCreateRowOpen ? (
               <tr>
-                <td colSpan={8}>
+                <td colSpan={9}>
                   <p className="muted">No owed items found.</p>
                 </td>
               </tr>
@@ -460,6 +509,17 @@ export function OwedPage() {
                         type="date"
                         value={editForm.dueDate}
                         onChange={(event) => updateEditForm('dueDate', event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="table-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={editForm.linkedTransactionId}
+                        onChange={(event) => updateEditForm('linkedTransactionId', event.target.value)}
+                        placeholder="Tx ID"
                       />
                     </td>
                     <td className="right">
@@ -511,6 +571,7 @@ export function OwedPage() {
                     </td>
                     <td>{item.status}</td>
                     <td>{formatDate(item.due_date)}</td>
+                    <td>{item.linked_transaction_id ?? '-'}</td>
                     <td className="right">{formatMoney(item.amount_total)}</td>
                     <td className="right">{formatMoney(item.amount_paid)}</td>
                     <td className="right">{formatMoney(item.amount_remaining)}</td>
