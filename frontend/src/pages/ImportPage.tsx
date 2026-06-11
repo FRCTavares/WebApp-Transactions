@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   commitImport,
+  deleteImportBatch,
   listImportBatches,
   listImportBatchTransactions,
   previewImport,
@@ -203,6 +204,33 @@ export function ImportPage() {
     }
   }
 
+  async function handleDeleteBatch(batch: ImportBatch) {
+    const confirmed = window.confirm(
+      `Rollback import batch ${batch.id}? This will delete ${batch.rows_inserted} imported transactions from "${batch.filename}".`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      await deleteImportBatch(batch.id)
+      setMessage(`Import batch ${batch.id} rolled back.`)
+
+      if (selectedBatch?.id === batch.id) {
+        setSelectedBatch(null)
+        setBatchTransactions([])
+      }
+
+      loadBatches()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to rollback import batch')
+    }
+  }
+
   return (
     <section>
       <h1>Import CSV/XLSX</h1>
@@ -319,9 +347,18 @@ export function ImportPage() {
                 <td>{batch.rows_skipped}</td>
                 <td>{batch.status}</td>
                 <td>
-                  <button type="button" onClick={() => handleSelectBatch(batch)}>
-                    {selectedBatch?.id === batch.id ? 'Refresh' : 'View'}
-                  </button>
+                  <div className="action-group">
+                    <button type="button" onClick={() => handleSelectBatch(batch)}>
+                      {selectedBatch?.id === batch.id ? 'Refresh' : 'View'}
+                    </button>
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => handleDeleteBatch(batch)}
+                    >
+                      Rollback
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

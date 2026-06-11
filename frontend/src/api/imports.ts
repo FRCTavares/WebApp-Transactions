@@ -1,4 +1,4 @@
-import { apiGet, apiPostForm } from './client'
+import { apiDelete, apiGet, apiPostForm } from './client'
 import type { ImportBatch, ImportPreviewResponse, Transaction } from '../types/api'
 
 function buildImportForm(source: string, file: File) {
@@ -29,3 +29,8 @@ export function listImportBatches() {
 export function listImportBatchTransactions(batchId: number) {
   return apiGet<Transaction[]>(`/api/import/batches/${batchId}/transactions`)
 }
+
+export function deleteImportBatch(batchId: number) {
+  return apiDelete(`/api/import/batches/${batchId}`)
+}
+
