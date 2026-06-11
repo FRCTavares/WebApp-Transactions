@@ -31,8 +31,8 @@ function getMonthDateRange(month: string) {
 
   const [year, monthNumber] = month.split('-').map(Number)
   const startDate = `${year}-${String(monthNumber).padStart(2, '0')}-01`
-  const nextMonthDate = new Date(year, monthNumber, 1)
-  const endDate = nextMonthDate.toISOString().slice(0, 10)
+  const lastDayOfMonth = new Date(year, monthNumber, 0)
+  const endDate = lastDayOfMonth.toISOString().slice(0, 10)
 
   return {
     dateFrom: startDate,
