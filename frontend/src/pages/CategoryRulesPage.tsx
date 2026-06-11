@@ -24,14 +24,15 @@ import {
   type RuleFormState,
 } from '../components/CategoryRuleForm'
 import { StatusMessage } from '../components/StatusMessage'
+import { CashflowRuleForm, type CashflowRuleFormState } from '../components/rules/CashflowRuleForm'
 import { CashflowRulesTable } from '../components/rules/CashflowRulesTable'
 import { CategorySuggestionsTable } from '../components/rules/CategorySuggestionsTable'
 import { CategoryRulesTable } from '../components/rules/CategoryRulesTable'
 import { DescriptionSuggestionsTable } from '../components/rules/DescriptionSuggestionsTable'
 import { DescriptionRulesTable } from '../components/rules/DescriptionRulesTable'
+import { RulesPageHeader } from '../components/rules/RulesPageHeader'
 import type {
   CashflowRule,
-  CashflowType,
   CategoryRule,
   CategoryRuleSuggestion,
   DescriptionRule,
@@ -47,16 +48,6 @@ const INITIAL_RULE_FORM: RuleFormState = {
   direction: '',
   source: '',
   is_active: true,
-}
-
-type CashflowRuleFormState = {
-  name: string
-  cashflow_type: CashflowType
-  match_text: string
-  match_field: 'description' | 'raw_description' | 'merchant'
-  direction: '' | 'in' | 'out'
-  source: string
-  is_active: boolean
 }
 
 const INITIAL_CASHFLOW_RULE_FORM: CashflowRuleFormState = {
@@ -442,26 +433,11 @@ export function CategoryRulesPage() {
 
   return (
     <section className="rules-page">
-      <div className="page-header">
-        <div>
-          <h1>Categories / Rules</h1>
-          <p className="muted small">
-            Clean descriptions, categorise transactions, and mark transfers or investments.
-          </p>
-        </div>
-
-        <div className="action-group">
-          <button type="button" onClick={handleApplyRules}>
-            Apply category rules
-          </button>
-          <button type="button" onClick={handleApplyDescriptionRules}>
-            Apply description rules
-          </button>
-          <button type="button" onClick={handleApplyCashflowRules}>
-            Apply cashflow rules
-          </button>
-        </div>
-      </div>
+      <RulesPageHeader
+        onApplyCategoryRules={handleApplyRules}
+        onApplyDescriptionRules={handleApplyDescriptionRules}
+        onApplyCashflowRules={handleApplyCashflowRules}
+      />
 
       <StatusMessage error={error} message={message} />
 
@@ -507,100 +483,16 @@ export function CategoryRulesPage() {
           </div>
         </div>
 
-        <form className="rule-form" onSubmit={handleCreateCashflowRule}>
-        <div className="form-row">
-          <label>
-            Name
-            <input
-              value={cashflowRuleForm.name}
-              onChange={(event) => updateCashflowRuleForm('name', event.target.value)}
-              placeholder="Trading 212 investment"
-            />
-          </label>
-
-          <label>
-            Cashflow Type
-            <select
-              value={cashflowRuleForm.cashflow_type}
-              onChange={(event) => updateCashflowRuleForm('cashflow_type', event.target.value)}
-            >
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-              <option value="internal_transfer">Internal Transfer</option>
-              <option value="investment">Investment</option>
-              <option value="reimbursement">Reimbursement</option>
-              <option value="reimbursed_expense">Reimbursed Expense</option>
-            </select>
-          </label>
-
-          <label>
-            Match Text
-            <input
-              value={cashflowRuleForm.match_text}
-              onChange={(event) => updateCashflowRuleForm('match_text', event.target.value)}
-              placeholder="Trading 212"
-            />
-          </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Match Field
-            <select
-              value={cashflowRuleForm.match_field}
-              onChange={(event) => updateCashflowRuleForm('match_field', event.target.value)}
-            >
-              <option value="raw_description">Raw Description</option>
-              <option value="description">Description</option>
-              <option value="merchant">Merchant</option>
-            </select>
-          </label>
-
-          <label>
-            Direction
-            <select
-              value={cashflowRuleForm.direction}
-              onChange={(event) => updateCashflowRuleForm('direction', event.target.value)}
-            >
-              <option value="">Any</option>
-              <option value="in">In</option>
-              <option value="out">Out</option>
-            </select>
-          </label>
-
-          <label>
-            Source
-            <input
-              value={cashflowRuleForm.source}
-              onChange={(event) => updateCashflowRuleForm('source', event.target.value)}
-              placeholder="Optional"
-            />
-          </label>
-        </div>
-
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={cashflowRuleForm.is_active}
-            onChange={(event) => updateCashflowRuleForm('is_active', event.target.checked)}
-          />
-          Active
-        </label>
-
-        <div className="action-group">
-          <button type="submit">Create cashflow rule</button>
-          <button
-            type="button"
-            onClick={() => {
-              setCashflowRuleForm(INITIAL_CASHFLOW_RULE_FORM)
-              setError(null)
-              setMessage(null)
-            }}
-          >
-            Clear
-          </button>
-        </div>
-        </form>
+        <CashflowRuleForm
+          form={cashflowRuleForm}
+          onSubmit={handleCreateCashflowRule}
+          onChange={updateCashflowRuleForm}
+          onClear={() => {
+            setCashflowRuleForm(INITIAL_CASHFLOW_RULE_FORM)
+            setError(null)
+            setMessage(null)
+          }}
+        />
       </section>
 
       <section className="panel-card">

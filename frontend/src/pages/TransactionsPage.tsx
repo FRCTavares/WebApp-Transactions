@@ -408,8 +408,8 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
                   placeholder="0.00"
                 />
               </td>
-              <td>
-                <div className="action-group">
+              <td className="actions-cell">
+                <div className="table-action-group">
                   <button
                     type="button"
                     className="primary-button"
@@ -496,8 +496,8 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
                   placeholder="0.00"
                 />
               </td>
-              <td>
-                <div className="action-group">
+              <td className="actions-cell">
+                <div className="table-action-group">
                   <button
                     type="button"
                     className="primary-button"
