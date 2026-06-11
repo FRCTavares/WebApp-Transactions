@@ -5,8 +5,9 @@ import { OwedPage } from './pages/OwedPage'
 import { ImportPage } from './pages/ImportPage'
 import { CategoryRulesPage } from './pages/CategoryRulesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
+import { CleanupPage } from './pages/CleanupPage'
 
-type Page = 'dashboard' | 'money-in' | 'money-out' | 'investments' | 'owed' | 'import' | 'categories'
+type Page = 'dashboard' | 'money-in' | 'money-out' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
 
 const NAV_ITEMS: { id: Page; label: string }[] = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -14,6 +15,7 @@ const NAV_ITEMS: { id: Page; label: string }[] = [
   { id: 'money-out', label: 'Money Out' },
   { id: 'investments', label: 'Investments' },
   { id: 'owed', label: 'Money Owed To Me' },
+  { id: 'cleanup', label: 'Monthly Review' },
   { id: 'import', label: 'Import CSV/XLSX' },
   { id: 'categories', label: 'Categories / Rules' },
 ]
@@ -45,6 +47,7 @@ function App() {
         {page === 'money-out' && <TransactionsPage direction="out" title="Money Out" />}
         {page === 'investments' && <InvestmentsPage />}
         {page === 'owed' && <OwedPage />}
+        {page === 'cleanup' && <CleanupPage />}
         {page === 'import' && <ImportPage />}
         {page === 'categories' && <CategoryRulesPage />}
       </main>

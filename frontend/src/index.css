@@ -377,3 +377,19 @@ main {
   flex-wrap: nowrap;
 }
 
+
+.review-section {
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  margin-bottom: 4px;
+}
