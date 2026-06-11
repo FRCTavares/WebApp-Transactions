@@ -19,6 +19,10 @@ import { formatDate, formatMoney } from '../utils/format'
 
 const SOURCES = ['revolut', 'activobank', 'trading212']
 
+function getStatusBadgeClass(status: string) {
+  return `badge badge-status-${status.replaceAll('_', '-')}`
+}
+
 function PreviewTransactionsTable({
   title,
   transactions,
@@ -54,8 +58,18 @@ function PreviewTransactionsTable({
                   <div>{transaction.description}</div>
                   <div className="muted small">{transaction.raw_description}</div>
                 </td>
-                <td>{transaction.category ?? '-'}</td>
-                <td>{transaction.direction}</td>
+                <td>
+                  {transaction.category ? (
+                    <span className="badge badge-neutral">{transaction.category}</span>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
+                <td>
+                  <span className={`badge badge-direction-${transaction.direction}`}>
+                    {transaction.direction}
+                  </span>
+                </td>
                 <td className="right">
                   {formatMoney(transaction.amount, transaction.currency)}
                 </td>
@@ -233,40 +247,73 @@ export function ImportPage() {
 
   return (
     <section>
-      <h1>Import CSV/XLSX</h1>
+      <div className="page-header">
+        <div>
+          <h1>Import CSV/XLSX</h1>
+          <p className="muted small">
+            Preview first, check duplicates, then commit only the new rows.
+          </p>
+        </div>
 
-      <div className="form-grid">
-        <label>
-          Source
-          <select value={source} onChange={(event) => setSource(event.target.value)}>
-            {SOURCES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
+        <button type="button" onClick={loadBatches}>
+          Refresh Batches
+        </button>
+      </div>
 
-        <label>
-          File
-          <input
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null)
-              setPreview(null)
-              setMessage(null)
-              setError(null)
-            }}
-          />
-        </label>
+      <div className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Upload file</h2>
+            <p className="muted small">
+              Supported sources: Revolut, ActivoBank, and Trading 212.
+            </p>
+          </div>
+        </div>
 
-        <div className="toolbar">
+        <div className="form-row">
+          <label>
+            Source
+            <select value={source} onChange={(event) => setSource(event.target.value)}>
+              {SOURCES.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            File
+            <input
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null)
+                setPreview(null)
+                setMessage(null)
+                setError(null)
+              }}
+            />
+          </label>
+        </div>
+
+        {file && (
+          <p className="file-help">
+            Selected file: <strong>{file.name}</strong>
+          </p>
+        )}
+
+        <div className="action-group">
           <button type="button" onClick={handlePreview} disabled={isCommitting}>
             Preview
           </button>
-          <button type="button" onClick={handleCommit} disabled={!canCommit}>
-            {isCommitting ? 'Committing...' : 'Commit'}
+          <button
+            type="button"
+            className="primary-button"
+            onClick={handleCommit}
+            disabled={!canCommit}
+          >
+            {isCommitting ? 'Committing...' : 'Commit Import'}
           </button>
         </div>
       </div>
@@ -276,27 +323,27 @@ export function ImportPage() {
       {preview && (
         <>
           <h2>Preview Summary</h2>
-          <div className="cards">
-            <div className="card">
-              <span>Total rows</span>
+          <div className="summary-grid">
+            <article className="summary-card">
+              <h2>Total rows</h2>
               <strong>{preview.rows_total}</strong>
-            </div>
-            <div className="card">
-              <span>Valid</span>
+            </article>
+            <article className="summary-card">
+              <h2>Valid</h2>
               <strong>{preview.rows_valid}</strong>
-            </div>
-            <div className="card">
-              <span>Rows to import</span>
+            </article>
+            <article className="summary-card">
+              <h2>Rows to import</h2>
               <strong>{newTransactions.length}</strong>
-            </div>
-            <div className="card">
-              <span>Duplicates</span>
+            </article>
+            <article className="summary-card">
+              <h2>Duplicates</h2>
               <strong>{preview.rows_duplicates}</strong>
-            </div>
-            <div className="card">
-              <span>Invalid</span>
+            </article>
+            <article className="summary-card">
+              <h2>Invalid</h2>
               <strong>{preview.rows_invalid}</strong>
-            </div>
+            </article>
           </div>
 
           {newTransactions.length === 0 && (
@@ -336,16 +383,30 @@ export function ImportPage() {
             </tr>
           </thead>
           <tbody>
+            {batches.length === 0 && (
+              <tr>
+                <td colSpan={9}>
+                  <p className="muted">No import batches yet.</p>
+                </td>
+              </tr>
+            )}
+
             {batches.map((batch) => (
               <tr key={batch.id}>
                 <td>{batch.id}</td>
-                <td>{batch.source}</td>
+                <td>
+                  <span className="badge badge-source">{batch.source}</span>
+                </td>
                 <td>{batch.filename}</td>
                 <td>{formatDate(batch.imported_at)}</td>
                 <td>{batch.rows_total}</td>
                 <td>{batch.rows_inserted}</td>
                 <td>{batch.rows_skipped}</td>
-                <td>{batch.status}</td>
+                <td>
+                  <span className={getStatusBadgeClass(batch.status)}>
+                    {batch.status}
+                  </span>
+                </td>
                 <td>
                   <div className="action-group">
                     <button type="button" onClick={() => handleSelectBatch(batch)}>
@@ -367,18 +428,22 @@ export function ImportPage() {
       </div>
 
       {selectedBatch && (
-        <>
-          <h2>Batch {selectedBatch.id} Transactions</h2>
-          <p className="muted small">
-            {selectedBatch.filename} · {selectedBatch.source} · imported {formatDate(selectedBatch.imported_at)}
-          </p>
+        <section className="review-section">
+          <div className="section-header">
+            <div>
+              <h2>Batch {selectedBatch.id} Transactions</h2>
+              <p className="muted small">
+                {selectedBatch.filename} · {selectedBatch.source} · imported {formatDate(selectedBatch.imported_at)}
+              </p>
+            </div>
+          </div>
 
           {isLoadingBatchTransactions ? (
             <p className="muted">Loading batch transactions...</p>
           ) : (
             <TransactionTable transactions={batchTransactions} />
           )}
-        </>
+        </section>
       )}
     </section>
   )
