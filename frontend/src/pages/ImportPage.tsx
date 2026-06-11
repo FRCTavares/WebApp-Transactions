@@ -113,6 +113,7 @@ export function ImportPage() {
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch | null>(null)
   const [batchTransactions, setBatchTransactions] = useState<Transaction[]>([])
   const [isLoadingBatchTransactions, setIsLoadingBatchTransactions] = useState(false)
+  const [isCommitting, setIsCommitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -122,7 +123,7 @@ export function ImportPage() {
   const duplicateTransactions = preview?.transactions.filter(
     (transaction) => transaction.is_duplicate,
   ) ?? []
-  const canCommit = Boolean(file && preview && newTransactions.length > 0)
+  const canCommit = Boolean(file && preview && newTransactions.length > 0 && !isCommitting)
 
   function loadBatches() {
     listImportBatches().then(setBatches).catch(() => undefined)
@@ -149,6 +150,10 @@ export function ImportPage() {
   }
 
   async function handleCommit() {
+    if (isCommitting) {
+      return
+    }
+
     if (!file) {
       setError('Choose a file first.')
       return
@@ -166,6 +171,7 @@ export function ImportPage() {
 
     setError(null)
     setMessage(null)
+    setIsCommitting(true)
 
     try {
       await commitImport(source, file)
@@ -176,6 +182,8 @@ export function ImportPage() {
       loadBatches()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to commit import')
+    } finally {
+      setIsCommitting(false)
     }
   }
 
@@ -226,11 +234,11 @@ export function ImportPage() {
         </label>
 
         <div className="toolbar">
-          <button type="button" onClick={handlePreview}>
+          <button type="button" onClick={handlePreview} disabled={isCommitting}>
             Preview
           </button>
           <button type="button" onClick={handleCommit} disabled={!canCommit}>
-            Commit
+            {isCommitting ? 'Committing...' : 'Commit'}
           </button>
         </div>
       </div>
