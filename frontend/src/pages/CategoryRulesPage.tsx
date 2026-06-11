@@ -25,6 +25,9 @@ import {
 } from '../components/CategoryRuleForm'
 import { CategorySelect } from '../components/CategorySelect'
 import { StatusMessage } from '../components/StatusMessage'
+import { CashflowRulesTable } from '../components/rules/CashflowRulesTable'
+import { CategoryRulesTable } from '../components/rules/CategoryRulesTable'
+import { DescriptionRulesTable } from '../components/rules/DescriptionRulesTable'
 import type {
   CashflowRule,
   CashflowType,
@@ -511,32 +514,7 @@ export function CategoryRulesPage() {
       )}
 
       <h2>Description Rules</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Match</th>
-              <th>Clean Description</th>
-              <th>Direction</th>
-              <th>Source</th>
-              <th>Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            {descriptionRules.map((rule) => (
-              <tr key={rule.id}>
-                <td>{rule.name}</td>
-                <td>{rule.match_text}</td>
-                <td>{rule.cleaned_description}</td>
-                <td>{rule.direction ?? '-'}</td>
-                <td>{rule.source ?? '-'}</td>
-                <td>{rule.is_active ? 'yes' : 'no'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DescriptionRulesTable rules={descriptionRules} />
 
       <h2>New Cashflow Rule</h2>
       <form className="manual-form" onSubmit={handleCreateCashflowRule}>
@@ -635,32 +613,7 @@ export function CategoryRulesPage() {
       </form>
 
       <h2>Cashflow Rules</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Match</th>
-              <th>Type</th>
-              <th>Direction</th>
-              <th>Source</th>
-              <th>Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cashflowRules.map((rule) => (
-              <tr key={rule.id}>
-                <td>{rule.name}</td>
-                <td>{rule.match_text}</td>
-                <td>{rule.cashflow_type.replace('_', ' ')}</td>
-                <td>{rule.direction ?? '-'}</td>
-                <td>{rule.source ?? '-'}</td>
-                <td>{rule.is_active ? 'yes' : 'no'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <CashflowRulesTable rules={cashflowRules} />
 
       <h2>New Category Rule</h2>
       <CategoryRuleForm
@@ -743,50 +696,12 @@ export function CategoryRulesPage() {
       )}
 
       <h2>Category Rules</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Match</th>
-              <th>Category</th>
-              <th>Direction</th>
-              <th>Source</th>
-              <th>Active</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.map((rule) => (
-              <tr key={rule.id}>
-                <td>{rule.name}</td>
-                <td>{rule.match_text}</td>
-                <td>{rule.category}</td>
-                <td>{rule.direction ?? '-'}</td>
-                <td>{rule.source ?? '-'}</td>
-                <td>{rule.is_active ? 'yes' : 'no'}</td>
-                <td>
-                  <div className="action-group">
-                    <button type="button" onClick={() => handleStartEditRule(rule)}>
-                      Edit
-                    </button>
-                    <button type="button" onClick={() => handleToggleRule(rule)}>
-                      {rule.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button
-                      type="button"
-                      className="danger-button"
-                      onClick={() => handleDeleteRule(rule)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <CategoryRulesTable
+        rules={rules}
+        onEdit={handleStartEditRule}
+        onToggle={handleToggleRule}
+        onDelete={handleDeleteRule}
+      />
     </section>
   )
 }
