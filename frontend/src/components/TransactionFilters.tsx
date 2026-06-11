@@ -42,9 +42,24 @@ export function TransactionFilters({
   onApply,
   onClear,
 }: TransactionFiltersProps) {
+  const activeFilterCount = [
+    filters.search,
+    filters.category,
+    filters.source,
+    filters.cashflowType,
+    filters.month,
+    filters.dateFrom,
+    filters.dateTo,
+  ].filter(Boolean).length
+
   return (
-    <div className="filter-panel">
-      <h2>Filters</h2>
+    <details className="filter-panel compact-filter-panel">
+      <summary>
+        <span>Filters</span>
+        {activeFilterCount > 0 && (
+          <span className="filter-count">{activeFilterCount} active</span>
+        )}
+      </summary>
 
       <div className="form-row">
         <label>
@@ -128,6 +143,6 @@ export function TransactionFilters({
           Clear Filters
         </button>
       </div>
-    </div>
+    </details>
   )
 }

@@ -99,6 +99,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
   const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -130,6 +131,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     setEditForm(getInitialFormState(direction))
     setFilters(initialFilters)
     setEditingTransaction(null)
+    setIsCreateFormOpen(false)
     loadTransactions(initialFilters)
   }, [direction])
 
@@ -190,6 +192,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       })
 
       setForm(getInitialFormState(direction))
+      setIsCreateFormOpen(false)
       setMessage('Transaction created.')
       loadTransactions()
     } catch (caughtError: unknown) {
@@ -271,16 +274,34 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
   return (
     <section>
-      <h1>{title}</h1>
+      <div className="page-header">
+        <div>
+          <h1>{title}</h1>
+          <p className="muted small">
+            {transactions.length} transactions · {formatMoney(transactionTotal)} total
+          </p>
+        </div>
 
-      <TransactionForm
-        title="Add Manual Transaction"
-        form={form}
-        submitLabel="Add"
-        direction={direction}
-        onSubmit={handleCreateTransaction}
-        onChange={updateForm}
-      />
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => setIsCreateFormOpen((isOpen) => !isOpen)}
+        >
+          {isCreateFormOpen ? 'Close' : '+ Add'}
+        </button>
+      </div>
+
+      {isCreateFormOpen && (
+        <TransactionForm
+          title={`New ${title} Transaction`}
+          form={form}
+          submitLabel="Add"
+          direction={direction}
+          onSubmit={handleCreateTransaction}
+          onChange={updateForm}
+          onCancel={() => setIsCreateFormOpen(false)}
+        />
+      )}
 
       {editingTransaction && (
         <TransactionForm
@@ -302,10 +323,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         onApply={() => loadTransactions()}
         onClear={clearFilters}
       />
-
-      <p className="muted small">
-        {transactions.length} transactions · {formatMoney(transactionTotal)} total
-      </p>
 
       <TransactionTable
         transactions={transactions}
