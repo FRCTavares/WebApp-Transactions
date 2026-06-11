@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatchJson, apiPostJson, buildQuery } from './client'
+import { apiDelete, apiGet, apiGetBlob, apiPatchJson, apiPostJson, buildQuery } from './client'
 import type {
   Transaction,
   TransactionCreatePayload,
@@ -8,6 +8,10 @@ import type {
 
 export function listTransactions(filters: TransactionFilters = {}) {
   return apiGet<Transaction[]>(`/api/transactions${buildQuery(filters)}`)
+}
+
+export function exportTransactionsCsv(filters: TransactionFilters = {}) {
+  return apiGetBlob(`/api/transactions/export${buildQuery(filters)}`)
 }
 
 export function createTransaction(payload: TransactionCreatePayload) {

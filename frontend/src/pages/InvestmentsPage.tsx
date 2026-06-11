@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listTransactions } from '../api/transactions'
+import { exportTransactionsCsv, listTransactions } from '../api/transactions'
 import { StatusMessage } from '../components/StatusMessage'
 import { TransactionTable } from '../components/TransactionTable'
 import type { Transaction } from '../types/api'
@@ -38,6 +38,17 @@ function getMonthDateRange(month: string) {
     dateFrom: startDate,
     dateTo: endDate,
   }
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = objectUrl
+  link.download = filename
+  link.click()
+
+  URL.revokeObjectURL(objectUrl)
 }
 
 function getActiveFilterCount(values: string[]) {
@@ -95,6 +106,29 @@ export function InvestmentsPage() {
       })
   }
 
+  async function handleExportCsv() {
+    setError(null)
+    setMessage(null)
+
+    const monthDateRange = getMonthDateRange(month)
+
+    try {
+      const blob = await exportTransactionsCsv({
+        cashflow_type: 'investment',
+        search: search || undefined,
+        source: source || undefined,
+        date_from: dateFrom || monthDateRange.dateFrom || undefined,
+        date_to: dateTo || monthDateRange.dateTo || undefined,
+        limit: 50000,
+      })
+
+      downloadBlob(blob, 'investment-transactions.csv')
+      setMessage('CSV export downloaded.')
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to export investments')
+    }
+  }
+
   const total = getTransactionsTotal(transactions)
   const inflowTotal = getInvestmentIncomeTotal(transactions)
   const outflowTotal = getInvestmentOutflowTotal(transactions)
@@ -110,9 +144,14 @@ export function InvestmentsPage() {
           </p>
         </div>
 
-        <button type="button" onClick={loadInvestments}>
-          Refresh
-        </button>
+        <div className="action-group">
+          <button type="button" onClick={handleExportCsv}>
+            Export CSV
+          </button>
+          <button type="button" onClick={loadInvestments}>
+            Refresh
+          </button>
+        </div>
       </div>
 
       <StatusMessage error={error} message={message} />

@@ -87,6 +87,14 @@ export async function apiGet<T>(path: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export async function apiGetBlob(path: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`)
+
+  await raiseForBadResponse(response, 'GET', path)
+
+  return response.blob()
+}
+
 export async function apiPostForm<T>(
   path: string,
   formData: FormData,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   createTransaction,
   deleteTransaction,
+  exportTransactionsCsv,
   listTransactions,
   updateTransaction,
 } from '../api/transactions'
@@ -87,6 +88,21 @@ function getMonthDateRange(month: string) {
   }
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = objectUrl
+  link.download = filename
+  link.click()
+
+  URL.revokeObjectURL(objectUrl)
+}
+
+function getExportFilename(direction: Direction) {
+  return direction === 'in' ? 'money-in-transactions.csv' : 'money-out-transactions.csv'
+}
+
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
@@ -118,6 +134,31 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load transactions')
       })
+  }
+
+  async function handleExportCsv() {
+    setError(null)
+    setMessage(null)
+
+    const monthDateRange = getMonthDateRange(filters.month)
+
+    try {
+      const blob = await exportTransactionsCsv({
+        direction,
+        cashflow_type: filters.cashflowType || undefined,
+        search: filters.search || undefined,
+        category: filters.category || undefined,
+        source: filters.source || undefined,
+        date_from: filters.dateFrom || monthDateRange.dateFrom || undefined,
+        date_to: filters.dateTo || monthDateRange.dateTo || undefined,
+        limit: 50000,
+      })
+
+      downloadBlob(blob, getExportFilename(direction))
+      setMessage('CSV export downloaded.')
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to export transactions')
+    }
   }
 
   useEffect(() => {
@@ -276,13 +317,18 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setIsCreateFormOpen((isOpen) => !isOpen)}
-        >
-          {isCreateFormOpen ? 'Close' : '+ Add'}
-        </button>
+        <div className="action-group">
+          <button type="button" onClick={handleExportCsv}>
+            Export CSV
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setIsCreateFormOpen((isOpen) => !isOpen)}
+          >
+            {isCreateFormOpen ? 'Close' : '+ Add'}
+          </button>
+        </div>
       </div>
 
       <StatusMessage error={error} message={message} />
