@@ -5,8 +5,9 @@ import {
   listOwedItems,
   updateOwedItem,
 } from '../api/owed'
+import { listTransactions } from '../api/transactions'
 import { StatusMessage } from '../components/StatusMessage'
-import type { OwedItem, OwedStatus } from '../types/api'
+import type { OwedItem, OwedStatus, Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
 type OwedFormState = {
@@ -83,8 +84,16 @@ function parseLinkedTransactionId(value: string) {
   return parsedValue
 }
 
+function formatLinkedTransactionOption(transaction: Transaction) {
+  return `#${transaction.id} | ${transaction.date} | ${transaction.description} | ${formatMoney(
+    transaction.amount,
+    transaction.currency,
+  )}`
+}
+
 export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
+  const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatus>('')
   const [form, setForm] = useState<OwedFormState>(getInitialFormState)
   const [editForm, setEditForm] = useState<OwedFormState>(getInitialFormState)
@@ -106,9 +115,25 @@ export function OwedPage() {
       })
   }
 
+  function loadLinkedTransactions() {
+    listTransactions({
+      direction: 'out',
+      cashflow_type: 'expense',
+      limit: 100,
+    })
+      .then(setLinkedTransactions)
+      .catch((caughtError: unknown) => {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load linked transaction options')
+      })
+  }
+
   useEffect(() => {
     loadItems()
   }, [statusFilter])
+
+  useEffect(() => {
+    loadLinkedTransactions()
+  }, [])
 
   function updateForm(field: keyof OwedFormState, value: string) {
     setForm((currentForm) => ({
@@ -122,6 +147,14 @@ export function OwedPage() {
       ...currentForm,
       [field]: value,
     }))
+  }
+
+  function updateFormLinkedTransactionId(transactionId: string) {
+    updateForm('linkedTransactionId', transactionId)
+  }
+
+  function updateEditFormLinkedTransactionId(transactionId: string) {
+    updateEditForm('linkedTransactionId', transactionId)
   }
 
   async function createItemFromForm() {
@@ -332,7 +365,13 @@ export function OwedPage() {
           ))}
         </select>
 
-        <button type="button" onClick={() => loadItems()}>
+        <button
+          type="button"
+          onClick={() => {
+            loadItems()
+            loadLinkedTransactions()
+          }}
+        >
           Refresh
         </button>
 
@@ -418,14 +457,26 @@ export function OwedPage() {
                   />
                 </td>
                 <td>
-                  <input
+                  <select
                     className="table-input"
+                    value={form.linkedTransactionId}
+                    onChange={(event) => updateFormLinkedTransactionId(event.target.value)}
+                  >
+                    <option value="">Choose transaction</option>
+                    {linkedTransactions.map((transaction) => (
+                      <option key={transaction.id} value={transaction.id}>
+                        {formatLinkedTransactionOption(transaction)}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    className="table-input table-input-secondary"
                     type="number"
                     min="1"
                     step="1"
                     value={form.linkedTransactionId}
                     onChange={(event) => updateForm('linkedTransactionId', event.target.value)}
-                    placeholder="Tx ID"
+                    placeholder="Manual Tx ID"
                   />
                 </td>
                 <td className="right">
@@ -512,14 +563,26 @@ export function OwedPage() {
                       />
                     </td>
                     <td>
-                      <input
+                      <select
                         className="table-input"
+                        value={editForm.linkedTransactionId}
+                        onChange={(event) => updateEditFormLinkedTransactionId(event.target.value)}
+                      >
+                        <option value="">Choose transaction</option>
+                        {linkedTransactions.map((transaction) => (
+                          <option key={transaction.id} value={transaction.id}>
+                            {formatLinkedTransactionOption(transaction)}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="table-input table-input-secondary"
                         type="number"
                         min="1"
                         step="1"
                         value={editForm.linkedTransactionId}
                         onChange={(event) => updateEditForm('linkedTransactionId', event.target.value)}
-                        placeholder="Tx ID"
+                        placeholder="Manual Tx ID"
                       />
                     </td>
                     <td className="right">
