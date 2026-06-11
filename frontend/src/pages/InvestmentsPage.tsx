@@ -40,6 +40,10 @@ function getMonthDateRange(month: string) {
   }
 }
 
+function getActiveFilterCount(values: string[]) {
+  return values.filter(Boolean).length
+}
+
 export function InvestmentsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [search, setSearch] = useState('')
@@ -94,10 +98,22 @@ export function InvestmentsPage() {
   const total = getTransactionsTotal(transactions)
   const inflowTotal = getInvestmentIncomeTotal(transactions)
   const outflowTotal = getInvestmentOutflowTotal(transactions)
+  const activeFilterCount = getActiveFilterCount([search, month, dateFrom, dateTo, source])
 
   return (
     <section>
-      <h1>Investments</h1>
+      <div className="page-header">
+        <div>
+          <h1>Investments</h1>
+          <p className="muted small">
+            {transactions.length} investment transactions · {formatMoney(total.toFixed(2))} total movements
+          </p>
+        </div>
+
+        <button type="button" onClick={loadInvestments}>
+          Refresh
+        </button>
+      </div>
 
       <StatusMessage error={error} message={message} />
 
@@ -118,8 +134,13 @@ export function InvestmentsPage() {
         </article>
       </div>
 
-      <div className="filter-panel">
-        <h2>Filters</h2>
+      <details className="filter-panel compact-filter-panel">
+        <summary>
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="filter-count">{activeFilterCount} active</span>
+          )}
+        </summary>
 
         <div className="form-row">
           <label>
@@ -181,9 +202,8 @@ export function InvestmentsPage() {
             Clear Filters
           </button>
         </div>
-      </div>
+      </details>
 
-      <h2>Investment Transactions</h2>
       <p className="muted">
         Showing transactions marked as investment. These are excluded from normal Money In and Money Out.
       </p>
