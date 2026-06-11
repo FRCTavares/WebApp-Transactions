@@ -38,6 +38,24 @@ function getInitialFormState(): OwedFormState {
   }
 }
 
+function getItemsTotal(items: OwedItem[], field: 'amount_total' | 'amount_paid' | 'amount_remaining') {
+  return items.reduce((total, item) => total + Number(item[field]), 0)
+}
+
+function getActiveItems(items: OwedItem[]) {
+  return items.filter(
+    (item) => item.status === 'open' || item.status === 'partially_paid',
+  )
+}
+
+function getPaidItems(items: OwedItem[]) {
+  return items.filter((item) => item.status === 'paid')
+}
+
+function getCancelledItems(items: OwedItem[]) {
+  return items.filter((item) => item.status === 'cancelled')
+}
+
 export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatus>('')
@@ -139,6 +157,13 @@ export function OwedPage() {
     }
   }
 
+  const activeItems = getActiveItems(items)
+  const paidItems = getPaidItems(items)
+  const cancelledItems = getCancelledItems(items)
+  const totalStillOwed = getItemsTotal(activeItems, 'amount_remaining')
+  const totalAlreadyReimbursed = getItemsTotal(items, 'amount_paid')
+  const totalOriginalAmount = getItemsTotal(items, 'amount_total')
+
   return (
     <section>
       <h1>Money Owed To Me</h1>
@@ -215,6 +240,28 @@ export function OwedPage() {
 
       <StatusMessage error={error} message={message} />
 
+      <div className="summary-grid">
+        <article className="summary-card">
+          <h2>Still owed to me</h2>
+          <strong>{formatMoney(totalStillOwed.toFixed(2))}</strong>
+        </article>
+
+        <article className="summary-card">
+          <h2>Already reimbursed</h2>
+          <strong>{formatMoney(totalAlreadyReimbursed.toFixed(2))}</strong>
+        </article>
+
+        <article className="summary-card">
+          <h2>Total original amount</h2>
+          <strong>{formatMoney(totalOriginalAmount.toFixed(2))}</strong>
+        </article>
+
+        <article className="summary-card">
+          <h2>Active owed items</h2>
+          <strong>{activeItems.length}</strong>
+        </article>
+      </div>
+
       <div className="toolbar">
         <select
           value={statusFilter}
@@ -230,12 +277,48 @@ export function OwedPage() {
         <button type="button" onClick={() => loadItems()}>
           Refresh
         </button>
+
+        <button type="button" onClick={() => setStatusFilter('')}>
+          All
+        </button>
+
+        <button type="button" onClick={() => setStatusFilter('open')}>
+          Open
+        </button>
+
+        <button type="button" onClick={() => setStatusFilter('partially_paid')}>
+          Partially Paid
+        </button>
+
+        <button type="button" onClick={() => setStatusFilter('paid')}>
+          Paid
+        </button>
       </div>
+
+      <p className="muted">
+        Use this page for reimbursements: things you paid for someone else and need to be paid back for.
+      </p>
 
       {items.length === 0 ? (
         <p className="muted">No owed items found.</p>
       ) : (
-        <div className="table-wrap">
+        <>
+          <div className="cards">
+            <div className="card">
+              <span>Open / partially paid</span>
+              <strong>{activeItems.length}</strong>
+            </div>
+            <div className="card">
+              <span>Paid</span>
+              <strong>{paidItems.length}</strong>
+            </div>
+            <div className="card">
+              <span>Cancelled</span>
+              <strong>{cancelledItems.length}</strong>
+            </div>
+          </div>
+
+          <div className="table-wrap">
           <table>
             <thead>
               <tr>
@@ -282,7 +365,8 @@ export function OwedPage() {
               ))}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </section>
   )
