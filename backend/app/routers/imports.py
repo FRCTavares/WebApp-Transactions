@@ -65,6 +65,14 @@ def list_import_batch_transactions(
     )
 
 
+@router.delete("/batches/{batch_id}")
+def delete_import_batch(
+    batch_id: int,
+    service: ImportService = Depends(get_import_service),
+):
+    return service.delete_import_batch(batch_id)
+
+
 @router.post("/preview", response_model=ImportPreviewResponse)
 async def preview_import(
     source: str = Form(...),

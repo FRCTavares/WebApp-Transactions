@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import extract, func, or_, select
+from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.transaction import Transaction
@@ -167,6 +167,15 @@ class TransactionRepository:
     def delete(self, transaction: Transaction) -> None:
         self.db.delete(transaction)
         self.db.commit()
+
+    def delete_by_import_batch(self, import_batch_id: int) -> int:
+        statement = sqlalchemy_delete(Transaction).where(
+            Transaction.import_batch_id == import_batch_id
+        )
+        result = self.db.execute(statement)
+        self.db.commit()
+
+        return result.rowcount or 0
 
     def exists_by_dedupe_hash(self, dedupe_hash: str) -> bool:
         statement = select(Transaction.id).where(Transaction.dedupe_hash == dedupe_hash)

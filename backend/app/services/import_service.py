@@ -64,6 +64,20 @@ class ImportService:
             offset=offset,
         )
 
+    def delete_import_batch(self, import_batch_id: int) -> dict[str, int | str]:
+        import_batch = self.get_import_batch(import_batch_id)
+
+        deleted_transactions = self.transaction_repository.delete_by_import_batch(
+            import_batch_id=import_batch_id,
+        )
+        self.import_batch_repository.delete(import_batch)
+
+        return {
+            "import_batch_id": import_batch_id,
+            "deleted_transactions": deleted_transactions,
+            "status": "deleted",
+        }
+
     def preview_import_from_file(
         self,
         source: str,

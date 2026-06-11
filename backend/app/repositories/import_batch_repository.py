@@ -47,3 +47,8 @@ class ImportBatchRepository:
 
     def get_by_id(self, import_batch_id: int) -> ImportBatch | None:
         return self.db.get(ImportBatch, import_batch_id)
+
+
+    def delete(self, import_batch: ImportBatch) -> None:
+        self.db.delete(import_batch)
+        self.db.commit()

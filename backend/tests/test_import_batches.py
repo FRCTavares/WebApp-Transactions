@@ -178,3 +178,53 @@ def test_list_import_batch_transactions_returns_404_when_batch_missing(client):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Import batch not found"
+
+def test_delete_import_batch_deletes_batch_and_its_transactions(client, db_session):
+    import_batch = create_import_batch(db_session)
+    other_batch = create_import_batch(
+        db_session,
+        filename="other.csv",
+    )
+
+    transaction_to_delete = create_transaction(
+        db_session,
+        import_batch_id=import_batch.id,
+        transaction_date=date(2026, 5, 1),
+        description="Imported transaction",
+        amount="10.00",
+    )
+    transaction_to_keep = create_transaction(
+        db_session,
+        import_batch_id=other_batch.id,
+        transaction_date=date(2026, 5, 2),
+        description="Other batch transaction",
+        amount="20.00",
+    )
+
+    import_batch_id = import_batch.id
+    other_batch_id = other_batch.id
+    transaction_to_delete_id = transaction_to_delete.id
+    transaction_to_keep_id = transaction_to_keep.id
+
+    response = client.delete(f"/api/import/batches/{import_batch_id}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["import_batch_id"] == import_batch_id
+    assert data["deleted_transactions"] == 1
+    assert data["status"] == "deleted"
+
+    assert db_session.get(ImportBatch, import_batch_id) is None
+    assert db_session.get(Transaction, transaction_to_delete_id) is None
+    assert db_session.get(ImportBatch, other_batch_id) is not None
+    assert db_session.get(Transaction, transaction_to_keep_id) is not None
+
+
+def test_delete_import_batch_returns_404_when_missing(client):
+    response = client.delete("/api/import/batches/999")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Import batch not found"
+
