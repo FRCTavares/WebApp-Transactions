@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatchJson, apiPostJson, buildQuery } from './client'
+import { apiDelete, apiGet, apiGetBlob, apiPatchJson, apiPostJson, buildQuery } from './client'
 import type {
   OwedItem,
   OwedItemCreatePayload,
@@ -8,6 +8,10 @@ import type {
 
 export function listOwedItems(filters: OwedItemFilters = {}) {
   return apiGet<OwedItem[]>(`/api/owed${buildQuery(filters)}`)
+}
+
+export function exportOwedItemsCsv(filters: OwedItemFilters = {}) {
+  return apiGetBlob(`/api/owed/export${buildQuery(filters)}`)
 }
 
 export function createOwedItem(payload: OwedItemCreatePayload) {

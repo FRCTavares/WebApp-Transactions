@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   createOwedItem,
   deleteOwedItem,
+  exportOwedItemsCsv,
   listOwedItems,
   updateOwedItem,
 } from '../api/owed'
@@ -83,6 +84,17 @@ function formatLinkedTransactionOption(transaction: Transaction) {
     transaction.amount,
     transaction.currency,
   )}`
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = objectUrl
+  link.download = filename
+  link.click()
+
+  URL.revokeObjectURL(objectUrl)
 }
 
 export function OwedPage() {
@@ -294,6 +306,23 @@ export function OwedPage() {
     }
   }
 
+  async function handleExportCsv() {
+    setError(null)
+    setMessage(null)
+
+    try {
+      const blob = await exportOwedItemsCsv({
+        status: statusFilter || undefined,
+        limit: 50000,
+      })
+
+      downloadBlob(blob, 'owed-items.csv')
+      setMessage('CSV export downloaded.')
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to export owed items')
+    }
+  }
+
   const activeItems = getActiveItems(items)
   const paidItems = getPaidItems(items)
   const cancelledItems = getCancelledItems(items)
@@ -311,16 +340,21 @@ export function OwedPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => {
-            setEditingItem(null)
-            setIsCreateRowOpen((isOpen) => !isOpen)
-          }}
-        >
-          {isCreateRowOpen ? 'Close' : '+ Add'}
-        </button>
+        <div className="action-group">
+          <button type="button" onClick={handleExportCsv}>
+            Export CSV
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              setEditingItem(null)
+              setIsCreateRowOpen((isOpen) => !isOpen)
+            }}
+          >
+            {isCreateRowOpen ? 'Close' : '+ Add'}
+          </button>
+        </div>
       </div>
 
       <StatusMessage error={error} message={message} />
