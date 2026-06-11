@@ -47,12 +47,19 @@ export function DescriptionSuggestionsTable({
               <tr key={suggestionKey}>
                 <td>{suggestion.raw_description}</td>
                 <td>{suggestion.description}</td>
-                <td>{suggestion.source}</td>
-                <td>{suggestion.direction}</td>
+                <td>
+                  <span className="badge badge-source">{suggestion.source}</span>
+                </td>
+                <td>
+                  <span className={`badge badge-direction-${suggestion.direction}`}>
+                    {suggestion.direction}
+                  </span>
+                </td>
                 <td>{suggestion.count}</td>
                 <td className="right">{formatMoney(suggestion.total)}</td>
                 <td>
                   <input
+                    className="table-input"
                     value={cleanedDescription}
                     onChange={(event) => onDescriptionChange(suggestion, event.target.value)}
                     placeholder={suggestion.description}
@@ -61,6 +68,7 @@ export function DescriptionSuggestionsTable({
                 <td>
                   <button
                     type="button"
+                    className="primary-button"
                     disabled={!cleanedDescription}
                     onClick={() => onAddRule(suggestion)}
                   >

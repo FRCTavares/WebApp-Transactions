@@ -36,10 +36,30 @@ export function CategoryRulesTable({
             <tr key={rule.id}>
               <td>{rule.name}</td>
               <td>{rule.match_text}</td>
-              <td>{rule.category}</td>
-              <td>{rule.direction ?? '-'}</td>
-              <td>{rule.source ?? '-'}</td>
-              <td>{rule.is_active ? 'yes' : 'no'}</td>
+              <td>
+                <span className="badge badge-neutral">{rule.category}</span>
+              </td>
+              <td>
+                {rule.direction ? (
+                  <span className={`badge badge-direction-${rule.direction}`}>
+                    {rule.direction}
+                  </span>
+                ) : (
+                  <span className="muted">-</span>
+                )}
+              </td>
+              <td>
+                {rule.source ? (
+                  <span className="badge badge-source">{rule.source}</span>
+                ) : (
+                  <span className="muted">-</span>
+                )}
+              </td>
+              <td>
+                <span className={`badge ${rule.is_active ? 'badge-active' : 'badge-inactive'}`}>
+                  {rule.is_active ? 'active' : 'inactive'}
+                </span>
+              </td>
               <td>
                 <div className="action-group">
                   <button type="button" onClick={() => onEdit(rule)}>

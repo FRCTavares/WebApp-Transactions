@@ -650,3 +650,37 @@ td[colspan] {
   background: #fef2f2;
   color: #991b1b;
 }
+
+/* Rules page polish */
+.badge-active {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.badge-inactive {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.table-wrap input,
+.table-wrap select {
+  min-width: 180px;
+}
+
+.table-wrap .primary-button {
+  white-space: nowrap;
+}
+
+.table-wrap td:first-child {
+  max-width: 340px;
+}
+
+.table-wrap td:nth-child(2) {
+  max-width: 420px;
+}
+
+.table-wrap td {
+  word-break: break-word;
+}

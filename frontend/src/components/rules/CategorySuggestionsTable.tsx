@@ -43,8 +43,14 @@ export function CategorySuggestionsTable({
             return (
               <tr key={suggestionKey}>
                 <td>{suggestion.description}</td>
-                <td>{suggestion.source}</td>
-                <td>{suggestion.direction}</td>
+                <td>
+                  <span className="badge badge-source">{suggestion.source}</span>
+                </td>
+                <td>
+                  <span className={`badge badge-direction-${suggestion.direction}`}>
+                    {suggestion.direction}
+                  </span>
+                </td>
                 <td>{suggestion.count}</td>
                 <td className="right">{formatMoney(suggestion.total)}</td>
                 <td>
@@ -57,6 +63,7 @@ export function CategorySuggestionsTable({
                 <td>
                   <button
                     type="button"
+                    className="primary-button"
                     disabled={!selectedCategory}
                     onClick={() => onAddRule(suggestion)}
                   >
