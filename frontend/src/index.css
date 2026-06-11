@@ -368,3 +368,12 @@ main {
   flex-wrap: nowrap;
 }
 
+.inline-edit-row td {
+  background: #fffbeb;
+  border-bottom: 1px solid #fde68a;
+}
+
+.inline-edit-row .action-group {
+  flex-wrap: nowrap;
+}
+
