@@ -93,9 +93,21 @@ class ManualFundingResolutionRead(BaseModel):
     transaction_id: int
 
 
+class MatchedTransactionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    date: DateType
+    description: str
+    amount: Decimal
+    currency: str
+    account: str | None = None
+
+
 class InvestmentEventRead(InvestmentEventBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     created_at: DateTimeType
     updated_at: DateTimeType
+    matched_transaction: MatchedTransactionRead | None = None

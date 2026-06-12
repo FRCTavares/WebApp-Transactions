@@ -34,7 +34,7 @@ class InvestmentEventService:
         limit: int = 100,
         offset: int = 0,
     ) -> list[InvestmentEvent]:
-        return self.repository.list(
+        events = self.repository.list(
             source=source,
             event_type=event_type,
             date_from=date_from,
@@ -42,6 +42,8 @@ class InvestmentEventService:
             limit=limit,
             offset=offset,
         )
+
+        return [self._attach_matched_transaction(event) for event in events]
 
     def get_event(self, event_id: int) -> InvestmentEvent:
         event = self.repository.get_by_id(event_id)
@@ -52,7 +54,7 @@ class InvestmentEventService:
                 detail="Investment event not found",
             )
 
-        return event
+        return self._attach_matched_transaction(event)
 
     def update_event(
         self,
@@ -65,6 +67,22 @@ class InvestmentEventService:
     def delete_event(self, event_id: int) -> None:
         event = self.get_event(event_id)
         self.repository.delete(event)
+
+
+    def _attach_matched_transaction(self, event: InvestmentEvent) -> InvestmentEvent:
+        matched_transaction = None
+
+        if (
+            self.transaction_repository is not None
+            and event.matched_transaction_id is not None
+        ):
+            matched_transaction = self.transaction_repository.get_by_id(
+                event.matched_transaction_id
+            )
+
+        event.matched_transaction = matched_transaction
+
+        return event
 
     def resolve_manual_funding(
         self,

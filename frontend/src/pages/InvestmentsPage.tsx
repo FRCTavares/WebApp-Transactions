@@ -422,9 +422,22 @@ export function InvestmentsPage() {
                   {getFundingStatusLabel(event) === '-' ? (
                     <span className="muted">-</span>
                   ) : (
-                    <span className={getFundingBadgeClass(event)}>
-                      {getFundingStatusLabel(event)}
-                    </span>
+                    <>
+                      <span className={getFundingBadgeClass(event)}>
+                        {getFundingStatusLabel(event)}
+                      </span>
+
+                      {event.matched_transaction && (
+                        <span className="muted table-subtext">
+                          Linked #{event.matched_transaction.id} ·{' '}
+                          {formatMoney(
+                            event.matched_transaction.amount,
+                            event.matched_transaction.currency,
+                          )}{' '}
+                          · {formatDate(event.matched_transaction.date)}
+                        </span>
+                      )}
+                    </>
                   )}
                 </td>
                 <td>

@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.models.investment_event import InvestmentEvent
+from app.models.transaction import Transaction
 
 
 def create_event(
@@ -36,6 +37,26 @@ def create_event(
     db_session.refresh(event)
 
     return event
+
+
+def create_transaction(db_session, *, transaction_date, amount):
+    transaction = Transaction(
+        date=transaction_date,
+        description="Trading 212 deposit funding",
+        raw_description="Manual funding transaction",
+        amount=Decimal(amount),
+        direction="out",
+        cashflow_type="investment",
+        source="manual",
+        account="ActivoBank",
+        currency="EUR",
+    )
+
+    db_session.add(transaction)
+    db_session.commit()
+    db_session.refresh(transaction)
+
+    return transaction
 
 
 def test_list_investment_events(client, db_session):
@@ -243,3 +264,65 @@ def test_resolve_manual_funding_rejects_already_resolved_event(client, db_sessio
     )
 
     assert response.status_code == 400
+
+
+def test_list_investment_events_includes_matched_transaction(client, db_session):
+    transaction = create_transaction(
+        db_session,
+        transaction_date=date(2024, 9, 9),
+        amount="34.10",
+    )
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        funding_source="activobank",
+        funding_match_status="manual",
+    )
+    event.matched_transaction_id = transaction.id
+    event.transaction_id = transaction.id
+    db_session.add(event)
+    db_session.commit()
+
+    response = client.get("/api/investment-events")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["id"] == event.id
+    assert data[0]["matched_transaction"]["id"] == transaction.id
+    assert data[0]["matched_transaction"]["amount"] == "34.10"
+    assert data[0]["matched_transaction"]["currency"] == "EUR"
+    assert data[0]["matched_transaction"]["account"] == "ActivoBank"
+
+
+def test_get_investment_event_includes_matched_transaction(client, db_session):
+    transaction = create_transaction(
+        db_session,
+        transaction_date=date(2024, 9, 9),
+        amount="34.10",
+    )
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        funding_source="activobank",
+        funding_match_status="manual",
+    )
+    event.matched_transaction_id = transaction.id
+    event.transaction_id = transaction.id
+    db_session.add(event)
+    db_session.commit()
+
+    response = client.get(f"/api/investment-events/{event.id}")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["matched_transaction"]["id"] == transaction.id
+    assert data["matched_transaction"]["description"] == "Trading 212 deposit funding"

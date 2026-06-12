@@ -73,6 +73,15 @@ export type TransactionUpdatePayload = {
   notes?: string | null
 }
 
+export type MatchedTransaction = {
+  id: number
+  date: string
+  description: string
+  amount: string
+  currency: string
+  account: string | null
+}
+
 export type InvestmentEvent = {
   id: number
   date: string
@@ -98,6 +107,7 @@ export type InvestmentEvent = {
   funding_source: string | null
   funding_match_status: string | null
   matched_transaction_id: number | null
+  matched_transaction: MatchedTransaction | null
   import_batch_id: number | null
   external_id: string | null
   dedupe_hash: string | null
