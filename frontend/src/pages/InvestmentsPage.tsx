@@ -158,6 +158,16 @@ export function InvestmentsPage() {
       return
     }
 
+    const confirmed = window.confirm(
+      `This will create a real Money Out investment transaction for ${formatMoney(
+        fundingForm.eurAmount,
+      )}. Continue?`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
     try {
       await resolveManualFunding(event.id, {
         eur_amount: fundingForm.eurAmount,
