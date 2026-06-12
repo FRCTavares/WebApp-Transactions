@@ -6,10 +6,12 @@ from app.repositories.category_rule_repository import CategoryRuleRepository
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.fx_match import FxMatchPreviewResponse
 from app.schemas.import_batch import ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.transaction import TransactionRead
 from app.services.category_rule_service import CategoryRuleService
+from app.services.fx_match_service import FxMatchService
 from app.services.import_service import ImportService
 
 
@@ -31,6 +33,28 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
         import_batch_repository=import_batch_repository,
         category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
+    )
+
+
+def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
+    transaction_repository = TransactionRepository(db)
+    import_batch_repository = ImportBatchRepository(db)
+    investment_event_repository = InvestmentEventRepository(db)
+    category_rule_repository = CategoryRuleRepository(db)
+    category_rule_service = CategoryRuleService(
+        category_rule_repository=category_rule_repository,
+        transaction_repository=transaction_repository,
+    )
+    import_service = ImportService(
+        transaction_repository=transaction_repository,
+        import_batch_repository=import_batch_repository,
+        category_rule_service=category_rule_service,
+        investment_event_repository=investment_event_repository,
+    )
+
+    return FxMatchService(
+        transaction_repository=transaction_repository,
+        import_service=import_service,
     )
 
 
@@ -106,3 +130,19 @@ async def commit_import(
         file_content=file_content,
         filename=filename,
     )
+
+@router.post("/fx-matches/preview", response_model=FxMatchPreviewResponse)
+async def preview_fx_matches(
+    source: str = Form(...),
+    file: UploadFile = File(...),
+    service: FxMatchService = Depends(get_fx_match_service),
+):
+    file_content = await file.read()
+    filename = file.filename or "uploaded"
+
+    return service.preview_matches_from_file(
+        source=source,
+        file_content=file_content,
+        filename=filename,
+    )
+

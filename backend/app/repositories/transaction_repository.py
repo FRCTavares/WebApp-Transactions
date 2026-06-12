@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
@@ -189,6 +189,29 @@ class TransactionRepository:
             self.db.refresh(transaction)
 
         return transactions
+
+    def list_fx_match_candidates(
+        self,
+        target_date: date,
+        source: str = "activobank",
+        days_window: int = 3,
+        limit: int = 20,
+    ) -> list[Transaction]:
+        date_from = target_date - timedelta(days=days_window)
+        date_to = target_date + timedelta(days=days_window)
+
+        statement = (
+            select(Transaction)
+            .where(Transaction.source == source)
+            .where(Transaction.direction == "out")
+            .where(Transaction.currency == "EUR")
+            .where(Transaction.date >= date_from)
+            .where(Transaction.date <= date_to)
+            .order_by(Transaction.date.desc(), Transaction.id.desc())
+            .limit(limit)
+        )
+
+        return list(self.db.scalars(statement).all())
 
     def get_category_summary(
         self,
