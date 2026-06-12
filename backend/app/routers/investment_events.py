@@ -8,6 +8,7 @@ from app.repositories.investment_event_repository import InvestmentEventReposito
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
     InvestmentEventRead,
+    InvestmentPositionRead,
     ManualFundingResolutionCreate,
     ManualFundingResolutionRead,
 )
@@ -47,6 +48,14 @@ def list_investment_events(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get("/positions", response_model=list[InvestmentPositionRead])
+def list_investment_positions(
+    source: str | None = Query(default=None),
+    service: InvestmentEventService = Depends(get_investment_event_service),
+):
+    return service.list_positions(source=source)
 
 
 @router.get("/{event_id}", response_model=InvestmentEventRead)

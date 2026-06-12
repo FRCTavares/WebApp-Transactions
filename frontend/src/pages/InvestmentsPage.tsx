@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { listInvestmentEvents, resolveManualFunding } from '../api/investmentEvents'
+import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
 import { StatusMessage } from '../components/StatusMessage'
-import type { InvestmentEvent } from '../types/api'
+import type { InvestmentEvent, InvestmentPosition } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
 type ManualFundingFormState = {
@@ -82,6 +82,7 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
 
 export function InvestmentsPage() {
   const [events, setEvents] = useState<InvestmentEvent[]>([])
+  const [positions, setPositions] = useState<InvestmentPosition[]>([])
   const [eventType, setEventType] = useState('')
   const [source, setSource] = useState('')
   const [month, setMonth] = useState('')
@@ -103,16 +104,22 @@ export function InvestmentsPage() {
 
     const monthDateRange = getMonthDateRange(month)
 
-    listInvestmentEvents({
-      source: source || undefined,
-      event_type: eventType || undefined,
-      date_from: dateFrom || monthDateRange.dateFrom || undefined,
-      date_to: dateTo || monthDateRange.dateTo || undefined,
-      limit: 100,
-    })
-      .then(setEvents)
+    Promise.all([
+      listInvestmentEvents({
+        source: source || undefined,
+        event_type: eventType || undefined,
+        date_from: dateFrom || monthDateRange.dateFrom || undefined,
+        date_to: dateTo || monthDateRange.dateTo || undefined,
+        limit: 100,
+      }),
+      listInvestmentPositions(source || undefined),
+    ])
+      .then(([loadedEvents, loadedPositions]) => {
+        setEvents(loadedEvents)
+        setPositions(loadedPositions)
+      })
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment events')
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
       })
   }
 
@@ -127,10 +134,16 @@ export function InvestmentsPage() {
     setDateFrom('')
     setDateTo('')
 
-    listInvestmentEvents({ limit: 100 })
-      .then(setEvents)
+    Promise.all([
+      listInvestmentEvents({ limit: 100 }),
+      listInvestmentPositions(),
+    ])
+      .then(([loadedEvents, loadedPositions]) => {
+        setEvents(loadedEvents)
+        setPositions(loadedPositions)
+      })
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment events')
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
       })
   }
 
@@ -242,7 +255,64 @@ export function InvestmentsPage() {
           <h2>Unmatched deposits</h2>
           <strong>{unmatchedDepositCount}</strong>
         </article>
+
+        <article className="summary-card">
+          <h2>Open positions</h2>
+          <strong>{positions.length}</strong>
+        </article>
       </div>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Positions</h2>
+            <p className="muted small">
+              Static holdings calculated from imported market buy and sell events. Live prices are not included yet.
+            </p>
+          </div>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>ISIN</th>
+                <th className="right">Quantity</th>
+                <th className="right">Average price</th>
+                <th className="right">Total cost</th>
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {positions.map((position) => (
+                <tr key={`${position.source}-${position.account}-${position.ticker}-${position.isin}`}>
+                  <td>
+                    <strong>{position.ticker ?? '-'}</strong>
+                  </td>
+                  <td>{position.instrument_name ?? '-'}</td>
+                  <td>{position.isin ?? '-'}</td>
+                  <td className="right">{position.quantity}</td>
+                  <td className="right">{formatMoney(position.average_price, position.currency)}</td>
+                  <td className="right">{formatMoney(position.total_cost, position.currency)}</td>
+                  <td>
+                    <span className="badge badge-source">{position.currency}</span>
+                  </td>
+                </tr>
+              ))}
+
+              {positions.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="empty-state">
+                    No open positions found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <details className="filter-panel compact-filter-panel">
         <summary>

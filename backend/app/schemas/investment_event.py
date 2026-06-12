@@ -81,6 +81,18 @@ class InvestmentEventUpdate(BaseModel):
     notes: str | None = None
 
 
+class InvestmentPositionRead(BaseModel):
+    source: str
+    account: str | None = None
+    instrument_name: str | None = None
+    ticker: str | None = None
+    isin: str | None = None
+    quantity: Decimal
+    total_cost: Decimal
+    currency: str
+    average_price: Decimal
+
+
 class ManualFundingResolutionCreate(BaseModel):
     eur_amount: Decimal = Field(gt=0)
     date: DateType

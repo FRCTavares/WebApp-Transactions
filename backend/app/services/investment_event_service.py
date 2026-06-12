@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from fastapi import HTTPException, status
 
@@ -44,6 +45,73 @@ class InvestmentEventService:
         )
 
         return [self._attach_matched_transaction(event) for event in events]
+
+    def list_positions(
+        self,
+        source: str | None = None,
+    ) -> list[dict[str, object]]:
+        events = self.repository.list_all(source=source)
+        positions: dict[tuple[str, str | None, str | None, str | None, str], dict[str, object]] = {}
+
+        for event in events:
+            if event.event_type not in {"market_buy", "market_sell"}:
+                continue
+
+            if event.quantity is None or event.quantity <= 0:
+                continue
+
+            key = (
+                event.source,
+                event.account,
+                event.ticker,
+                event.isin,
+                event.currency,
+            )
+
+            if key not in positions:
+                positions[key] = {
+                    "source": event.source,
+                    "account": event.account,
+                    "instrument_name": event.instrument_name,
+                    "ticker": event.ticker,
+                    "isin": event.isin,
+                    "quantity": Decimal("0"),
+                    "total_cost": Decimal("0"),
+                    "currency": event.currency,
+                    "average_price": Decimal("0"),
+                }
+
+            position = positions[key]
+
+            if event.event_type == "market_buy":
+                position["quantity"] = position["quantity"] + event.quantity
+                position["total_cost"] = position["total_cost"] + event.amount
+
+                if position["instrument_name"] is None:
+                    position["instrument_name"] = event.instrument_name
+
+            if event.event_type == "market_sell":
+                position["quantity"] = position["quantity"] - event.quantity
+                position["total_cost"] = position["total_cost"] - event.amount
+
+        open_positions = []
+
+        for position in positions.values():
+            quantity = position["quantity"]
+
+            if quantity <= 0:
+                continue
+
+            position["average_price"] = (position["total_cost"] / quantity).quantize(Decimal("0.00000001"))
+            open_positions.append(position)
+
+        return sorted(
+            open_positions,
+            key=lambda position: (
+                str(position["ticker"] or ""),
+                str(position["instrument_name"] or ""),
+            ),
+        )
 
     def get_event(self, event_id: int) -> InvestmentEvent:
         event = self.repository.get_by_id(event_id)

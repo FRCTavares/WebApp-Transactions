@@ -2,6 +2,7 @@ import { apiGet, apiPostJson, buildQuery } from './client'
 import type {
   InvestmentEvent,
   InvestmentEventFilters,
+  InvestmentPosition,
   ManualFundingResolutionPayload,
   ManualFundingResolutionResponse,
 } from '../types/api'
@@ -12,6 +13,12 @@ export function listInvestmentEvents(filters: InvestmentEventFilters = {}) {
 
 export function getInvestmentEvent(eventId: number) {
   return apiGet<InvestmentEvent>(`/api/investment-events/${eventId}`)
+}
+
+export function listInvestmentPositions(source?: string) {
+  return apiGet<InvestmentPosition[]>(
+    `/api/investment-events/positions${buildQuery({ source })}`,
+  )
 }
 
 export function resolveManualFunding(

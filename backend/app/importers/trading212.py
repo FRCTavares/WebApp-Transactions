@@ -105,6 +105,11 @@ class Trading212Importer:
             raw_description=raw_description,
             amount=amount,
             currency=currency,
+            instrument_name=self._get_optional_value(row, "Name"),
+            ticker=self._get_optional_value(row, "Ticker"),
+            isin=self._get_optional_value(row, "ISIN"),
+            quantity=self._parse_optional_amount(row, "No. of shares"),
+            price=self._parse_optional_amount(row, "Price / share"),
             original_amount=amount,
             original_currency=currency,
             fx_rate_to_eur=Decimal("1") if currency == "EUR" else None,
@@ -282,6 +287,18 @@ class Trading212Importer:
                 continue
 
         raise ValueError(f"Unsupported Trading 212 date format: {value}")
+
+    def _parse_optional_amount(
+        self,
+        row: dict[str, str],
+        field_name: str,
+    ) -> Decimal | None:
+        value = self._get_optional_value(row, field_name)
+
+        if value is None:
+            return None
+
+        return abs(self._parse_amount(value))
 
     def _parse_amount(self, value: str) -> Decimal:
         clean_value = value.strip().replace(",", "")

@@ -48,6 +48,20 @@ class InvestmentEventRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_all(
+        self,
+        source: str | None = None,
+    ) -> list[InvestmentEvent]:
+        statement = select(InvestmentEvent).order_by(
+            InvestmentEvent.date.asc(),
+            InvestmentEvent.id.asc(),
+        )
+
+        if source is not None:
+            statement = statement.where(InvestmentEvent.source == source)
+
+        return list(self.db.scalars(statement).all())
+
     def list_by_import_batch(
         self,
         import_batch_id: int,
