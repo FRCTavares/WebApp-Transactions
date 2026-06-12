@@ -48,6 +48,9 @@ class ImportPreviewInvestmentEvent(BaseModel):
     fx_rate_to_eur: Decimal | None = None
     fx_rate_source: str | None = None
     transaction_id: int | None = None
+    funding_source: str | None = None
+    funding_match_status: str | None = None
+    matched_transaction_id: int | None = None
     external_id: str | None = None
     notes: str | None = None
     dedupe_hash: str

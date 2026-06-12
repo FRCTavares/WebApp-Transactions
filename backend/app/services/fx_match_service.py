@@ -10,7 +10,7 @@ from app.schemas.fx_match import (
     FxMatchPreviewResponse,
     PendingFxDepositMatch,
 )
-from app.schemas.import_preview import ImportPreviewTransaction
+from app.schemas.import_preview import ImportPreviewInvestmentEvent
 from app.services.import_service import ImportService
 
 
@@ -44,9 +44,9 @@ class FxMatchService:
         )
 
         pending_deposits = [
-            transaction
-            for transaction in preview.transactions
-            if self._is_pending_trading212_deposit(transaction)
+            event
+            for event in preview.investment_events
+            if self._is_pending_trading212_deposit(event)
         ]
 
         return FxMatchPreviewResponse(
@@ -59,19 +59,18 @@ class FxMatchService:
 
     def _is_pending_trading212_deposit(
         self,
-        transaction: ImportPreviewTransaction,
+        transaction: ImportPreviewInvestmentEvent,
     ) -> bool:
         return (
             not transaction.is_duplicate
             and transaction.source == "trading212"
-            and transaction.direction == "out"
-            and transaction.cashflow_type == "investment"
+            and transaction.event_type == "deposit"
             and transaction.fx_rate_source == "pending"
         )
 
     def _build_pending_deposit_match(
         self,
-        pending_deposit: ImportPreviewTransaction,
+        pending_deposit: ImportPreviewInvestmentEvent,
     ) -> PendingFxDepositMatch:
         candidates = self.transaction_repository.list_fx_match_candidates(
             target_date=pending_deposit.date,
@@ -105,7 +104,7 @@ class FxMatchService:
 
     def _build_candidate(
         self,
-        pending_deposit: ImportPreviewTransaction,
+        pending_deposit: ImportPreviewInvestmentEvent,
         transaction: Transaction,
     ) -> FxMatchCandidate:
         date_distance_days = abs((transaction.date - pending_deposit.date).days)
@@ -131,7 +130,7 @@ class FxMatchService:
 
     def _score_candidate(
         self,
-        pending_deposit: ImportPreviewTransaction,
+        pending_deposit: ImportPreviewInvestmentEvent,
         transaction: Transaction,
         date_distance_days: int,
     ) -> Decimal:

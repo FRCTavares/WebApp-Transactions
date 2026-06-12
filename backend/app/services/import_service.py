@@ -353,24 +353,15 @@ class ImportService:
                 and preview_transaction.fx_rate_source == "pending"
             )
         ]
-        pending_event_rows = [
-            preview_event.row_number
-            for preview_event in preview.investment_events
-            if (
-                not preview_event.is_duplicate
-                and preview_event.fx_rate_source == "pending"
-            )
-        ]
-
-        if not pending_transaction_rows and not pending_event_rows:
+        if not pending_transaction_rows:
             return
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "message": "Import contains rows with pending FX conversion. Preview is allowed, but commit is blocked until EUR conversion is resolved.",
+                "message": "Import contains transaction rows with pending FX conversion. Preview is allowed, but commit is blocked until EUR conversion is resolved.",
                 "pending_transaction_rows": pending_transaction_rows,
-                "pending_investment_event_rows": pending_event_rows,
+                "pending_investment_event_rows": [],
             },
         )
 
@@ -443,6 +434,9 @@ class ImportService:
                     fx_rate_to_eur=preview_event.fx_rate_to_eur,
                     fx_rate_source=preview_event.fx_rate_source,
                     transaction_id=preview_event.transaction_id,
+                    funding_source=preview_event.funding_source,
+                    funding_match_status=preview_event.funding_match_status,
+                    matched_transaction_id=preview_event.matched_transaction_id,
                     external_id=preview_event.external_id,
                     dedupe_hash=preview_event.dedupe_hash,
                     import_batch_id=import_batch_id,
@@ -521,6 +515,9 @@ class ImportService:
             fx_rate_to_eur=event.fx_rate_to_eur,
             fx_rate_source=event.fx_rate_source,
             transaction_id=event.transaction_id,
+            funding_source=event.funding_source,
+            funding_match_status=event.funding_match_status,
+            matched_transaction_id=event.matched_transaction_id,
             external_id=event.external_id,
             notes=event.notes,
             dedupe_hash=dedupe_hash,

@@ -43,6 +43,9 @@ class InvestmentEvent(Base):
     fx_rate_source: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
 
     transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    funding_source: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
+    funding_match_status: Mapped[Optional[str]] = mapped_column(String(30), nullable=True, index=True)
+    matched_transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
     import_batch_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
     external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)

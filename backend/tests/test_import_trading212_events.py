@@ -26,15 +26,15 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
     assert preview.rows_total == 3
     assert preview.rows_valid == 3
     assert preview.rows_duplicates == 0
-    assert len(preview.transactions) == 1
-    assert len(preview.investment_events) == 2
-
-    assert preview.transactions[0].description == "Bank Transfer"
-    assert preview.transactions[0].direction == "out"
-    assert preview.transactions[0].cashflow_type == "investment"
+    assert len(preview.transactions) == 0
+    assert len(preview.investment_events) == 3
 
     assert preview.investment_events[0].event_type == "market_buy"
     assert preview.investment_events[0].amount == Decimal("12.34")
+
+    assert preview.investment_events[1].event_type == "deposit"
+    assert preview.investment_events[1].funding_source == "activobank"
+    assert preview.investment_events[1].funding_match_status == "unmatched"
 
     result = service.commit_import(
         source="trading212",
@@ -43,12 +43,12 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
     )
 
     assert result["rows_inserted"] == 3
-    assert result["transactions_inserted"] == 1
-    assert result["investment_events_inserted"] == 2
+    assert result["transactions_inserted"] == 0
+    assert result["investment_events_inserted"] == 3
 
     transactions = transaction_repository.list(source="trading212")
     events = investment_event_repository.list(source="trading212")
 
-    assert len(transactions) == 1
-    assert len(events) == 2
-    assert events[0].event_type in {"interest", "market_buy"}
+    assert len(transactions) == 0
+    assert len(events) == 3
+    assert {event.event_type for event in events} == {"deposit", "interest", "market_buy"}

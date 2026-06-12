@@ -94,11 +94,13 @@ class Trading212Importer:
         )
         amount = abs(self._parse_amount(amount_text))
 
+        event_type = self._get_event_type(action=action, description=description)
+
         return NormalisedInvestmentEvent(
             date=self._parse_date(time),
             source=self.source,
             account=self.account,
-            event_type=self._get_event_type(action=action, description=description),
+            event_type=event_type,
             description=description,
             raw_description=raw_description,
             amount=amount,
@@ -107,6 +109,8 @@ class Trading212Importer:
             original_currency=currency,
             fx_rate_to_eur=Decimal("1") if currency == "EUR" else None,
             fx_rate_source="source_currency" if currency == "EUR" else "pending",
+            funding_source="activobank" if event_type in {"deposit", "withdrawal"} else None,
+            funding_match_status="unmatched" if event_type in {"deposit", "withdrawal"} else None,
             external_id=external_id,
             notes=action,
         )
@@ -127,9 +131,15 @@ class Trading212Importer:
             "interest on cash",
             "fx conversion",
             "currency conversion",
+            "bank transfer",
+            "deposit",
+            "withdrawal",
         )
 
-        return any(marker in combined_text for marker in investment_markers)
+        return (
+            any(marker in combined_text for marker in investment_markers)
+            or description_text.startswith("transaction id:")
+        )
 
     def _get_event_type(
         self,
@@ -139,6 +149,16 @@ class Trading212Importer:
         action_text = (action or "").strip().lower()
         description_text = description.strip().lower()
         combined_text = f"{action_text} {description_text}"
+
+        if (
+            "bank transfer" in combined_text
+            or "deposit" in combined_text
+            or description_text.startswith("transaction id:")
+        ):
+            return "deposit"
+
+        if "withdrawal" in combined_text:
+            return "withdrawal"
 
         if "market buy" in combined_text:
             return "market_buy"

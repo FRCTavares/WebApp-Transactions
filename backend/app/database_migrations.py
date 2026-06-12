@@ -1,16 +1,16 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 
 
 def run_startup_migrations(engine: Engine) -> None:
     """Small SQLite-safe migrations until the project adopts Alembic."""
 
-    inspector = inspect(engine)
-    transaction_columns = {
-        column["name"]
-        for column in inspector.get_columns("transactions")
-    }
+    _run_transaction_migrations(engine=engine)
+    _run_investment_event_migrations(engine=engine)
 
+
+def _run_transaction_migrations(engine: Engine) -> None:
     transaction_column_migrations = {
         "original_amount": "ALTER TABLE transactions ADD COLUMN original_amount NUMERIC(12, 2)",
         "original_currency": "ALTER TABLE transactions ADD COLUMN original_currency VARCHAR(3)",
@@ -19,22 +19,84 @@ def run_startup_migrations(engine: Engine) -> None:
     }
 
     for column_name, sql in transaction_column_migrations.items():
-        if column_name not in transaction_columns:
-            with engine.begin() as connection:
-                connection.execute(text(sql))
+        _add_column_if_missing(
+            engine=engine,
+            table_name="transactions",
+            column_name=column_name,
+            sql=sql,
+        )
 
-    if "cashflow_type" not in transaction_columns:
+    if _column_exists(
+        engine=engine,
+        table_name="transactions",
+        column_name="cashflow_type",
+    ):
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "ALTER TABLE transactions "
+                "ADD COLUMN cashflow_type VARCHAR(30) NOT NULL DEFAULT 'expense'"
+            )
+        )
+        connection.execute(
+            text(
+                "UPDATE transactions "
+                "SET cashflow_type = 'income' "
+                "WHERE direction = 'in'"
+            )
+        )
+
+
+def _run_investment_event_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="investment_events"):
+        return
+
+    investment_event_column_migrations = {
+        "funding_source": "ALTER TABLE investment_events ADD COLUMN funding_source VARCHAR(50)",
+        "funding_match_status": "ALTER TABLE investment_events ADD COLUMN funding_match_status VARCHAR(30)",
+        "matched_transaction_id": "ALTER TABLE investment_events ADD COLUMN matched_transaction_id INTEGER",
+    }
+
+    for column_name, sql in investment_event_column_migrations.items():
+        _add_column_if_missing(
+            engine=engine,
+            table_name="investment_events",
+            column_name=column_name,
+            sql=sql,
+        )
+
+
+def _table_exists(engine: Engine, table_name: str) -> bool:
+    inspector = inspect(engine)
+    return table_name in inspector.get_table_names()
+
+
+def _column_exists(engine: Engine, table_name: str, column_name: str) -> bool:
+    inspector = inspect(engine)
+    columns = {column["name"] for column in inspector.get_columns(table_name)}
+    return column_name in columns
+
+
+def _add_column_if_missing(
+    engine: Engine,
+    table_name: str,
+    column_name: str,
+    sql: str,
+) -> None:
+    if _column_exists(
+        engine=engine,
+        table_name=table_name,
+        column_name=column_name,
+    ):
+        return
+
+    try:
         with engine.begin() as connection:
-            connection.execute(
-                text(
-                    "ALTER TABLE transactions "
-                    "ADD COLUMN cashflow_type VARCHAR(30) NOT NULL DEFAULT 'expense'"
-                )
-            )
-            connection.execute(
-                text(
-                    "UPDATE transactions "
-                    "SET cashflow_type = 'income' "
-                    "WHERE direction = 'in'"
-                )
-            )
+            connection.execute(text(sql))
+    except OperationalError as error:
+        if "duplicate column name" in str(error).lower():
+            return
+
+        raise

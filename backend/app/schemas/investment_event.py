@@ -32,6 +32,9 @@ class InvestmentEventBase(BaseModel):
     fx_rate_source: str | None = None
 
     transaction_id: int | None = None
+    funding_source: str | None = None
+    funding_match_status: str | None = None
+    matched_transaction_id: int | None = None
     import_batch_id: int | None = None
     external_id: str | None = None
     dedupe_hash: str | None = None
@@ -69,6 +72,9 @@ class InvestmentEventUpdate(BaseModel):
     fx_rate_source: str | None = None
 
     transaction_id: int | None = None
+    funding_source: str | None = None
+    funding_match_status: str | None = None
+    matched_transaction_id: int | None = None
     import_batch_id: int | None = None
     external_id: str | None = None
     dedupe_hash: str | None = None
