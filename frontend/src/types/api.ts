@@ -73,6 +73,48 @@ export type TransactionUpdatePayload = {
   notes?: string | null
 }
 
+export type InvestmentEvent = {
+  id: number
+  date: string
+  source: string
+  account: string | null
+  event_type: string
+  description: string
+  raw_description: string
+  instrument_name: string | null
+  ticker: string | null
+  isin: string | null
+  quantity: string | null
+  price: string | null
+  fees: string | null
+  taxes: string | null
+  amount: string
+  currency: string
+  original_amount: string | null
+  original_currency: string | null
+  fx_rate_to_eur: string | null
+  fx_rate_source: string | null
+  transaction_id: number | null
+  funding_source: string | null
+  funding_match_status: string | null
+  matched_transaction_id: number | null
+  import_batch_id: number | null
+  external_id: string | null
+  dedupe_hash: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InvestmentEventFilters = {
+  source?: string
+  event_type?: string
+  date_from?: string
+  date_to?: string
+  limit?: number
+  offset?: number
+}
+
 export type OwedStatus = 'open' | 'partially_paid' | 'paid' | 'cancelled'
 
 export type OwedItem = {
@@ -191,6 +233,9 @@ export type ImportPreviewInvestmentEvent = {
   fx_rate_to_eur: string | null
   fx_rate_source: string | null
   transaction_id: number | null
+  funding_source: string | null
+  funding_match_status: string | null
+  matched_transaction_id: number | null
   external_id: string | null
   notes: string | null
   dedupe_hash: string

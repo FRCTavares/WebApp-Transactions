@@ -1,25 +1,8 @@
 import { useEffect, useState } from 'react'
-import { exportTransactionsCsv, listTransactions } from '../api/transactions'
+import { listInvestmentEvents } from '../api/investmentEvents'
 import { StatusMessage } from '../components/StatusMessage'
-import { TransactionTable } from '../components/TransactionTable'
-import type { Transaction } from '../types/api'
-import { formatMoney } from '../utils/format'
-
-function getTransactionsTotal(transactions: Transaction[]) {
-  return transactions.reduce((total, transaction) => total + Number(transaction.amount), 0)
-}
-
-function getInvestmentIncomeTotal(transactions: Transaction[]) {
-  return transactions
-    .filter((transaction) => transaction.direction === 'in')
-    .reduce((total, transaction) => total + Number(transaction.amount), 0)
-}
-
-function getInvestmentOutflowTotal(transactions: Transaction[]) {
-  return transactions
-    .filter((transaction) => transaction.direction === 'out')
-    .reduce((total, transaction) => total + Number(transaction.amount), 0)
-}
+import type { InvestmentEvent } from '../types/api'
+import { formatDate, formatMoney } from '../utils/format'
 
 function getMonthDateRange(month: string) {
   if (!month) {
@@ -32,108 +15,92 @@ function getMonthDateRange(month: string) {
   const [year, monthNumber] = month.split('-').map(Number)
   const monthText = String(monthNumber).padStart(2, '0')
   const lastDay = new Date(year, monthNumber, 0).getDate()
-  const startDate = `${year}-${monthText}-01`
-  const endDate = `${year}-${monthText}-${String(lastDay).padStart(2, '0')}`
 
   return {
-    dateFrom: startDate,
-    dateTo: endDate,
+    dateFrom: `${year}-${monthText}-01`,
+    dateTo: `${year}-${monthText}-${String(lastDay).padStart(2, '0')}`,
   }
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const objectUrl = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-
-  link.href = objectUrl
-  link.download = filename
-  link.click()
-
-  URL.revokeObjectURL(objectUrl)
 }
 
 function getActiveFilterCount(values: string[]) {
   return values.filter(Boolean).length
 }
 
+function getEventTypeLabel(eventType: string) {
+  return eventType
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+function getFundingStatusLabel(event: InvestmentEvent) {
+  if (!event.funding_source && !event.funding_match_status) {
+    return '-'
+  }
+
+  const source = event.funding_source ?? 'Unknown source'
+  const status = event.funding_match_status ?? 'unknown'
+
+  return `${source} · ${status}`
+}
+
+function getEventCount(events: InvestmentEvent[], eventType: string) {
+  return events.filter((event) => event.event_type === eventType).length
+}
+
 export function InvestmentsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [search, setSearch] = useState('')
+  const [events, setEvents] = useState<InvestmentEvent[]>([])
+  const [eventType, setEventType] = useState('')
+  const [source, setSource] = useState('')
   const [month, setMonth] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [source, setSource] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  function loadInvestments() {
+  function loadEvents() {
     setError(null)
     setMessage(null)
 
     const monthDateRange = getMonthDateRange(month)
 
-    listTransactions({
-      cashflow_type: 'investment',
-      search: search || undefined,
+    listInvestmentEvents({
       source: source || undefined,
+      event_type: eventType || undefined,
       date_from: dateFrom || monthDateRange.dateFrom || undefined,
       date_to: dateTo || monthDateRange.dateTo || undefined,
       limit: 100,
     })
-      .then(setTransactions)
+      .then(setEvents)
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investments')
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment events')
       })
   }
 
   useEffect(() => {
-    loadInvestments()
+    loadEvents()
   }, [])
 
   function clearFilters() {
-    setSearch('')
+    setEventType('')
+    setSource('')
     setMonth('')
     setDateFrom('')
     setDateTo('')
-    setSource('')
 
-    listTransactions({
-      cashflow_type: 'investment',
-      limit: 100,
-    })
-      .then(setTransactions)
+    listInvestmentEvents({ limit: 100 })
+      .then(setEvents)
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investments')
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment events')
       })
   }
 
-  async function handleExportCsv() {
-    setError(null)
-    setMessage(null)
-
-    const monthDateRange = getMonthDateRange(month)
-
-    try {
-      const blob = await exportTransactionsCsv({
-        cashflow_type: 'investment',
-        search: search || undefined,
-        source: source || undefined,
-        date_from: dateFrom || monthDateRange.dateFrom || undefined,
-        date_to: dateTo || monthDateRange.dateTo || undefined,
-        limit: 50000,
-      })
-
-      downloadBlob(blob, 'investment-transactions.csv')
-      setMessage('CSV export downloaded.')
-    } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to export investments')
-    }
-  }
-
-  const total = getTransactionsTotal(transactions)
-  const inflowTotal = getInvestmentIncomeTotal(transactions)
-  const outflowTotal = getInvestmentOutflowTotal(transactions)
-  const activeFilterCount = getActiveFilterCount([search, month, dateFrom, dateTo, source])
+  const activeFilterCount = getActiveFilterCount([eventType, source, month, dateFrom, dateTo])
+  const depositCount = getEventCount(events, 'deposit')
+  const marketBuyCount = getEventCount(events, 'market_buy')
+  const unmatchedDepositCount = events.filter(
+    (event) => event.event_type === 'deposit' && event.funding_match_status === 'unmatched',
+  ).length
 
   return (
     <section>
@@ -141,15 +108,12 @@ export function InvestmentsPage() {
         <div>
           <h1>Investments</h1>
           <p className="muted small">
-            {transactions.length} investment transactions · {formatMoney(total.toFixed(2))} total movements
+            {events.length} investment events loaded from broker imports.
           </p>
         </div>
 
         <div className="action-group">
-          <button type="button" onClick={handleExportCsv}>
-            Export CSV
-          </button>
-          <button type="button" onClick={loadInvestments}>
+          <button type="button" onClick={loadEvents}>
             Refresh
           </button>
         </div>
@@ -159,18 +123,23 @@ export function InvestmentsPage() {
 
       <div className="summary-grid">
         <article className="summary-card">
-          <h2>Total investment movements</h2>
-          <strong>{formatMoney(total.toFixed(2))}</strong>
+          <h2>Investment events</h2>
+          <strong>{events.length}</strong>
         </article>
 
         <article className="summary-card">
-          <h2>Investment inflows</h2>
-          <strong>{formatMoney(inflowTotal.toFixed(2))}</strong>
+          <h2>Deposits</h2>
+          <strong>{depositCount}</strong>
         </article>
 
         <article className="summary-card">
-          <h2>Investment outflows</h2>
-          <strong>{formatMoney(outflowTotal.toFixed(2))}</strong>
+          <h2>Market buys</h2>
+          <strong>{marketBuyCount}</strong>
+        </article>
+
+        <article className="summary-card">
+          <h2>Unmatched deposits</h2>
+          <strong>{unmatchedDepositCount}</strong>
         </article>
       </div>
 
@@ -184,12 +153,20 @@ export function InvestmentsPage() {
 
         <div className="form-row">
           <label>
-            Search
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search description"
-            />
+            Event Type
+            <select
+              value={eventType}
+              onChange={(event) => setEventType(event.target.value)}
+            >
+              <option value="">All event types</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+              <option value="market_buy">Market Buy</option>
+              <option value="market_sell">Market Sell</option>
+              <option value="dividend">Dividend</option>
+              <option value="interest">Interest</option>
+              <option value="fx_conversion">FX Conversion</option>
+            </select>
           </label>
 
           <label>
@@ -199,10 +176,8 @@ export function InvestmentsPage() {
               onChange={(event) => setSource(event.target.value)}
             >
               <option value="">All sources</option>
-              <option value="manual">Manual</option>
-              <option value="revolut">Revolut</option>
-              <option value="activobank">ActivoBank</option>
               <option value="trading212">Trading 212</option>
+              <option value="manual">Manual</option>
             </select>
           </label>
 
@@ -235,7 +210,7 @@ export function InvestmentsPage() {
         </div>
 
         <div className="action-group">
-          <button type="button" onClick={loadInvestments}>
+          <button type="button" onClick={loadEvents}>
             Apply Filters
           </button>
           <button type="button" onClick={clearFilters}>
@@ -245,10 +220,52 @@ export function InvestmentsPage() {
       </details>
 
       <p className="muted">
-        Showing transactions marked as investment. These are excluded from normal Money In and Money Out.
+        Investment events are broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
       </p>
 
-      <TransactionTable transactions={transactions} />
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Original</th>
+              <th>Funding</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event) => (
+              <tr key={event.id}>
+                <td>{formatDate(event.date)}</td>
+                <td>{getEventTypeLabel(event.event_type)}</td>
+                <td>
+                  <strong>{event.description}</strong>
+                  <span className="muted table-subtext">{event.raw_description}</span>
+                </td>
+                <td>{formatMoney(event.amount, event.currency)}</td>
+                <td>
+                  {event.original_amount && event.original_currency
+                    ? formatMoney(event.original_amount, event.original_currency)
+                    : '-'}
+                </td>
+                <td>{getFundingStatusLabel(event)}</td>
+                <td>{event.source}</td>
+              </tr>
+            ))}
+
+            {events.length === 0 && (
+              <tr>
+                <td colSpan={7} className="empty-state">
+                  No investment events found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }
