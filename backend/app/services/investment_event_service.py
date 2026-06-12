@@ -4,12 +4,23 @@ from fastapi import HTTPException, status
 
 from app.models.investment_event import InvestmentEvent
 from app.repositories.investment_event_repository import InvestmentEventRepository
-from app.schemas.investment_event import InvestmentEventCreate, InvestmentEventUpdate
+from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.investment_event import (
+    InvestmentEventCreate,
+    InvestmentEventUpdate,
+    ManualFundingResolutionCreate,
+)
+from app.schemas.transaction import TransactionCreate
 
 
 class InvestmentEventService:
-    def __init__(self, repository: InvestmentEventRepository) -> None:
+    def __init__(
+        self,
+        repository: InvestmentEventRepository,
+        transaction_repository: TransactionRepository | None = None,
+    ) -> None:
         self.repository = repository
+        self.transaction_repository = transaction_repository
 
     def create_event(self, event_data: InvestmentEventCreate) -> InvestmentEvent:
         return self.repository.create(event_data)
@@ -54,3 +65,63 @@ class InvestmentEventService:
     def delete_event(self, event_id: int) -> None:
         event = self.get_event(event_id)
         self.repository.delete(event)
+
+    def resolve_manual_funding(
+        self,
+        event_id: int,
+        resolution_data: ManualFundingResolutionCreate,
+    ) -> tuple[InvestmentEvent, int]:
+        if self.transaction_repository is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Transaction repository is required",
+            )
+
+        event = self.get_event(event_id)
+
+        if event.event_type != "deposit":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only deposit investment events can be manually resolved",
+            )
+
+        if event.funding_match_status != "unmatched":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only unmatched funding events can be manually resolved",
+            )
+
+        transaction = self.transaction_repository.create(
+            TransactionCreate(
+                date=resolution_data.date,
+                description=resolution_data.description,
+                raw_description=(
+                    f"Manual funding resolution for investment event {event.id}: "
+                    f"{event.raw_description}"
+                ),
+                amount=resolution_data.eur_amount,
+                original_amount=event.amount,
+                original_currency=event.currency,
+                fx_rate_to_eur=resolution_data.eur_amount / event.amount,
+                fx_rate_source="manual",
+                direction="out",
+                cashflow_type="investment",
+                source="manual",
+                account="ActivoBank",
+                currency="EUR",
+                notes=resolution_data.notes,
+            )
+        )
+
+        updated_event = self.repository.update(
+            event,
+            InvestmentEventUpdate(
+                transaction_id=transaction.id,
+                matched_transaction_id=transaction.id,
+                funding_match_status="manual",
+                fx_rate_to_eur=resolution_data.eur_amount / event.amount,
+                fx_rate_source="manual",
+            ),
+        )
+
+        return updated_event, transaction.id

@@ -152,3 +152,94 @@ def test_get_missing_investment_event_returns_404(client):
     response = client.get("/api/investment-events/999999")
 
     assert response.status_code == 404
+
+
+def test_resolve_manual_funding_creates_transaction_and_updates_event(client, db_session):
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        funding_source="activobank",
+        funding_match_status="unmatched",
+        description="Trading 212 deposit",
+    )
+
+    response = client.post(
+        f"/api/investment-events/{event.id}/resolve-manual-funding",
+        json={
+            "eur_amount": "34.10",
+            "date": "2024-09-09",
+            "description": "Trading 212 deposit funding",
+            "notes": "Manual funding resolution",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["transaction_id"] is not None
+    assert data["investment_event"]["id"] == event.id
+    assert data["investment_event"]["funding_match_status"] == "manual"
+    assert data["investment_event"]["transaction_id"] == data["transaction_id"]
+    assert data["investment_event"]["matched_transaction_id"] == data["transaction_id"]
+    assert data["investment_event"]["fx_rate_source"] == "manual"
+
+    transaction = db_session.get(
+        __import__("app.models.transaction", fromlist=["Transaction"]).Transaction,
+        data["transaction_id"],
+    )
+
+    assert transaction is not None
+    assert transaction.direction == "out"
+    assert transaction.cashflow_type == "investment"
+    assert transaction.amount == Decimal("34.10")
+    assert transaction.currency == "EUR"
+    assert transaction.original_amount == Decimal("37.00")
+    assert transaction.original_currency == "USD"
+    assert transaction.fx_rate_source == "manual"
+    assert transaction.source == "manual"
+    assert transaction.account == "ActivoBank"
+
+
+def test_resolve_manual_funding_rejects_non_deposit_event(client, db_session):
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="market_buy",
+        amount="37.00",
+    )
+
+    response = client.post(
+        f"/api/investment-events/{event.id}/resolve-manual-funding",
+        json={
+            "eur_amount": "34.10",
+            "date": "2024-09-09",
+            "description": "Invalid funding",
+        },
+    )
+
+    assert response.status_code == 400
+
+
+def test_resolve_manual_funding_rejects_already_resolved_event(client, db_session):
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        funding_source="activobank",
+        funding_match_status="manual",
+    )
+
+    response = client.post(
+        f"/api/investment-events/{event.id}/resolve-manual-funding",
+        json={
+            "eur_amount": "34.10",
+            "date": "2024-09-09",
+            "description": "Duplicate funding",
+        },
+    )
+
+    assert response.status_code == 400

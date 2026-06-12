@@ -81,6 +81,18 @@ class InvestmentEventUpdate(BaseModel):
     notes: str | None = None
 
 
+class ManualFundingResolutionCreate(BaseModel):
+    eur_amount: Decimal = Field(gt=0)
+    date: DateType
+    description: str = Field(min_length=1, max_length=255)
+    notes: str | None = None
+
+
+class ManualFundingResolutionRead(BaseModel):
+    investment_event: "InvestmentEventRead"
+    transaction_id: int
+
+
 class InvestmentEventRead(InvestmentEventBase):
     model_config = ConfigDict(from_attributes=True)
 

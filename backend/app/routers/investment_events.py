@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repositories.investment_event_repository import InvestmentEventRepository
-from app.schemas.investment_event import InvestmentEventRead
+from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.investment_event import (
+    InvestmentEventRead,
+    ManualFundingResolutionCreate,
+    ManualFundingResolutionRead,
+)
 from app.services.investment_event_service import InvestmentEventService
 
 
@@ -16,7 +21,12 @@ def get_investment_event_service(
     db: Session = Depends(get_db),
 ) -> InvestmentEventService:
     repository = InvestmentEventRepository(db)
-    return InvestmentEventService(repository=repository)
+    transaction_repository = TransactionRepository(db)
+
+    return InvestmentEventService(
+        repository=repository,
+        transaction_repository=transaction_repository,
+    )
 
 
 @router.get("", response_model=list[InvestmentEventRead])
@@ -45,3 +55,23 @@ def get_investment_event(
     service: InvestmentEventService = Depends(get_investment_event_service),
 ):
     return service.get_event(event_id)
+
+
+@router.post(
+    "/{event_id}/resolve-manual-funding",
+    response_model=ManualFundingResolutionRead,
+)
+def resolve_manual_funding(
+    event_id: int,
+    resolution_data: ManualFundingResolutionCreate,
+    service: InvestmentEventService = Depends(get_investment_event_service),
+):
+    investment_event, transaction_id = service.resolve_manual_funding(
+        event_id=event_id,
+        resolution_data=resolution_data,
+    )
+
+    return {
+        "investment_event": investment_event,
+        "transaction_id": transaction_id,
+    }
