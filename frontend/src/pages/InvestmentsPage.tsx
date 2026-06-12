@@ -51,6 +51,18 @@ function getFundingStatusLabel(event: InvestmentEvent) {
   return `${source} · ${status}`
 }
 
+function getFundingBadgeClass(event: InvestmentEvent) {
+  if (event.funding_match_status === 'manual') {
+    return 'badge badge-status-completed'
+  }
+
+  if (event.funding_match_status === 'unmatched') {
+    return 'badge badge-status-pending'
+  }
+
+  return 'badge badge-neutral'
+}
+
 function getEventCount(events: InvestmentEvent[], eventType: string) {
   return events.filter((event) => event.event_type === eventType).length
 }
@@ -312,26 +324,30 @@ export function InvestmentsPage() {
         Investment events are broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
       </p>
 
-      <div className="table-wrapper">
-        <table>
+      <div className="table-wrap investments-table-wrap">
+        <table className="investments-table">
           <thead>
             <tr>
               <th>Date</th>
               <th>Event</th>
               <th>Description</th>
-              <th>Amount</th>
-              <th>Original</th>
+              <th className="right">Amount</th>
+              <th className="right">Original</th>
               <th>Funding</th>
               <th>Source</th>
-              <th>Actions</th>
+              <th className="actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
             {events.map((event) => (
               <tr key={event.id}>
-                <td>{formatDate(event.date)}</td>
-                <td>{getEventTypeLabel(event.event_type)}</td>
+                <td className="date-cell">{formatDate(event.date)}</td>
                 <td>
+                  <span className={`badge badge-event-${event.event_type.replaceAll('_', '-')}`}>
+                    {getEventTypeLabel(event.event_type)}
+                  </span>
+                </td>
+                <td className="description-cell">
                   <strong>{event.description}</strong>
                   <span className="muted table-subtext">{event.raw_description}</span>
 
@@ -396,18 +412,32 @@ export function InvestmentsPage() {
                     </div>
                   )}
                 </td>
-                <td>{formatMoney(event.amount, event.currency)}</td>
-                <td>
+                <td className="right money-cell">{formatMoney(event.amount, event.currency)}</td>
+                <td className="right money-cell">
                   {event.original_amount && event.original_currency
                     ? formatMoney(event.original_amount, event.original_currency)
                     : '-'}
                 </td>
-                <td>{getFundingStatusLabel(event)}</td>
-                <td>{event.source}</td>
                 <td>
+                  {getFundingStatusLabel(event) === '-' ? (
+                    <span className="muted">-</span>
+                  ) : (
+                    <span className={getFundingBadgeClass(event)}>
+                      {getFundingStatusLabel(event)}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <span className="badge badge-source">{event.source}</span>
+                </td>
+                <td className="actions-cell">
                   {canResolveManually(event) ? (
-                    <button type="button" onClick={() => startManualResolution(event)}>
-                      Resolve manually
+                    <button
+                      className="small-button"
+                      type="button"
+                      onClick={() => startManualResolution(event)}
+                    >
+                      Resolve
                     </button>
                   ) : (
                     <span className="muted">-</span>
