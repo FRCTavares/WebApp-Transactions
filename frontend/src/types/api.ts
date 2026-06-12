@@ -115,6 +115,19 @@ export type InvestmentEventFilters = {
   offset?: number
 }
 
+export type ManualFundingResolutionPayload = {
+  eur_amount: string
+  date: string
+  description: string
+  notes?: string | null
+}
+
+export type ManualFundingResolutionResponse = {
+  investment_event: InvestmentEvent
+  transaction_id: number
+}
+
+
 export type OwedStatus = 'open' | 'partially_paid' | 'paid' | 'cancelled'
 
 export type OwedItem = {

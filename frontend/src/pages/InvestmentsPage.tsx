@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
-import { listInvestmentEvents } from '../api/investmentEvents'
+import { listInvestmentEvents, resolveManualFunding } from '../api/investmentEvents'
 import { StatusMessage } from '../components/StatusMessage'
 import type { InvestmentEvent } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
+
+type ManualFundingFormState = {
+  eurAmount: string
+  date: string
+  description: string
+  notes: string
+}
 
 function getMonthDateRange(month: string) {
   if (!month) {
@@ -48,6 +55,19 @@ function getEventCount(events: InvestmentEvent[], eventType: string) {
   return events.filter((event) => event.event_type === eventType).length
 }
 
+function canResolveManually(event: InvestmentEvent) {
+  return event.event_type === 'deposit' && event.funding_match_status === 'unmatched'
+}
+
+function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormState {
+  return {
+    eurAmount: '',
+    date: event.date,
+    description: 'Trading 212 deposit funding',
+    notes: `Manual EUR funding resolution for ${event.amount} ${event.currency} deposit`,
+  }
+}
+
 export function InvestmentsPage() {
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [eventType, setEventType] = useState('')
@@ -55,6 +75,13 @@ export function InvestmentsPage() {
   const [month, setMonth] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [resolvingEventId, setResolvingEventId] = useState<number | null>(null)
+  const [fundingForm, setFundingForm] = useState<ManualFundingFormState>({
+    eurAmount: '',
+    date: '',
+    description: '',
+    notes: '',
+  })
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,6 +120,58 @@ export function InvestmentsPage() {
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment events')
       })
+  }
+
+  function startManualResolution(event: InvestmentEvent) {
+    setResolvingEventId(event.id)
+    setFundingForm(createDefaultFundingForm(event))
+    setError(null)
+    setMessage(null)
+  }
+
+  function cancelManualResolution() {
+    setResolvingEventId(null)
+    setFundingForm({
+      eurAmount: '',
+      date: '',
+      description: '',
+      notes: '',
+    })
+  }
+
+  async function submitManualResolution(event: InvestmentEvent) {
+    setError(null)
+    setMessage(null)
+
+    if (!fundingForm.eurAmount || Number(fundingForm.eurAmount) <= 0) {
+      setError('Enter a positive EUR amount.')
+      return
+    }
+
+    if (!fundingForm.date) {
+      setError('Enter a funding date.')
+      return
+    }
+
+    if (!fundingForm.description.trim()) {
+      setError('Enter a description.')
+      return
+    }
+
+    try {
+      await resolveManualFunding(event.id, {
+        eur_amount: fundingForm.eurAmount,
+        date: fundingForm.date,
+        description: fundingForm.description,
+        notes: fundingForm.notes || null,
+      })
+
+      setMessage('Manual funding resolution saved.')
+      cancelManualResolution()
+      loadEvents()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to resolve manual funding')
+    }
   }
 
   const activeFilterCount = getActiveFilterCount([eventType, source, month, dateFrom, dateTo])
@@ -234,6 +313,7 @@ export function InvestmentsPage() {
               <th>Original</th>
               <th>Funding</th>
               <th>Source</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -244,6 +324,67 @@ export function InvestmentsPage() {
                 <td>
                   <strong>{event.description}</strong>
                   <span className="muted table-subtext">{event.raw_description}</span>
+
+                  {resolvingEventId === event.id && (
+                    <div className="inline-form">
+                      <label>
+                        EUR amount
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={fundingForm.eurAmount}
+                          onChange={(inputEvent) => setFundingForm({
+                            ...fundingForm,
+                            eurAmount: inputEvent.target.value,
+                          })}
+                        />
+                      </label>
+
+                      <label>
+                        Funding date
+                        <input
+                          type="date"
+                          value={fundingForm.date}
+                          onChange={(inputEvent) => setFundingForm({
+                            ...fundingForm,
+                            date: inputEvent.target.value,
+                          })}
+                        />
+                      </label>
+
+                      <label>
+                        Description
+                        <input
+                          value={fundingForm.description}
+                          onChange={(inputEvent) => setFundingForm({
+                            ...fundingForm,
+                            description: inputEvent.target.value,
+                          })}
+                        />
+                      </label>
+
+                      <label>
+                        Notes
+                        <input
+                          value={fundingForm.notes}
+                          onChange={(inputEvent) => setFundingForm({
+                            ...fundingForm,
+                            notes: inputEvent.target.value,
+                          })}
+                        />
+                      </label>
+
+                      <div className="action-group">
+                        <button type="button" onClick={() => submitManualResolution(event)}>
+                          Save resolution
+                        </button>
+                        <button type="button" onClick={cancelManualResolution}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </td>
                 <td>{formatMoney(event.amount, event.currency)}</td>
                 <td>
@@ -253,12 +394,21 @@ export function InvestmentsPage() {
                 </td>
                 <td>{getFundingStatusLabel(event)}</td>
                 <td>{event.source}</td>
+                <td>
+                  {canResolveManually(event) ? (
+                    <button type="button" onClick={() => startManualResolution(event)}>
+                      Resolve manually
+                    </button>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
               </tr>
             ))}
 
             {events.length === 0 && (
               <tr>
-                <td colSpan={7} className="empty-state">
+                <td colSpan={8} className="empty-state">
                   No investment events found.
                 </td>
               </tr>
