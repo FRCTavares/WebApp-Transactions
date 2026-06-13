@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
-import { createOrUpdateMarketPrice } from '../api/marketPrices'
+import { createOrUpdateMarketPrice, listMarketPrices } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
-import type { InvestmentEvent, InvestmentPosition } from '../types/api'
+import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
 type ManualFundingFormState = {
@@ -92,6 +92,7 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
 export function InvestmentsPage() {
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
+  const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
   const [eventType, setEventType] = useState('')
   const [source, setSource] = useState('')
   const [month, setMonth] = useState('')
@@ -129,10 +130,12 @@ export function InvestmentsPage() {
         limit: 100,
       }),
       listInvestmentPositions(source || undefined),
+      listMarketPrices(),
     ])
-      .then(([loadedEvents, loadedPositions]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
+        setMarketPrices(loadedMarketPrices)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -153,10 +156,12 @@ export function InvestmentsPage() {
     Promise.all([
       listInvestmentEvents({ limit: 100 }),
       listInvestmentPositions(),
+      listMarketPrices(),
     ])
-      .then(([loadedEvents, loadedPositions]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
+        setMarketPrices(loadedMarketPrices)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -356,7 +361,7 @@ export function InvestmentsPage() {
                   <td className="right">
                     {position.costs.map((cost) => (
                       <span className="table-subtext" key={cost.currency}>
-                        {formatMoney(cost.total_cost, cost.currency)}
+                        {formatMoney(cost.total_cost, cost.currency)} {cost.currency}
                       </span>
                     ))}
                   </td>
@@ -466,6 +471,56 @@ export function InvestmentsPage() {
           <button type="button" onClick={submitMarketPrice}>
             Save market price
           </button>
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Cached market prices</h2>
+            <p className="muted small">
+              Latest saved prices used by the positions table.
+            </p>
+          </div>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>ISIN</th>
+                <th className="right">Price</th>
+                <th>Source</th>
+                <th>Fetched at</th>
+              </tr>
+            </thead>
+            <tbody>
+              {marketPrices.map((marketPrice) => (
+                <tr key={marketPrice.id}>
+                  <td>
+                    <strong>{marketPrice.ticker ?? '-'}</strong>
+                  </td>
+                  <td>{marketPrice.isin ?? '-'}</td>
+                  <td className="right">
+                    {formatMoney(marketPrice.price, marketPrice.currency)} {marketPrice.currency}
+                  </td>
+                  <td>
+                    <span className="badge badge-source">{marketPrice.source}</span>
+                  </td>
+                  <td>{formatDate(marketPrice.fetched_at)}</td>
+                </tr>
+              ))}
+
+              {marketPrices.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="empty-state">
+                    No cached market prices found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 
