@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
-import { createOrUpdateMarketPrice, deleteMarketPrice, listMarketPrices, updateMarketPrice } from '../api/marketPrices'
+import {
+  createOrUpdateMarketPrice,
+  deleteMarketPrice,
+  fetchLatestMarketPrice,
+  fetchMarketPriceHistory,
+  listMarketPrices,
+  updateMarketPrice,
+} from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentEventsTable } from '../components/investments/InvestmentEventsTable'
 import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
-import { MarketPriceForm, type MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import { MarketPricesTable } from '../components/investments/MarketPricesTable'
+import {
+  MarketDataPanel,
+  type MarketDataFetchHistoryFormState,
+  type MarketDataFetchLatestFormState,
+} from '../components/investments/MarketDataPanel'
+import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
 import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatMoney } from '../utils/format'
 
@@ -134,6 +145,20 @@ export function InvestmentsPage() {
     currency: 'EUR',
     source: 'manual',
   })
+  const [latestMarketDataForm, setLatestMarketDataForm] = useState<MarketDataFetchLatestFormState>({
+    symbol: '',
+    ticker: '',
+    isin: '',
+    currency: '',
+  })
+  const [historyMarketDataForm, setHistoryMarketDataForm] = useState<MarketDataFetchHistoryFormState>({
+    symbol: '',
+    ticker: '',
+    isin: '',
+    currency: '',
+    dateFrom: '',
+    dateTo: '',
+  })
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -249,6 +274,60 @@ export function InvestmentsPage() {
       loadEvents()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to resolve manual funding')
+    }
+  }
+
+  async function fetchLatestMarketData() {
+    setError(null)
+    setMessage(null)
+
+    if (!latestMarketDataForm.symbol.trim()) {
+      setError('Enter a Yahoo symbol, for example VWCE.DE.')
+      return
+    }
+
+    try {
+      const fetchedPrice = await fetchLatestMarketPrice({
+        symbol: latestMarketDataForm.symbol.trim(),
+        ticker: latestMarketDataForm.ticker.trim() || null,
+        isin: latestMarketDataForm.isin.trim() || null,
+        currency: latestMarketDataForm.currency.trim().toUpperCase() || null,
+      })
+
+      setMessage(`Fetched latest price for ${fetchedPrice.ticker ?? fetchedPrice.isin ?? latestMarketDataForm.symbol}.`)
+      loadEvents()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch latest market price')
+    }
+  }
+
+  async function fetchHistoricalMarketData() {
+    setError(null)
+    setMessage(null)
+
+    if (!historyMarketDataForm.symbol.trim()) {
+      setError('Enter a Yahoo symbol, for example VWCE.DE.')
+      return
+    }
+
+    if (!historyMarketDataForm.dateFrom || !historyMarketDataForm.dateTo) {
+      setError('Enter a start date and end date.')
+      return
+    }
+
+    try {
+      const history = await fetchMarketPriceHistory({
+        symbol: historyMarketDataForm.symbol.trim(),
+        ticker: historyMarketDataForm.ticker.trim() || null,
+        isin: historyMarketDataForm.isin.trim() || null,
+        currency: historyMarketDataForm.currency.trim().toUpperCase() || null,
+        date_from: historyMarketDataForm.dateFrom,
+        date_to: historyMarketDataForm.dateTo,
+      })
+
+      setMessage(`Fetched ${history.length} historical price rows.`)
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch historical market prices')
     }
   }
 
@@ -391,18 +470,21 @@ export function InvestmentsPage() {
 
       <InvestmentPositionsTable positions={positions} />
 
-      <MarketPriceForm
-        form={marketPriceForm}
-        isEditing={editingMarketPriceId !== null}
-        onChange={setMarketPriceForm}
-        onSubmit={submitMarketPrice}
-        onCancelEdit={cancelMarketPriceEdit}
-      />
-
-      <MarketPricesTable
+      <MarketDataPanel
+        latestForm={latestMarketDataForm}
+        historyForm={historyMarketDataForm}
+        manualForm={marketPriceForm}
+        isEditingManualPrice={editingMarketPriceId !== null}
         marketPrices={marketPrices}
-        onEdit={startMarketPriceEdit}
-        onDelete={removeMarketPrice}
+        onLatestFormChange={setLatestMarketDataForm}
+        onHistoryFormChange={setHistoryMarketDataForm}
+        onManualFormChange={setMarketPriceForm}
+        onFetchLatest={fetchLatestMarketData}
+        onFetchHistory={fetchHistoricalMarketData}
+        onSubmitManualPrice={submitMarketPrice}
+        onCancelManualEdit={cancelMarketPriceEdit}
+        onEditManualPrice={startMarketPriceEdit}
+        onDeleteManualPrice={removeMarketPrice}
       />
 
       <InvestmentFiltersPanel
