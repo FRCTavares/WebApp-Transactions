@@ -252,13 +252,13 @@ export function ImportPage() {
   const rowsToImportCount = newTransactions.length + newInvestmentEvents.length
   const pendingFxTransactionRows = getPendingFxRowNumbers(newTransactions)
   const pendingFxEventRows = getPendingFxRowNumbers(newInvestmentEvents)
-  const hasPendingFxRows =
-    hasPendingFx(newTransactions) || hasPendingFx(newInvestmentEvents)
+  const hasBlockingPendingFxRows = hasPendingFx(newTransactions)
+  const hasPendingFxEventRows = pendingFxEventRows.length > 0
   const canCommit = Boolean(
     file &&
     preview &&
     rowsToImportCount > 0 &&
-    !hasPendingFxRows &&
+    !hasBlockingPendingFxRows &&
     !isCommitting,
   )
 
@@ -306,8 +306,8 @@ export function ImportPage() {
       return
     }
 
-    if (hasPendingFxRows) {
-      setError('This import has pending FX conversion. Resolve EUR conversion before committing.')
+    if (hasBlockingPendingFxRows) {
+      setError('This import has pending FX conversion on transaction rows. Resolve EUR conversion before committing.')
       return
     }
 
@@ -487,10 +487,16 @@ export function ImportPage() {
             </p>
           )}
 
-          {hasPendingFxRows && (
+          {hasBlockingPendingFxRows && (
             <p className="status status-error">
-              This import has pending FX conversion. Commit is disabled until EUR conversion is resolved.
+              This import has pending FX conversion on transaction rows. Commit is disabled until EUR conversion is resolved.
               Transaction rows: {pendingFxTransactionRows.join(', ') || 'none'}.
+            </p>
+          )}
+
+          {!hasBlockingPendingFxRows && hasPendingFxEventRows && (
+            <p className="status status-info">
+              Some investment events have pending FX. Commit is allowed because broker ledger events can remain in source currency.
               Investment event rows: {pendingFxEventRows.join(', ') || 'none'}.
             </p>
           )}
