@@ -51,7 +51,7 @@ class InvestmentEventService:
         source: str | None = None,
     ) -> list[dict[str, object]]:
         events = self.repository.list_all(source=source)
-        positions: dict[tuple[str, str | None, str | None, str | None, str], dict[str, object]] = {}
+        positions: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
 
         for event in events:
             if event.event_type not in {"market_buy", "market_sell"}:
@@ -65,7 +65,6 @@ class InvestmentEventService:
                 event.account,
                 event.ticker,
                 event.isin,
-                event.currency,
             )
 
             if key not in positions:
@@ -76,23 +75,32 @@ class InvestmentEventService:
                     "ticker": event.ticker,
                     "isin": event.isin,
                     "quantity": Decimal("0"),
-                    "total_cost": Decimal("0"),
-                    "currency": event.currency,
-                    "average_price": Decimal("0"),
+                    "cost_buckets": {},
                 }
 
             position = positions[key]
+            cost_buckets = position["cost_buckets"]
+
+            if event.currency not in cost_buckets:
+                cost_buckets[event.currency] = {
+                    "quantity": Decimal("0"),
+                    "total_cost": Decimal("0"),
+                }
+
+            bucket = cost_buckets[event.currency]
 
             if event.event_type == "market_buy":
                 position["quantity"] = position["quantity"] + event.quantity
-                position["total_cost"] = position["total_cost"] + event.amount
+                bucket["quantity"] = bucket["quantity"] + event.quantity
+                bucket["total_cost"] = bucket["total_cost"] + event.amount
 
                 if position["instrument_name"] is None:
                     position["instrument_name"] = event.instrument_name
 
             if event.event_type == "market_sell":
                 position["quantity"] = position["quantity"] - event.quantity
-                position["total_cost"] = position["total_cost"] - event.amount
+                bucket["quantity"] = bucket["quantity"] - event.quantity
+                bucket["total_cost"] = bucket["total_cost"] - event.amount
 
         open_positions = []
 
@@ -102,8 +110,42 @@ class InvestmentEventService:
             if quantity <= 0:
                 continue
 
-            position["average_price"] = (position["total_cost"] / quantity).quantize(Decimal("0.00000001"))
-            open_positions.append(position)
+            costs = []
+
+            for currency, bucket in sorted(position["cost_buckets"].items()):
+                bucket_quantity = bucket["quantity"]
+                total_cost = bucket["total_cost"]
+
+                if bucket_quantity <= 0 or total_cost <= 0:
+                    continue
+
+                costs.append(
+                    {
+                        "currency": currency,
+                        "total_cost": total_cost.quantize(Decimal("0.01")),
+                        "average_price": (total_cost / bucket_quantity).quantize(Decimal("0.00000001")),
+                    }
+                )
+
+            if not costs:
+                continue
+
+            open_positions.append(
+                {
+                    "source": position["source"],
+                    "account": position["account"],
+                    "instrument_name": position["instrument_name"],
+                    "ticker": position["ticker"],
+                    "isin": position["isin"],
+                    "quantity": quantity.quantize(Decimal("0.00000001")),
+                    "costs": costs,
+                    "market_price": None,
+                    "market_price_currency": None,
+                    "market_value": None,
+                    "unrealised_gain": None,
+                    "unrealised_gain_percent": None,
+                }
+            )
 
         return sorted(
             open_positions,

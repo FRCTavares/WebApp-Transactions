@@ -116,6 +116,12 @@ export type InvestmentEvent = {
   updated_at: string
 }
 
+export type InvestmentPositionCost = {
+  currency: string
+  total_cost: string
+  average_price: string
+}
+
 export type InvestmentPosition = {
   source: string
   account: string | null
@@ -123,9 +129,12 @@ export type InvestmentPosition = {
   ticker: string | null
   isin: string | null
   quantity: string
-  total_cost: string
-  currency: string
-  average_price: string
+  costs: InvestmentPositionCost[]
+  market_price: string | null
+  market_price_currency: string | null
+  market_value: string | null
+  unrealised_gain: string | null
+  unrealised_gain_percent: string | null
 }
 
 export type InvestmentEventFilters = {

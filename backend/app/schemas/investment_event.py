@@ -81,6 +81,12 @@ class InvestmentEventUpdate(BaseModel):
     notes: str | None = None
 
 
+class InvestmentPositionCostRead(BaseModel):
+    currency: str
+    total_cost: Decimal
+    average_price: Decimal
+
+
 class InvestmentPositionRead(BaseModel):
     source: str
     account: str | None = None
@@ -88,9 +94,12 @@ class InvestmentPositionRead(BaseModel):
     ticker: str | None = None
     isin: str | None = None
     quantity: Decimal
-    total_cost: Decimal
-    currency: str
-    average_price: Decimal
+    costs: list[InvestmentPositionCostRead]
+    market_price: Decimal | None = None
+    market_price_currency: str | None = None
+    market_value: Decimal | None = None
+    unrealised_gain: Decimal | None = None
+    unrealised_gain_percent: Decimal | None = None
 
 
 class ManualFundingResolutionCreate(BaseModel):

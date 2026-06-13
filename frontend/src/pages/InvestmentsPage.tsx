@@ -280,9 +280,10 @@ export function InvestmentsPage() {
                 <th>Name</th>
                 <th>ISIN</th>
                 <th className="right">Quantity</th>
-                <th className="right">Average price</th>
-                <th className="right">Total cost</th>
-                <th>Currency</th>
+                <th className="right">Cost basis</th>
+                <th className="right">Current price</th>
+                <th className="right">Current value</th>
+                <th className="right">Gain/Loss</th>
               </tr>
             </thead>
             <tbody>
@@ -294,17 +295,34 @@ export function InvestmentsPage() {
                   <td>{position.instrument_name ?? '-'}</td>
                   <td>{position.isin ?? '-'}</td>
                   <td className="right">{position.quantity}</td>
-                  <td className="right">{formatMoney(position.average_price, position.currency)}</td>
-                  <td className="right">{formatMoney(position.total_cost, position.currency)}</td>
-                  <td>
-                    <span className="badge badge-source">{position.currency}</span>
+                  <td className="right">
+                    {position.costs.map((cost) => (
+                      <span className="table-subtext" key={cost.currency}>
+                        {formatMoney(cost.total_cost, cost.currency)}
+                      </span>
+                    ))}
+                  </td>
+                  <td className="right">
+                    {position.market_price && position.market_price_currency
+                      ? formatMoney(position.market_price, position.market_price_currency)
+                      : '-'}
+                  </td>
+                  <td className="right">
+                    {position.market_value && position.market_price_currency
+                      ? formatMoney(position.market_value, position.market_price_currency)
+                      : '-'}
+                  </td>
+                  <td className="right">
+                    {position.unrealised_gain && position.market_price_currency
+                      ? formatMoney(position.unrealised_gain, position.market_price_currency)
+                      : '-'}
                   </td>
                 </tr>
               ))}
 
               {positions.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="empty-state">
+                  <td colSpan={8} className="empty-state">
                     No open positions found.
                   </td>
                 </tr>
