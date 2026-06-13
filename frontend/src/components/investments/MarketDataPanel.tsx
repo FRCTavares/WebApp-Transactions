@@ -62,7 +62,7 @@ export function MarketDataPanel({
         </div>
       </div>
 
-      <details open>
+      <details>
         <summary>Fetch latest price</summary>
 
         <div className="form-row">
