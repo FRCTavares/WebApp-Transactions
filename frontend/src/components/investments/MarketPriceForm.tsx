@@ -27,7 +27,7 @@ export function MarketPriceForm({
         <div>
           <h2>{isEditing ? 'Edit market price' : 'Manual market price'}</h2>
           <p className="muted small">
-            Cached price entry. No live market fetching is used yet.
+            Manual cached price entry. Use this as a fallback when fetched market data is unavailable.
           </p>
         </div>
       </div>

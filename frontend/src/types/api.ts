@@ -176,6 +176,43 @@ export type MarketPriceUpdatePayload = {
   fetched_at?: string | null
 }
 
+export type MarketPriceHistory = {
+  id: number
+  ticker: string | null
+  isin: string | null
+  price_date: string
+  close_price: string
+  currency: string
+  source: string
+  fetched_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type MarketPriceFetchLatestPayload = {
+  symbol: string
+  ticker?: string | null
+  isin?: string | null
+  currency?: string | null
+}
+
+export type MarketPriceFetchHistoryPayload = {
+  symbol: string
+  ticker?: string | null
+  isin?: string | null
+  currency?: string | null
+  date_from: string
+  date_to: string
+}
+
+export type MarketPriceHistoryFilters = {
+  ticker?: string
+  isin?: string
+  date_from?: string
+  date_to?: string
+  limit?: number
+}
+
 export type ManualFundingResolutionPayload = {
   eur_amount: string
   date: string

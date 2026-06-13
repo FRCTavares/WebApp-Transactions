@@ -12,7 +12,7 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
         <div>
           <h2>Positions</h2>
           <p className="muted small">
-            Static holdings calculated from imported market buy and sell events. Live prices are not included yet.
+            Holdings calculated from imported market buy and sell events. Current values use cached market prices.
           </p>
         </div>
       </div>
