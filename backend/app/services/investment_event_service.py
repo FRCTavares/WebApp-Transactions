@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 from app.models.investment_event import InvestmentEvent
 from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
     InvestmentEventCreate,
@@ -19,9 +20,11 @@ class InvestmentEventService:
         self,
         repository: InvestmentEventRepository,
         transaction_repository: TransactionRepository | None = None,
+        market_price_repository: MarketPriceRepository | None = None,
     ) -> None:
         self.repository = repository
         self.transaction_repository = transaction_repository
+        self.market_price_repository = market_price_repository
 
     def create_event(self, event_data: InvestmentEventCreate) -> InvestmentEvent:
         return self.repository.create(event_data)
@@ -130,6 +133,13 @@ class InvestmentEventService:
             if not costs:
                 continue
 
+            market_fields = self._get_market_fields(
+                ticker=position["ticker"],
+                isin=position["isin"],
+                quantity=quantity,
+                costs=costs,
+            )
+
             open_positions.append(
                 {
                     "source": position["source"],
@@ -139,11 +149,7 @@ class InvestmentEventService:
                     "isin": position["isin"],
                     "quantity": quantity.quantize(Decimal("0.00000001")),
                     "costs": costs,
-                    "market_price": None,
-                    "market_price_currency": None,
-                    "market_value": None,
-                    "unrealised_gain": None,
-                    "unrealised_gain_percent": None,
+                    **market_fields,
                 }
             )
 
@@ -154,6 +160,53 @@ class InvestmentEventService:
                 str(position["instrument_name"] or ""),
             ),
         )
+
+    def _get_market_fields(
+        self,
+        ticker: str | None,
+        isin: str | None,
+        quantity: Decimal,
+        costs: list[dict[str, Decimal | str]],
+    ) -> dict[str, Decimal | str | None]:
+        empty_fields = {
+            "market_price": None,
+            "market_price_currency": None,
+            "market_value": None,
+            "unrealised_gain": None,
+            "unrealised_gain_percent": None,
+        }
+
+        if self.market_price_repository is None:
+            return empty_fields
+
+        market_price = self.market_price_repository.get_latest_by_ticker_or_isin(
+            ticker=ticker,
+            isin=isin,
+        )
+
+        if market_price is None:
+            return empty_fields
+
+        market_value = (quantity * market_price.price).quantize(Decimal("0.01"))
+        unrealised_gain = None
+        unrealised_gain_percent = None
+
+        if len(costs) == 1 and costs[0]["currency"] == market_price.currency:
+            total_cost = costs[0]["total_cost"]
+
+            if total_cost > 0:
+                unrealised_gain = (market_value - total_cost).quantize(Decimal("0.01"))
+                unrealised_gain_percent = (
+                    unrealised_gain / total_cost * Decimal("100")
+                ).quantize(Decimal("0.01"))
+
+        return {
+            "market_price": market_price.price.quantize(Decimal("0.00000001")),
+            "market_price_currency": market_price.currency,
+            "market_value": market_value,
+            "unrealised_gain": unrealised_gain,
+            "unrealised_gain_percent": unrealised_gain_percent,
+        }
 
     def get_event(self, event_id: int) -> InvestmentEvent:
         event = self.repository.get_by_id(event_id)

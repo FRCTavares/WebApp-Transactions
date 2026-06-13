@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
+import { createOrUpdateMarketPrice } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import type { InvestmentEvent, InvestmentPosition } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
@@ -9,6 +10,14 @@ type ManualFundingFormState = {
   date: string
   description: string
   notes: string
+}
+
+type MarketPriceFormState = {
+  ticker: string
+  isin: string
+  price: string
+  currency: string
+  source: string
 }
 
 function getMonthDateRange(month: string) {
@@ -94,6 +103,13 @@ export function InvestmentsPage() {
     date: '',
     description: '',
     notes: '',
+  })
+  const [marketPriceForm, setMarketPriceForm] = useState<MarketPriceFormState>({
+    ticker: '',
+    isin: '',
+    price: '',
+    currency: 'EUR',
+    source: 'manual',
   })
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -206,6 +222,48 @@ export function InvestmentsPage() {
       loadEvents()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to resolve manual funding')
+    }
+  }
+
+  async function submitMarketPrice() {
+    setError(null)
+    setMessage(null)
+
+    if (!marketPriceForm.ticker.trim() && !marketPriceForm.isin.trim()) {
+      setError('Enter a ticker or ISIN.')
+      return
+    }
+
+    if (!marketPriceForm.price || Number(marketPriceForm.price) <= 0) {
+      setError('Enter a positive market price.')
+      return
+    }
+
+    if (!marketPriceForm.currency.trim()) {
+      setError('Enter a currency.')
+      return
+    }
+
+    try {
+      await createOrUpdateMarketPrice({
+        ticker: marketPriceForm.ticker.trim() || null,
+        isin: marketPriceForm.isin.trim() || null,
+        price: marketPriceForm.price,
+        currency: marketPriceForm.currency.trim().toUpperCase(),
+        source: marketPriceForm.source.trim() || 'manual',
+      })
+
+      setMessage('Market price saved.')
+      setMarketPriceForm({
+        ticker: '',
+        isin: '',
+        price: '',
+        currency: 'EUR',
+        source: 'manual',
+      })
+      loadEvents()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to save market price')
     }
   }
 
@@ -329,6 +387,85 @@ export function InvestmentsPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Manual market price</h2>
+            <p className="muted small">
+              Cached price entry. No live market fetching is used yet.
+            </p>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Ticker
+            <input
+              value={marketPriceForm.ticker}
+              placeholder="VWCE"
+              onChange={(event) => setMarketPriceForm({
+                ...marketPriceForm,
+                ticker: event.target.value,
+              })}
+            />
+          </label>
+
+          <label>
+            ISIN
+            <input
+              value={marketPriceForm.isin}
+              placeholder="IE00BK5BQT80"
+              onChange={(event) => setMarketPriceForm({
+                ...marketPriceForm,
+                isin: event.target.value,
+              })}
+            />
+          </label>
+
+          <label>
+            Price
+            <input
+              type="number"
+              min="0"
+              step="0.00000001"
+              value={marketPriceForm.price}
+              onChange={(event) => setMarketPriceForm({
+                ...marketPriceForm,
+                price: event.target.value,
+              })}
+            />
+          </label>
+
+          <label>
+            Currency
+            <input
+              value={marketPriceForm.currency}
+              onChange={(event) => setMarketPriceForm({
+                ...marketPriceForm,
+                currency: event.target.value.toUpperCase(),
+              })}
+            />
+          </label>
+
+          <label>
+            Source
+            <input
+              value={marketPriceForm.source}
+              onChange={(event) => setMarketPriceForm({
+                ...marketPriceForm,
+                source: event.target.value,
+              })}
+            />
+          </label>
+        </div>
+
+        <div className="action-group">
+          <button type="button" onClick={submitMarketPrice}>
+            Save market price
+          </button>
         </div>
       </section>
 

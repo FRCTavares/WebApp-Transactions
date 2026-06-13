@@ -146,6 +146,27 @@ export type InvestmentEventFilters = {
   offset?: number
 }
 
+export type MarketPrice = {
+  id: number
+  ticker: string | null
+  isin: string | null
+  price: string
+  currency: string
+  source: string
+  fetched_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type MarketPriceCreatePayload = {
+  ticker?: string | null
+  isin?: string | null
+  price: string
+  currency: string
+  source: string
+  fetched_at?: string | null
+}
+
 export type ManualFundingResolutionPayload = {
   eur_amount: string
   date: string

@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.market_price_repository import MarketPriceRepository
+from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
     InvestmentEventRead,
@@ -23,10 +25,12 @@ def get_investment_event_service(
 ) -> InvestmentEventService:
     repository = InvestmentEventRepository(db)
     transaction_repository = TransactionRepository(db)
+    market_price_repository = MarketPriceRepository(db)
 
     return InvestmentEventService(
         repository=repository,
         transaction_repository=transaction_repository,
+        market_price_repository=market_price_repository,
     )
 
 
