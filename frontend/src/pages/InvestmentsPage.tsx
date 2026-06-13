@@ -3,7 +3,7 @@ import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } f
 import { createOrUpdateMarketPrice, deleteMarketPrice, listMarketPrices, updateMarketPrice } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
-import { InvestmentSummaryCards } from '../components/investments/InvestmentSummaryCards'
+import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
 import { MarketPriceForm, type MarketPriceFormState } from '../components/investments/MarketPriceForm'
 import { MarketPricesTable } from '../components/investments/MarketPricesTable'
 import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
@@ -14,6 +14,63 @@ type ManualFundingFormState = {
   date: string
   description: string
   notes: string
+}
+
+function addCurrencyTotal(
+  totals: Map<string, number>,
+  currency: string | null,
+  amount: string | null,
+) {
+  if (!currency || !amount) {
+    return
+  }
+
+  const numericAmount = Number(amount)
+
+  if (Number.isNaN(numericAmount)) {
+    return
+  }
+
+  totals.set(currency, (totals.get(currency) ?? 0) + numericAmount)
+}
+
+function toCurrencyTotals(totals: Map<string, number>): InvestmentCurrencyTotal[] {
+  return [...totals.entries()]
+    .map(([currency, amount]) => ({
+      currency,
+      amount,
+    }))
+    .sort((left, right) => left.currency.localeCompare(right.currency))
+}
+
+function getInvestmentTotals(positions: InvestmentPosition[]) {
+  const costTotals = new Map<string, number>()
+  const marketValueTotals = new Map<string, number>()
+  const unrealisedGainTotals = new Map<string, number>()
+
+  for (const position of positions) {
+    for (const cost of position.costs) {
+      addCurrencyTotal(costTotals, cost.currency, cost.total_cost)
+    }
+
+    addCurrencyTotal(
+      marketValueTotals,
+      position.market_price_currency,
+      position.market_value,
+    )
+
+    addCurrencyTotal(
+      unrealisedGainTotals,
+      position.market_price_currency,
+      position.unrealised_gain,
+    )
+  }
+
+  return {
+    costTotals: toCurrencyTotals(costTotals),
+    marketValueTotals: toCurrencyTotals(marketValueTotals),
+    unrealisedGainTotals: toCurrencyTotals(unrealisedGainTotals),
+  }
 }
 
 function getMonthDateRange(month: string) {
@@ -332,6 +389,7 @@ export function InvestmentsPage() {
   const unmatchedDepositCount = events.filter(
     (event) => event.event_type === 'deposit' && event.funding_match_status === 'unmatched',
   ).length
+  const investmentTotals = getInvestmentTotals(positions)
 
   return (
     <section>
@@ -358,6 +416,9 @@ export function InvestmentsPage() {
         marketBuyCount={marketBuyCount}
         unmatchedDepositCount={unmatchedDepositCount}
         openPositionCount={positions.length}
+        costTotals={investmentTotals.costTotals}
+        marketValueTotals={investmentTotals.marketValueTotals}
+        unrealisedGainTotals={investmentTotals.unrealisedGainTotals}
       />
 
       <InvestmentPositionsTable positions={positions} />
