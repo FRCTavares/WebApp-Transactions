@@ -4,6 +4,7 @@ from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
 from app.models.market_price import MarketPrice
+from app.models.market_price_history import MarketPriceHistory
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 
@@ -14,6 +15,7 @@ __all__ = [
     "ImportBatch",
     "InvestmentEvent",
     "MarketPrice",
+    "MarketPriceHistory",
     "OwedItem",
     "Transaction",
 ]

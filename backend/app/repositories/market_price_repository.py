@@ -77,7 +77,6 @@ class MarketPriceRepository:
 
         return list(latest_by_key.values())
 
-
     def get_by_id(self, price_id: int) -> MarketPrice | None:
         return self.db.get(MarketPrice, price_id)
 

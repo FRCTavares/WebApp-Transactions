@@ -222,3 +222,99 @@ def test_delete_missing_market_price_returns_404(client):
     response = client.delete("/api/market-prices/999999")
 
     assert response.status_code == 404
+
+from datetime import UTC, datetime
+
+from app.routers.market_prices import get_market_data_provider
+from app.services.market_data.base import MarketDataHistoryPoint, MarketDataLatestPrice
+
+
+class FakeMarketDataProvider:
+    def get_latest_price(self, symbol):
+        return MarketDataLatestPrice(
+            price=Decimal("155.25"),
+            currency="EUR",
+            fetched_at=datetime(2026, 6, 13, 12, 0, tzinfo=UTC),
+        )
+
+    def get_history(self, symbol, date_from, date_to):
+        return [
+            MarketDataHistoryPoint(
+                price_date=date(2026, 6, 10),
+                close_price=Decimal("151.10"),
+                currency="EUR",
+            ),
+            MarketDataHistoryPoint(
+                price_date=date(2026, 6, 11),
+                close_price=Decimal("152.20"),
+                currency="EUR",
+            ),
+        ]
+
+
+def test_fetch_latest_market_price_from_provider(client):
+    client.app.dependency_overrides[get_market_data_provider] = lambda: FakeMarketDataProvider()
+
+    try:
+        response = client.post(
+            "/api/market-prices/fetch/latest",
+            json={
+                "symbol": "VWCE.DE",
+                "ticker": "VWCE",
+                "isin": "IE00BK5BQT80",
+            },
+        )
+
+        assert response.status_code == 200
+
+        data = response.json()
+
+        assert data["ticker"] == "VWCE"
+        assert data["isin"] == "IE00BK5BQT80"
+        assert data["price"] == "155.25000000"
+        assert data["currency"] == "EUR"
+        assert data["source"] == "yfinance"
+
+        latest_response = client.get("/api/market-prices/latest?ticker=VWCE")
+
+        assert latest_response.status_code == 200
+        assert latest_response.json()["price"] == "155.25000000"
+    finally:
+        client.app.dependency_overrides.clear()
+
+
+def test_fetch_and_list_market_price_history_from_provider(client):
+    client.app.dependency_overrides[get_market_data_provider] = lambda: FakeMarketDataProvider()
+
+    try:
+        response = client.post(
+            "/api/market-prices/fetch/history",
+            json={
+                "symbol": "VWCE.DE",
+                "ticker": "VWCE",
+                "isin": "IE00BK5BQT80",
+                "date_from": "2026-06-10",
+                "date_to": "2026-06-11",
+            },
+        )
+
+        assert response.status_code == 200
+
+        data = response.json()
+
+        assert len(data) == 2
+        assert data[0]["ticker"] == "VWCE"
+        assert data[0]["close_price"] == "151.10000000"
+        assert data[1]["close_price"] == "152.20000000"
+
+        list_response = client.get("/api/market-prices/history?ticker=VWCE")
+
+        assert list_response.status_code == 200
+
+        history = list_response.json()
+
+        assert len(history) == 2
+        assert history[0]["price_date"] == "2026-06-11"
+        assert history[1]["price_date"] == "2026-06-10"
+    finally:
+        client.app.dependency_overrides.clear()

@@ -1,20 +1,39 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.schemas.market_price import MarketPriceCreate, MarketPriceRead, MarketPriceUpdate
+from app.schemas.market_price_history import (
+    MarketPriceFetchHistoryRequest,
+    MarketPriceFetchLatestRequest,
+    MarketPriceHistoryRead,
+)
+from app.services.market_data.yfinance_provider import YFinanceMarketDataProvider
 from app.services.market_price_service import MarketPriceService
 
 
 router = APIRouter(prefix="/api/market-prices", tags=["market-prices"])
 
 
+def get_market_data_provider() -> YFinanceMarketDataProvider:
+    return YFinanceMarketDataProvider()
+
+
 def get_market_price_service(
     db: Session = Depends(get_db),
+    provider: YFinanceMarketDataProvider = Depends(get_market_data_provider),
 ) -> MarketPriceService:
     repository = MarketPriceRepository(db)
-    return MarketPriceService(repository)
+    history_repository = MarketPriceHistoryRepository(db)
+    return MarketPriceService(
+        repository=repository,
+        history_repository=history_repository,
+        provider=provider,
+    )
 
 
 @router.get("", response_model=list[MarketPriceRead])
@@ -36,6 +55,40 @@ def get_latest_market_price(
     )
 
 
+@router.get("/history", response_model=list[MarketPriceHistoryRead])
+def list_market_price_history(
+    ticker: str | None = Query(default=None),
+    isin: str | None = Query(default=None),
+    date_from: date | None = Query(default=None),
+    date_to: date | None = Query(default=None),
+    limit: int = Query(default=500, ge=1, le=5000),
+    service: MarketPriceService = Depends(get_market_price_service),
+):
+    return service.list_history(
+        ticker=ticker,
+        isin=isin,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
+
+
+@router.post("/fetch/latest", response_model=MarketPriceRead)
+def fetch_latest_market_price(
+    request: MarketPriceFetchLatestRequest,
+    service: MarketPriceService = Depends(get_market_price_service),
+):
+    return service.fetch_latest(request)
+
+
+@router.post("/fetch/history", response_model=list[MarketPriceHistoryRead])
+def fetch_market_price_history(
+    request: MarketPriceFetchHistoryRequest,
+    service: MarketPriceService = Depends(get_market_price_service),
+):
+    return service.fetch_history(request)
+
+
 @router.post(
     "",
     response_model=MarketPriceRead,
@@ -46,7 +99,6 @@ def create_or_update_market_price(
     service: MarketPriceService = Depends(get_market_price_service),
 ):
     return service.create_or_update_latest(price_data)
-
 
 
 @router.patch("/{price_id}", response_model=MarketPriceRead)

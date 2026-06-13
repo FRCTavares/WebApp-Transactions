@@ -10,6 +10,7 @@ from app.models import (
     ImportBatch,
     InvestmentEvent,
     MarketPrice,
+    MarketPriceHistory,
     OwedItem,
     Transaction,
 )
