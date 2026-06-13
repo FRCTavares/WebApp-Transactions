@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
 import { createOrUpdateMarketPrice, listMarketPrices } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
+import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
+import { InvestmentSummaryCards } from '../components/investments/InvestmentSummaryCards'
+import { MarketPriceForm, type MarketPriceFormState } from '../components/investments/MarketPriceForm'
+import { MarketPricesTable } from '../components/investments/MarketPricesTable'
 import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
@@ -10,14 +14,6 @@ type ManualFundingFormState = {
   date: string
   description: string
   notes: string
-}
-
-type MarketPriceFormState = {
-  ticker: string
-  isin: string
-  price: string
-  currency: string
-  source: string
 }
 
 function getMonthDateRange(month: string) {
@@ -298,231 +294,23 @@ export function InvestmentsPage() {
 
       <StatusMessage error={error} message={message} />
 
-      <div className="summary-grid">
-        <article className="summary-card">
-          <h2>Investment events</h2>
-          <strong>{events.length}</strong>
-        </article>
+      <InvestmentSummaryCards
+        eventCount={events.length}
+        depositCount={depositCount}
+        marketBuyCount={marketBuyCount}
+        unmatchedDepositCount={unmatchedDepositCount}
+        openPositionCount={positions.length}
+      />
 
-        <article className="summary-card">
-          <h2>Deposits</h2>
-          <strong>{depositCount}</strong>
-        </article>
+      <InvestmentPositionsTable positions={positions} />
 
-        <article className="summary-card">
-          <h2>Market buys</h2>
-          <strong>{marketBuyCount}</strong>
-        </article>
+      <MarketPriceForm
+        form={marketPriceForm}
+        onChange={setMarketPriceForm}
+        onSubmit={submitMarketPrice}
+      />
 
-        <article className="summary-card">
-          <h2>Unmatched deposits</h2>
-          <strong>{unmatchedDepositCount}</strong>
-        </article>
-
-        <article className="summary-card">
-          <h2>Open positions</h2>
-          <strong>{positions.length}</strong>
-        </article>
-      </div>
-
-      <section className="panel-card">
-        <div className="section-header">
-          <div>
-            <h2>Positions</h2>
-            <p className="muted small">
-              Static holdings calculated from imported market buy and sell events. Live prices are not included yet.
-            </p>
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Name</th>
-                <th>ISIN</th>
-                <th className="right">Quantity</th>
-                <th className="right">Cost basis</th>
-                <th className="right">Current price</th>
-                <th className="right">Current value</th>
-                <th className="right">Gain/Loss</th>
-              </tr>
-            </thead>
-            <tbody>
-              {positions.map((position) => (
-                <tr key={`${position.source}-${position.account}-${position.ticker}-${position.isin}`}>
-                  <td>
-                    <strong>{position.ticker ?? '-'}</strong>
-                  </td>
-                  <td>{position.instrument_name ?? '-'}</td>
-                  <td>{position.isin ?? '-'}</td>
-                  <td className="right">{position.quantity}</td>
-                  <td className="right">
-                    {position.costs.map((cost) => (
-                      <span className="table-subtext" key={cost.currency}>
-                        {formatMoney(cost.total_cost, cost.currency)} {cost.currency}
-                      </span>
-                    ))}
-                  </td>
-                  <td className="right">
-                    {position.market_price && position.market_price_currency
-                      ? formatMoney(position.market_price, position.market_price_currency)
-                      : '-'}
-                  </td>
-                  <td className="right">
-                    {position.market_value && position.market_price_currency
-                      ? formatMoney(position.market_value, position.market_price_currency)
-                      : '-'}
-                  </td>
-                  <td className="right">
-                    {position.unrealised_gain && position.market_price_currency
-                      ? formatMoney(position.unrealised_gain, position.market_price_currency)
-                      : '-'}
-                  </td>
-                </tr>
-              ))}
-
-              {positions.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="empty-state">
-                    No open positions found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="panel-card">
-        <div className="section-header">
-          <div>
-            <h2>Manual market price</h2>
-            <p className="muted small">
-              Cached price entry. No live market fetching is used yet.
-            </p>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Ticker
-            <input
-              value={marketPriceForm.ticker}
-              placeholder="VWCE"
-              onChange={(event) => setMarketPriceForm({
-                ...marketPriceForm,
-                ticker: event.target.value,
-              })}
-            />
-          </label>
-
-          <label>
-            ISIN
-            <input
-              value={marketPriceForm.isin}
-              placeholder="IE00BK5BQT80"
-              onChange={(event) => setMarketPriceForm({
-                ...marketPriceForm,
-                isin: event.target.value,
-              })}
-            />
-          </label>
-
-          <label>
-            Price
-            <input
-              type="number"
-              min="0"
-              step="0.00000001"
-              value={marketPriceForm.price}
-              onChange={(event) => setMarketPriceForm({
-                ...marketPriceForm,
-                price: event.target.value,
-              })}
-            />
-          </label>
-
-          <label>
-            Currency
-            <input
-              value={marketPriceForm.currency}
-              onChange={(event) => setMarketPriceForm({
-                ...marketPriceForm,
-                currency: event.target.value.toUpperCase(),
-              })}
-            />
-          </label>
-
-          <label>
-            Source
-            <input
-              value={marketPriceForm.source}
-              onChange={(event) => setMarketPriceForm({
-                ...marketPriceForm,
-                source: event.target.value,
-              })}
-            />
-          </label>
-        </div>
-
-        <div className="action-group">
-          <button type="button" onClick={submitMarketPrice}>
-            Save market price
-          </button>
-        </div>
-      </section>
-
-      <section className="panel-card">
-        <div className="section-header">
-          <div>
-            <h2>Cached market prices</h2>
-            <p className="muted small">
-              Latest saved prices used by the positions table.
-            </p>
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>ISIN</th>
-                <th className="right">Price</th>
-                <th>Source</th>
-                <th>Fetched at</th>
-              </tr>
-            </thead>
-            <tbody>
-              {marketPrices.map((marketPrice) => (
-                <tr key={marketPrice.id}>
-                  <td>
-                    <strong>{marketPrice.ticker ?? '-'}</strong>
-                  </td>
-                  <td>{marketPrice.isin ?? '-'}</td>
-                  <td className="right">
-                    {formatMoney(marketPrice.price, marketPrice.currency)} {marketPrice.currency}
-                  </td>
-                  <td>
-                    <span className="badge badge-source">{marketPrice.source}</span>
-                  </td>
-                  <td>{formatDate(marketPrice.fetched_at)}</td>
-                </tr>
-              ))}
-
-              {marketPrices.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="empty-state">
-                    No cached market prices found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <MarketPricesTable marketPrices={marketPrices} />
 
       <details className="filter-panel compact-filter-panel">
         <summary>
