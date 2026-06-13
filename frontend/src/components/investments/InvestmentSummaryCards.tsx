@@ -37,46 +37,37 @@ export function InvestmentSummaryCards({
   unrealisedGainTotals,
 }: InvestmentSummaryCardsProps) {
   return (
-    <div className="summary-grid">
-      <article className="summary-card">
-        <h2>Investment events</h2>
-        <strong>{eventCount}</strong>
-      </article>
+    <section className="portfolio-snapshot">
+      <div className="portfolio-snapshot-header">
+        <div>
+          <h2>Portfolio snapshot</h2>
+          <p className="muted small">
+            {eventCount} events · {marketBuyCount} market buys · {depositCount} deposits · {unmatchedDepositCount} unmatched deposits
+          </p>
+        </div>
+      </div>
 
-      <article className="summary-card">
-        <h2>Deposits</h2>
-        <strong>{depositCount}</strong>
-      </article>
+      <div className="portfolio-metrics">
+        <article>
+          <span>Open positions</span>
+          <strong>{openPositionCount}</strong>
+        </article>
 
-      <article className="summary-card">
-        <h2>Market buys</h2>
-        <strong>{marketBuyCount}</strong>
-      </article>
+        <article>
+          <span>Cost basis</span>
+          <strong>{formatCurrencyTotals(costTotals)}</strong>
+        </article>
 
-      <article className="summary-card">
-        <h2>Unmatched deposits</h2>
-        <strong>{unmatchedDepositCount}</strong>
-      </article>
+        <article>
+          <span>Market value</span>
+          <strong>{formatCurrencyTotals(marketValueTotals)}</strong>
+        </article>
 
-      <article className="summary-card">
-        <h2>Open positions</h2>
-        <strong>{openPositionCount}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Cost basis</h2>
-        <strong>{formatCurrencyTotals(costTotals)}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Market value</h2>
-        <strong>{formatCurrencyTotals(marketValueTotals)}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Unrealised gain</h2>
-        <strong>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
-      </article>
-    </div>
+        <article>
+          <span>Unrealised gain</span>
+          <strong>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
+        </article>
+      </div>
+    </section>
   )
 }
