@@ -2,7 +2,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.market_price import MarketPrice
-from app.schemas.market_price import MarketPriceCreate
+from app.schemas.market_price import MarketPriceCreate, MarketPriceUpdate
 
 
 class MarketPriceRepository:
@@ -76,3 +76,24 @@ class MarketPriceRepository:
                 latest_by_key[key] = price
 
         return list(latest_by_key.values())
+
+
+    def get_by_id(self, price_id: int) -> MarketPrice | None:
+        return self.db.get(MarketPrice, price_id)
+
+    def update(self, market_price: MarketPrice, price_data: MarketPriceUpdate) -> MarketPrice:
+        data = price_data.model_dump(exclude_unset=True)
+
+        for field, value in data.items():
+            if value is not None:
+                setattr(market_price, field, value)
+
+        self.db.add(market_price)
+        self.db.commit()
+        self.db.refresh(market_price)
+
+        return market_price
+
+    def delete(self, market_price: MarketPrice) -> None:
+        self.db.delete(market_price)
+        self.db.commit()

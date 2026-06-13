@@ -20,6 +20,15 @@ class MarketPriceCreate(BaseModel):
         return self
 
 
+class MarketPriceUpdate(BaseModel):
+    ticker: str | None = Field(default=None, max_length=50)
+    isin: str | None = Field(default=None, max_length=50)
+    price: Decimal | None = Field(default=None, gt=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    source: str | None = Field(default=None, min_length=1, max_length=50)
+    fetched_at: DateTimeType | None = None
+
+
 class MarketPriceRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

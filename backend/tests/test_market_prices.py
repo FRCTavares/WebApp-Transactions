@@ -142,3 +142,83 @@ def test_positions_do_not_fake_gain_when_cost_currency_does_not_match_price_curr
     assert position["market_value"] == "556.57"
     assert position["unrealised_gain"] is None
     assert position["unrealised_gain_percent"] is None
+
+
+def test_update_market_price_by_id(client):
+    create_response = client.post(
+        "/api/market-prices",
+        json={
+            "ticker": "VWCE",
+            "isin": "IE00BK5BQT80",
+            "price": "150.00",
+            "currency": "EUR",
+            "source": "manual",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    price_id = create_response.json()["id"]
+
+    update_response = client.patch(
+        f"/api/market-prices/{price_id}",
+        json={
+            "ticker": "VWCE",
+            "isin": "IE00BK5BQT80",
+            "price": "152.50",
+            "currency": "EUR",
+            "source": "manual",
+        },
+    )
+
+    assert update_response.status_code == 200
+    assert update_response.json()["price"] == "152.50000000"
+
+    list_response = client.get("/api/market-prices")
+
+    assert list_response.status_code == 200
+    assert len(list_response.json()) == 1
+    assert list_response.json()[0]["price"] == "152.50000000"
+
+
+def test_delete_market_price_by_id(client):
+    create_response = client.post(
+        "/api/market-prices",
+        json={
+            "ticker": "VWCE",
+            "isin": "IE00BK5BQT80",
+            "price": "150.00",
+            "currency": "EUR",
+            "source": "manual",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    price_id = create_response.json()["id"]
+
+    delete_response = client.delete(f"/api/market-prices/{price_id}")
+
+    assert delete_response.status_code == 204
+
+    list_response = client.get("/api/market-prices")
+
+    assert list_response.status_code == 200
+    assert list_response.json() == []
+
+
+def test_update_missing_market_price_returns_404(client):
+    response = client.patch(
+        "/api/market-prices/999999",
+        json={
+            "price": "152.50",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+def test_delete_missing_market_price_returns_404(client):
+    response = client.delete("/api/market-prices/999999")
+
+    assert response.status_code == 404

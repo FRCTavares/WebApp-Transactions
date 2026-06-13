@@ -167,6 +167,15 @@ export type MarketPriceCreatePayload = {
   fetched_at?: string | null
 }
 
+export type MarketPriceUpdatePayload = {
+  ticker?: string | null
+  isin?: string | null
+  price?: string
+  currency?: string
+  source?: string
+  fetched_at?: string | null
+}
+
 export type ManualFundingResolutionPayload = {
   eur_amount: string
   date: string

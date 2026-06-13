@@ -3,9 +3,15 @@ import { formatDate, formatMoney } from '../../utils/format'
 
 type MarketPricesTableProps = {
   marketPrices: MarketPrice[]
+  onEdit: (marketPrice: MarketPrice) => void
+  onDelete: (marketPrice: MarketPrice) => void
 }
 
-export function MarketPricesTable({ marketPrices }: MarketPricesTableProps) {
+export function MarketPricesTable({
+  marketPrices,
+  onEdit,
+  onDelete,
+}: MarketPricesTableProps) {
   return (
     <section className="panel-card">
       <div className="section-header">
@@ -26,6 +32,7 @@ export function MarketPricesTable({ marketPrices }: MarketPricesTableProps) {
               <th className="right">Price</th>
               <th>Source</th>
               <th>Fetched at</th>
+              <th className="actions-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -42,6 +49,22 @@ export function MarketPricesTable({ marketPrices }: MarketPricesTableProps) {
                   <span className="badge badge-source">{marketPrice.source}</span>
                 </td>
                 <td>{formatDate(marketPrice.fetched_at)}</td>
+                <td className="actions-cell">
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={() => onEdit(marketPrice)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={() => onDelete(marketPrice)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
 

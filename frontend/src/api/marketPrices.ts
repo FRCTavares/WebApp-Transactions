@@ -1,5 +1,5 @@
-import { apiGet, apiPostJson, buildQuery } from './client'
-import type { MarketPrice, MarketPriceCreatePayload } from '../types/api'
+import { apiDelete, apiGet, apiPatchJson, apiPostJson, buildQuery } from './client'
+import type { MarketPrice, MarketPriceCreatePayload, MarketPriceUpdatePayload } from '../types/api'
 
 export function listMarketPrices() {
   return apiGet<MarketPrice[]>('/api/market-prices')
@@ -11,4 +11,13 @@ export function getLatestMarketPrice(filters: { ticker?: string; isin?: string }
 
 export function createOrUpdateMarketPrice(payload: MarketPriceCreatePayload) {
   return apiPostJson<MarketPrice>('/api/market-prices', payload)
+}
+
+
+export function updateMarketPrice(priceId: number, payload: MarketPriceUpdatePayload) {
+  return apiPatchJson<MarketPrice>(`/api/market-prices/${priceId}`, payload)
+}
+
+export function deleteMarketPrice(priceId: number) {
+  return apiDelete(`/api/market-prices/${priceId}`)
 }

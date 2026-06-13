@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
-import { createOrUpdateMarketPrice, listMarketPrices } from '../api/marketPrices'
+import { createOrUpdateMarketPrice, deleteMarketPrice, listMarketPrices, updateMarketPrice } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards } from '../components/investments/InvestmentSummaryCards'
@@ -101,6 +101,7 @@ export function InvestmentsPage() {
     description: '',
     notes: '',
   })
+  const [editingMarketPriceId, setEditingMarketPriceId] = useState<number | null>(null)
   const [marketPriceForm, setMarketPriceForm] = useState<MarketPriceFormState>({
     ticker: '',
     isin: '',
@@ -246,15 +247,22 @@ export function InvestmentsPage() {
     }
 
     try {
-      await createOrUpdateMarketPrice({
+      const payload = {
         ticker: marketPriceForm.ticker.trim() || null,
         isin: marketPriceForm.isin.trim() || null,
         price: marketPriceForm.price,
         currency: marketPriceForm.currency.trim().toUpperCase(),
         source: marketPriceForm.source.trim() || 'manual',
-      })
+      }
 
-      setMessage('Market price saved.')
+      if (editingMarketPriceId === null) {
+        await createOrUpdateMarketPrice(payload)
+        setMessage('Market price saved.')
+      } else {
+        await updateMarketPrice(editingMarketPriceId, payload)
+        setMessage('Market price updated.')
+      }
+      setEditingMarketPriceId(null)
       setMarketPriceForm({
         ticker: '',
         isin: '',
@@ -265,6 +273,56 @@ export function InvestmentsPage() {
       loadEvents()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save market price')
+    }
+  }
+
+  function startMarketPriceEdit(marketPrice: MarketPrice) {
+    setEditingMarketPriceId(marketPrice.id)
+    setMarketPriceForm({
+      ticker: marketPrice.ticker ?? '',
+      isin: marketPrice.isin ?? '',
+      price: marketPrice.price,
+      currency: marketPrice.currency,
+      source: marketPrice.source,
+    })
+    setError(null)
+    setMessage(null)
+  }
+
+  function cancelMarketPriceEdit() {
+    setEditingMarketPriceId(null)
+    setMarketPriceForm({
+      ticker: '',
+      isin: '',
+      price: '',
+      currency: 'EUR',
+      source: 'manual',
+    })
+  }
+
+  async function removeMarketPrice(marketPrice: MarketPrice) {
+    const label = marketPrice.ticker ?? marketPrice.isin ?? `#${marketPrice.id}`
+    const confirmed = window.confirm(`Delete cached market price for ${label}?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setError(null)
+      setMessage(null)
+
+      await deleteMarketPrice(marketPrice.id)
+
+      setMessage('Market price deleted.')
+
+      if (editingMarketPriceId === marketPrice.id) {
+        cancelMarketPriceEdit()
+      }
+
+      loadEvents()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete market price')
     }
   }
 
@@ -306,11 +364,17 @@ export function InvestmentsPage() {
 
       <MarketPriceForm
         form={marketPriceForm}
+        isEditing={editingMarketPriceId !== null}
         onChange={setMarketPriceForm}
         onSubmit={submitMarketPrice}
+        onCancelEdit={cancelMarketPriceEdit}
       />
 
-      <MarketPricesTable marketPrices={marketPrices} />
+      <MarketPricesTable
+        marketPrices={marketPrices}
+        onEdit={startMarketPriceEdit}
+        onDelete={removeMarketPrice}
+      />
 
       <details className="filter-panel compact-filter-panel">
         <summary>

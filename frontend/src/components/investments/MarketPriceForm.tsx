@@ -8,20 +8,24 @@ export type MarketPriceFormState = {
 
 type MarketPriceFormProps = {
   form: MarketPriceFormState
+  isEditing: boolean
   onChange: (form: MarketPriceFormState) => void
   onSubmit: () => void
+  onCancelEdit: () => void
 }
 
 export function MarketPriceForm({
   form,
+  isEditing,
   onChange,
   onSubmit,
+  onCancelEdit,
 }: MarketPriceFormProps) {
   return (
     <section className="panel-card">
       <div className="section-header">
         <div>
-          <h2>Manual market price</h2>
+          <h2>{isEditing ? 'Edit market price' : 'Manual market price'}</h2>
           <p className="muted small">
             Cached price entry. No live market fetching is used yet.
           </p>
@@ -92,8 +96,14 @@ export function MarketPriceForm({
 
       <div className="action-group">
         <button type="button" onClick={onSubmit}>
-          Save market price
+          {isEditing ? 'Update market price' : 'Save market price'}
         </button>
+
+        {isEditing && (
+          <button type="button" onClick={onCancelEdit}>
+            Cancel edit
+          </button>
+        )}
       </div>
     </section>
   )
