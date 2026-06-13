@@ -3,6 +3,7 @@ import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } f
 import { createOrUpdateMarketPrice, deleteMarketPrice, listMarketPrices, updateMarketPrice } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentEventsTable } from '../components/investments/InvestmentEventsTable'
+import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
 import { MarketPriceForm, type MarketPriceFormState } from '../components/investments/MarketPriceForm'
@@ -404,81 +405,21 @@ export function InvestmentsPage() {
         onDelete={removeMarketPrice}
       />
 
-      <details className="filter-panel compact-filter-panel">
-        <summary>
-          <span>Filters</span>
-          {activeFilterCount > 0 && (
-            <span className="filter-count">{activeFilterCount} active</span>
-          )}
-        </summary>
-
-        <div className="form-row">
-          <label>
-            Event Type
-            <select
-              value={eventType}
-              onChange={(event) => setEventType(event.target.value)}
-            >
-              <option value="">All event types</option>
-              <option value="deposit">Deposit</option>
-              <option value="withdrawal">Withdrawal</option>
-              <option value="market_buy">Market Buy</option>
-              <option value="market_sell">Market Sell</option>
-              <option value="dividend">Dividend</option>
-              <option value="interest">Interest</option>
-              <option value="fx_conversion">FX Conversion</option>
-            </select>
-          </label>
-
-          <label>
-            Source
-            <select
-              value={source}
-              onChange={(event) => setSource(event.target.value)}
-            >
-              <option value="">All sources</option>
-              <option value="trading212">Trading 212</option>
-              <option value="manual">Manual</option>
-            </select>
-          </label>
-
-          <label>
-            Month
-            <input
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-            />
-          </label>
-
-          <label>
-            Date From
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-            />
-          </label>
-
-          <label>
-            Date To
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-            />
-          </label>
-        </div>
-
-        <div className="action-group">
-          <button type="button" onClick={loadEvents}>
-            Apply Filters
-          </button>
-          <button type="button" onClick={clearFilters}>
-            Clear Filters
-          </button>
-        </div>
-      </details>
+      <InvestmentFiltersPanel
+        activeFilterCount={activeFilterCount}
+        eventType={eventType}
+        source={source}
+        month={month}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onEventTypeChange={setEventType}
+        onSourceChange={setSource}
+        onMonthChange={setMonth}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
+        onApplyFilters={loadEvents}
+        onClearFilters={clearFilters}
+      />
 
       <p className="muted">
         Investment events are broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
