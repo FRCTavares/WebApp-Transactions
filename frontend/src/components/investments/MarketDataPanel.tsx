@@ -52,7 +52,7 @@ export function MarketDataPanel({
   onDeleteManualPrice,
 }: MarketDataPanelProps) {
   return (
-    <section className="panel-card">
+    <section className="panel-card market-data-panel">
       <div className="section-header">
         <div>
           <h2>Market data</h2>

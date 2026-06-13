@@ -834,3 +834,115 @@ td[colspan] {
   background: #fffbeb;
   color: #92400e;
 }
+
+
+/* Investment market data panel */
+.market-data-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.market-data-panel .section-header {
+  margin-bottom: 0;
+}
+
+.market-data-panel details {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  overflow: hidden;
+}
+
+.market-data-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
+.market-data-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.market-data-panel summary::after {
+  content: "Show";
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.market-data-panel details[open] summary {
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.market-data-panel details[open] summary::after {
+  content: "Hide";
+}
+
+.market-data-panel details .form-row {
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  margin: 12px;
+}
+
+.market-data-panel details .action-group {
+  margin: 0 12px 12px;
+}
+
+.market-data-panel details input {
+  width: 100%;
+  min-width: 0;
+}
+
+.market-data-panel .panel-card {
+  border-color: #e5e7eb;
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 12px;
+}
+
+.market-data-panel .panel-card .section-header {
+  margin-bottom: 10px;
+}
+
+.market-data-panel .table-wrap {
+  margin-bottom: 0;
+}
+
+.market-data-panel .table-wrap table {
+  min-width: 760px;
+}
+
+.market-data-panel .table-wrap th,
+.market-data-panel .table-wrap td {
+  padding: 8px 10px;
+}
+
+.market-data-panel .small-button {
+  padding: 5px 7px;
+}
+
+.summary-card strong {
+  overflow-wrap: anywhere;
+}
+
+.summary-card:nth-last-child(-n + 3) strong {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+@media (max-width: 1100px) {
+  .market-data-panel details .form-row {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .market-data-panel details .form-row {
+    grid-template-columns: 1fr;
+  }
+}
