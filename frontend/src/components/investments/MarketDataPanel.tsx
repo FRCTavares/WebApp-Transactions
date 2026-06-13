@@ -1,4 +1,4 @@
-import type { MarketPrice } from '../../types/api'
+import type { InvestmentPosition, MarketPrice } from '../../types/api'
 import { MarketPriceForm, type MarketPriceFormState } from './MarketPriceForm'
 import { MarketPricesTable } from './MarketPricesTable'
 
@@ -19,6 +19,7 @@ export type MarketDataFetchHistoryFormState = {
 }
 
 type MarketDataPanelProps = {
+  positions: InvestmentPosition[]
   latestForm: MarketDataFetchLatestFormState
   historyForm: MarketDataFetchHistoryFormState
   manualForm: MarketPriceFormState
@@ -35,7 +36,53 @@ type MarketDataPanelProps = {
   onDeleteManualPrice: (marketPrice: MarketPrice) => void
 }
 
+function getPositionKey(position: InvestmentPosition) {
+  return `${position.ticker ?? ''}|${position.isin ?? ''}|${position.instrument_name ?? ''}`
+}
+
+function getPositionCurrency(position: InvestmentPosition) {
+  return position.market_price_currency ?? position.costs[0]?.currency ?? ''
+}
+
+function getDefaultYahooSymbol(position: InvestmentPosition) {
+  const ticker = position.ticker?.toUpperCase()
+
+  if (ticker === 'VWCE') {
+    return 'VWCE.DE'
+  }
+
+  if (ticker === 'CSPX') {
+    return 'CSPX.L'
+  }
+
+  return position.ticker ?? ''
+}
+
+function getPositionLabel(position: InvestmentPosition) {
+  const ticker = position.ticker ?? 'No ticker'
+  const name = position.instrument_name ?? 'Unnamed holding'
+  const isin = position.isin ?? 'No ISIN'
+
+  return `${ticker} - ${name} - ${isin}`
+}
+
+function getSelectedPositionKey(
+  positions: InvestmentPosition[],
+  ticker: string,
+  isin: string,
+) {
+  const selectedPosition = positions.find((position) => {
+    const matchesTicker = ticker && position.ticker === ticker
+    const matchesIsin = isin && position.isin === isin
+
+    return matchesTicker || matchesIsin
+  })
+
+  return selectedPosition ? getPositionKey(selectedPosition) : ''
+}
+
 export function MarketDataPanel({
+  positions,
   latestForm,
   historyForm,
   manualForm,
@@ -51,13 +98,44 @@ export function MarketDataPanel({
   onEditManualPrice,
   onDeleteManualPrice,
 }: MarketDataPanelProps) {
+  function selectLatestPosition(positionKey: string) {
+    const selectedPosition = positions.find((position) => getPositionKey(position) === positionKey)
+
+    if (!selectedPosition) {
+      return
+    }
+
+    onLatestFormChange({
+      symbol: getDefaultYahooSymbol(selectedPosition),
+      ticker: selectedPosition.ticker ?? '',
+      isin: selectedPosition.isin ?? '',
+      currency: getPositionCurrency(selectedPosition),
+    })
+  }
+
+  function selectHistoryPosition(positionKey: string) {
+    const selectedPosition = positions.find((position) => getPositionKey(position) === positionKey)
+
+    if (!selectedPosition) {
+      return
+    }
+
+    onHistoryFormChange({
+      ...historyForm,
+      symbol: getDefaultYahooSymbol(selectedPosition),
+      ticker: selectedPosition.ticker ?? '',
+      isin: selectedPosition.isin ?? '',
+      currency: getPositionCurrency(selectedPosition),
+    })
+  }
+
   return (
     <section className="panel-card market-data-panel">
       <div className="section-header">
         <div>
           <h2>Market data</h2>
           <p className="muted small">
-            Fetch prices manually, cache them locally, and use manual prices only as a fallback.
+            Select a holding, fetch prices manually, cache them locally, and use manual prices only as a fallback.
           </p>
         </div>
       </div>
@@ -66,6 +144,21 @@ export function MarketDataPanel({
         <summary>Fetch latest price</summary>
 
         <div className="form-row">
+          <label>
+            Holding
+            <select
+              value={getSelectedPositionKey(positions, latestForm.ticker, latestForm.isin)}
+              onChange={(event) => selectLatestPosition(event.target.value)}
+            >
+              <option value="">Select holding</option>
+              {positions.map((position) => (
+                <option key={getPositionKey(position)} value={getPositionKey(position)}>
+                  {getPositionLabel(position)}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <label>
             Yahoo symbol
             <input
@@ -126,6 +219,21 @@ export function MarketDataPanel({
         <summary>Fetch historical prices</summary>
 
         <div className="form-row">
+          <label>
+            Holding
+            <select
+              value={getSelectedPositionKey(positions, historyForm.ticker, historyForm.isin)}
+              onChange={(event) => selectHistoryPosition(event.target.value)}
+            >
+              <option value="">Select holding</option>
+              {positions.map((position) => (
+                <option key={getPositionKey(position)} value={getPositionKey(position)}>
+                  {getPositionLabel(position)}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <label>
             Yahoo symbol
             <input

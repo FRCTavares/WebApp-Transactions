@@ -471,6 +471,7 @@ export function InvestmentsPage() {
       <InvestmentPositionsTable positions={positions} />
 
       <MarketDataPanel
+        positions={positions}
         latestForm={latestMarketDataForm}
         historyForm={historyMarketDataForm}
         manualForm={marketPriceForm}
