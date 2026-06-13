@@ -53,13 +53,22 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                     : '-'}
                 </td>
                 <td className="right">
-                  {position.market_value && position.market_price_currency
-                    ? formatMoney(position.market_value, position.market_price_currency)
+                  {position.market_value && position.market_value_currency
+                    ? (
+                      <>
+                        {formatMoney(position.market_value, position.market_value_currency)}
+                        {position.market_fx_rate_to_eur && position.market_price_currency !== position.market_value_currency && (
+                          <span className="table-subtext muted">
+                            FX {position.market_price_currency}/EUR {position.market_fx_rate_to_eur}
+                          </span>
+                        )}
+                      </>
+                    )
                     : '-'}
                 </td>
                 <td className="right">
-                  {position.unrealised_gain && position.market_price_currency
-                    ? formatMoney(position.unrealised_gain, position.market_price_currency)
+                  {position.unrealised_gain && position.market_value_currency
+                    ? formatMoney(position.unrealised_gain, position.market_value_currency)
                     : '-'}
                 </td>
               </tr>

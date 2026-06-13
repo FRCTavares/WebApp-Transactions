@@ -68,13 +68,13 @@ function getInvestmentTotals(positions: InvestmentPosition[]) {
 
     addCurrencyTotal(
       marketValueTotals,
-      position.market_price_currency,
+      position.market_value_currency,
       position.market_value,
     )
 
     addCurrencyTotal(
       unrealisedGainTotals,
-      position.market_price_currency,
+      position.market_value_currency,
       position.unrealised_gain,
     )
   }

@@ -172,6 +172,8 @@ class InvestmentEventService:
             "market_price": None,
             "market_price_currency": None,
             "market_value": None,
+            "market_value_currency": None,
+            "market_fx_rate_to_eur": None,
             "unrealised_gain": None,
             "unrealised_gain_percent": None,
         }
@@ -187,26 +189,134 @@ class InvestmentEventService:
         if market_price is None:
             return empty_fields
 
-        market_value = (quantity * market_price.price).quantize(Decimal("0.01"))
+        market_value_native = quantity * market_price.price
+        market_fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
+            market_price.currency,
+            ticker=ticker,
+            isin=isin,
+        )
+
+        if market_price.currency == "EUR":
+            market_value = market_value_native.quantize(Decimal("0.01"))
+            market_value_currency = "EUR"
+            market_fx_rate_to_eur = Decimal("1")
+        elif market_fx_rate_to_eur is not None:
+            market_value = (market_value_native * market_fx_rate_to_eur).quantize(Decimal("0.01"))
+            market_value_currency = "EUR"
+        else:
+            market_value = None
+            market_value_currency = None
+
         unrealised_gain = None
         unrealised_gain_percent = None
 
-        if len(costs) == 1 and costs[0]["currency"] == market_price.currency:
-            total_cost = costs[0]["total_cost"]
+        if market_value is not None:
+            total_cost_eur = self._get_total_cost_in_eur(
+                costs=costs,
+                ticker=ticker,
+                isin=isin,
+            )
 
-            if total_cost > 0:
-                unrealised_gain = (market_value - total_cost).quantize(Decimal("0.01"))
+            if total_cost_eur is not None and total_cost_eur > 0:
+                unrealised_gain = (market_value - total_cost_eur).quantize(Decimal("0.01"))
                 unrealised_gain_percent = (
-                    unrealised_gain / total_cost * Decimal("100")
+                    unrealised_gain / total_cost_eur * Decimal("100")
                 ).quantize(Decimal("0.01"))
 
         return {
             "market_price": market_price.price.quantize(Decimal("0.00000001")),
             "market_price_currency": market_price.currency,
             "market_value": market_value,
+            "market_value_currency": market_value_currency,
+            "market_fx_rate_to_eur": market_fx_rate_to_eur,
             "unrealised_gain": unrealised_gain,
             "unrealised_gain_percent": unrealised_gain_percent,
         }
+
+    def _get_latest_fx_rate_to_eur(
+        self,
+        currency: str,
+        ticker: str | None = None,
+        isin: str | None = None,
+    ) -> Decimal | None:
+        if currency == "EUR":
+            return Decimal("1")
+
+        events = sorted(
+            self.repository.list_all(),
+            key=lambda item: item.date,
+            reverse=True,
+        )
+
+        for event in events:
+            if (
+                event.fx_rate_to_eur is not None
+                and event.fx_rate_to_eur > 0
+                and (
+                    event.currency == currency
+                    or event.original_currency == currency
+                )
+            ):
+                return event.fx_rate_to_eur
+
+        for event in events:
+            if event.event_type not in {"market_buy", "market_sell"}:
+                continue
+
+            if ticker is not None and event.ticker != ticker:
+                continue
+
+            if isin is not None and event.isin != isin:
+                continue
+
+            if event.currency != "EUR":
+                continue
+
+            if (
+                event.quantity is None
+                or event.price is None
+                or event.quantity <= 0
+                or event.price <= 0
+                or event.amount <= 0
+            ):
+                continue
+
+            native_value = event.quantity * event.price
+
+            if native_value <= 0:
+                continue
+
+            return (event.amount / native_value).quantize(Decimal("0.00000008"))
+
+        return None
+
+    def _get_total_cost_in_eur(
+        self,
+        costs: list[dict[str, Decimal | str]],
+        ticker: str | None = None,
+        isin: str | None = None,
+    ) -> Decimal | None:
+        total_cost_eur = Decimal("0")
+
+        for cost in costs:
+            currency = str(cost["currency"])
+            total_cost = cost["total_cost"]
+
+            if not isinstance(total_cost, Decimal):
+                total_cost = Decimal(str(total_cost))
+
+            fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
+                currency,
+                ticker=ticker,
+                isin=isin,
+            )
+
+            if fx_rate_to_eur is None:
+                return None
+
+            total_cost_eur += total_cost * fx_rate_to_eur
+
+        return total_cost_eur.quantize(Decimal("0.01"))
 
     def get_event(self, event_id: int) -> InvestmentEvent:
         event = self.repository.get_by_id(event_id)

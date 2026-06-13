@@ -139,7 +139,9 @@ def test_positions_do_not_fake_gain_when_cost_currency_does_not_match_price_curr
 
     assert position["market_price"] == "150.00000000"
     assert position["market_price_currency"] == "USD"
-    assert position["market_value"] == "556.57"
+    assert position["market_value"] is None
+    assert position["market_value_currency"] is None
+    assert position["market_fx_rate_to_eur"] is None
     assert position["unrealised_gain"] is None
     assert position["unrealised_gain_percent"] is None
 
@@ -318,3 +320,73 @@ def test_fetch_and_list_market_price_history_from_provider(client):
         assert history[1]["price_date"] == "2026-06-10"
     finally:
         client.app.dependency_overrides.clear()
+
+
+def test_positions_convert_usd_market_value_to_eur_using_imported_fx_rate(client, db_session):
+    event = create_market_buy(db_session, ticker="CSPX", isin="IE00B5BMR087")
+    event.currency = "USD"
+    event.original_currency = "USD"
+    event.fx_rate_to_eur = Decimal("0.8649")
+    db_session.add(event)
+    db_session.commit()
+
+    client.post(
+        "/api/market-prices",
+        json={
+            "ticker": "CSPX",
+            "isin": "IE00B5BMR087",
+            "price": "800.54",
+            "currency": "USD",
+            "source": "manual",
+        },
+    )
+
+    response = client.get("/api/investment-events/positions")
+
+    assert response.status_code == 200
+
+    position = response.json()[0]
+
+    assert position["ticker"] == "CSPX"
+    assert position["market_price"] == "800.54000000"
+    assert position["market_price_currency"] == "USD"
+    assert position["market_value_currency"] == "EUR"
+    assert position["market_fx_rate_to_eur"] == "0.86490000"
+    assert position["market_value"] == "2569.08"
+
+
+def test_positions_derive_market_fx_rate_from_eur_market_buy(client, db_session):
+    event = create_market_buy(db_session, ticker="CSPX", isin="IE00B5BMR087")
+    event.quantity = Decimal("0.00180605")
+    event.price = Decimal("794.58")
+    event.amount = Decimal("1.24")
+    event.currency = "EUR"
+    event.original_amount = Decimal("1.24")
+    event.original_currency = "EUR"
+    event.fx_rate_to_eur = Decimal("1")
+    event.fx_rate_source = "source_currency"
+    db_session.add(event)
+    db_session.commit()
+
+    client.post(
+        "/api/market-prices",
+        json={
+            "ticker": "CSPX",
+            "isin": "IE00B5BMR087",
+            "price": "800.53997803",
+            "currency": "USD",
+            "source": "manual",
+        },
+    )
+
+    response = client.get("/api/investment-events/positions")
+
+    assert response.status_code == 200
+
+    position = response.json()[0]
+
+    assert position["ticker"] == "CSPX"
+    assert position["market_price_currency"] == "USD"
+    assert position["market_fx_rate_to_eur"] == "0.86408066"
+    assert position["market_value_currency"] == "EUR"
+    assert position["market_value"] == "1.25"

@@ -133,6 +133,8 @@ export type InvestmentPosition = {
   market_price: string | null
   market_price_currency: string | null
   market_value: string | null
+  market_value_currency: string | null
+  market_fx_rate_to_eur: string | null
   unrealised_gain: string | null
   unrealised_gain_percent: string | null
 }

@@ -98,6 +98,8 @@ class InvestmentPositionRead(BaseModel):
     market_price: Decimal | None = None
     market_price_currency: str | None = None
     market_value: Decimal | None = None
+    market_value_currency: str | None = None
+    market_fx_rate_to_eur: Decimal | None = None
     unrealised_gain: Decimal | None = None
     unrealised_gain_percent: Decimal | None = None
 
