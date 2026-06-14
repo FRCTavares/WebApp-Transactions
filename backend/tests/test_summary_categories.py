@@ -2,7 +2,9 @@ from datetime import date
 from decimal import Decimal
 
 from app.models.transaction import Transaction
+from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.services.summary_service import SummaryService
 
 
 def test_get_category_summary_groups_by_category_subcategory_direction_and_month(db_session):
@@ -76,3 +78,177 @@ def test_get_category_summary_groups_by_category_subcategory_direction_and_month
     assert subcategory == "Supermarket"
     assert total == Decimal("25.50")
     assert count == 2
+
+
+def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
+    transactions = [
+        Transaction(
+            date=date(2026, 5, 1),
+            description="Groceries",
+            raw_description="Groceries",
+            amount=Decimal("10.00"),
+            direction="out",
+            source="manual",
+            account=None,
+            category="Groceries",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="expense",
+        ),
+        Transaction(
+            date=date(2026, 5, 2),
+            description="Investment",
+            raw_description="Investment",
+            amount=Decimal("1000.00"),
+            direction="out",
+            source="manual",
+            account=None,
+            category="Investment",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="internal_transfer",
+        ),
+        Transaction(
+            date=date(2026, 5, 3),
+            description="Reimbursed school",
+            raw_description="Reimbursed school",
+            amount=Decimal("1450.00"),
+            direction="out",
+            source="manual",
+            account=None,
+            category="Education",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="reimbursed_expense",
+        ),
+    ]
+
+    db_session.add_all(transactions)
+    db_session.commit()
+
+    service = SummaryService(
+        repository=SummaryRepository(db_session),
+        transaction_repository=TransactionRepository(db_session),
+    )
+
+    response = service.get_category_summary(
+        year=2026,
+        month=5,
+        direction="out",
+    )
+
+    assert len(response.items) == 1
+    assert response.items[0].category == "Groceries"
+    assert response.items[0].total == Decimal("10.00")
+
+
+def test_summary_service_defaults_in_category_summary_to_income(db_session):
+    transactions = [
+        Transaction(
+            date=date(2026, 5, 1),
+            description="Salary",
+            raw_description="Salary",
+            amount=Decimal("100.00"),
+            direction="in",
+            source="manual",
+            account=None,
+            category="Salary",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="income",
+        ),
+        Transaction(
+            date=date(2026, 5, 2),
+            description="Refund",
+            raw_description="Refund",
+            amount=Decimal("1000.00"),
+            direction="in",
+            source="manual",
+            account=None,
+            category="Refund",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="reimbursed_expense",
+        ),
+        Transaction(
+            date=date(2026, 5, 3),
+            description="Savings transfer",
+            raw_description="Savings transfer",
+            amount=Decimal("550.00"),
+            direction="in",
+            source="manual",
+            account=None,
+            category="Transfer",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="internal_transfer",
+        ),
+    ]
+
+    db_session.add_all(transactions)
+    db_session.commit()
+
+    service = SummaryService(
+        repository=SummaryRepository(db_session),
+        transaction_repository=TransactionRepository(db_session),
+    )
+
+    response = service.get_category_summary(
+        year=2026,
+        month=5,
+        direction="in",
+    )
+
+    assert len(response.items) == 1
+    assert response.items[0].category == "Salary"
+    assert response.items[0].total == Decimal("100.00")
+
+
+def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db_session):
+    transactions = [
+        Transaction(
+            date=date(2026, 5, 1),
+            description="Groceries",
+            raw_description="Groceries",
+            amount=Decimal("10.00"),
+            direction="out",
+            source="manual",
+            account=None,
+            category="Groceries",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="expense",
+        ),
+        Transaction(
+            date=date(2026, 5, 2),
+            description="Investment",
+            raw_description="Investment",
+            amount=Decimal("1000.00"),
+            direction="out",
+            source="manual",
+            account=None,
+            category="Investment",
+            subcategory=None,
+            currency="EUR",
+            cashflow_type="internal_transfer",
+        ),
+    ]
+
+    db_session.add_all(transactions)
+    db_session.commit()
+
+    service = SummaryService(
+        repository=SummaryRepository(db_session),
+        transaction_repository=TransactionRepository(db_session),
+    )
+
+    response = service.get_category_summary(
+        year=2026,
+        month=5,
+        direction="out",
+        cashflow_type="internal_transfer",
+    )
+
+    assert len(response.items) == 1
+    assert response.items[0].category == "Investment"
+    assert response.items[0].total == Decimal("1000.00")

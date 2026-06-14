@@ -75,11 +75,19 @@ class SummaryService:
         if self.transaction_repository is None:
             raise RuntimeError("Transaction repository is required for category summary")
 
+        effective_cashflow_type = cashflow_type
+
+        if effective_cashflow_type is None and direction == "out":
+            effective_cashflow_type = "expense"
+
+        if effective_cashflow_type is None and direction == "in":
+            effective_cashflow_type = "income"
+
         rows = self.transaction_repository.get_category_summary(
             year=year,
             month=month,
             direction=direction,
-            cashflow_type=cashflow_type,
+            cashflow_type=effective_cashflow_type,
         )
 
         items = [
