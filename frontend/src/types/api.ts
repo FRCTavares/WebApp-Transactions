@@ -25,6 +25,13 @@ export type Transaction = {
   import_batch_id: number | null
   external_id: string | null
   dedupe_hash: string | null
+  is_owed: boolean
+  owed_item_id: number | null
+  owed_status: OwedStatus | null
+  owed_person: string | null
+  owed_amount_total: string | null
+  owed_amount_paid: string | null
+  owed_amount_remaining: string | null
   created_at: string
   updated_at: string
 }

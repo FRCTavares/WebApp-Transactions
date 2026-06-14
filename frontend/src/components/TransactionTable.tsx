@@ -5,7 +5,6 @@ import { formatDate, formatMoney } from '../utils/format'
 export type TransactionTableRow = Transaction & {
   is_grouped?: boolean
   grouped_count?: number
-  owed_status?: 'open' | 'partially_paid' | 'paid' | 'cancelled'
 }
 
 type TransactionTableProps = {
@@ -26,12 +25,18 @@ function getCashflowBadgeClass(cashflowType: string) {
 }
 
 function getOwedLabel(transaction: TransactionTableRow) {
+  const personText = transaction.owed_person ? ` by ${transaction.owed_person}` : ''
+
   if (transaction.owed_status === 'paid') {
-    return 'Reimbursed'
+    return `Paid${personText}`
   }
 
-  if (transaction.owed_status === 'open' || transaction.owed_status === 'partially_paid') {
-    return 'Owed'
+  if (transaction.owed_status === 'partially_paid') {
+    return `Part paid${personText}`
+  }
+
+  if (transaction.owed_status === 'open') {
+    return `Owed${personText}`
   }
 
   return null
@@ -129,7 +134,7 @@ export function TransactionTable({
                           Edit
                         </button>
                       )}
-                      {!transaction.is_grouped && !transaction.owed_status && onMarkOwed && transaction.direction === 'out' && (
+                      {!transaction.is_grouped && !transaction.is_owed && onMarkOwed && transaction.direction === 'out' && (
                         <button type="button" onClick={() => onMarkOwed(transaction)}>
                           Owed
                         </button>

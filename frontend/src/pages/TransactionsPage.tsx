@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createOwedItem, listOwedItems } from '../api/owed'
+import { createOwedItem } from '../api/owed'
 import {
   createTransaction,
   deleteTransaction,
@@ -14,7 +14,7 @@ import {
 import type { TransactionFormState } from '../components/TransactionForm'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
-import type { CashflowType, Direction, OwedItem, Transaction } from '../types/api'
+import type { CashflowType, Direction, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 type TransactionsPageProps = {
@@ -113,34 +113,8 @@ function getMonthEndDate(month: string) {
   return new Date(year, monthNumber, 0).toISOString().slice(0, 10)
 }
 
-function getOwedStatusByTransactionId(owedItems: OwedItem[]) {
-  const statusByTransactionId = new Map<number, OwedItem['status']>()
-
-  for (const item of owedItems) {
-    if (!item.linked_transaction_id || item.status === 'cancelled') {
-      continue
-    }
-
-    statusByTransactionId.set(item.linked_transaction_id, item.status)
-  }
-
-  return statusByTransactionId
-}
-
-function applyOwedStatus(
-  transactions: TransactionTableRow[],
-  owedItems: OwedItem[],
-): TransactionTableRow[] {
-  const statusByTransactionId = getOwedStatusByTransactionId(owedItems)
-
-  return transactions.map((transaction) => ({
-    ...transaction,
-    owed_status: statusByTransactionId.get(transaction.id),
-  }))
-}
-
 function getOwedSortRank(transaction: TransactionTableRow) {
-  if (!transaction.owed_status) {
+  if (!transaction.is_owed || transaction.owed_status === 'cancelled') {
     return 0
   }
 
@@ -170,12 +144,11 @@ function sortTransactionsForDisplay(transactions: TransactionTableRow[]) {
 function getTransactionsForDisplay(
   transactions: Transaction[],
   selectedMonth: string,
-  owedItems: OwedItem[],
 ): TransactionTableRow[] {
   const cashbackRows = transactions.filter(isTrading212Cashback)
 
   if (cashbackRows.length <= 1) {
-    return sortTransactionsForDisplay(applyOwedStatus(transactions, owedItems))
+    return sortTransactionsForDisplay(transactions)
   }
 
   const cashbackTotal = cashbackRows.reduce(
@@ -197,15 +170,10 @@ function getTransactionsForDisplay(
     dedupe_hash: `grouped-trading212-cashback-${selectedMonth}`,
   }
 
-  return sortTransactionsForDisplay(
-    applyOwedStatus(
-      [
-        ...transactions.filter((transaction) => !isTrading212Cashback(transaction)),
-        cashbackRow,
-      ],
-      owedItems,
-    ),
-  )
+  return sortTransactionsForDisplay([
+    ...transactions.filter((transaction) => !isTrading212Cashback(transaction)),
+    cashbackRow,
+  ])
 }
 
 function getMonthDateRange(month: string) {
@@ -245,7 +213,6 @@ function getExportFilename(direction: Direction) {
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [owedItems, setOwedItems] = useState<OwedItem[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getInitialFilterState(direction),
   )
@@ -262,14 +229,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     alreadyPaid: false,
     notes: '',
   })
-
-  function loadOwedItems() {
-    listOwedItems({
-      limit: 500,
-    })
-      .then(setOwedItems)
-      .catch(() => undefined)
-  }
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -328,7 +287,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     setEditingTransaction(null)
     setIsCreateFormOpen(false)
     loadTransactions(initialFilters)
-    loadOwedItems()
   }, [direction])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -548,15 +506,14 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
           : 'Open owed item created from transaction.',
       )
       closeOwedDialog()
-      loadOwedItems()
-    } catch (caughtError: unknown) {
+      } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed item')
     }
   }
 
   const transactionTotal = getTransactionsTotal(transactions)
   const selectedMonth = filters.month || getCurrentMonth()
-  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth, owedItems)
+  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth)
 
   return (
     <section>
