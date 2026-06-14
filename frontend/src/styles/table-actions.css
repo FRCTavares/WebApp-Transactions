@@ -1,0 +1,18 @@
+/* Inline transaction row actions */
+.actions-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.table-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.table-action-group button {
+  white-space: nowrap;
+  min-width: 72px;
+}

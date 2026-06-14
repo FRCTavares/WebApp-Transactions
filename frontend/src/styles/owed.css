@@ -1,0 +1,129 @@
+/* Owed page */
+.owed-page {
+  display: grid;
+  gap: 16px;
+}
+
+.owed-page .page-header {
+  margin-bottom: 0;
+}
+
+.owed-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.owed-summary-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.owed-summary-card span {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.owed-summary-card strong {
+  display: block;
+  color: #111827;
+  font-size: 26px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.owed-summary-card small {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.owed-summary-card-primary {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.owed-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.owed-toolbar-label {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.owed-toolbar select {
+  min-width: 220px;
+}
+
+.owed-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.owed-table-wrap {
+  margin-bottom: 0;
+}
+
+.owed-table {
+  min-width: 980px;
+}
+
+.owed-table th,
+.owed-table td {
+  padding: 12px 10px;
+}
+
+.owed-empty-state {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 28px 12px;
+  text-align: center;
+}
+
+.owed-empty-state strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.owed-empty-state p {
+  margin: 0;
+  max-width: 460px;
+}
+
+@media (max-width: 900px) {
+  .owed-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owed-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .owed-toolbar-actions {
+    justify-content: flex-start;
+  }
+}

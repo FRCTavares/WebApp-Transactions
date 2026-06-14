@@ -1,0 +1,106 @@
+/* Table readability */
+.table-wrap {
+  max-width: 100%;
+}
+
+.table-wrap table {
+  min-width: 920px;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid #d1d5db;
+}
+
+tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td {
+  background: #fcfcfd;
+}
+
+tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.inline-create-row:hover td {
+  background: #ecfdf5;
+}
+
+.inline-edit-row:hover td {
+  background: #fef3c7;
+}
+
+td.right,
+th.right {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+td .action-group button {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+td .muted {
+  margin-top: 4px;
+}
+
+td[colspan] {
+  padding: 24px;
+  text-align: center;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.badge-income,
+.badge-reimbursement {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.badge-expense,
+.badge-reimbursed-expense {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.badge-internal-transfer {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.badge-investment {
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.badge-neutral {
+  border-color: #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+}
+
+.badge-source {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #4b5563;
+}

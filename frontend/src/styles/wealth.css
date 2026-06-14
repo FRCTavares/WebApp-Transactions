@@ -1,0 +1,99 @@
+/* Wealth page */
+.wealth-page {
+  display: grid;
+  gap: 16px;
+}
+
+.wealth-page .page-header {
+  margin-bottom: 0;
+}
+
+.wealth-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.wealth-summary-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.wealth-summary-card span {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wealth-summary-card strong {
+  display: block;
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.15;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+
+.wealth-summary-card small {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.wealth-summary-card-primary {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.wealth-table-wrap {
+  margin-bottom: 0;
+}
+
+.wealth-table-wrap table {
+  min-width: 1180px;
+}
+
+.wealth-monthly-wrap {
+  max-width: 520px;
+  margin-bottom: 0;
+}
+
+.wealth-monthly-wrap table {
+  min-width: 420px;
+}
+
+.wealth-empty-state {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 28px 12px;
+  text-align: center;
+}
+
+.wealth-empty-state strong {
+  color: #111827;
+  font-size: 16px;
+}
+
+.wealth-empty-state p {
+  margin: 0;
+  max-width: 460px;
+}
+
+@media (max-width: 1100px) {
+  .wealth-summary-grid {
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .wealth-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
