@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   createOwedItem,
+  createOwedPayment,
   deleteOwedItem,
   exportOwedItemsCsv,
   listOwedItems,
@@ -11,8 +12,62 @@ import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItems
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { OwedSummaryCards } from '../components/owed/OwedSummaryCards'
 import { StatusMessage } from '../components/StatusMessage'
-import type { OwedItem, OwedStatusFilter, Transaction } from '../types/api'
+import type { OwedItem, OwedPaymentMethod, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
+
+
+type PaymentFormState = {
+  person: string
+  amount: string
+  paymentDate: string
+  method: OwedPaymentMethod
+  notes: string
+}
+
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getInitialPaymentFormState(): PaymentFormState {
+  return {
+    person: '',
+    amount: '',
+    paymentDate: getTodayDate(),
+    method: 'cash',
+    notes: '',
+  }
+}
+
+function getPaymentPeople(items: OwedItem[]) {
+  return Array.from(new Set(
+    items
+      .filter((item) => item.status === 'open' || item.status === 'partially_paid')
+      .map((item) => item.person),
+  )).sort((first, second) => first.localeCompare(second))
+}
+
+function getAutoAllocationPreview(items: OwedItem[], person: string, amount: number) {
+  let remaining = amount
+
+  return items
+    .filter((item) => item.person === person)
+    .filter((item) => item.status === 'open' || item.status === 'partially_paid')
+    .map((item) => {
+      const allocationAmount = Math.min(remaining, Number(item.amount_remaining))
+      remaining -= allocationAmount
+
+      return {
+        item,
+        amount: allocationAmount,
+      }
+    })
+    .filter((allocation) => allocation.amount > 0)
+}
+
+function getAllocationTotal(allocations: Array<{ amount: number }>) {
+  return allocations.reduce((total, allocation) => total + allocation.amount, 0)
+}
 
 function getInitialFormState(): OwedFormState {
   return {
@@ -96,6 +151,8 @@ export function OwedPage() {
   const [editForm, setEditForm] = useState<OwedFormState>(getInitialFormState)
   const [editingItem, setEditingItem] = useState<OwedItem | null>(null)
   const [isCreateRowOpen, setIsCreateRowOpen] = useState(false)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [paymentForm, setPaymentForm] = useState<PaymentFormState>(getInitialPaymentFormState)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -152,6 +209,61 @@ export function OwedPage() {
 
   function updateEditFormLinkedTransactionId(transactionId: string) {
     updateEditForm('linkedTransactionId', transactionId)
+  }
+
+
+  function updatePaymentForm<K extends keyof PaymentFormState>(
+    field: K,
+    value: PaymentFormState[K],
+  ) {
+    setPaymentForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }))
+  }
+
+  async function recordPaymentFromForm() {
+    setError(null)
+    setMessage(null)
+
+    const amount = Math.abs(Number(paymentForm.amount.replace(',', '.')))
+
+    if (!paymentForm.person.trim()) {
+      setError('Person is required.')
+      return
+    }
+
+    if (!amount || Number.isNaN(amount)) {
+      setError('Amount received must be a positive number.')
+      return
+    }
+
+    if (!paymentForm.paymentDate) {
+      setError('Payment date is required.')
+      return
+    }
+
+    try {
+      const payment = await createOwedPayment({
+        person: paymentForm.person.trim(),
+        amount: amount.toFixed(2),
+        payment_date: paymentForm.paymentDate,
+        method: paymentForm.method,
+        currency: 'EUR',
+        notes: paymentForm.notes || null,
+      })
+
+      setMessage(
+        Number(payment.unallocated_amount) > 0
+          ? `Payment recorded. ${formatMoney(payment.unallocated_amount)} left unallocated.`
+          : 'Payment recorded.',
+      )
+      setPaymentForm(getInitialPaymentFormState())
+      setIsPaymentModalOpen(false)
+      loadItems()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to record payment')
+    }
   }
 
   async function createItemFromForm() {
@@ -337,6 +449,15 @@ export function OwedPage() {
           </button>
           <button
             type="button"
+            onClick={() => {
+              setPaymentForm(getInitialPaymentFormState())
+              setIsPaymentModalOpen(true)
+            }}
+          >
+            Record Payment
+          </button>
+          <button
+            type="button"
             className="primary-button"
             onClick={() => {
               setEditingItem(null)
@@ -367,6 +488,131 @@ export function OwedPage() {
           loadLinkedTransactions()
         }}
       />
+
+
+      {isPaymentModalOpen && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-header">
+              <div>
+                <h2>Record payment</h2>
+                <p className="muted small">
+                  Record cash, bank transfer, MB WAY, or other repayments.
+                </p>
+              </div>
+              <button type="button" onClick={() => setIsPaymentModalOpen(false)}>
+                Close
+              </button>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Person
+                <select
+                  value={paymentForm.person}
+                  onChange={(event) => updatePaymentForm('person', event.target.value)}
+                >
+                  <option value="">Choose person</option>
+                  {getPaymentPeople(items).map((person) => (
+                    <option key={person} value={person}>
+                      {person}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Amount received
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentForm.amount}
+                  onChange={(event) => updatePaymentForm('amount', event.target.value)}
+                  placeholder="0.00"
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Payment date
+                <input
+                  type="date"
+                  value={paymentForm.paymentDate}
+                  onChange={(event) => updatePaymentForm('paymentDate', event.target.value)}
+                />
+              </label>
+
+              <label>
+                Method
+                <select
+                  value={paymentForm.method}
+                  onChange={(event) =>
+                    updatePaymentForm('method', event.target.value as OwedPaymentMethod)
+                  }
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank transfer</option>
+                  <option value="mbway">MB WAY</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Notes
+              <textarea
+                value={paymentForm.notes}
+                onChange={(event) => updatePaymentForm('notes', event.target.value)}
+                rows={3}
+              />
+            </label>
+
+            {paymentForm.person && Number(paymentForm.amount) > 0 && (
+              <div className="modal-transaction-summary">
+                <div>
+                  <strong>Auto-allocation preview</strong>
+                  {getAutoAllocationPreview(
+                    items,
+                    paymentForm.person,
+                    Math.abs(Number(paymentForm.amount)),
+                  ).map((allocation) => (
+                    <p key={allocation.item.id} className="muted small">
+                      {allocation.item.reason}: {formatMoney(allocation.amount.toFixed(2))}
+                    </p>
+                  ))}
+                </div>
+                <span>
+                  Leftover: {formatMoney((
+                    Math.abs(Number(paymentForm.amount)) -
+                    getAllocationTotal(
+                      getAutoAllocationPreview(
+                        items,
+                        paymentForm.person,
+                        Math.abs(Number(paymentForm.amount)),
+                      ),
+                    )
+                  ).toFixed(2))}
+                </span>
+              </div>
+            )}
+
+            <div className="modal-actions">
+              <button type="button" onClick={() => setIsPaymentModalOpen(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={recordPaymentFromForm}
+              >
+                Record payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <OwedItemsTable
         items={items}

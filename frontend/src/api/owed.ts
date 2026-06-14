@@ -4,6 +4,9 @@ import type {
   OwedItemCreatePayload,
   OwedItemFilters,
   OwedItemUpdatePayload,
+  OwedPayment,
+  OwedPaymentCreatePayload,
+  OwedPaymentFilters,
 } from '../types/api'
 
 export function listOwedItems(filters: OwedItemFilters = {}) {
@@ -24,4 +27,13 @@ export function updateOwedItem(owedItemId: number, payload: OwedItemUpdatePayloa
 
 export function deleteOwedItem(owedItemId: number) {
   return apiDelete(`/api/owed/${owedItemId}`)
+}
+
+
+export function createOwedPayment(payload: OwedPaymentCreatePayload) {
+  return apiPostJson<OwedPayment>('/api/owed/payments', payload)
+}
+
+export function listOwedPayments(filters: OwedPaymentFilters = {}) {
+  return apiGet<OwedPayment[]>(`/api/owed/payments${buildQuery(filters)}`)
 }

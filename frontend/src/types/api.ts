@@ -275,6 +275,55 @@ export type OwedItemFilters = {
   offset?: number
 }
 
+
+export type OwedPaymentMethod = 'cash' | 'bank_transfer' | 'mbway' | 'other'
+
+export type OwedPaymentAllocation = {
+  id: number
+  owed_payment_id: number
+  owed_item_id: number
+  amount: string
+  created_at: string
+}
+
+export type OwedPaymentAllocationCreatePayload = {
+  owed_item_id: number
+  amount: string
+}
+
+export type OwedPayment = {
+  id: number
+  person: string
+  payment_date: string
+  amount: string
+  currency: string
+  method: OwedPaymentMethod
+  notes: string | null
+  linked_transaction_id: number | null
+  allocated_amount: string
+  unallocated_amount: string
+  allocations: OwedPaymentAllocation[]
+  created_at: string
+  updated_at: string
+}
+
+export type OwedPaymentCreatePayload = {
+  person: string
+  payment_date: string
+  amount: string
+  currency?: string
+  method: OwedPaymentMethod
+  notes?: string | null
+  linked_transaction_id?: number | null
+  allocations?: OwedPaymentAllocationCreatePayload[]
+}
+
+export type OwedPaymentFilters = {
+  person?: string
+  limit?: number
+  offset?: number
+}
+
 export type CategoryTotal = {
   category: string
   total: string
