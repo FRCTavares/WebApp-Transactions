@@ -125,12 +125,31 @@ def _run_wealth_migrations(engine: Engine) -> None:
                     "fx_rate_to_eur NUMERIC(18, 8) NOT NULL DEFAULT 1, "
                     "interest_earned NUMERIC(12, 2), "
                     "notes TEXT, "
+                    "source VARCHAR(50) NOT NULL DEFAULT 'manual', "
+                    "import_batch_id INTEGER, "
+                    "external_id VARCHAR(255), "
+                    "dedupe_hash VARCHAR(64), "
                     "created_at DATETIME NOT NULL, "
                     "updated_at DATETIME NOT NULL, "
                     "PRIMARY KEY (id)"
                     ")"
                 )
             )
+
+    wealth_snapshot_column_migrations = {
+        "source": "ALTER TABLE wealth_snapshots ADD COLUMN source VARCHAR(50) NOT NULL DEFAULT 'manual'",
+        "import_batch_id": "ALTER TABLE wealth_snapshots ADD COLUMN import_batch_id INTEGER",
+        "external_id": "ALTER TABLE wealth_snapshots ADD COLUMN external_id VARCHAR(255)",
+        "dedupe_hash": "ALTER TABLE wealth_snapshots ADD COLUMN dedupe_hash VARCHAR(64)",
+    }
+
+    for column_name, sql in wealth_snapshot_column_migrations.items():
+        _add_column_if_missing(
+            engine=engine,
+            table_name="wealth_snapshots",
+            column_name=column_name,
+            sql=sql,
+        )
 
 
 def _table_exists(engine: Engine, table_name: str) -> bool:

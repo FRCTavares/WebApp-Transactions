@@ -3,9 +3,11 @@ from decimal import Decimal
 from app.importers.legacy_excel import LegacyExcelImporter
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
+from app.models.wealth_snapshot import WealthSnapshot
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
 from app.schemas.legacy_excel_import import (
     LegacyExcelCommitResponse,
     LegacyExcelPreviewInvalidRow,
@@ -13,6 +15,10 @@ from app.schemas.legacy_excel_import import (
     LegacyExcelPreviewResponse,
     LegacyExcelPreviewSummary,
     LegacyExcelPreviewTransaction,
+    LegacyExcelPreviewWealthSnapshot,
+    LegacyExcelWealthCommitResponse,
+    LegacyExcelWealthPreviewResponse,
+    LegacyExcelWealthPreviewSummary,
 )
 from app.utils.hashing import create_dedupe_hash, create_owed_item_dedupe_hash
 
@@ -26,10 +32,12 @@ class LegacyExcelImportService:
         transaction_repository: TransactionRepository,
         owed_repository: OwedRepository,
         import_batch_repository: ImportBatchRepository,
+        wealth_repository: WealthRepository | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.owed_repository = owed_repository
         self.import_batch_repository = import_batch_repository
+        self.wealth_repository = wealth_repository
         self.importer = LegacyExcelImporter()
 
     def preview_import_from_file(
@@ -234,6 +242,205 @@ class LegacyExcelImportService:
             invalid_rows_skipped=preview.rows_invalid,
             status=import_batch.status,
         )
+
+
+    def preview_wealth_import_from_file(
+        self,
+        file_content: bytes,
+        filename: str,
+    ) -> LegacyExcelWealthPreviewResponse:
+        if self.wealth_repository is None:
+            raise RuntimeError("Wealth repository is required for wealth import")
+
+        snapshots: list[LegacyExcelPreviewWealthSnapshot] = []
+        seen_hashes: set[str] = set()
+
+        for snapshot in self.importer.parse_wealth_snapshots(file_content):
+            dedupe_hash = self._build_wealth_snapshot_dedupe_hash(
+                account_name=snapshot.account_name,
+                snapshot_date=snapshot.snapshot_date,
+                balance=snapshot.balance_eur,
+            )
+            account = self.wealth_repository.get_account_by_name(snapshot.account_name)
+            is_duplicate = (
+                dedupe_hash in seen_hashes
+                or self.wealth_repository.exists_snapshot_by_dedupe_hash(dedupe_hash)
+                or (
+                    account is not None
+                    and self.wealth_repository.exists_snapshot_for_account_date(
+                        account_id=account.id,
+                        snapshot_date=snapshot.snapshot_date,
+                    )
+                )
+            )
+            seen_hashes.add(dedupe_hash)
+
+            snapshots.append(
+                LegacyExcelPreviewWealthSnapshot(
+                    sheet_name=snapshot.sheet_name,
+                    row_number=snapshot.row_number,
+                    column_number=snapshot.column_number,
+                    snapshot_date=snapshot.snapshot_date,
+                    account_name=snapshot.account_name,
+                    account_type=snapshot.account_type,
+                    balance=snapshot.balance,
+                    currency=snapshot.currency,
+                    balance_eur=snapshot.balance_eur,
+                    fx_rate_to_eur=snapshot.fx_rate_to_eur,
+                    interest_earned=snapshot.interest_earned,
+                    notes=snapshot.notes,
+                    external_id=snapshot.external_id,
+                    dedupe_hash=dedupe_hash,
+                    is_duplicate=is_duplicate,
+                )
+            )
+
+        duplicate_count = sum(1 for snapshot in snapshots if snapshot.is_duplicate)
+        snapshot_dates = [snapshot.snapshot_date for snapshot in snapshots]
+
+        return LegacyExcelWealthPreviewResponse(
+            source=SOURCE,
+            filename=filename,
+            rows_total=len(snapshots),
+            rows_valid=len(snapshots),
+            rows_duplicates=duplicate_count,
+            rows_invalid=0,
+            summary=LegacyExcelWealthPreviewSummary(
+                snapshot_count=len(snapshots),
+                duplicate_snapshot_count=duplicate_count,
+                account_count=len({snapshot.account_name for snapshot in snapshots}),
+                latest_snapshot_date=max(snapshot_dates) if snapshot_dates else None,
+            ),
+            snapshots=snapshots,
+        )
+
+    def commit_wealth_import_from_file(
+        self,
+        file_content: bytes,
+        filename: str,
+    ) -> LegacyExcelWealthCommitResponse:
+        if self.wealth_repository is None:
+            raise RuntimeError("Wealth repository is required for wealth import")
+
+        preview = self.preview_wealth_import_from_file(
+            file_content=file_content,
+            filename=filename,
+        )
+
+        snapshots_to_insert = [
+            snapshot for snapshot in preview.snapshots if not snapshot.is_duplicate
+        ]
+
+        if not snapshots_to_insert:
+            return LegacyExcelWealthCommitResponse(
+                import_batch_id=0,
+                source=SOURCE,
+                filename=filename,
+                rows_total=preview.rows_total,
+                rows_inserted=0,
+                rows_skipped=preview.rows_duplicates,
+                accounts_created=0,
+                snapshots_inserted=0,
+                duplicate_snapshots_skipped=preview.rows_duplicates,
+                status="skipped",
+            )
+
+        accounts_created = 0
+
+        for preview_snapshot in snapshots_to_insert:
+            account = self.wealth_repository.get_account_by_name(
+                preview_snapshot.account_name
+            )
+
+            if account is None:
+                self.wealth_repository.create_account(
+                    self._build_wealth_account_create_payload(preview_snapshot)
+                )
+                accounts_created += 1
+
+        import_batch = self.import_batch_repository.create(
+            source="legacy_excel_wealth",
+            filename=filename,
+            rows_total=preview.rows_total,
+            rows_inserted=len(snapshots_to_insert),
+            rows_skipped=preview.rows_duplicates,
+            status=self._get_import_status(
+                rows_total=preview.rows_total,
+                rows_inserted=len(snapshots_to_insert),
+                rows_skipped=preview.rows_duplicates,
+            ),
+        )
+
+        snapshot_models: list[WealthSnapshot] = []
+
+        for preview_snapshot in snapshots_to_insert:
+            account = self.wealth_repository.get_account_by_name(
+                preview_snapshot.account_name
+            )
+
+            if account is None:
+                continue
+
+            snapshot_models.append(
+                WealthSnapshot(
+                    snapshot_date=preview_snapshot.snapshot_date,
+                    account_id=account.id,
+                    balance=preview_snapshot.balance,
+                    currency=preview_snapshot.currency,
+                    balance_eur=preview_snapshot.balance_eur,
+                    fx_rate_to_eur=preview_snapshot.fx_rate_to_eur,
+                    interest_earned=preview_snapshot.interest_earned,
+                    notes=preview_snapshot.notes,
+                    source="legacy_excel_wealth",
+                    import_batch_id=import_batch.id,
+                    external_id=preview_snapshot.external_id,
+                    dedupe_hash=preview_snapshot.dedupe_hash,
+                )
+            )
+
+        self.wealth_repository.bulk_insert_snapshots(snapshot_models)
+
+        return LegacyExcelWealthCommitResponse(
+            import_batch_id=import_batch.id,
+            source=SOURCE,
+            filename=filename,
+            rows_total=preview.rows_total,
+            rows_inserted=len(snapshot_models),
+            rows_skipped=preview.rows_duplicates,
+            accounts_created=accounts_created,
+            snapshots_inserted=len(snapshot_models),
+            duplicate_snapshots_skipped=preview.rows_duplicates,
+            status=import_batch.status,
+        )
+
+    def _build_wealth_snapshot_dedupe_hash(
+        self,
+        account_name: str,
+        snapshot_date,
+        balance,
+    ) -> str:
+        raw_value = f"{SOURCE}:wealth:{account_name}:{snapshot_date}:{balance}"
+        return create_dedupe_hash(
+            source=SOURCE,
+            transaction_date=snapshot_date,
+            amount=balance,
+            direction="wealth",
+            raw_description=raw_value,
+            currency="EUR",
+        )
+
+    def _build_wealth_account_create_payload(self, preview_snapshot):
+        from app.schemas.wealth import WealthAccountCreate
+
+        return WealthAccountCreate(
+            name=preview_snapshot.account_name,
+            account_type=preview_snapshot.account_type,
+            currency=preview_snapshot.currency,
+            institution=preview_snapshot.account_name,
+            is_active=True,
+            notes="Created from legacy Excel wealth import.",
+        )
+
 
     def _build_transactions_to_insert(
         self,

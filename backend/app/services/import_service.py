@@ -15,6 +15,7 @@ from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
 from app.schemas.import_preview import (
     ImportInvalidRow,
     ImportPreviewInvestmentEvent,
@@ -30,12 +31,14 @@ class ImportService:
         self,
         transaction_repository: TransactionRepository,
         import_batch_repository: ImportBatchRepository,
+        wealth_repository: WealthRepository | None = None,
         category_rule_service: CategoryRuleService | None = None,
         investment_event_repository: InvestmentEventRepository | None = None,
         owed_repository: OwedRepository | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
+        self.wealth_repository = wealth_repository
         self.category_rule_service = category_rule_service
         self.investment_event_repository = investment_event_repository
         self.owed_repository = owed_repository
@@ -84,6 +87,7 @@ class ImportService:
 
         deleted_investment_events = 0
         deleted_owed_items = 0
+        deleted_wealth_snapshots = 0
 
         if self.investment_event_repository is not None:
             deleted_investment_events = (
@@ -101,6 +105,11 @@ class ImportService:
                 import_batch_id=import_batch_id,
             )
 
+        if import_batch.source == "legacy_excel_wealth" and self.wealth_repository is not None:
+            deleted_wealth_snapshots = self.wealth_repository.delete_snapshots_by_import_batch(
+                import_batch_id
+            )
+
         self.import_batch_repository.delete(import_batch)
 
         return {
@@ -108,6 +117,7 @@ class ImportService:
             "deleted_transactions": deleted_transactions,
             "deleted_investment_events": deleted_investment_events,
             "deleted_owed_items": deleted_owed_items,
+            "deleted_wealth_snapshots": deleted_wealth_snapshots,
             "status": "deleted",
         }
 

@@ -42,6 +42,54 @@ class WealthRepository:
     def get_account_by_id(self, account_id: int) -> WealthAccount | None:
         return self.db.get(WealthAccount, account_id)
 
+
+    def get_account_by_name(self, name: str) -> WealthAccount | None:
+        statement = select(WealthAccount).where(WealthAccount.name == name).limit(1)
+        return self.db.scalar(statement)
+
+    def exists_snapshot_for_account_date(
+        self,
+        account_id: int,
+        snapshot_date: date,
+    ) -> bool:
+        statement = (
+            select(WealthSnapshot.id)
+            .where(WealthSnapshot.account_id == account_id)
+            .where(WealthSnapshot.snapshot_date == snapshot_date)
+            .limit(1)
+        )
+        return self.db.scalar(statement) is not None
+
+    def exists_snapshot_by_dedupe_hash(self, dedupe_hash: str) -> bool:
+        statement = (
+            select(WealthSnapshot.id)
+            .where(WealthSnapshot.dedupe_hash == dedupe_hash)
+            .limit(1)
+        )
+        return self.db.scalar(statement) is not None
+
+    def bulk_insert_snapshots(self, snapshots: list[WealthSnapshot]) -> None:
+        self.db.add_all(snapshots)
+        self.db.commit()
+
+    def delete_snapshots_by_import_batch(self, import_batch_id: int) -> int:
+        snapshots = list(
+            self.db.scalars(
+                select(WealthSnapshot).where(
+                    WealthSnapshot.import_batch_id == import_batch_id
+                )
+            ).all()
+        )
+
+        deleted_count = len(snapshots)
+
+        for snapshot in snapshots:
+            self.db.delete(snapshot)
+
+        self.db.commit()
+        return deleted_count
+
+
     def update_account(
         self,
         account: WealthAccount,

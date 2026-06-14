@@ -7,6 +7,7 @@ from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
 from app.schemas.fx_match import FxMatchPreviewResponse
 from app.schemas.import_batch import ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api/import", tags=["import"])
 def get_import_service(db: Session = Depends(get_db)) -> ImportService:
     transaction_repository = TransactionRepository(db)
     import_batch_repository = ImportBatchRepository(db)
+    wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
     owed_repository = OwedRepository(db)
     category_rule_repository = CategoryRuleRepository(db)
@@ -33,6 +35,7 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
     return ImportService(
         transaction_repository=transaction_repository,
         import_batch_repository=import_batch_repository,
+        wealth_repository=wealth_repository,
         category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,
@@ -42,6 +45,7 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
 def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
     transaction_repository = TransactionRepository(db)
     import_batch_repository = ImportBatchRepository(db)
+    wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
     category_rule_repository = CategoryRuleRepository(db)
     category_rule_service = CategoryRuleService(
@@ -51,6 +55,7 @@ def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
     import_service = ImportService(
         transaction_repository=transaction_repository,
         import_batch_repository=import_batch_repository,
+        wealth_repository=wealth_repository,
         category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,

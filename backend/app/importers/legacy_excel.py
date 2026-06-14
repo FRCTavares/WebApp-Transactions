@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from calendar import monthrange
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
@@ -19,6 +20,7 @@ SKIPPED_SHEETS = {
 }
 
 LAST_LEGACY_MONTH = date(2026, 4, 1)
+LAST_LEGACY_WEALTH_MONTH = date(2026, 5, 31)
 
 MONTHS_PT = {
     "janeiro": 1,
@@ -70,6 +72,23 @@ class LegacyExcelOwedItem:
 
 
 @dataclass(frozen=True)
+class LegacyExcelWealthSnapshot:
+    sheet_name: str
+    row_number: int
+    column_number: int
+    snapshot_date: date
+    account_name: str
+    account_type: str
+    balance: Decimal
+    currency: str
+    balance_eur: Decimal
+    fx_rate_to_eur: Decimal
+    interest_earned: Decimal
+    notes: str | None
+    external_id: str
+
+
+@dataclass(frozen=True)
 class LegacyExcelInvalidRow:
     sheet_name: str
     row_number: int
@@ -82,6 +101,7 @@ class LegacyExcelParseResult:
     transactions: list[LegacyExcelTransaction]
     owed_items: list[LegacyExcelOwedItem]
     invalid_rows: list[LegacyExcelInvalidRow]
+    wealth_snapshots: list[LegacyExcelWealthSnapshot]
 
 
 @dataclass(frozen=True)
@@ -144,7 +164,162 @@ class LegacyExcelImporter:
             transactions=transactions,
             owed_items=owed_items,
             invalid_rows=invalid_rows,
+            wealth_snapshots=self.parse_wealth_snapshots(file_content),
         )
+
+
+    def parse_wealth_snapshots(self, file_content: bytes) -> list[LegacyExcelWealthSnapshot]:
+        workbook = load_workbook(BytesIO(file_content), data_only=True)
+        worksheet = self._get_painel_central_sheet(workbook)
+
+        if worksheet is None:
+            return []
+
+        month_columns = self._find_wealth_month_columns(worksheet)
+        account_rows = self._find_wealth_account_rows(worksheet)
+
+        snapshots: list[LegacyExcelWealthSnapshot] = []
+
+        for account_key, account_config in account_rows.items():
+            row_number = account_config["row_number"]
+
+            for column_number, snapshot_date in month_columns.items():
+                if snapshot_date > LAST_LEGACY_WEALTH_MONTH:
+                    continue
+
+                value = worksheet.cell(row_number, column_number).value
+
+                if value is None:
+                    continue
+
+                try:
+                    balance = self._parse_amount(value)
+                except ValueError:
+                    continue
+
+                if balance <= 0:
+                    continue
+
+                account_name = account_config["account_name"]
+
+                snapshots.append(
+                    LegacyExcelWealthSnapshot(
+                        sheet_name=worksheet.title,
+                        row_number=row_number,
+                        column_number=column_number,
+                        snapshot_date=snapshot_date,
+                        account_name=account_name,
+                        account_type=account_config["account_type"],
+                        balance=balance,
+                        currency=CURRENCY,
+                        balance_eur=balance,
+                        fx_rate_to_eur=Decimal("1"),
+                        interest_earned=Decimal("0.00"),
+                        notes="Legacy Excel wealth snapshot.",
+                        external_id=self._build_wealth_external_id(
+                            account_key=account_key,
+                            snapshot_date=snapshot_date,
+                        ),
+                    )
+                )
+
+        return snapshots
+
+    def _get_painel_central_sheet(self, workbook):
+        for sheet_name in workbook.sheetnames:
+            if self._normalise_text(sheet_name) == "painel central":
+                return workbook[sheet_name]
+
+        return None
+
+    def _find_wealth_month_columns(self, worksheet: Worksheet) -> dict[int, date]:
+        month_columns: dict[int, date] = {}
+
+        for row in worksheet.iter_rows():
+            for cell in row:
+                snapshot_date = self._parse_wealth_month_header(cell.value)
+
+                if snapshot_date is not None:
+                    month_columns[cell.column] = snapshot_date
+
+        return month_columns
+
+    def _parse_wealth_month_header(self, value) -> date | None:
+        if value is None:
+            return None
+
+        text = self._normalise_text(value)
+        parts = text.split()
+
+        if len(parts) < 2:
+            return None
+
+        month = MONTHS_PT.get(parts[0])
+        if month is None:
+            return None
+
+        year_text = parts[-1]
+        if not year_text.isdigit():
+            return None
+
+        year = int(year_text)
+        if year < 100:
+            year += 2000
+
+        last_day = monthrange(year, month)[1]
+        return date(year, month, last_day)
+
+    def _find_wealth_account_rows(self, worksheet: Worksheet) -> dict[str, dict[str, int | str]]:
+        account_configs = {
+            "activobank": {
+                "matches": {"activobank", "activo bank"},
+                "account_name": "ActivoBank",
+                "account_type": "current_account",
+            },
+            "revolut": {
+                "matches": {"revolut"},
+                "account_name": "Revolut",
+                "account_type": "current_account",
+            },
+            "trading_212": {
+                "matches": {"trading 212", "trading212"},
+                "account_name": "Trading 212",
+                "account_type": "brokerage",
+            },
+            "bank_notes": {
+                "matches": {"bank notes", "cash", "notas"},
+                "account_name": "Bank Notes",
+                "account_type": "cash",
+            },
+            "money_owed_to_me": {
+                "matches": {"dividas nao pagas", "dívidas não pagas"},
+                "account_name": "Money Owed To Me",
+                "account_type": "other",
+            },
+        }
+
+        rows: dict[str, dict[str, int | str]] = {}
+
+        for row in worksheet.iter_rows():
+            for cell in row:
+                value = self._normalise_text(cell.value)
+
+                if not value:
+                    continue
+
+                for account_key, config in account_configs.items():
+                    if value in config["matches"]:
+                        rows[account_key] = {
+                            "row_number": cell.row,
+                            "account_name": config["account_name"],
+                            "account_type": config["account_type"],
+                        }
+
+        return rows
+
+    def _build_wealth_external_id(self, account_key: str, snapshot_date: date) -> str:
+        return f"{SOURCE}:wealth:{account_key}:{snapshot_date.isoformat()}"
+
 
     def _should_skip_sheet(self, sheet_name: str) -> bool:
         return self._normalise_text(sheet_name) in SKIPPED_SHEETS

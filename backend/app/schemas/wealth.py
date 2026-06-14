@@ -102,6 +102,10 @@ class WealthSnapshotRead(BaseModel):
     fx_rate_to_eur: Decimal
     interest_earned: Decimal | None = None
     notes: str | None = None
+    source: str = "manual"
+    import_batch_id: int | None = None
+    external_id: str | None = None
+    dedupe_hash: str | None = None
     created_at: DateTimeType
     updated_at: DateTimeType
 

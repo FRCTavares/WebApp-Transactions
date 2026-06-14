@@ -85,3 +85,52 @@ class LegacyExcelCommitResponse(BaseModel):
     duplicate_owed_items_skipped: int
     invalid_rows_skipped: int
     status: str
+
+
+class LegacyExcelPreviewWealthSnapshot(BaseModel):
+    sheet_name: str
+    row_number: int
+    column_number: int
+    snapshot_date: DateType
+    account_name: str
+    account_type: str
+    balance: Decimal
+    currency: str
+    balance_eur: Decimal
+    fx_rate_to_eur: Decimal
+    interest_earned: Decimal
+    notes: str | None = None
+    external_id: str
+    dedupe_hash: str
+    is_duplicate: bool = False
+
+
+class LegacyExcelWealthPreviewSummary(BaseModel):
+    snapshot_count: int
+    duplicate_snapshot_count: int
+    account_count: int
+    latest_snapshot_date: DateType | None = None
+
+
+class LegacyExcelWealthPreviewResponse(BaseModel):
+    source: str
+    filename: str
+    rows_total: int
+    rows_valid: int
+    rows_duplicates: int
+    rows_invalid: int
+    summary: LegacyExcelWealthPreviewSummary
+    snapshots: list[LegacyExcelPreviewWealthSnapshot]
+
+
+class LegacyExcelWealthCommitResponse(BaseModel):
+    import_batch_id: int
+    source: str
+    filename: str
+    rows_total: int
+    rows_inserted: int
+    rows_skipped: int
+    accounts_created: int
+    snapshots_inserted: int
+    duplicate_snapshots_skipped: int
+    status: str

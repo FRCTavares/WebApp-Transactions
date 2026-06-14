@@ -5,9 +5,12 @@ from app.database import get_db
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
 from app.schemas.legacy_excel_import import (
     LegacyExcelCommitResponse,
     LegacyExcelPreviewResponse,
+    LegacyExcelWealthCommitResponse,
+    LegacyExcelWealthPreviewResponse,
 )
 from app.services.legacy_excel_import_service import LegacyExcelImportService
 
@@ -24,11 +27,13 @@ def get_legacy_excel_import_service(
     transaction_repository = TransactionRepository(db)
     owed_repository = OwedRepository(db)
     import_batch_repository = ImportBatchRepository(db)
+    wealth_repository = WealthRepository(db)
 
     return LegacyExcelImportService(
         transaction_repository=transaction_repository,
         owed_repository=owed_repository,
         import_batch_repository=import_batch_repository,
+        wealth_repository=wealth_repository,
     )
 
 
@@ -56,6 +61,34 @@ async def commit_legacy_excel_import(
     filename = file.filename or "legacy_finance.xlsx"
 
     return service.commit_import_from_file(
+        file_content=file_content,
+        filename=filename,
+    )
+
+
+@router.post("/wealth-preview", response_model=LegacyExcelWealthPreviewResponse)
+async def preview_legacy_excel_wealth_import(
+    file: UploadFile = File(...),
+    service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+):
+    file_content = await file.read()
+    filename = file.filename or "legacy_finance.xlsx"
+
+    return service.preview_wealth_import_from_file(
+        file_content=file_content,
+        filename=filename,
+    )
+
+
+@router.post("/wealth-commit", response_model=LegacyExcelWealthCommitResponse)
+async def commit_legacy_excel_wealth_import(
+    file: UploadFile = File(...),
+    service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+):
+    file_content = await file.read()
+    filename = file.filename or "legacy_finance.xlsx"
+
+    return service.commit_wealth_import_from_file(
         file_content=file_content,
         filename=filename,
     )
