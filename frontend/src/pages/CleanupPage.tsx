@@ -123,6 +123,7 @@ export function CleanupPage() {
     (total, group) => total + group.transactions.length,
     0,
   )
+  const groupsWithItems = reviewGroups.filter((group) => group.transactions.length > 0)
 
   return (
     <section>
@@ -134,28 +135,15 @@ export function CleanupPage() {
           </p>
         </div>
 
-        <button type="button" onClick={loadReviewTransactions}>
-          Refresh
-        </button>
-      </div>
-
-      <StatusMessage error={error} message={message} />
-
-      <div className="filter-panel compact-filter-panel">
-        <div className="form-row">
-          <label>
-            Month
-            <input
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-            />
-          </label>
-        </div>
-
         <div className="action-group">
+          <input
+            aria-label="Review month"
+            type="month"
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
+          />
           <button type="button" onClick={loadReviewTransactions}>
-            Load Month
+            Load
           </button>
           <button
             type="button"
@@ -163,22 +151,59 @@ export function CleanupPage() {
               setMonth(getCurrentMonth())
             }}
           >
-            Current Month
+            Current
+          </button>
+          <button type="button" onClick={loadReviewTransactions}>
+            Refresh
           </button>
         </div>
       </div>
 
-      <div className="summary-grid">
-        {reviewGroups.map((group) => (
-          <article className="summary-card" key={group.title}>
-            <h2>{group.title}</h2>
-            <strong>{group.transactions.length}</strong>
-          </article>
-        ))}
-      </div>
+      <StatusMessage error={error} message={message} />
 
-      {reviewGroups.map((group) => (
-        <section className="review-section" key={group.title}>
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Review snapshot</h2>
+            <p className="muted small">
+              Items that need cleanup or should be checked before trusting the month totals.
+            </p>
+          </div>
+          <strong>{reviewItemCount}</strong>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Review area</th>
+                <th>Description</th>
+                <th className="right">Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviewGroups.map((group) => (
+                <tr key={group.title}>
+                  <td>
+                    <strong>{group.title}</strong>
+                  </td>
+                  <td className="muted small">{group.description}</td>
+                  <td className="right">
+                    <strong>{group.transactions.length}</strong>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {groupsWithItems.length === 0 && (
+          <p className="empty-state">All clear for this month. No review items found.</p>
+        )}
+      </section>
+
+      {groupsWithItems.map((group) => (
+        <section className="panel-card" key={group.title}>
           <div className="section-header">
             <div>
               <h2>{group.title}</h2>
@@ -187,11 +212,7 @@ export function CleanupPage() {
             <strong>{group.transactions.length}</strong>
           </div>
 
-          {group.transactions.length === 0 ? (
-            <p className="muted">No items in this group.</p>
-          ) : (
-            <TransactionTable transactions={group.transactions} />
-          )}
+          <TransactionTable transactions={group.transactions} />
         </section>
       ))}
     </section>
