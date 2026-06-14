@@ -3,9 +3,9 @@ import type { OwedStatusFilter } from '../../types/api'
 const statusOptions: Array<{ value: '' | OwedStatusFilter; label: string }> = [
   { value: 'active', label: 'Current owed' },
   { value: '', label: 'All history' },
-  { value: 'open', label: 'Open' },
-  { value: 'partially_paid', label: 'Partially paid' },
-  { value: 'paid', label: 'Paid' },
+  { value: 'open', label: 'Open only' },
+  { value: 'partially_paid', label: 'Partially paid only' },
+  { value: 'paid', label: 'Paid history' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
@@ -21,41 +21,41 @@ export function OwedStatusToolbar({
   onRefresh,
 }: OwedStatusToolbarProps) {
   return (
-    <div className="toolbar">
-      <select
-        value={statusFilter}
-        onChange={(event) => onStatusFilterChange(event.target.value as '' | OwedStatusFilter)}
-      >
-        {statusOptions.map((option) => (
-          <option key={option.value || 'all'} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+    <div className="owed-toolbar">
+      <div>
+        <label className="owed-toolbar-label" htmlFor="owed-status-filter">
+          View
+        </label>
+        <select
+          id="owed-status-filter"
+          value={statusFilter}
+          onChange={(event) => onStatusFilterChange(event.target.value as '' | OwedStatusFilter)}
+        >
+          {statusOptions.map((option) => (
+            <option key={option.value || 'all'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <button type="button" onClick={onRefresh}>
-        Refresh
-      </button>
+      <div className="owed-toolbar-actions">
+        <button type="button" onClick={() => onStatusFilterChange('active')}>
+          Current
+        </button>
 
-      <button type="button" onClick={() => onStatusFilterChange('active')}>
-        Current
-      </button>
+        <button type="button" onClick={() => onStatusFilterChange('paid')}>
+          Paid history
+        </button>
 
-      <button type="button" onClick={() => onStatusFilterChange('')}>
-        All History
-      </button>
+        <button type="button" onClick={() => onStatusFilterChange('')}>
+          All history
+        </button>
 
-      <button type="button" onClick={() => onStatusFilterChange('open')}>
-        Open
-      </button>
-
-      <button type="button" onClick={() => onStatusFilterChange('partially_paid')}>
-        Partially Paid
-      </button>
-
-      <button type="button" onClick={() => onStatusFilterChange('paid')}>
-        Paid
-      </button>
+        <button type="button" onClick={onRefresh}>
+          Refresh
+        </button>
+      </div>
     </div>
   )
 }

@@ -19,35 +19,23 @@ export function OwedSummaryCards({
   totalOriginalAmount,
 }: OwedSummaryCardsProps) {
   return (
-    <div className="summary-grid">
-      <article className="summary-card">
-        <h2>Still owed to me</h2>
+    <div className="owed-summary-grid">
+      <article className="owed-summary-card owed-summary-card-primary">
+        <span>Still owed</span>
         <strong>{formatMoney(totalStillOwed.toFixed(2))}</strong>
+        <small>{activeItems.length} current items</small>
       </article>
 
-      <article className="summary-card">
-        <h2>Already reimbursed</h2>
+      <article className="owed-summary-card">
+        <span>Already reimbursed</span>
         <strong>{formatMoney(totalAlreadyReimbursed.toFixed(2))}</strong>
+        <small>{paidItems.length} paid items in this view</small>
       </article>
 
-      <article className="summary-card">
-        <h2>Total original amount</h2>
+      <article className="owed-summary-card">
+        <span>Total original amount</span>
         <strong>{formatMoney(totalOriginalAmount.toFixed(2))}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Open / partially paid</h2>
-        <strong>{activeItems.length}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Paid</h2>
-        <strong>{paidItems.length}</strong>
-      </article>
-
-      <article className="summary-card">
-        <h2>Cancelled</h2>
-        <strong>{cancelledItems.length}</strong>
+        <small>{cancelledItems.length} cancelled items</small>
       </article>
     </div>
   )

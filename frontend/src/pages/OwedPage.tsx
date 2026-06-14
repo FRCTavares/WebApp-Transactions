@@ -322,7 +322,7 @@ export function OwedPage() {
   const totalOriginalAmount = getItemsTotal(items, 'amount_total')
 
   return (
-    <section>
+    <section className="owed-page">
       <div className="page-header">
         <div>
           <h1>Money Owed To Me</h1>

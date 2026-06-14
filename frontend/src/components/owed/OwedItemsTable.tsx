@@ -53,8 +53,8 @@ export function OwedItemsTable({
   formatLinkedTransactionOption,
 }: OwedItemsTableProps) {
   return (
-    <div className="table-wrap">
-      <table>
+    <div className="table-wrap owed-table-wrap">
+      <table className="owed-table">
         <thead>
           <tr>
             <th>Person</th>
@@ -164,7 +164,12 @@ export function OwedItemsTable({
           {items.length === 0 && !isCreateRowOpen ? (
             <tr>
               <td colSpan={9}>
-                <p className="muted">No owed items found.</p>
+                <div className="owed-empty-state">
+                  <strong>No current owed items</strong>
+                  <p className="muted">
+                    Add a new item when someone owes you money. Paid legacy history is hidden in the default view.
+                  </p>
+                </div>
               </td>
             </tr>
           ) : (
