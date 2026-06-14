@@ -55,6 +55,10 @@ function getDefaultYahooSymbol(position: InvestmentPosition) {
     return 'CSPX.L'
   }
 
+  if (ticker === 'BTC') {
+    return 'BTC-EUR'
+  }
+
   return position.ticker ?? ''
 }
 
