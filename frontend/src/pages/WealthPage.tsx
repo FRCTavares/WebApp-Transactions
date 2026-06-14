@@ -13,6 +13,7 @@ import {
   updateWealthSnapshot,
 } from '../api/wealth'
 import { StatusMessage } from '../components/StatusMessage'
+import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
 import {
   accountTypeOptions,
   getAccountGroups,
@@ -851,35 +852,7 @@ export function WealthPage() {
           </div>
         </div>
 
-        <div className="table-wrap wealth-monthly-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th className="right">Total wealth</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthlyTotals.map((row) => (
-                <tr key={row.month}>
-                  <td>{row.month}</td>
-                  <td className="right">{formatMoney(row.total_wealth_eur)}</td>
-                </tr>
-              ))}
-
-              {monthlyTotals.length === 0 ? (
-                <tr>
-                  <td colSpan={2}>
-                    <div className="wealth-empty-state">
-                      <strong>No monthly totals yet.</strong>
-                      <p className="muted small">Add snapshots to start building net worth history.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <WealthMonthlyChart monthlyTotals={monthlyTotals} />
       </section>
 
       <section className="panel-card">

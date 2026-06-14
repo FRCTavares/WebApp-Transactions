@@ -302,3 +302,81 @@
 .wealth-quick-snapshot .small-button {
   padding: 5px 9px;
 }
+
+.wealth-chart-card {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.wealth-chart-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.wealth-chart-header h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.wealth-chart-stat {
+  display: grid;
+  gap: 3px;
+  min-width: 150px;
+  text-align: right;
+}
+
+.wealth-chart-stat span,
+.wealth-chart-stat small {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wealth-chart-stat strong {
+  color: #111827;
+  font-size: 20px;
+}
+
+.wealth-chart-wrap {
+  overflow-x: auto;
+}
+
+.wealth-chart-wrap svg {
+  display: block;
+  min-width: 720px;
+  width: 100%;
+  height: auto;
+}
+
+.wealth-chart-axis {
+  stroke: #cbd5e1;
+  stroke-width: 1;
+}
+
+.wealth-chart-line {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wealth-chart-point {
+  fill: #ffffff;
+  stroke: #2563eb;
+  stroke-width: 2;
+}
+
+.wealth-chart-label {
+  fill: #6b7280;
+  font-size: 12px;
+}
