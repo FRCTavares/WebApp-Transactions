@@ -74,7 +74,15 @@ function getAccountLabel(account: WealthAccount) {
 }
 
 function getAccountTypeLabel(accountType: WealthAccountType) {
-  return accountTypeOptions.find((option) => option.value === accountType)?.label ?? accountType
+  const labels: Record<WealthAccountType, string> = {
+    current_account: 'Current',
+    savings_account: 'Savings',
+    brokerage: 'Brokerage',
+    cash: 'Cash',
+    other: 'Other',
+  }
+
+  return labels[accountType]
 }
 
 function getAccountName(accounts: WealthAccount[], accountId: number) {
@@ -91,6 +99,29 @@ function getLatestSnapshotByAccount(snapshots: WealthSnapshot[]) {
   }
 
   return latestByAccount
+}
+
+type WealthAccountGroup = {
+  key: string
+  label: string
+  accounts: WealthAccount[]
+}
+
+function getAccountGroups(accounts: WealthAccount[]) {
+  const grouped = new Map<string, WealthAccount[]>()
+
+  for (const account of accounts) {
+    const key = account.institution?.trim() || account.name
+    grouped.set(key, [...(grouped.get(key) ?? []), account])
+  }
+
+  return Array.from(grouped.entries())
+    .map(([key, groupedAccounts]): WealthAccountGroup => ({
+      key,
+      label: key,
+      accounts: groupedAccounts,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label))
 }
 
 function toPositiveAmount(value: string, fieldName: string) {
@@ -129,6 +160,7 @@ export function WealthPage() {
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [isSnapshotFormOpen, setIsSnapshotFormOpen] = useState(false)
   const [showInactiveAccounts, setShowInactiveAccounts] = useState(false)
+  const [expandedAccountGroups, setExpandedAccountGroups] = useState<Set<string>>(new Set())
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -368,7 +400,22 @@ export function WealthPage() {
     }
   }
 
+  function toggleAccountGroup(groupKey: string) {
+    setExpandedAccountGroups((currentGroups) => {
+      const nextGroups = new Set(currentGroups)
+
+      if (nextGroups.has(groupKey)) {
+        nextGroups.delete(groupKey)
+      } else {
+        nextGroups.add(groupKey)
+      }
+
+      return nextGroups
+    })
+  }
+
   const latestByAccount = getLatestSnapshotByAccount(snapshots)
+  const accountGroups = getAccountGroups(accounts)
   const sortedSnapshots = [...snapshots].sort((left, right) => {
     return right.snapshot_date.localeCompare(left.snapshot_date) || right.id - left.id
   })
@@ -653,59 +700,149 @@ export function WealthPage() {
           <table>
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Account</th>
                 <th>Type</th>
-                <th>Institution</th>
-                <th>Currency</th>
-                <th>Status</th>
                 <th className="right">Latest balance</th>
                 <th>Latest date</th>
-                <th>Notes</th>
+                <th>Status</th>
                 <th className="actions-cell">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {accounts.map((account) => {
-                const latestSnapshot = latestByAccount.get(account.id)
+              {accountGroups.map((group) => {
+                const hasSubAccounts = group.accounts.length > 1
+
+                if (!hasSubAccounts) {
+                  const account = group.accounts[0]
+                  const latestSnapshot = latestByAccount.get(account.id)
+
+                  return (
+                    <tr key={account.id}>
+                      <td>
+                        <div className="wealth-account-cell">
+                          <strong>{account.name}</strong>
+                          <span>{account.institution ?? account.currency}</span>
+                        </div>
+                      </td>
+                      <td>{getAccountTypeLabel(account.account_type)}</td>
+                      <td className="right">
+                        {latestSnapshot ? formatMoney(latestSnapshot.balance_eur) : '-'}
+                      </td>
+                      <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
+                      <td>
+                        <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
+                          {account.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-action-group">
+                          <button type="button" className="small-button" onClick={() => startAccountEdit(account)}>
+                            Edit
+                          </button>
+                          <button type="button" className="small-button" onClick={() => toggleAccountActive(account)}>
+                            {account.is_active ? 'Archive' : 'Restore'}
+                          </button>
+                          <button type="button" className="small-button danger-button" onClick={() => removeAccount(account)}>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                const isExpanded = expandedAccountGroups.has(group.key)
+                const latestSnapshots = group.accounts
+                  .map((account) => latestByAccount.get(account.id))
+                  .filter((snapshot): snapshot is WealthSnapshot => Boolean(snapshot))
+                const groupBalance = latestSnapshots
+                  .reduce((total, snapshot) => total + Number(snapshot.balance_eur), 0)
+                  .toFixed(2)
+                const groupLatestDate = latestSnapshots
+                  .map((snapshot) => snapshot.snapshot_date)
+                  .sort()
+                  .at(-1)
 
                 return (
-                  <tr key={account.id}>
-                    <td>
-                      <strong>{account.name}</strong>
-                    </td>
-                    <td>{getAccountTypeLabel(account.account_type)}</td>
-                    <td>{account.institution ?? '-'}</td>
-                    <td>{account.currency}</td>
-                    <td>
-                      <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
-                        {account.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="right">
-                      {latestSnapshot ? formatMoney(latestSnapshot.balance_eur) : '-'}
-                    </td>
-                    <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
-                    <td>{account.notes ?? '-'}</td>
-                    <td>
-                      <div className="table-action-group">
-                        <button type="button" className="small-button" onClick={() => startAccountEdit(account)}>
-                          Edit
+                  <>
+                    <tr key={group.key} className="wealth-account-group-row">
+                      <td>
+                        <button
+                          type="button"
+                          className="wealth-group-toggle"
+                          onClick={() => toggleAccountGroup(group.key)}
+                        >
+                          <span>{isExpanded ? '▾' : '▸'}</span>
+                          <strong>{group.label}</strong>
                         </button>
-                        <button type="button" className="small-button" onClick={() => toggleAccountActive(account)}>
-                          {account.is_active ? 'Archive' : 'Restore'}
+                        <div className="wealth-group-meta">
+                          {group.accounts.length} sub-accounts
+                        </div>
+                      </td>
+                      <td>Group</td>
+                      <td className="right">{formatMoney(groupBalance)}</td>
+                      <td>{groupLatestDate ? formatDate(groupLatestDate) : '-'}</td>
+                      <td>
+                        <span className="badge badge-active">Active</span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="small-button"
+                          onClick={() => toggleAccountGroup(group.key)}
+                        >
+                          {isExpanded ? 'Hide' : 'Show'}
                         </button>
-                        <button type="button" className="small-button danger-button" onClick={() => removeAccount(account)}>
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+
+                    {isExpanded
+                      ? group.accounts.map((account) => {
+                          const latestSnapshot = latestByAccount.get(account.id)
+
+                          return (
+                            <tr key={account.id} className="wealth-sub-account-row">
+                              <td>
+                                <div className="wealth-account-cell">
+                                  <strong>{account.name.replace(`${group.label} `, '')}</strong>
+                                  <span>{account.institution ?? account.currency}</span>
+                                </div>
+                              </td>
+                              <td>{getAccountTypeLabel(account.account_type)}</td>
+                              <td className="right">
+                                {latestSnapshot ? formatMoney(latestSnapshot.balance_eur) : '-'}
+                              </td>
+                              <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
+                              <td>
+                                <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
+                                  {account.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="table-action-group">
+                                  <button type="button" className="small-button" onClick={() => startAccountEdit(account)}>
+                                    Edit
+                                  </button>
+                                  <button type="button" className="small-button" onClick={() => toggleAccountActive(account)}>
+                                    {account.is_active ? 'Archive' : 'Restore'}
+                                  </button>
+                                  <button type="button" className="small-button danger-button" onClick={() => removeAccount(account)}>
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      : null}
+                  </>
                 )
               })}
 
+
               {accounts.length === 0 ? (
                 <tr>
-                  <td colSpan={9}>
+                  <td colSpan={6}>
                     <div className="wealth-empty-state">
                       <strong>No wealth accounts yet.</strong>
                       <p className="muted small">Create accounts first, then add monthly snapshots.</p>
