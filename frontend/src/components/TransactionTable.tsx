@@ -2,12 +2,19 @@ import type { ReactNode } from 'react'
 import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
+export type TransactionTableRow = Transaction & {
+  is_grouped?: boolean
+  grouped_count?: number
+  owed_status?: 'open' | 'partially_paid' | 'paid' | 'cancelled'
+}
+
 type TransactionTableProps = {
-  transactions: Transaction[]
+  transactions: TransactionTableRow[]
   createRow?: ReactNode
-  editRow?: (transaction: Transaction) => ReactNode
-  onEdit?: (transaction: Transaction) => void
-  onDelete?: (transaction: Transaction) => void
+  editRow?: (transaction: TransactionTableRow) => ReactNode
+  onEdit?: (transaction: TransactionTableRow) => void
+  onDelete?: (transaction: TransactionTableRow) => void
+  onMarkOwed?: (transaction: TransactionTableRow) => void
 }
 
 function formatCashflowType(cashflowType: string) {
@@ -18,14 +25,27 @@ function getCashflowBadgeClass(cashflowType: string) {
   return `badge badge-${cashflowType.replaceAll('_', '-')}`
 }
 
+function getOwedLabel(transaction: TransactionTableRow) {
+  if (transaction.owed_status === 'paid') {
+    return 'Reimbursed'
+  }
+
+  if (transaction.owed_status === 'open' || transaction.owed_status === 'partially_paid') {
+    return 'Owed'
+  }
+
+  return null
+}
+
 export function TransactionTable({
   transactions,
   createRow,
   editRow,
   onEdit,
   onDelete,
+  onMarkOwed,
 }: TransactionTableProps) {
-  const showActions = Boolean(onEdit || onDelete || createRow || editRow)
+  const showActions = Boolean(onEdit || onDelete || onMarkOwed || createRow || editRow)
 
   return (
     <div className="table-wrap">
@@ -60,11 +80,28 @@ export function TransactionTable({
             }
 
             return (
-              <tr key={transaction.id}>
+              <tr
+                key={transaction.is_grouped ? `grouped-${transaction.dedupe_hash}` : transaction.id}
+                className="transaction-row"
+              >
                 <td>{formatDate(transaction.date)}</td>
                 <td>
-                  <div>{transaction.description}</div>
-                  <div className="muted small">{transaction.raw_description}</div>
+                  <div className="transaction-description-line">
+                    <span>{transaction.description}</span>
+                    {getOwedLabel(transaction) && (
+                      <span className={`badge ${
+                        transaction.owed_status === 'paid'
+                          ? 'badge-owed-paid'
+                          : 'badge-owed-open'
+                      }`}>
+                        {getOwedLabel(transaction)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="muted small">
+                    {transaction.raw_description}
+                    {transaction.grouped_count ? ` · ${transaction.grouped_count} grouped rows` : ''}
+                  </div>
                 </td>
                 <td>
                   <span className={getCashflowBadgeClass(transaction.cashflow_type)}>
@@ -87,12 +124,17 @@ export function TransactionTable({
                 {showActions && (
                   <td>
                     <div className="action-group">
-                      {onEdit && (
+                      {!transaction.is_grouped && onEdit && (
                         <button type="button" onClick={() => onEdit(transaction)}>
                           Edit
                         </button>
                       )}
-                      {onDelete && (
+                      {!transaction.is_grouped && !transaction.owed_status && onMarkOwed && transaction.direction === 'out' && (
+                        <button type="button" onClick={() => onMarkOwed(transaction)}>
+                          Owed
+                        </button>
+                      )}
+                      {!transaction.is_grouped && onDelete && (
                         <button
                           type="button"
                           className="danger-button"
@@ -100,6 +142,9 @@ export function TransactionTable({
                         >
                           Delete
                         </button>
+                      )}
+                      {transaction.is_grouped && (
+                        <span className="muted small">Grouped</span>
                       )}
                     </div>
                   </td>

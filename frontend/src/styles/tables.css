@@ -153,3 +153,76 @@ td[colspan] {
   color: #1e3a8a;
   font-size: 13px;
 }
+
+
+
+.transaction-description-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-owed-open {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.badge-owed-paid {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15 23 42 / 0.35);
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(560px, 100%);
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 40px rgb(15 23 42 / 0.2);
+  padding: 1rem;
+}
+
+.modal-header,
+.modal-actions,
+.modal-transaction-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.modal-header {
+  margin-bottom: 1rem;
+}
+
+.modal-transaction-summary {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}

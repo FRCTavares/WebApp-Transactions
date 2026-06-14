@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createOwedItem, listOwedItems } from '../api/owed'
 import {
   createTransaction,
   deleteTransaction,
@@ -11,14 +12,21 @@ import {
   type TransactionFilterState,
 } from '../components/TransactionFilters'
 import type { TransactionFormState } from '../components/TransactionForm'
-import { TransactionTable } from '../components/TransactionTable'
+import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
-import type { CashflowType, Direction, Transaction } from '../types/api'
+import type { CashflowType, Direction, OwedItem, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 type TransactionsPageProps = {
   direction: Direction
   title: string
+}
+
+type OwedFromTransactionFormState = {
+  person: string
+  amount: string
+  alreadyPaid: boolean
+  notes: string
 }
 
 function getTodayDate() {
@@ -92,6 +100,114 @@ function getTransactionsTotal(transactions: Transaction[]) {
   return transactions.reduce((total, transaction) => total + Number(transaction.amount), 0)
 }
 
+function isTrading212Cashback(transaction: Transaction) {
+  return (
+    transaction.direction === 'in' &&
+    transaction.source === 'trading212' &&
+    transaction.description.toLowerCase() === 'spending cashback'
+  )
+}
+
+function getMonthEndDate(month: string) {
+  const [year, monthNumber] = month.split('-').map(Number)
+  return new Date(year, monthNumber, 0).toISOString().slice(0, 10)
+}
+
+function getOwedStatusByTransactionId(owedItems: OwedItem[]) {
+  const statusByTransactionId = new Map<number, OwedItem['status']>()
+
+  for (const item of owedItems) {
+    if (!item.linked_transaction_id || item.status === 'cancelled') {
+      continue
+    }
+
+    statusByTransactionId.set(item.linked_transaction_id, item.status)
+  }
+
+  return statusByTransactionId
+}
+
+function applyOwedStatus(
+  transactions: TransactionTableRow[],
+  owedItems: OwedItem[],
+): TransactionTableRow[] {
+  const statusByTransactionId = getOwedStatusByTransactionId(owedItems)
+
+  return transactions.map((transaction) => ({
+    ...transaction,
+    owed_status: statusByTransactionId.get(transaction.id),
+  }))
+}
+
+function getOwedSortRank(transaction: TransactionTableRow) {
+  if (!transaction.owed_status) {
+    return 0
+  }
+
+  if (transaction.owed_status === 'open' || transaction.owed_status === 'partially_paid') {
+    return 1
+  }
+
+  if (transaction.owed_status === 'paid') {
+    return 2
+  }
+
+  return 3
+}
+
+function sortTransactionsForDisplay(transactions: TransactionTableRow[]) {
+  return [...transactions].sort((first, second) => {
+    const owedRankDifference = getOwedSortRank(first) - getOwedSortRank(second)
+
+    if (owedRankDifference !== 0) {
+      return owedRankDifference
+    }
+
+    return second.date.localeCompare(first.date)
+  })
+}
+
+function getTransactionsForDisplay(
+  transactions: Transaction[],
+  selectedMonth: string,
+  owedItems: OwedItem[],
+): TransactionTableRow[] {
+  const cashbackRows = transactions.filter(isTrading212Cashback)
+
+  if (cashbackRows.length <= 1) {
+    return sortTransactionsForDisplay(applyOwedStatus(transactions, owedItems))
+  }
+
+  const cashbackTotal = cashbackRows.reduce(
+    (total, transaction) => total + Number(transaction.amount),
+    0,
+  )
+
+  const cashbackRow: TransactionTableRow = {
+    ...cashbackRows[0],
+    id: -1,
+    date: getMonthEndDate(selectedMonth),
+    description: `Trading 212 cashback - ${getMonthLabel(selectedMonth)}`,
+    raw_description: 'Monthly grouped cashback',
+    amount: cashbackTotal.toFixed(2),
+    category: cashbackRows[0].category ?? 'Cashback',
+    notes: `${cashbackRows.length} cashback rows grouped for display`,
+    is_grouped: true,
+    grouped_count: cashbackRows.length,
+    dedupe_hash: `grouped-trading212-cashback-${selectedMonth}`,
+  }
+
+  return sortTransactionsForDisplay(
+    applyOwedStatus(
+      [
+        ...transactions.filter((transaction) => !isTrading212Cashback(transaction)),
+        cashbackRow,
+      ],
+      owedItems,
+    ),
+  )
+}
+
 function getMonthDateRange(month: string) {
   if (!month) {
     return {
@@ -129,6 +245,7 @@ function getExportFilename(direction: Direction) {
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [owedItems, setOwedItems] = useState<OwedItem[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getInitialFilterState(direction),
   )
@@ -138,6 +255,21 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
+  const [owedForm, setOwedForm] = useState<OwedFromTransactionFormState>({
+    person: 'Mother',
+    amount: '',
+    alreadyPaid: false,
+    notes: '',
+  })
+
+  function loadOwedItems() {
+    listOwedItems({
+      limit: 500,
+    })
+      .then(setOwedItems)
+      .catch(() => undefined)
+  }
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -153,7 +285,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       source: activeFilters.source || undefined,
       date_from: activeFilters.dateFrom || monthDateRange.dateFrom || undefined,
       date_to: activeFilters.dateTo || monthDateRange.dateTo || undefined,
-      limit: 100,
+      limit: 500,
     })
       .then(setTransactions)
       .catch((caughtError: unknown) => {
@@ -196,6 +328,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     setEditingTransaction(null)
     setIsCreateFormOpen(false)
     loadTransactions(initialFilters)
+    loadOwedItems()
   }, [direction])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -345,8 +478,85 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }
   }
 
+  function openOwedDialog(transaction: TransactionTableRow) {
+    setError(null)
+    setMessage(null)
+    setOwedDraftTransaction(transaction)
+    setOwedForm({
+      person: 'Mother',
+      amount: transaction.amount,
+      alreadyPaid: false,
+      notes: transaction.raw_description,
+    })
+  }
+
+  function closeOwedDialog() {
+    setOwedDraftTransaction(null)
+    setOwedForm({
+      person: 'Mother',
+      amount: '',
+      alreadyPaid: false,
+      notes: '',
+    })
+  }
+
+  function updateOwedForm<K extends keyof OwedFromTransactionFormState>(
+    field: K,
+    value: OwedFromTransactionFormState[K],
+  ) {
+    setOwedForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }))
+  }
+
+  async function createOwedItemFromDialog() {
+    if (!owedDraftTransaction) {
+      return
+    }
+
+    const amount = Math.abs(Number(owedForm.amount.replace(',', '.')))
+
+    if (!owedForm.person.trim()) {
+      setError('Person is required.')
+      return
+    }
+
+    if (!amount || Number.isNaN(amount)) {
+      setError('Amount owed must be a positive number.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      await createOwedItem({
+        person: owedForm.person.trim(),
+        amount_total: amount.toFixed(2),
+        amount_paid: owedForm.alreadyPaid ? amount.toFixed(2) : '0.00',
+        reason: owedDraftTransaction.description,
+        status: owedForm.alreadyPaid ? 'paid' : 'open',
+        due_date: null,
+        linked_transaction_id: owedDraftTransaction.id,
+        notes: owedForm.notes || null,
+      })
+
+      setMessage(
+        owedForm.alreadyPaid
+          ? 'Paid owed item created from transaction.'
+          : 'Open owed item created from transaction.',
+      )
+      closeOwedDialog()
+      loadOwedItems()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed item')
+    }
+  }
+
   const transactionTotal = getTransactionsTotal(transactions)
   const selectedMonth = filters.month || getCurrentMonth()
+  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth, owedItems)
 
   return (
     <section>
@@ -406,7 +616,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       />
 
       <TransactionTable
-        transactions={transactions}
+        transactions={displayTransactions}
         createRow={
           isCreateFormOpen ? (
             <tr className="inline-create-row">
@@ -585,7 +795,84 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         }
         onEdit={handleStartEdit}
         onDelete={handleDeleteTransaction}
+        onMarkOwed={direction === 'out' ? openOwedDialog : undefined}
       />
+
+      {owedDraftTransaction && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-header">
+              <div>
+                <h2>Create owed item</h2>
+                <p className="muted small">
+                  Link this expense to Money Owed To Me.
+                </p>
+              </div>
+              <button type="button" onClick={closeOwedDialog}>
+                Close
+              </button>
+            </div>
+
+            <div className="modal-transaction-summary">
+              <strong>{owedDraftTransaction.description}</strong>
+              <span>{formatMoney(owedDraftTransaction.amount, owedDraftTransaction.currency)}</span>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Person
+                <input
+                  value={owedForm.person}
+                  onChange={(event) => updateOwedForm('person', event.target.value)}
+                  placeholder="Mother"
+                />
+              </label>
+
+              <label>
+                Amount owed
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={owedForm.amount}
+                  onChange={(event) => updateOwedForm('amount', event.target.value)}
+                />
+              </label>
+            </div>
+
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={owedForm.alreadyPaid}
+                onChange={(event) => updateOwedForm('alreadyPaid', event.target.checked)}
+              />
+              Already reimbursed
+            </label>
+
+            <label>
+              Notes
+              <textarea
+                value={owedForm.notes}
+                onChange={(event) => updateOwedForm('notes', event.target.value)}
+                rows={3}
+              />
+            </label>
+
+            <div className="modal-actions">
+              <button type="button" onClick={closeOwedDialog}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={createOwedItemFromDialog}
+              >
+                Create owed item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
