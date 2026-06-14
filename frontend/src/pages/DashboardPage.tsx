@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
-import type { CategorySummaryResponse, MonthlySummary } from '../types/api'
+import type { CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary } from '../types/api'
 import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 
@@ -28,20 +29,40 @@ function getCurrentYearMonth() {
   }
 }
 
+function calculateDashboardNet(
+  summary: MonthlySummary,
+  investmentMonthlyChange: InvestmentMonthlyChange | null,
+) {
+  const investmentChange = Number(investmentMonthlyChange?.unrealised_monthly_change ?? 0)
+
+  return (
+    Number(summary.money_in)
+    - Number(summary.personal_money_out)
+    + investmentChange
+  ).toFixed(2)
+}
+
 export function DashboardPage() {
   const currentYearMonth = getCurrentYearMonth()
   const [year, setYear] = useState(currentYearMonth.year)
   const [month, setMonth] = useState(currentYearMonth.month)
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
+  const [investmentMonthlyChange, setInvestmentMonthlyChange] =
+    useState<InvestmentMonthlyChange | null>(null)
   const [categories, setCategories] = useState<CategorySummaryResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     setError(null)
 
-    Promise.all([getMonthlySummary(year, month), getCategorySummary('out', year, month)])
-      .then(([summaryData, categoryData]) => {
+    Promise.all([
+      getMonthlySummary(year, month),
+      getInvestmentMonthlyChange(year, month),
+      getCategorySummary('out', year, month),
+    ])
+      .then(([summaryData, investmentMonthlyChangeData, categoryData]) => {
         setSummary(summaryData)
+        setInvestmentMonthlyChange(investmentMonthlyChangeData)
         setCategories(categoryData)
       })
       .catch((caughtError: unknown) => {
@@ -102,9 +123,18 @@ export function DashboardPage() {
               <p className="muted small">After reimbursements</p>
             </div>
             <div className="card">
+              <span>Investments</span>
+              <strong>
+                {investmentMonthlyChange?.unrealised_monthly_change
+                  ? formatMoney(investmentMonthlyChange.unrealised_monthly_change)
+                  : '-'}
+              </strong>
+              <p className="muted small">Unrealised monthly gain/loss</p>
+            </div>
+            <div className="card">
               <span>Net</span>
-              <strong>{formatMoney(summary.personal_net)}</strong>
-              <p className="muted small">Income minus money spent</p>
+              <strong>{formatMoney(calculateDashboardNet(summary, investmentMonthlyChange))}</strong>
+              <p className="muted small">Income - spent + investments</p>
             </div>
           </div>
 

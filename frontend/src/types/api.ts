@@ -146,6 +146,14 @@ export type InvestmentPosition = {
   unrealised_gain_percent: string | null
 }
 
+export type InvestmentMonthlyChange = {
+  month: string
+  start_value: string | null
+  end_value: string | null
+  net_invested: string
+  unrealised_monthly_change: string | null
+}
+
 export type InvestmentEventFilters = {
   source?: string
   event_type?: string

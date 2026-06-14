@@ -2,6 +2,7 @@ import { apiGet, apiPostJson, buildQuery } from './client'
 import type {
   InvestmentEvent,
   InvestmentEventFilters,
+  InvestmentMonthlyChange,
   InvestmentPosition,
   ManualFundingResolutionPayload,
   ManualFundingResolutionResponse,
@@ -18,6 +19,12 @@ export function getInvestmentEvent(eventId: number) {
 export function listInvestmentPositions(source?: string) {
   return apiGet<InvestmentPosition[]>(
     `/api/investment-events/positions${buildQuery({ source })}`,
+  )
+}
+
+export function getInvestmentMonthlyChange(year: number, month: number) {
+  return apiGet<InvestmentMonthlyChange>(
+    `/api/investment-events/monthly-change${buildQuery({ year, month })}`,
   )
 }
 
