@@ -441,3 +441,102 @@ export type CashflowRule = {
   created_at: string
   updated_at: string
 }
+
+export type WealthAccountType =
+  | 'current_account'
+  | 'savings_account'
+  | 'brokerage'
+  | 'cash'
+  | 'other'
+
+export type WealthAccount = {
+  id: number
+  name: string
+  account_type: WealthAccountType
+  currency: string
+  institution: string | null
+  is_active: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type WealthAccountCreatePayload = {
+  name: string
+  account_type: WealthAccountType
+  currency: string
+  institution?: string | null
+  is_active: boolean
+  notes?: string | null
+}
+
+export type WealthAccountUpdatePayload = {
+  name?: string
+  account_type?: WealthAccountType
+  currency?: string
+  institution?: string | null
+  is_active?: boolean
+  notes?: string | null
+}
+
+export type WealthAccountFilters = {
+  active_only?: boolean
+  limit?: number
+  offset?: number
+}
+
+export type WealthSnapshot = {
+  id: number
+  snapshot_date: string
+  account_id: number
+  balance: string
+  currency: string
+  balance_eur: string
+  fx_rate_to_eur: string
+  interest_earned: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type WealthSnapshotCreatePayload = {
+  snapshot_date: string
+  account_id: number
+  balance: string
+  currency: string
+  balance_eur?: string | null
+  fx_rate_to_eur?: string | null
+  interest_earned?: string | null
+  notes?: string | null
+}
+
+export type WealthSnapshotUpdatePayload = {
+  snapshot_date?: string
+  account_id?: number
+  balance?: string
+  currency?: string
+  balance_eur?: string | null
+  fx_rate_to_eur?: string | null
+  interest_earned?: string | null
+  notes?: string | null
+}
+
+export type WealthSnapshotFilters = {
+  account_id?: number
+  date_from?: string
+  date_to?: string
+  limit?: number
+  offset?: number
+}
+
+export type WealthSummary = {
+  current_total_wealth_eur: string
+  account_count: number
+  latest_snapshot_date: string | null
+  total_interest_earned: string
+}
+
+export type WealthMonthlyTotal = {
+  month: string
+  total_wealth_eur: string
+}

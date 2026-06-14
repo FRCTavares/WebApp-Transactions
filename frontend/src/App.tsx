@@ -5,9 +5,10 @@ import { OwedPage } from './pages/OwedPage'
 import { ImportPage } from './pages/ImportPage'
 import { CategoryRulesPage } from './pages/CategoryRulesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
+import { WealthPage } from './pages/WealthPage'
 import { CleanupPage } from './pages/CleanupPage'
 
-type Page = 'dashboard' | 'money-in' | 'money-out' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
+type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
   {
@@ -22,6 +23,7 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
     items: [
       { id: 'money-in', label: 'Money In' },
       { id: 'money-out', label: 'Money Out' },
+      { id: 'wealth', label: 'Wealth' },
       { id: 'investments', label: 'Investments' },
       { id: 'owed', label: 'Money Owed To Me' },
     ],
@@ -71,6 +73,7 @@ function App() {
         {page === 'dashboard' && <DashboardPage />}
         {page === 'money-in' && <TransactionsPage direction="in" title="Money In" />}
         {page === 'money-out' && <TransactionsPage direction="out" title="Money Out" />}
+        {page === 'wealth' && <WealthPage />}
         {page === 'investments' && <InvestmentsPage />}
         {page === 'owed' && <OwedPage />}
         {page === 'cleanup' && <CleanupPage />}
