@@ -229,6 +229,7 @@ export type ManualFundingResolutionResponse = {
 
 
 export type OwedStatus = 'open' | 'partially_paid' | 'paid' | 'cancelled'
+export type OwedStatusFilter = 'active' | OwedStatus
 
 export type OwedItem = {
   id: number
@@ -268,7 +269,7 @@ export type OwedItemUpdatePayload = {
 }
 
 export type OwedItemFilters = {
-  status?: OwedStatus
+  status?: OwedStatusFilter
   person?: string
   limit?: number
   offset?: number

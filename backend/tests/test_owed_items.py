@@ -119,6 +119,40 @@ def test_list_owed_items_filters_by_status_and_person(client):
     assert data[0]["status"] == "partially_paid"
 
 
+def test_list_owed_items_active_status_returns_open_and_partially_paid_only(client):
+    create_owed_item(
+        client,
+        person="Alice",
+        reason="Dinner",
+        amount_total="30.00",
+        amount_paid="0.00",
+    )
+    create_owed_item(
+        client,
+        person="Alice",
+        reason="Trip",
+        amount_total="100.00",
+        amount_paid="50.00",
+    )
+    create_owed_item(
+        client,
+        person="Bob",
+        reason="Coffee",
+        amount_total="5.00",
+        amount_paid="5.00",
+    )
+
+    response = client.get("/api/owed?status=active")
+
+    assert response.status_code == 200
+
+    data = response.json()
+    statuses = {item["status"] for item in data}
+
+    assert len(data) == 2
+    assert statuses == {"open", "partially_paid"}
+
+
 def test_get_missing_owed_item_returns_404(client):
     response = client.get("/api/owed/999")
 

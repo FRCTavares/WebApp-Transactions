@@ -11,7 +11,7 @@ import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItems
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { OwedSummaryCards } from '../components/owed/OwedSummaryCards'
 import { StatusMessage } from '../components/StatusMessage'
-import type { OwedItem, OwedStatus, Transaction } from '../types/api'
+import type { OwedItem, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 function getInitialFormState(): OwedFormState {
@@ -91,7 +91,7 @@ function downloadBlob(blob: Blob, filename: string) {
 export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
   const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
-  const [statusFilter, setStatusFilter] = useState<'' | OwedStatus>('')
+  const [statusFilter, setStatusFilter] = useState<'' | OwedStatusFilter>('active')
   const [form, setForm] = useState<OwedFormState>(getInitialFormState)
   const [editForm, setEditForm] = useState<OwedFormState>(getInitialFormState)
   const [editingItem, setEditingItem] = useState<OwedItem | null>(null)

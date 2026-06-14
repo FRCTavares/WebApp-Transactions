@@ -28,7 +28,11 @@ class OwedRepository:
     ) -> list[OwedItem]:
         statement = select(OwedItem).order_by(OwedItem.created_at.desc(), OwedItem.id.desc())
 
-        if status is not None:
+        if status == "active":
+            statement = statement.where(
+                OwedItem.status.in_(["open", "partially_paid"])
+            )
+        elif status is not None:
             statement = statement.where(OwedItem.status == status)
 
         if person is not None:

@@ -1,7 +1,8 @@
-import type { OwedStatus } from '../../types/api'
+import type { OwedStatusFilter } from '../../types/api'
 
-const statusOptions: Array<{ value: '' | OwedStatus; label: string }> = [
-  { value: '', label: 'All statuses' },
+const statusOptions: Array<{ value: '' | OwedStatusFilter; label: string }> = [
+  { value: 'active', label: 'Current owed' },
+  { value: '', label: 'All history' },
   { value: 'open', label: 'Open' },
   { value: 'partially_paid', label: 'Partially paid' },
   { value: 'paid', label: 'Paid' },
@@ -9,8 +10,8 @@ const statusOptions: Array<{ value: '' | OwedStatus; label: string }> = [
 ]
 
 type OwedStatusToolbarProps = {
-  statusFilter: '' | OwedStatus
-  onStatusFilterChange: (status: '' | OwedStatus) => void
+  statusFilter: '' | OwedStatusFilter
+  onStatusFilterChange: (status: '' | OwedStatusFilter) => void
   onRefresh: () => void
 }
 
@@ -23,7 +24,7 @@ export function OwedStatusToolbar({
     <div className="toolbar">
       <select
         value={statusFilter}
-        onChange={(event) => onStatusFilterChange(event.target.value as '' | OwedStatus)}
+        onChange={(event) => onStatusFilterChange(event.target.value as '' | OwedStatusFilter)}
       >
         {statusOptions.map((option) => (
           <option key={option.value || 'all'} value={option.value}>
@@ -36,8 +37,12 @@ export function OwedStatusToolbar({
         Refresh
       </button>
 
+      <button type="button" onClick={() => onStatusFilterChange('active')}>
+        Current
+      </button>
+
       <button type="button" onClick={() => onStatusFilterChange('')}>
-        All
+        All History
       </button>
 
       <button type="button" onClick={() => onStatusFilterChange('open')}>
