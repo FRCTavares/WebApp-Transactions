@@ -200,8 +200,8 @@ export function getAccountGroups(accounts: WealthAccount[]) {
 export function toPositiveAmount(value: string, fieldName: string) {
   const numberValue = Math.abs(Number(value))
 
-  if (!Number.isFinite(numberValue) || numberValue <= 0) {
-    throw new Error(`${fieldName} must be a positive number.`)
+  if (!Number.isFinite(numberValue) || numberValue < 0) {
+    throw new Error(`${fieldName} must be zero or a positive number.`)
   }
 
   return numberValue.toFixed(2)
