@@ -92,6 +92,84 @@ export function getLatestSnapshotByAccount(snapshots: WealthSnapshot[]) {
   return latestByAccount
 }
 
+function getNormalisedText(value: string | null | undefined) {
+  return (value ?? '').trim().toLowerCase()
+}
+
+function getGroupSortRank(groupLabel: string) {
+  const label = getNormalisedText(groupLabel)
+
+  if (label.includes('activo')) {
+    return 10
+  }
+
+  if (label.includes('trading 212')) {
+    return 20
+  }
+
+  if (label.includes('revolut')) {
+    return 30
+  }
+
+  if (label.includes('bank notes')) {
+    return 40
+  }
+
+  if (
+    label.includes('money owed') ||
+    label.includes('owed') ||
+    label.includes('dívidas') ||
+    label.includes('dividas')
+  ) {
+    return 50
+  }
+
+  return 100
+}
+
+function getAccountSortRank(account: WealthAccount) {
+  const name = getNormalisedText(account.name)
+  const institution = getNormalisedText(account.institution)
+
+  if (institution.includes('activo') || name.includes('activo')) {
+    if (name.includes('trip')) {
+      return 12
+    }
+
+    if (name.includes('emergency')) {
+      return 13
+    }
+
+    return 11
+  }
+
+  if (institution.includes('trading 212') || name.includes('trading 212')) {
+    if (name.includes('daily') || name.includes('everyday') || name.includes('cash')) {
+      return 21
+    }
+
+    if (name.includes('btc') || name.includes('bitcoin')) {
+      return 22
+    }
+
+    if (name.includes('cspx')) {
+      return 23
+    }
+
+    if (name.includes('vwce')) {
+      return 24
+    }
+
+    if (name.includes('investment')) {
+      return 25
+    }
+
+    return 29
+  }
+
+  return 100
+}
+
 export function getAccountGroups(accounts: WealthAccount[]) {
   const grouped = new Map<string, WealthAccount[]>()
 
@@ -104,9 +182,19 @@ export function getAccountGroups(accounts: WealthAccount[]) {
     .map(([key, groupedAccounts]): WealthAccountGroup => ({
       key,
       label: key,
-      accounts: groupedAccounts,
+      accounts: [...groupedAccounts].sort((left, right) => {
+        return (
+          getAccountSortRank(left) - getAccountSortRank(right) ||
+          left.name.localeCompare(right.name)
+        )
+      }),
     }))
-    .sort((left, right) => left.label.localeCompare(right.label))
+    .sort((left, right) => {
+      return (
+        getGroupSortRank(left.label) - getGroupSortRank(right.label) ||
+        left.label.localeCompare(right.label)
+      )
+    })
 }
 
 export function toPositiveAmount(value: string, fieldName: string) {
