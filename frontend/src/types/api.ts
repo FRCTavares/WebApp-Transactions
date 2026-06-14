@@ -340,7 +340,10 @@ export type MonthlySummary = {
   month: string
   money_in: string
   money_out: string
+  owed_expense_amount: string
+  personal_money_out: string
   net: string
+  personal_net: string
   open_owed_amount: string
   top_expense_categories: CategoryTotal[]
 }

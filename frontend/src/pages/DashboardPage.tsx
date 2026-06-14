@@ -97,16 +97,14 @@ export function DashboardPage() {
               <strong>{formatMoney(summary.money_in)}</strong>
             </div>
             <div className="card">
-              <span>Money Out</span>
-              <strong>{formatMoney(summary.money_out)}</strong>
+              <span>Money Spent</span>
+              <strong>{formatMoney(summary.personal_money_out)}</strong>
+              <p className="muted small">After reimbursements</p>
             </div>
             <div className="card">
               <span>Net</span>
-              <strong>{formatMoney(summary.net)}</strong>
-            </div>
-            <div className="card">
-              <span>Open Owed</span>
-              <strong>{formatMoney(summary.open_owed_amount)}</strong>
+              <strong>{formatMoney(summary.personal_net)}</strong>
+              <p className="muted small">Income minus money spent</p>
             </div>
           </div>
 
