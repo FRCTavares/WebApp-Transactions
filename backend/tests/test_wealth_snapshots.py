@@ -193,6 +193,73 @@ def test_monthly_endpoint_groups_latest_snapshot_per_account_per_month(client):
         },
         {
             "month": "2026-02",
-            "total_wealth_eur": "2200.00",
+            "total_wealth_eur": "5200.00",
         },
+    ]
+
+
+def test_wealth_monthly_totals_carry_forward_latest_account_balances(client):
+    account_a = client.post(
+        "/api/wealth/accounts",
+        json={
+            "name": "Current Account",
+            "account_type": "current_account",
+            "currency": "EUR",
+            "institution": "Bank",
+            "is_active": True,
+            "notes": None,
+        },
+    ).json()
+    account_b = client.post(
+        "/api/wealth/accounts",
+        json={
+            "name": "Cash",
+            "account_type": "cash",
+            "currency": "EUR",
+            "institution": None,
+            "is_active": True,
+            "notes": None,
+        },
+    ).json()
+
+    client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-04-30",
+            "account_id": account_a["id"],
+            "balance": "100.00",
+            "currency": "EUR",
+            "interest_earned": "0.00",
+            "notes": None,
+        },
+    )
+    client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-04-30",
+            "account_id": account_b["id"],
+            "balance": "50.00",
+            "currency": "EUR",
+            "interest_earned": "0.00",
+            "notes": None,
+        },
+    )
+    client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-05-31",
+            "account_id": account_a["id"],
+            "balance": "120.00",
+            "currency": "EUR",
+            "interest_earned": "0.00",
+            "notes": None,
+        },
+    )
+
+    response = client.get("/api/wealth/monthly")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {"month": "2026-04", "total_wealth_eur": "150.00"},
+        {"month": "2026-05", "total_wealth_eur": "170.00"},
     ]

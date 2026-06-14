@@ -151,22 +151,24 @@ class WealthService:
 
     def get_monthly_totals(self) -> list[WealthMonthlyRead]:
         snapshots = self.repository.list_all_snapshots_ascending()
-        latest_by_month_account: dict[str, dict[int, WealthSnapshot]] = defaultdict(dict)
+        snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
             month = snapshot.snapshot_date.strftime("%Y-%m")
-            latest_by_month_account[month][snapshot.account_id] = snapshot
+            snapshots_by_month[month].append(snapshot)
 
-        rows = []
+        latest_by_account: dict[int, WealthSnapshot] = {}
+        rows: list[WealthMonthlyRead] = []
 
-        for month in sorted(latest_by_month_account):
+        for month in sorted(snapshots_by_month):
+            for snapshot in snapshots_by_month[month]:
+                latest_by_account[snapshot.account_id] = snapshot
+
             total = sum(
-                (
-                    snapshot.balance_eur
-                    for snapshot in latest_by_month_account[month].values()
-                ),
+                (snapshot.balance_eur for snapshot in latest_by_account.values()),
                 Decimal("0"),
             )
+
             rows.append(
                 WealthMonthlyRead(
                     month=month,
