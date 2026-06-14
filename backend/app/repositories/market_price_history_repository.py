@@ -81,6 +81,33 @@ class MarketPriceHistoryRepository:
 
         return self.db.scalar(statement)
 
+    def get_latest_on_or_before(
+        self,
+        price_date: date,
+        ticker: str | None = None,
+        isin: str | None = None,
+    ) -> MarketPriceHistory | None:
+        identity_filters = []
+
+        if ticker:
+            identity_filters.append(MarketPriceHistory.ticker == ticker)
+
+        if isin:
+            identity_filters.append(MarketPriceHistory.isin == isin)
+
+        if not identity_filters:
+            return None
+
+        statement = (
+            select(MarketPriceHistory)
+            .where(or_(*identity_filters))
+            .where(MarketPriceHistory.price_date <= price_date)
+            .order_by(MarketPriceHistory.price_date.desc(), MarketPriceHistory.id.desc())
+            .limit(1)
+        )
+
+        return self.db.scalar(statement)
+
     def list_history(
         self,
         ticker: str | None = None,

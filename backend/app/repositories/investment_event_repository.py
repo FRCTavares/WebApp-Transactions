@@ -62,6 +62,32 @@ class InvestmentEventRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_until(
+        self,
+        end_date: date,
+    ) -> list[InvestmentEvent]:
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.date <= end_date)
+            .order_by(InvestmentEvent.date.asc(), InvestmentEvent.id.asc())
+        )
+
+        return list(self.db.scalars(statement).all())
+
+    def list_between(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> list[InvestmentEvent]:
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.date >= start_date)
+            .where(InvestmentEvent.date < end_date)
+            .order_by(InvestmentEvent.date.asc(), InvestmentEvent.id.asc())
+        )
+
+        return list(self.db.scalars(statement).all())
+
     def list_by_import_batch(
         self,
         import_batch_id: int,

@@ -104,6 +104,14 @@ class InvestmentPositionRead(BaseModel):
     unrealised_gain_percent: Decimal | None = None
 
 
+class InvestmentMonthlyChangeRead(BaseModel):
+    month: str
+    start_value: Decimal | None
+    end_value: Decimal | None
+    net_invested: Decimal
+    unrealised_monthly_change: Decimal | None
+
+
 class ManualFundingResolutionCreate(BaseModel):
     eur_amount: Decimal = Field(gt=0)
     date: DateType

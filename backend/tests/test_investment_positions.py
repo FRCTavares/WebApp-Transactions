@@ -203,3 +203,141 @@ def test_list_positions_applies_market_sells_to_matching_cost_bucket(client, db_
             "average_price": "600.00000000",
         }
     ]
+
+
+def test_monthly_change_uses_price_movement_not_buys(client, db_session):
+    from app.models.market_price_history import MarketPriceHistory
+
+    buy = InvestmentEvent(
+        date=date(2026, 5, 15),
+        source="trading212",
+        account="Trading 212",
+        event_type="market_buy",
+        description="Market buy VWCE",
+        raw_description="Market buy VWCE",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        quantity=Decimal("1.00"),
+        amount=Decimal("100.00"),
+        currency="EUR",
+        original_amount=Decimal("100.00"),
+        original_currency="EUR",
+        fx_rate_to_eur=Decimal("1"),
+    )
+    db_session.add(buy)
+
+    db_session.add(
+        MarketPriceHistory(
+            ticker="VWCE",
+            isin="IE00BK5BQT80",
+            price_date=date(2026, 5, 31),
+            close_price=Decimal("110.00"),
+            currency="EUR",
+            source="manual",
+        )
+    )
+
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["month"] == "2026-05"
+    assert data["start_value"] == "0.00"
+    assert data["end_value"] == "110.00"
+    assert data["net_invested"] == "100.00"
+    assert data["unrealised_monthly_change"] == "10.00"
+
+
+def test_monthly_change_uses_previous_month_end_holdings(client, db_session):
+    from app.models.market_price_history import MarketPriceHistory
+
+    buy = InvestmentEvent(
+        date=date(2026, 4, 10),
+        source="trading212",
+        account="Trading 212",
+        event_type="market_buy",
+        description="Market buy VWCE",
+        raw_description="Market buy VWCE",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        quantity=Decimal("2.00"),
+        amount=Decimal("200.00"),
+        currency="EUR",
+        original_amount=Decimal("200.00"),
+        original_currency="EUR",
+        fx_rate_to_eur=Decimal("1"),
+    )
+    db_session.add(buy)
+
+    db_session.add_all(
+        [
+            MarketPriceHistory(
+                ticker="VWCE",
+                isin="IE00BK5BQT80",
+                price_date=date(2026, 5, 1),
+                close_price=Decimal("100.00"),
+                currency="EUR",
+                source="manual",
+            ),
+            MarketPriceHistory(
+                ticker="VWCE",
+                isin="IE00BK5BQT80",
+                price_date=date(2026, 5, 31),
+                close_price=Decimal("105.00"),
+                currency="EUR",
+                source="manual",
+            ),
+        ]
+    )
+
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["start_value"] == "200.00"
+    assert data["end_value"] == "210.00"
+    assert data["net_invested"] == "0.00"
+    assert data["unrealised_monthly_change"] == "10.00"
+
+
+def test_monthly_change_returns_null_when_holdings_cannot_be_priced(client, db_session):
+    buy = InvestmentEvent(
+        date=date(2026, 5, 15),
+        source="trading212",
+        account="Trading 212",
+        event_type="market_buy",
+        description="Market buy VWCE",
+        raw_description="Market buy VWCE",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        quantity=Decimal("1.00"),
+        amount=Decimal("100.00"),
+        currency="EUR",
+        original_amount=Decimal("100.00"),
+        original_currency="EUR",
+        fx_rate_to_eur=Decimal("1"),
+    )
+    db_session.add(buy)
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["start_value"] == "0.00"
+    assert data["end_value"] is None
+    assert data["net_invested"] == "100.00"
+    assert data["unrealised_monthly_change"] is None

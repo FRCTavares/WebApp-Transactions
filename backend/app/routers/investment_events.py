@@ -5,12 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repositories.investment_event_repository import InvestmentEventRepository
-from app.repositories.market_price_repository import MarketPriceRepository
+from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
     InvestmentEventCreate,
     InvestmentEventRead,
+    InvestmentMonthlyChangeRead,
     InvestmentPositionRead,
     ManualFundingResolutionCreate,
     ManualFundingResolutionRead,
@@ -27,11 +28,13 @@ def get_investment_event_service(
     repository = InvestmentEventRepository(db)
     transaction_repository = TransactionRepository(db)
     market_price_repository = MarketPriceRepository(db)
+    market_price_history_repository = MarketPriceHistoryRepository(db)
 
     return InvestmentEventService(
         repository=repository,
         transaction_repository=transaction_repository,
         market_price_repository=market_price_repository,
+        market_price_history_repository=market_price_history_repository,
     )
 
 
@@ -69,6 +72,15 @@ def list_investment_positions(
     service: InvestmentEventService = Depends(get_investment_event_service),
 ):
     return service.list_positions(source=source)
+
+
+@router.get("/monthly-change", response_model=InvestmentMonthlyChangeRead)
+def get_investment_monthly_change(
+    year: int = Query(ge=1900, le=2200),
+    month: int = Query(ge=1, le=12),
+    service: InvestmentEventService = Depends(get_investment_event_service),
+):
+    return service.get_monthly_change(year=year, month=month)
 
 
 @router.get("/{event_id}", response_model=InvestmentEventRead)

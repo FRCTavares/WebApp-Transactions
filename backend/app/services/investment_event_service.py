@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 from app.models.investment_event import InvestmentEvent
 from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
@@ -21,10 +22,12 @@ class InvestmentEventService:
         repository: InvestmentEventRepository,
         transaction_repository: TransactionRepository | None = None,
         market_price_repository: MarketPriceRepository | None = None,
+        market_price_history_repository: MarketPriceHistoryRepository | None = None,
     ) -> None:
         self.repository = repository
         self.transaction_repository = transaction_repository
         self.market_price_repository = market_price_repository
+        self.market_price_history_repository = market_price_history_repository
 
     def create_event(self, event_data: InvestmentEventCreate) -> InvestmentEvent:
         return self.repository.create(event_data)
@@ -160,6 +163,149 @@ class InvestmentEventService:
                 str(position["instrument_name"] or ""),
             ),
         )
+
+    def get_monthly_change(
+        self,
+        year: int,
+        month: int,
+    ) -> dict[str, Decimal | str]:
+        start_date = date(year, month, 1)
+        end_date = self._get_next_month_start(year, month)
+        month_end = end_date.fromordinal(end_date.toordinal() - 1)
+
+        start_value = self._get_portfolio_value_on(start_date)
+        end_value = self._get_portfolio_value_on(month_end)
+        net_invested = self._get_net_invested_between(start_date, end_date)
+
+        unrealised_monthly_change = None
+
+        if start_value is not None and end_value is not None:
+            unrealised_monthly_change = (
+                end_value - start_value - net_invested
+            ).quantize(Decimal("0.01"))
+
+        return {
+            "month": f"{year:04d}-{month:02d}",
+            "start_value": start_value,
+            "end_value": end_value,
+            "net_invested": net_invested,
+            "unrealised_monthly_change": unrealised_monthly_change,
+        }
+
+    def _get_portfolio_value_on(self, value_date: date) -> Decimal | None:
+        if self.market_price_history_repository is None:
+            return None
+
+        holdings = self._get_holdings_on(value_date)
+        total_value = Decimal("0")
+        has_unpriced_holding = False
+
+        for holding in holdings.values():
+            quantity = holding["quantity"]
+
+            if quantity <= 0:
+                continue
+
+            price = self.market_price_history_repository.get_latest_on_or_before(
+                price_date=value_date,
+                ticker=holding["ticker"],
+                isin=holding["isin"],
+            )
+
+            if price is None:
+                has_unpriced_holding = True
+                continue
+
+            fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
+                price.currency,
+                ticker=holding["ticker"],
+                isin=holding["isin"],
+            )
+
+            if fx_rate_to_eur is None:
+                has_unpriced_holding = True
+                continue
+
+            total_value += quantity * price.close_price * fx_rate_to_eur
+
+        if has_unpriced_holding:
+            return None
+
+        return total_value.quantize(Decimal("0.01"))
+
+    def _get_holdings_on(
+        self,
+        value_date: date,
+    ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
+        holdings: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
+
+        for event in self.repository.list_until(value_date):
+            if event.event_type not in {"market_buy", "market_sell"}:
+                continue
+
+            if event.quantity is None or event.quantity <= 0:
+                continue
+
+            key = (
+                event.source,
+                event.account,
+                event.ticker,
+                event.isin,
+            )
+
+            if key not in holdings:
+                holdings[key] = {
+                    "ticker": event.ticker,
+                    "isin": event.isin,
+                    "quantity": Decimal("0"),
+                }
+
+            if event.event_type == "market_buy":
+                holdings[key]["quantity"] = holdings[key]["quantity"] + event.quantity
+
+            if event.event_type == "market_sell":
+                holdings[key]["quantity"] = holdings[key]["quantity"] - event.quantity
+
+        return holdings
+
+    def _get_net_invested_between(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> Decimal:
+        net_invested = Decimal("0")
+
+        for event in self.repository.list_between(start_date, end_date):
+            if event.event_type not in {"market_buy", "market_sell"}:
+                continue
+
+            amount_eur = self._get_event_amount_eur(event)
+
+            if amount_eur is None:
+                continue
+
+            if event.event_type == "market_buy":
+                net_invested += amount_eur
+
+            if event.event_type == "market_sell":
+                net_invested -= amount_eur
+
+        return net_invested.quantize(Decimal("0.01"))
+
+    def _get_event_amount_eur(self, event: InvestmentEvent) -> Decimal | None:
+        if event.currency == "EUR":
+            return event.amount
+
+        if event.fx_rate_to_eur is not None:
+            return event.amount * event.fx_rate_to_eur
+
+        return None
+
+    def _get_next_month_start(self, year: int, month: int) -> date:
+        if month == 12:
+            return date(year + 1, 1, 1)
+
+        return date(year, month + 1, 1)
 
     def _get_market_fields(
         self,
