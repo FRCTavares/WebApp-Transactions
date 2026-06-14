@@ -82,5 +82,14 @@ class TransactionRead(TransactionBase):
     import_batch_id: int | None = None
     external_id: str | None = None
     dedupe_hash: str | None = None
+
+    is_owed: bool = False
+    owed_item_id: int | None = None
+    owed_status: str | None = None
+    owed_person: str | None = None
+    owed_amount_total: Decimal | None = None
+    owed_amount_paid: Decimal | None = None
+    owed_amount_remaining: Decimal | None = None
+
     created_at: DateTimeType
     updated_at: DateTimeType

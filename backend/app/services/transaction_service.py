@@ -2,17 +2,19 @@ from datetime import date
 
 from fastapi import HTTPException, status
 
+from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
-from app.schemas.transaction import TransactionCreate, TransactionUpdate
+from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
 
 
 class TransactionService:
     def __init__(self, repository: TransactionRepository) -> None:
         self.repository = repository
 
-    def create_transaction(self, transaction_data: TransactionCreate) -> Transaction:
-        return self.repository.create(transaction_data)
+    def create_transaction(self, transaction_data: TransactionCreate) -> TransactionRead:
+        transaction = self.repository.create(transaction_data)
+        return self._build_transaction_read(transaction, None)
 
     def list_transactions(
         self,
@@ -25,8 +27,8 @@ class TransactionService:
         search: str | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> list[Transaction]:
-        return self.repository.list(
+    ) -> list[TransactionRead]:
+        transactions = self.repository.list(
             direction=direction,
             category=category,
             source=source,
@@ -38,13 +40,25 @@ class TransactionService:
             offset=offset,
         )
 
+        owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
+            [transaction.id for transaction in transactions]
+        )
+
+        return [
+            self._build_transaction_read(
+                transaction,
+                owed_items_by_transaction_id.get(transaction.id),
+            )
+            for transaction in transactions
+        ]
+
     def list_uncategorised_transactions(
         self,
         direction: str | None = None,
         source: str | None = None,
         limit: int = 100,
-    ) -> list[Transaction]:
-        return self.repository.list(
+    ) -> list[TransactionRead]:
+        transactions = self.repository.list(
             direction=direction,
             category=None,
             source=source,
@@ -53,7 +67,50 @@ class TransactionService:
             uncategorised_only=True,
         )
 
-    def get_transaction(self, transaction_id: int) -> Transaction:
+        owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
+            [transaction.id for transaction in transactions]
+        )
+
+        return [
+            self._build_transaction_read(
+                transaction,
+                owed_items_by_transaction_id.get(transaction.id),
+            )
+            for transaction in transactions
+        ]
+
+    def get_transaction(self, transaction_id: int) -> TransactionRead:
+        transaction = self._get_transaction_model(transaction_id)
+        owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
+            [transaction.id]
+        )
+
+        return self._build_transaction_read(
+            transaction,
+            owed_items_by_transaction_id.get(transaction.id),
+        )
+
+    def update_transaction(
+        self,
+        transaction_id: int,
+        transaction_data: TransactionUpdate,
+    ) -> TransactionRead:
+        transaction = self._get_transaction_model(transaction_id)
+        updated_transaction = self.repository.update(transaction, transaction_data)
+        owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
+            [updated_transaction.id]
+        )
+
+        return self._build_transaction_read(
+            updated_transaction,
+            owed_items_by_transaction_id.get(updated_transaction.id),
+        )
+
+    def delete_transaction(self, transaction_id: int) -> None:
+        transaction = self._get_transaction_model(transaction_id)
+        self.repository.delete(transaction)
+
+    def _get_transaction_model(self, transaction_id: int) -> Transaction:
         transaction = self.repository.get_by_id(transaction_id)
 
         if transaction is None:
@@ -64,14 +121,24 @@ class TransactionService:
 
         return transaction
 
-    def update_transaction(
+    def _build_transaction_read(
         self,
-        transaction_id: int,
-        transaction_data: TransactionUpdate,
-    ) -> Transaction:
-        transaction = self.get_transaction(transaction_id)
-        return self.repository.update(transaction, transaction_data)
+        transaction: Transaction,
+        owed_item: OwedItem | None,
+    ) -> TransactionRead:
+        data = TransactionRead.model_validate(transaction)
 
-    def delete_transaction(self, transaction_id: int) -> None:
-        transaction = self.get_transaction(transaction_id)
-        self.repository.delete(transaction)
+        if owed_item is None:
+            return data
+
+        return data.model_copy(
+            update={
+                "is_owed": True,
+                "owed_item_id": owed_item.id,
+                "owed_status": owed_item.status,
+                "owed_person": owed_item.person,
+                "owed_amount_total": owed_item.amount_total,
+                "owed_amount_paid": owed_item.amount_paid,
+                "owed_amount_remaining": owed_item.amount_remaining,
+            }
+        )

@@ -4,6 +4,7 @@ from decimal import Decimal
 from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
 
@@ -110,6 +111,25 @@ class TransactionRepository:
 
     def get_by_id(self, transaction_id: int) -> Transaction | None:
         return self.db.get(Transaction, transaction_id)
+
+    def list_owed_items_by_transaction_ids(
+        self,
+        transaction_ids: list[int],
+    ) -> dict[int, OwedItem]:
+        if not transaction_ids:
+            return {}
+
+        statement = select(OwedItem).where(
+            OwedItem.linked_transaction_id.in_(transaction_ids)
+        )
+
+        owed_items = list(self.db.scalars(statement).all())
+
+        return {
+            owed_item.linked_transaction_id: owed_item
+            for owed_item in owed_items
+            if owed_item.linked_transaction_id is not None
+        }
 
     def update(
         self,
