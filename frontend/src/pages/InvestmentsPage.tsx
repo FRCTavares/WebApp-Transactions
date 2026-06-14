@@ -29,6 +29,16 @@ export type ManualFundingFormState = {
   notes: string
 }
 
+type InvestmentEventSort =
+  | 'date_desc'
+  | 'date_asc'
+  | 'amount_desc'
+  | 'amount_asc'
+  | 'event_type'
+
+const INVESTMENT_EVENTS_FETCH_LIMIT = 500
+const INVESTMENT_EVENTS_PAGE_SIZE = 15
+
 function addCurrencyTotal(
   totals: Map<string, number>,
   currency: string | null,
@@ -63,6 +73,20 @@ function getInvestmentTotals(positions: InvestmentPosition[]) {
 
   for (const position of positions) {
     for (const cost of position.costs) {
+      if (cost.currency === 'EUR') {
+        addCurrencyTotal(costTotals, 'EUR', cost.total_cost)
+        continue
+      }
+
+      if (position.market_fx_rate_to_eur) {
+        const convertedCost = Number(cost.total_cost) * Number(position.market_fx_rate_to_eur)
+
+        if (!Number.isNaN(convertedCost)) {
+          addCurrencyTotal(costTotals, 'EUR', String(convertedCost))
+          continue
+        }
+      }
+
       addCurrencyTotal(costTotals, cost.currency, cost.total_cost)
     }
 
@@ -112,6 +136,31 @@ function getEventCount(events: InvestmentEvent[], eventType: string) {
   return events.filter((event) => event.event_type === eventType).length
 }
 
+async function listAllInvestmentEvents(
+  filters: Parameters<typeof listInvestmentEvents>[0] = {},
+) {
+  const allEvents: InvestmentEvent[] = []
+  let offset = 0
+
+  while (true) {
+    const batch = await listInvestmentEvents({
+      ...filters,
+      limit: INVESTMENT_EVENTS_FETCH_LIMIT,
+      offset,
+    })
+
+    allEvents.push(...batch)
+
+    if (batch.length < INVESTMENT_EVENTS_FETCH_LIMIT) {
+      break
+    }
+
+    offset += INVESTMENT_EVENTS_FETCH_LIMIT
+  }
+
+  return allEvents
+}
+
 function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormState {
   return {
     eurAmount: '',
@@ -119,6 +168,35 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
     description: 'Trading 212 deposit funding',
     notes: `Manual EUR funding resolution for ${event.amount} ${event.currency} deposit`,
   }
+}
+
+function getSortedInvestmentEvents(
+  events: InvestmentEvent[],
+  sort: InvestmentEventSort,
+) {
+  return [...events].sort((left, right) => {
+    if (sort === 'date_asc') {
+      return left.date.localeCompare(right.date) || left.id - right.id
+    }
+
+    if (sort === 'amount_desc') {
+      return Number(right.amount) - Number(left.amount)
+    }
+
+    if (sort === 'amount_asc') {
+      return Number(left.amount) - Number(right.amount)
+    }
+
+    if (sort === 'event_type') {
+      return (
+        left.event_type.localeCompare(right.event_type) ||
+        right.date.localeCompare(left.date) ||
+        right.id - left.id
+      )
+    }
+
+    return right.date.localeCompare(left.date) || right.id - left.id
+  })
 }
 
 export function InvestmentsPage() {
@@ -161,6 +239,9 @@ export function InvestmentsPage() {
   })
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isEventsOpen, setIsEventsOpen] = useState(false)
+  const [eventSort, setEventSort] = useState<InvestmentEventSort>('date_desc')
+  const [eventPage, setEventPage] = useState(1)
 
   function loadEvents() {
     setError(null)
@@ -169,12 +250,11 @@ export function InvestmentsPage() {
     const monthDateRange = getMonthDateRange(month)
 
     Promise.all([
-      listInvestmentEvents({
+      listAllInvestmentEvents({
         source: source || undefined,
         event_type: eventType || undefined,
         date_from: dateFrom || monthDateRange.dateFrom || undefined,
         date_to: dateTo || monthDateRange.dateTo || undefined,
-        limit: 100,
       }),
       listInvestmentPositions(source || undefined),
       listMarketPrices(),
@@ -183,6 +263,7 @@ export function InvestmentsPage() {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
+        setEventPage(1)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -201,7 +282,7 @@ export function InvestmentsPage() {
     setDateTo('')
 
     Promise.all([
-      listInvestmentEvents({ limit: 100 }),
+      listAllInvestmentEvents(),
       listInvestmentPositions(),
       listMarketPrices(),
     ])
@@ -437,6 +518,22 @@ export function InvestmentsPage() {
     (event) => event.event_type === 'deposit' && event.funding_match_status === 'unmatched',
   ).length
   const investmentTotals = getInvestmentTotals(positions)
+  const sortedEvents = getSortedInvestmentEvents(events, eventSort)
+  const eventPageCount = Math.max(
+    1,
+    Math.ceil(sortedEvents.length / INVESTMENT_EVENTS_PAGE_SIZE),
+  )
+  const currentEventPage = Math.min(eventPage, eventPageCount)
+  const firstEventIndex = (currentEventPage - 1) * INVESTMENT_EVENTS_PAGE_SIZE
+  const paginatedEvents = sortedEvents.slice(
+    firstEventIndex,
+    firstEventIndex + INVESTMENT_EVENTS_PAGE_SIZE,
+  )
+  const shownFirstEvent = sortedEvents.length === 0 ? 0 : firstEventIndex + 1
+  const shownLastEvent = Math.min(
+    firstEventIndex + INVESTMENT_EVENTS_PAGE_SIZE,
+    sortedEvents.length,
+  )
 
   return (
     <section>
@@ -504,19 +601,88 @@ export function InvestmentsPage() {
         onClearFilters={clearFilters}
       />
 
-      <p className="muted">
-        Investment events are broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
-      </p>
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Investment events</h2>
+            <p className="muted small">
+              {events.length} broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
+            </p>
+          </div>
 
-      <InvestmentEventsTable
-        events={events}
-        resolvingEventId={resolvingEventId}
-        fundingForm={fundingForm}
-        onFundingFormChange={setFundingForm}
-        onSubmitManualResolution={submitManualResolution}
-        onCancelManualResolution={cancelManualResolution}
-        onStartManualResolution={startManualResolution}
-      />
+          <div className="action-group">
+            <select
+              aria-label="Sort investment events"
+              value={eventSort}
+              onChange={(event) => {
+                setEventSort(event.target.value as InvestmentEventSort)
+                setEventPage(1)
+              }}
+              style={{ maxWidth: '220px' }}
+            >
+              <option value="date_desc">Date newest</option>
+              <option value="date_asc">Date oldest</option>
+              <option value="amount_desc">Amount highest</option>
+              <option value="amount_asc">Amount lowest</option>
+              <option value="event_type">Event type</option>
+            </select>
+
+            <button
+              className="small-button"
+              type="button"
+              onClick={() => setIsEventsOpen((currentValue) => !currentValue)}
+            >
+              {isEventsOpen ? 'Hide events' : 'Show events'}
+            </button>
+          </div>
+        </div>
+
+        {isEventsOpen ? (
+          <>
+            <div className="section-header">
+              <p className="muted small">
+                Showing {shownFirstEvent}-{shownLastEvent} of {sortedEvents.length} events.
+              </p>
+
+              <div className="action-group">
+                <button
+                  className="small-button"
+                  type="button"
+                  disabled={currentEventPage <= 1}
+                  onClick={() => setEventPage((currentValue) => Math.max(1, currentValue - 1))}
+                >
+                  Previous
+                </button>
+                <span className="muted small">
+                  Page {currentEventPage} of {eventPageCount}
+                </span>
+                <button
+                  className="small-button"
+                  type="button"
+                  disabled={currentEventPage >= eventPageCount}
+                  onClick={() => setEventPage((currentValue) => Math.min(eventPageCount, currentValue + 1))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <InvestmentEventsTable
+              events={paginatedEvents}
+              resolvingEventId={resolvingEventId}
+              fundingForm={fundingForm}
+              onFundingFormChange={setFundingForm}
+              onSubmitManualResolution={submitManualResolution}
+              onCancelManualResolution={cancelManualResolution}
+              onStartManualResolution={startManualResolution}
+            />
+          </>
+        ) : (
+          <p className="muted small">
+            Event table hidden. Show events to inspect all {events.length} broker ledger rows, paginated 15 at a time.
+          </p>
+        )}
+      </section>
     </section>
   )
 }
