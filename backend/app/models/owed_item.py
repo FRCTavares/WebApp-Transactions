@@ -29,6 +29,11 @@ class OwedItem(Base):
     linked_transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    source: Mapped[str] = mapped_column(String(50), index=True, default="manual")
+    import_batch_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

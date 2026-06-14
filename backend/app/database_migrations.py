@@ -8,6 +8,7 @@ def run_startup_migrations(engine: Engine) -> None:
 
     _run_transaction_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
+    _run_owed_item_migrations(engine=engine)
 
 
 def _run_transaction_migrations(engine: Engine) -> None:
@@ -63,6 +64,26 @@ def _run_investment_event_migrations(engine: Engine) -> None:
         _add_column_if_missing(
             engine=engine,
             table_name="investment_events",
+            column_name=column_name,
+            sql=sql,
+        )
+
+
+def _run_owed_item_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="owed_items"):
+        return
+
+    owed_item_column_migrations = {
+        "source": "ALTER TABLE owed_items ADD COLUMN source VARCHAR(50) NOT NULL DEFAULT 'manual'",
+        "import_batch_id": "ALTER TABLE owed_items ADD COLUMN import_batch_id INTEGER",
+        "external_id": "ALTER TABLE owed_items ADD COLUMN external_id VARCHAR(255)",
+        "dedupe_hash": "ALTER TABLE owed_items ADD COLUMN dedupe_hash VARCHAR(64)",
+    }
+
+    for column_name, sql in owed_item_column_migrations.items():
+        _add_column_if_missing(
+            engine=engine,
+            table_name="owed_items",
             column_name=column_name,
             sql=sql,
         )

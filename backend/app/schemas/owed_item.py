@@ -18,6 +18,10 @@ class OwedItemBase(BaseModel):
     due_date: DateType | None = None
     linked_transaction_id: int | None = None
     notes: str | None = None
+    source: str = "manual"
+    import_batch_id: int | None = None
+    external_id: str | None = None
+    dedupe_hash: str | None = None
 
 
 class OwedItemCreate(OwedItemBase):
@@ -33,6 +37,10 @@ class OwedItemUpdate(BaseModel):
     due_date: DateType | None = None
     linked_transaction_id: int | None = None
     notes: str | None = None
+    source: str | None = None
+    import_batch_id: int | None = None
+    external_id: str | None = None
+    dedupe_hash: str | None = None
 
 
 class OwedItemRead(OwedItemBase):

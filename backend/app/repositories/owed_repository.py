@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete as sqlalchemy_delete, select
 from sqlalchemy.orm import Session
 
 from app.models.owed_item import OwedItem
@@ -62,3 +62,25 @@ class OwedRepository:
     def delete(self, owed_item: OwedItem) -> None:
         self.db.delete(owed_item)
         self.db.commit()
+
+    def exists_by_dedupe_hash(self, dedupe_hash: str) -> bool:
+        statement = select(OwedItem.id).where(OwedItem.dedupe_hash == dedupe_hash)
+        return self.db.scalar(statement) is not None
+
+    def bulk_insert(self, owed_items: list[OwedItem]) -> list[OwedItem]:
+        self.db.add_all(owed_items)
+        self.db.commit()
+
+        for owed_item in owed_items:
+            self.db.refresh(owed_item)
+
+        return owed_items
+
+    def delete_by_import_batch(self, import_batch_id: int) -> int:
+        statement = sqlalchemy_delete(OwedItem).where(
+            OwedItem.import_batch_id == import_batch_id
+        )
+        result = self.db.execute(statement)
+        self.db.commit()
+
+        return result.rowcount or 0
