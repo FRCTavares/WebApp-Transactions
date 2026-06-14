@@ -93,7 +93,9 @@ class LegacyExcelImportService:
                 or dedupe_hash in seen_owed_hashes
             )
             seen_owed_hashes.add(dedupe_hash)
-            amount_remaining = owed_item.amount_total - owed_item.amount_paid
+            amount_paid = owed_item.amount_total
+            amount_remaining = Decimal("0.00")
+            status = "paid"
 
             owed_items.append(
                 LegacyExcelPreviewOwedItem(
@@ -101,10 +103,10 @@ class LegacyExcelImportService:
                     sheet_name=owed_item.sheet_name,
                     person=owed_item.person,
                     amount_total=owed_item.amount_total,
-                    amount_paid=owed_item.amount_paid,
+                    amount_paid=amount_paid,
                     amount_remaining=amount_remaining,
                     reason=owed_item.reason,
-                    status=owed_item.status,
+                    status=status,
                     due_date=owed_item.due_date,
                     notes=owed_item.notes,
                     external_id=owed_item.external_id,
