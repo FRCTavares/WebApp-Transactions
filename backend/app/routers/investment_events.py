@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,6 +9,7 @@ from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
+    InvestmentEventCreate,
     InvestmentEventRead,
     InvestmentPositionRead,
     ManualFundingResolutionCreate,
@@ -32,6 +33,14 @@ def get_investment_event_service(
         transaction_repository=transaction_repository,
         market_price_repository=market_price_repository,
     )
+
+
+@router.post("", response_model=InvestmentEventRead, status_code=status.HTTP_201_CREATED)
+def create_investment_event(
+    event_data: InvestmentEventCreate,
+    service: InvestmentEventService = Depends(get_investment_event_service),
+):
+    return service.create_event(event_data)
 
 
 @router.get("", response_model=list[InvestmentEventRead])
