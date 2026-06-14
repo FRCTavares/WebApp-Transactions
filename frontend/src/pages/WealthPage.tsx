@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { listInvestmentPositions } from '../api/investmentEvents'
 import {
   createWealthAccount,
   createWealthSnapshot,
@@ -12,7 +13,24 @@ import {
   updateWealthSnapshot,
 } from '../api/wealth'
 import { StatusMessage } from '../components/StatusMessage'
+import {
+  accountTypeOptions,
+  formatDerivedOrSnapshotBalance,
+  getAccountGroups,
+  getAccountLabel,
+  getAccountName,
+  getAccountTypeLabel,
+  getDerivedInvestmentValue,
+  getInitialAccountForm,
+  getInitialSnapshotForm,
+  getLatestSnapshotByAccount,
+  toOptionalPositiveAmount,
+  toPositiveAmount,
+  type AccountFormState,
+  type SnapshotFormState,
+} from '../utils/wealthPageUtils'
 import type {
+  InvestmentPosition,
   WealthAccount,
   WealthAccountType,
   WealthMonthlyTotal,
@@ -21,138 +39,12 @@ import type {
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
-type AccountFormState = {
-  name: string
-  accountType: WealthAccountType
-  currency: string
-  institution: string
-  notes: string
-}
-
-type SnapshotFormState = {
-  snapshotDate: string
-  accountId: string
-  balance: string
-  currency: string
-  fxRateToEur: string
-  interestEarned: string
-  notes: string
-}
-
-const accountTypeOptions: Array<{ value: WealthAccountType; label: string }> = [
-  { value: 'current_account', label: 'Current account' },
-  { value: 'savings_account', label: 'Savings account' },
-  { value: 'brokerage', label: 'Brokerage' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'other', label: 'Other' },
-]
-
-function getInitialAccountForm(): AccountFormState {
-  return {
-    name: '',
-    accountType: 'current_account',
-    currency: 'EUR',
-    institution: '',
-    notes: '',
-  }
-}
-
-function getInitialSnapshotForm(): SnapshotFormState {
-  return {
-    snapshotDate: new Date().toISOString().slice(0, 10),
-    accountId: '',
-    balance: '',
-    currency: 'EUR',
-    fxRateToEur: '',
-    interestEarned: '',
-    notes: '',
-  }
-}
-
-function getAccountLabel(account: WealthAccount) {
-  return `${account.name} (${account.currency})`
-}
-
-function getAccountTypeLabel(accountType: WealthAccountType) {
-  const labels: Record<WealthAccountType, string> = {
-    current_account: 'Current',
-    savings_account: 'Savings',
-    brokerage: 'Brokerage',
-    cash: 'Cash',
-    other: 'Other',
-  }
-
-  return labels[accountType]
-}
-
-function getAccountName(accounts: WealthAccount[], accountId: number) {
-  return accounts.find((account) => account.id === accountId)?.name ?? `Account #${accountId}`
-}
-
-function getLatestSnapshotByAccount(snapshots: WealthSnapshot[]) {
-  const latestByAccount = new Map<number, WealthSnapshot>()
-
-  for (const snapshot of [...snapshots].sort((left, right) => {
-    return left.snapshot_date.localeCompare(right.snapshot_date) || left.id - right.id
-  })) {
-    latestByAccount.set(snapshot.account_id, snapshot)
-  }
-
-  return latestByAccount
-}
-
-type WealthAccountGroup = {
-  key: string
-  label: string
-  accounts: WealthAccount[]
-}
-
-function getAccountGroups(accounts: WealthAccount[]) {
-  const grouped = new Map<string, WealthAccount[]>()
-
-  for (const account of accounts) {
-    const key = account.institution?.trim() || account.name
-    grouped.set(key, [...(grouped.get(key) ?? []), account])
-  }
-
-  return Array.from(grouped.entries())
-    .map(([key, groupedAccounts]): WealthAccountGroup => ({
-      key,
-      label: key,
-      accounts: groupedAccounts,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label))
-}
-
-function toPositiveAmount(value: string, fieldName: string) {
-  const numberValue = Math.abs(Number(value))
-
-  if (!Number.isFinite(numberValue) || numberValue <= 0) {
-    throw new Error(`${fieldName} must be a positive number.`)
-  }
-
-  return numberValue.toFixed(2)
-}
-
-function toOptionalPositiveAmount(value: string, fieldName: string) {
-  if (!value.trim()) {
-    return null
-  }
-
-  const numberValue = Math.abs(Number(value))
-
-  if (!Number.isFinite(numberValue) || numberValue < 0) {
-    throw new Error(`${fieldName} must be a positive number.`)
-  }
-
-  return numberValue.toFixed(2)
-}
-
 export function WealthPage() {
   const [accounts, setAccounts] = useState<WealthAccount[]>([])
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
   const [summary, setSummary] = useState<WealthSummary | null>(null)
   const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
+  const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
   const [accountForm, setAccountForm] = useState<AccountFormState>(getInitialAccountForm)
   const [snapshotForm, setSnapshotForm] = useState<SnapshotFormState>(getInitialSnapshotForm)
   const [editingAccountId, setEditingAccountId] = useState<number | null>(null)
@@ -172,12 +64,20 @@ export function WealthPage() {
       listWealthSnapshots({ limit: 500 }),
       getWealthSummary(),
       listWealthMonthlyTotals(),
+      listInvestmentPositions(),
     ])
-      .then(([loadedAccounts, loadedSnapshots, loadedSummary, loadedMonthlyTotals]) => {
+      .then(([
+        loadedAccounts,
+        loadedSnapshots,
+        loadedSummary,
+        loadedMonthlyTotals,
+        loadedInvestmentPositions,
+      ]) => {
         setAccounts(loadedAccounts)
         setSnapshots(loadedSnapshots)
         setSummary(loadedSummary)
         setMonthlyTotals(loadedMonthlyTotals)
+        setInvestmentPositions(loadedInvestmentPositions)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load wealth data')
@@ -726,7 +626,7 @@ export function WealthPage() {
                       </td>
                       <td>{getAccountTypeLabel(account.account_type)}</td>
                       <td className="right">
-                        {latestSnapshot ? formatMoney(latestSnapshot.balance_eur) : '-'}
+                        {formatDerivedOrSnapshotBalance(account, latestSnapshot, investmentPositions)}
                       </td>
                       <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
                       <td>
@@ -752,12 +652,25 @@ export function WealthPage() {
                 }
 
                 const isExpanded = expandedAccountGroups.has(group.key)
+                const groupBalance = group.accounts
+                  .reduce((total, account) => {
+                    const derivedValue = getDerivedInvestmentValue(account, investmentPositions)
+                    const latestSnapshot = latestByAccount.get(account.id)
+
+                    if (derivedValue !== null) {
+                      return total + derivedValue
+                    }
+
+                    if (latestSnapshot) {
+                      return total + Number(latestSnapshot.balance_eur)
+                    }
+
+                    return total
+                  }, 0)
+                  .toFixed(2)
                 const latestSnapshots = group.accounts
                   .map((account) => latestByAccount.get(account.id))
                   .filter((snapshot): snapshot is WealthSnapshot => Boolean(snapshot))
-                const groupBalance = latestSnapshots
-                  .reduce((total, snapshot) => total + Number(snapshot.balance_eur), 0)
-                  .toFixed(2)
                 const groupLatestDate = latestSnapshots
                   .map((snapshot) => snapshot.snapshot_date)
                   .sort()
@@ -810,7 +723,7 @@ export function WealthPage() {
                               </td>
                               <td>{getAccountTypeLabel(account.account_type)}</td>
                               <td className="right">
-                                {latestSnapshot ? formatMoney(latestSnapshot.balance_eur) : '-'}
+                                {formatDerivedOrSnapshotBalance(account, latestSnapshot, investmentPositions)}
                               </td>
                               <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
                               <td>

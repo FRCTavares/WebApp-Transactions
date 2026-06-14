@@ -276,3 +276,11 @@
 .wealth-sub-account-row {
   background: #ffffff;
 }
+
+.wealth-page td.right {
+  white-space: nowrap;
+}
+
+.wealth-page td.right {
+  font-variant-numeric: tabular-nums;
+}
