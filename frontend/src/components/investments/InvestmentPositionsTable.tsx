@@ -43,7 +43,7 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                 <td className="right">
                   {position.costs.map((cost) => (
                     <span className="table-subtext" key={cost.currency}>
-                      {formatMoney(cost.total_cost, cost.currency)} {cost.currency}
+                      {formatMoney(cost.total_cost, cost.currency)}
                     </span>
                   ))}
                 </td>
