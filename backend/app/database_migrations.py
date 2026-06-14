@@ -9,6 +9,7 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_transaction_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
     _run_owed_item_migrations(engine=engine)
+    _run_wealth_migrations(engine=engine)
 
 
 def _run_transaction_migrations(engine: Engine) -> None:
@@ -87,6 +88,49 @@ def _run_owed_item_migrations(engine: Engine) -> None:
             column_name=column_name,
             sql=sql,
         )
+
+
+
+def _run_wealth_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="wealth_accounts"):
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "CREATE TABLE wealth_accounts ("
+                    "id INTEGER NOT NULL, "
+                    "name VARCHAR(100) NOT NULL, "
+                    "account_type VARCHAR(50) NOT NULL, "
+                    "currency VARCHAR(3) NOT NULL DEFAULT 'EUR', "
+                    "institution VARCHAR(100), "
+                    "is_active BOOLEAN NOT NULL DEFAULT 1, "
+                    "notes TEXT, "
+                    "created_at DATETIME NOT NULL, "
+                    "updated_at DATETIME NOT NULL, "
+                    "PRIMARY KEY (id)"
+                    ")"
+                )
+            )
+
+    if not _table_exists(engine=engine, table_name="wealth_snapshots"):
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "CREATE TABLE wealth_snapshots ("
+                    "id INTEGER NOT NULL, "
+                    "snapshot_date DATE NOT NULL, "
+                    "account_id INTEGER NOT NULL, "
+                    "balance NUMERIC(12, 2) NOT NULL, "
+                    "currency VARCHAR(3) NOT NULL DEFAULT 'EUR', "
+                    "balance_eur NUMERIC(12, 2) NOT NULL, "
+                    "fx_rate_to_eur NUMERIC(18, 8) NOT NULL DEFAULT 1, "
+                    "interest_earned NUMERIC(12, 2), "
+                    "notes TEXT, "
+                    "created_at DATETIME NOT NULL, "
+                    "updated_at DATETIME NOT NULL, "
+                    "PRIMARY KEY (id)"
+                    ")"
+                )
+            )
 
 
 def _table_exists(engine: Engine, table_name: str) -> bool:

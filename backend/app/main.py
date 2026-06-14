@@ -13,6 +13,8 @@ from app.models import (
     MarketPriceHistory,
     OwedItem,
     Transaction,
+    WealthAccount,
+    WealthSnapshot,
 )
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.category_rules import router as category_rules_router
@@ -24,6 +26,7 @@ from app.routers.market_prices import router as market_prices_router
 from app.routers.owed import router as owed_router
 from app.routers.summary import router as summary_router
 from app.routers.transactions import router as transactions_router
+from app.routers.wealth import router as wealth_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -52,6 +55,7 @@ app.include_router(market_prices_router)
 app.include_router(cashflow_rules_router)
 app.include_router(category_rules_router)
 app.include_router(description_rules_router)
+app.include_router(wealth_router)
 
 
 @app.get("/api/health")
