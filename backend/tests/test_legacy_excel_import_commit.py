@@ -80,7 +80,8 @@ def test_legacy_excel_commit_skips_duplicates_on_second_import(client, db_sessio
     assert second_data["owed_items_inserted"] == 0
     assert second_data["duplicate_transactions_skipped"] == 6
     assert second_data["duplicate_owed_items_skipped"] == 3
-    assert second_data["status"] == "partial"
+    assert second_data["import_batch_id"] == 0
+    assert second_data["status"] == "skipped"
 
     assert db_session.query(Transaction).count() == 6
     assert db_session.query(OwedItem).count() == 3

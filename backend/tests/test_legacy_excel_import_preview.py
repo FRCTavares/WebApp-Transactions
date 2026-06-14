@@ -1,11 +1,7 @@
-from fastapi.testclient import TestClient
-
-from app.main import app
 from tests.test_legacy_excel_importer import build_workbook_bytes
 
 
-def test_legacy_excel_preview_endpoint_returns_transactions_and_owed_items():
-    client = TestClient(app)
+def test_legacy_excel_preview_endpoint_returns_transactions_and_owed_items(client):
 
     response = client.post(
         "/api/legacy-excel-import/preview",
@@ -40,8 +36,7 @@ def test_legacy_excel_preview_endpoint_returns_transactions_and_owed_items():
     assert first_transaction["is_duplicate"] is False
 
 
-def test_legacy_excel_preview_marks_duplicate_transactions_inside_file():
-    client = TestClient(app)
+def test_legacy_excel_preview_marks_duplicate_transactions_inside_file(client):
     workbook_content = build_workbook_bytes()
 
     response = client.post(

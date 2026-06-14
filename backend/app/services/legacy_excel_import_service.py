@@ -174,6 +174,22 @@ class LegacyExcelImportService:
         )
         rows_inserted = len(transactions_to_insert) + len(owed_items_to_insert)
 
+        if rows_inserted == 0:
+            return LegacyExcelCommitResponse(
+                import_batch_id=0,
+                source=SOURCE,
+                filename=filename,
+                rows_total=preview.rows_total,
+                rows_inserted=0,
+                rows_skipped=rows_skipped,
+                transactions_inserted=0,
+                owed_items_inserted=0,
+                duplicate_transactions_skipped=preview.summary.duplicate_transaction_count,
+                duplicate_owed_items_skipped=preview.summary.duplicate_owed_item_count,
+                invalid_rows_skipped=preview.rows_invalid,
+                status="skipped",
+            )
+
         import_batch = self.import_batch_repository.create(
             source=SOURCE,
             filename=filename,
