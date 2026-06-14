@@ -182,11 +182,12 @@ export function getDerivedInvestmentValue(
 
   const accountName = account.name.toUpperCase()
 
-  if (!accountName.includes('CSPX') && !accountName.includes('VWCE')) {
+  const supportedSymbols = ['BTC', 'CSPX', 'VWCE']
+  const targetSymbol = supportedSymbols.find((symbol) => accountName.includes(symbol))
+
+  if (!targetSymbol) {
     return null
   }
-
-  const targetSymbol = accountName.includes('CSPX') ? 'CSPX' : 'VWCE'
   const matchingPosition = positions.find((position) => {
     return getInvestmentPositionSymbol(position).includes(targetSymbol)
   })
