@@ -45,6 +45,11 @@ class SummaryService:
             start_date=start_date,
             end_date=end_date,
         )
+        owed_expense_amount = self.repository.get_owed_expense_amount(
+            start_date=start_date,
+            end_date=end_date,
+        )
+        personal_money_out = money_out - owed_expense_amount
         open_owed_amount = self.repository.get_open_owed_amount()
 
         top_categories = [
@@ -60,7 +65,10 @@ class SummaryService:
             month=f"{year:04d}-{month:02d}",
             money_in=money_in,
             money_out=money_out,
+            owed_expense_amount=owed_expense_amount,
+            personal_money_out=personal_money_out,
             net=money_in - money_out,
+            personal_net=money_in - personal_money_out,
             open_owed_amount=open_owed_amount,
             top_expense_categories=top_categories,
         )

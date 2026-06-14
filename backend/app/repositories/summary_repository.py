@@ -50,6 +50,22 @@ class SummaryRepository:
 
         return [(str(category), Decimal(str(total))) for category, total in rows]
 
+    def get_owed_expense_amount(
+        self,
+        start_date: date,
+        end_date: date,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(OwedItem.amount_total), 0))
+            .join(Transaction, Transaction.id == OwedItem.linked_transaction_id)
+            .where(Transaction.cashflow_type == "expense")
+            .where(Transaction.date >= start_date)
+            .where(Transaction.date < end_date)
+            .where(OwedItem.status != "cancelled")
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
     def get_open_owed_amount(self) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(OwedItem.amount_remaining), 0))

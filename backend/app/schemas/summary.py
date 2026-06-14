@@ -12,7 +12,10 @@ class MonthlySummary(BaseModel):
     month: str
     money_in: Decimal
     money_out: Decimal
+    owed_expense_amount: Decimal
+    personal_money_out: Decimal
     net: Decimal
+    personal_net: Decimal
     open_owed_amount: Decimal
     top_expense_categories: list[CategoryTotal]
 
