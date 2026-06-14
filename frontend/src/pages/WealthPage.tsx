@@ -51,6 +51,7 @@ export function WealthPage() {
   const [editingSnapshotId, setEditingSnapshotId] = useState<number | null>(null)
   const [isAccountFormOpen, setIsAccountFormOpen] = useState(false)
   const [isSnapshotFormOpen, setIsSnapshotFormOpen] = useState(false)
+  const [isSnapshotsTableOpen, setIsSnapshotsTableOpen] = useState(false)
   const [showInactiveAccounts, setShowInactiveAccounts] = useState(false)
   const [expandedAccountGroups, setExpandedAccountGroups] = useState<Set<string>>(new Set())
   const [message, setMessage] = useState<string | null>(null)
@@ -814,12 +815,21 @@ export function WealthPage() {
           <div>
             <h2>Snapshots</h2>
             <p className="muted small">
-              Manual account balances, newest first.
+              Manual account balances, newest first. Hidden by default.
             </p>
           </div>
+
+          <button
+            type="button"
+            className="small-button"
+            onClick={() => setIsSnapshotsTableOpen((isOpen) => !isOpen)}
+          >
+            {isSnapshotsTableOpen ? 'Hide snapshots' : 'Show snapshots'}
+          </button>
         </div>
 
-        <div className="table-wrap wealth-table-wrap">
+        {isSnapshotsTableOpen ? (
+          <div className="table-wrap wealth-table-wrap">
           <table>
             <thead>
               <tr>
@@ -872,7 +882,8 @@ export function WealthPage() {
               ) : null}
             </tbody>
           </table>
-        </div>
+          </div>
+        ) : null}
       </section>
     </section>
   )
