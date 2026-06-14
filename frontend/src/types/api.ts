@@ -540,3 +540,53 @@ export type WealthMonthlyTotal = {
   month: string
   total_wealth_eur: string
 }
+
+
+export type LegacyExcelWealthPreviewSnapshot = {
+  sheet_name: string
+  row_number: number
+  column_number: number
+  snapshot_date: string
+  account_name: string
+  account_type: string
+  balance: string
+  currency: string
+  balance_eur: string
+  fx_rate_to_eur: string
+  interest_earned: string
+  notes: string | null
+  external_id: string
+  dedupe_hash: string
+  is_duplicate: boolean
+}
+
+export type LegacyExcelWealthPreviewSummary = {
+  snapshot_count: number
+  duplicate_snapshot_count: number
+  account_count: number
+  latest_snapshot_date: string | null
+}
+
+export type LegacyExcelWealthPreviewResponse = {
+  source: string
+  filename: string
+  rows_total: number
+  rows_valid: number
+  rows_duplicates: number
+  rows_invalid: number
+  summary: LegacyExcelWealthPreviewSummary
+  snapshots: LegacyExcelWealthPreviewSnapshot[]
+}
+
+export type LegacyExcelWealthCommitResponse = {
+  import_batch_id: number
+  source: string
+  filename: string
+  rows_total: number
+  rows_inserted: number
+  rows_skipped: number
+  accounts_created: number
+  snapshots_inserted: number
+  duplicate_snapshots_skipped: number
+  status: string
+}

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   commitImport,
+  commitLegacyWealthImport,
   deleteImportBatch,
   listImportBatches,
   listImportBatchTransactions,
   previewImport,
+  previewLegacyWealthImport,
 } from '../api/imports'
 import { StatusMessage } from '../components/StatusMessage'
 import { TransactionTable } from '../components/TransactionTable'
@@ -14,6 +16,8 @@ import type {
   ImportPreviewInvestmentEvent,
   ImportPreviewResponse,
   ImportPreviewTransaction,
+  LegacyExcelWealthPreviewResponse,
+  LegacyExcelWealthPreviewSnapshot,
   Transaction,
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
@@ -190,6 +194,65 @@ function PreviewInvestmentEventsTable({
   )
 }
 
+
+function PreviewLegacyWealthSnapshotsTable({
+  snapshots,
+}: {
+  snapshots: LegacyExcelWealthPreviewSnapshot[]
+}) {
+  if (snapshots.length === 0) {
+    return null
+  }
+
+  return (
+    <>
+      <h2>Legacy Wealth Snapshots</h2>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Type</th>
+              <th>Source cell</th>
+              <th>Status</th>
+              <th className="right">Balance EUR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {snapshots.slice(0, 80).map((snapshot) => (
+              <tr key={`${snapshot.account_name}-${snapshot.snapshot_date}-${snapshot.dedupe_hash}`}>
+                <td>{snapshot.snapshot_date}</td>
+                <td>{snapshot.account_name}</td>
+                <td>
+                  <span className="badge badge-neutral">
+                    {snapshot.account_type.replaceAll('_', ' ')}
+                  </span>
+                </td>
+                <td>
+                  {snapshot.sheet_name} · row {snapshot.row_number} · col {snapshot.column_number}
+                </td>
+                <td>
+                  <span className={snapshot.is_duplicate ? 'badge badge-status-deleted' : 'badge badge-status-imported'}>
+                    {snapshot.is_duplicate ? 'Duplicate' : 'New'}
+                  </span>
+                </td>
+                <td className="right">
+                  {formatMoney(snapshot.balance_eur, snapshot.currency)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {snapshots.length > 80 && (
+        <p className="muted small">Showing first 80 of {snapshots.length} wealth snapshots.</p>
+      )}
+    </>
+  )
+}
+
 function InvalidRowsTable({ rows }: { rows: ImportInvalidRow[] }) {
   if (rows.length === 0) {
     return null
@@ -227,12 +290,15 @@ function InvalidRowsTable({ rows }: { rows: ImportInvalidRow[] }) {
 export function ImportPage() {
   const [source, setSource] = useState(SOURCES[0])
   const [file, setFile] = useState<File | null>(null)
+  const [legacyWealthFile, setLegacyWealthFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ImportPreviewResponse | null>(null)
+  const [legacyWealthPreview, setLegacyWealthPreview] = useState<LegacyExcelWealthPreviewResponse | null>(null)
   const [batches, setBatches] = useState<ImportBatch[]>([])
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch | null>(null)
   const [batchTransactions, setBatchTransactions] = useState<Transaction[]>([])
   const [isLoadingBatchTransactions, setIsLoadingBatchTransactions] = useState(false)
   const [isCommitting, setIsCommitting] = useState(false)
+  const [isCommittingLegacyWealth, setIsCommittingLegacyWealth] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -260,6 +326,15 @@ export function ImportPage() {
     rowsToImportCount > 0 &&
     !hasBlockingPendingFxRows &&
     !isCommitting,
+  )
+  const legacyWealthRowsToImport = legacyWealthPreview?.snapshots.filter(
+    (snapshot) => !snapshot.is_duplicate,
+  ).length ?? 0
+  const canCommitLegacyWealth = Boolean(
+    legacyWealthFile &&
+    legacyWealthPreview &&
+    legacyWealthRowsToImport > 0 &&
+    !isCommittingLegacyWealth,
   )
 
   function loadBatches() {
@@ -326,6 +401,59 @@ export function ImportPage() {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to commit import')
     } finally {
       setIsCommitting(false)
+    }
+  }
+
+
+  async function handleLegacyWealthPreview() {
+    if (!legacyWealthFile) {
+      setError('Choose a legacy Excel file first.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+
+    try {
+      setLegacyWealthPreview(await previewLegacyWealthImport(legacyWealthFile))
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to preview legacy wealth import')
+    }
+  }
+
+  async function handleLegacyWealthCommit() {
+    if (isCommittingLegacyWealth) {
+      return
+    }
+
+    if (!legacyWealthFile) {
+      setError('Choose a legacy Excel file first.')
+      return
+    }
+
+    if (!legacyWealthPreview) {
+      setError('Preview the legacy wealth file before committing it.')
+      return
+    }
+
+    if (legacyWealthRowsToImport === 0) {
+      setError('There are no new wealth snapshots to import.')
+      return
+    }
+
+    setError(null)
+    setMessage(null)
+    setIsCommittingLegacyWealth(true)
+
+    try {
+      const result = await commitLegacyWealthImport(legacyWealthFile)
+      setMessage(`Legacy wealth import committed. ${result.snapshots_inserted} snapshots inserted, ${result.accounts_created} accounts created.`)
+      setLegacyWealthPreview(null)
+      loadBatches()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to commit legacy wealth import')
+    } finally {
+      setIsCommittingLegacyWealth(false)
     }
   }
 
@@ -446,6 +574,95 @@ export function ImportPage() {
       </div>
 
       <StatusMessage error={error} message={message} />
+
+
+      <div className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Legacy wealth from Excel</h2>
+            <p className="muted small">
+              Imports historical net worth snapshots from Painel Central. It does not overwrite manual June onwards snapshots.
+            </p>
+          </div>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Legacy Excel file
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={(event) => {
+                setLegacyWealthFile(event.target.files?.[0] ?? null)
+                setLegacyWealthPreview(null)
+                setMessage(null)
+                setError(null)
+              }}
+            />
+          </label>
+        </div>
+
+        {legacyWealthFile && (
+          <p className="file-help">
+            Selected legacy file: <strong>{legacyWealthFile.name}</strong>
+          </p>
+        )}
+
+        <div className="action-group">
+          <button
+            type="button"
+            onClick={handleLegacyWealthPreview}
+            disabled={isCommittingLegacyWealth}
+          >
+            Preview Legacy Wealth
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={handleLegacyWealthCommit}
+            disabled={!canCommitLegacyWealth}
+          >
+            {isCommittingLegacyWealth ? 'Committing...' : 'Commit Legacy Wealth'}
+          </button>
+        </div>
+      </div>
+
+      {legacyWealthPreview && (
+        <>
+          <h2>Legacy Wealth Preview Summary</h2>
+          <div className="summary-grid">
+            <article className="summary-card">
+              <h2>Total snapshots</h2>
+              <strong>{legacyWealthPreview.rows_total}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Rows to import</h2>
+              <strong>{legacyWealthRowsToImport}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Accounts</h2>
+              <strong>{legacyWealthPreview.summary.account_count}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Duplicates</h2>
+              <strong>{legacyWealthPreview.rows_duplicates}</strong>
+            </article>
+            <article className="summary-card">
+              <h2>Latest snapshot</h2>
+              <strong>{formatDate(legacyWealthPreview.summary.latest_snapshot_date)}</strong>
+            </article>
+          </div>
+
+          {legacyWealthRowsToImport === 0 && (
+            <p className="status status-error">
+              This file has no new wealth snapshots to import. It may already have been imported.
+            </p>
+          )}
+
+          <PreviewLegacyWealthSnapshotsTable snapshots={legacyWealthPreview.snapshots} />
+        </>
+      )}
+
 
       {preview && (
         <>

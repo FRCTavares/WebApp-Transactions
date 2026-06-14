@@ -1,5 +1,11 @@
 import { apiDelete, apiGet, apiPostForm } from './client'
-import type { ImportBatch, ImportPreviewResponse, Transaction } from '../types/api'
+import type {
+  ImportBatch,
+  ImportPreviewResponse,
+  LegacyExcelWealthCommitResponse,
+  LegacyExcelWealthPreviewResponse,
+  Transaction,
+} from '../types/api'
 
 function buildImportForm(source: string, file: File) {
   const formData = new FormData()
@@ -34,3 +40,24 @@ export function deleteImportBatch(batchId: number) {
   return apiDelete(`/api/import/batches/${batchId}`)
 }
 
+
+
+export function previewLegacyWealthImport(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return apiPostForm<LegacyExcelWealthPreviewResponse>(
+    '/api/legacy-excel-import/wealth-preview',
+    formData,
+  )
+}
+
+export function commitLegacyWealthImport(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  return apiPostForm<LegacyExcelWealthCommitResponse>(
+    '/api/legacy-excel-import/wealth-commit',
+    formData,
+  )
+}
