@@ -6,7 +6,15 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import CategoryRule, ImportBatch, InvestmentEvent, OwedItem, Transaction
+from app.models import (
+    CategoryRule,
+    ImportBatch,
+    InvestmentEvent,
+    OwedItem,
+    OwedPayment,
+    OwedPaymentAllocation,
+    Transaction,
+)
 
 
 @pytest.fixture

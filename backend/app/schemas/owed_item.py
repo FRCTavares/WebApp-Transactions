@@ -50,3 +50,48 @@ class OwedItemRead(OwedItemBase):
     amount_remaining: Decimal
     created_at: DateTimeType
     updated_at: DateTimeType
+
+
+PaymentMethod = Literal["cash", "bank_transfer", "mbway", "other"]
+
+
+class OwedPaymentAllocationCreate(BaseModel):
+    owed_item_id: int
+    amount: Decimal = Field(gt=0)
+
+
+class OwedPaymentAllocationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    owed_payment_id: int
+    owed_item_id: int
+    amount: Decimal
+    created_at: DateTimeType
+
+
+class OwedPaymentCreate(BaseModel):
+    person: str = Field(min_length=1, max_length=100)
+    payment_date: DateType
+    amount: Decimal = Field(gt=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    method: PaymentMethod = "cash"
+    notes: str | None = None
+    linked_transaction_id: int | None = None
+    allocations: list[OwedPaymentAllocationCreate] = Field(default_factory=list)
+
+
+class OwedPaymentRead(BaseModel):
+    id: int
+    person: str
+    payment_date: DateType
+    amount: Decimal
+    currency: str
+    method: PaymentMethod
+    notes: str | None
+    linked_transaction_id: int | None
+    allocated_amount: Decimal
+    unallocated_amount: Decimal
+    allocations: list[OwedPaymentAllocationRead]
+    created_at: DateTimeType
+    updated_at: DateTimeType

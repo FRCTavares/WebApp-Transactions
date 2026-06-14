@@ -265,3 +265,260 @@ def test_decimal_values_are_returned_with_two_decimal_places(client):
     assert Decimal(data["amount_total"]) == Decimal("12.35")
     assert Decimal(data["amount_paid"]) == Decimal("1.24")
     assert Decimal(data["amount_remaining"]) == Decimal("11.11")
+
+
+def test_record_partial_payment_updates_owed_item(client):
+    create_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="MiniPreço",
+        amount_total="63.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "50.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "50.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+
+    payment = response.json()
+
+    assert payment["amount"] == "50.00"
+    assert payment["allocated_amount"] == "50.00"
+    assert payment["unallocated_amount"] == "0.00"
+
+    owed_response = client.get(f"/api/owed/{owed_item_id}")
+    owed_item = owed_response.json()
+
+    assert owed_item["amount_paid"] == "50.00"
+    assert owed_item["amount_remaining"] == "13.00"
+    assert owed_item["status"] == "partially_paid"
+
+
+def test_record_full_payment_updates_owed_item_to_paid(client):
+    create_response = create_owed_item(
+        client,
+        person="Grandma",
+        reason="Pizza",
+        amount_total="29.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-14",
+            "amount": "29.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "29.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+
+    owed_response = client.get(f"/api/owed/{owed_item_id}")
+    owed_item = owed_response.json()
+
+    assert owed_item["amount_paid"] == "29.00"
+    assert owed_item["amount_remaining"] == "0.00"
+    assert owed_item["status"] == "paid"
+
+
+def test_record_overpayment_keeps_unallocated_amount(client):
+    create_response = create_owed_item(
+        client,
+        person="Grandma",
+        reason="Pizza",
+        amount_total="29.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-14",
+            "amount": "50.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "29.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+
+    payment = response.json()
+
+    assert payment["allocated_amount"] == "29.00"
+    assert payment["unallocated_amount"] == "21.00"
+
+    owed_response = client.get(f"/api/owed/{owed_item_id}")
+    owed_item = owed_response.json()
+
+    assert owed_item["status"] == "paid"
+    assert owed_item["amount_remaining"] == "0.00"
+
+
+def test_record_payment_auto_allocates_oldest_first(client):
+    first_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="20.00",
+    )
+    second_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Pharmacy",
+        amount_total="30.00",
+    )
+
+    first_id = first_response.json()["id"]
+    second_id = second_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "45.00",
+            "method": "cash",
+        },
+    )
+
+    assert response.status_code == 201
+
+    payment = response.json()
+
+    assert payment["allocated_amount"] == "45.00"
+    assert payment["unallocated_amount"] == "0.00"
+    assert len(payment["allocations"]) == 2
+
+    first_owed = client.get(f"/api/owed/{first_id}").json()
+    second_owed = client.get(f"/api/owed/{second_id}").json()
+
+    assert first_owed["amount_paid"] == "20.00"
+    assert first_owed["amount_remaining"] == "0.00"
+    assert first_owed["status"] == "paid"
+
+    assert second_owed["amount_paid"] == "25.00"
+    assert second_owed["amount_remaining"] == "5.00"
+    assert second_owed["status"] == "partially_paid"
+
+
+def test_record_payment_rejects_allocation_to_other_person(client):
+    create_response = create_owed_item(
+        client,
+        person="Alice",
+        reason="Dinner",
+        amount_total="20.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Bob",
+            "payment_date": "2026-06-14",
+            "amount": "20.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "20.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Allocation person must match payment person"
+
+
+def test_record_payment_rejects_over_allocation_to_owed_item(client):
+    create_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Coffee",
+        amount_total="5.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "10.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "10.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Allocated amount cannot exceed owed item remaining amount"
+
+
+def test_list_and_get_owed_payments(client):
+    create_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="20.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    create_payment_response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "20.00",
+            "method": "mbway",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "20.00",
+                },
+            ],
+        },
+    )
+
+    payment_id = create_payment_response.json()["id"]
+
+    list_response = client.get("/api/owed/payments?person=Mother")
+    get_response = client.get(f"/api/owed/payments/{payment_id}")
+
+    assert list_response.status_code == 200
+    assert get_response.status_code == 200
+
+    assert len(list_response.json()) == 1
+    assert get_response.json()["method"] == "mbway"

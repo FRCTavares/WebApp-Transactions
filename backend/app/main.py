@@ -12,6 +12,8 @@ from app.models import (
     MarketPrice,
     MarketPriceHistory,
     OwedItem,
+    OwedPayment,
+    OwedPaymentAllocation,
     Transaction,
     WealthAccount,
     WealthSnapshot,

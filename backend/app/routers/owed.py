@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repositories.owed_repository import OwedRepository
-from app.schemas.owed_item import OwedItemCreate, OwedItemRead, OwedItemUpdate
+from app.schemas.owed_item import (
+    OwedItemCreate,
+    OwedItemRead,
+    OwedItemUpdate,
+    OwedPaymentCreate,
+    OwedPaymentRead,
+)
 from app.services.owed_service import OwedService
 
 
@@ -109,6 +115,40 @@ def export_owed_items(
         },
     )
 
+
+
+@router.post(
+    "/payments",
+    response_model=OwedPaymentRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def record_owed_payment(
+    payment_data: OwedPaymentCreate,
+    service: OwedService = Depends(get_owed_service),
+):
+    return service.record_payment(payment_data)
+
+
+@router.get("/payments", response_model=list[OwedPaymentRead])
+def list_owed_payments(
+    person: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: OwedService = Depends(get_owed_service),
+):
+    return service.list_payments(
+        person=person,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/payments/{payment_id}", response_model=OwedPaymentRead)
+def get_owed_payment(
+    payment_id: int,
+    service: OwedService = Depends(get_owed_service),
+):
+    return service.get_payment(payment_id)
 
 
 @router.get("/{owed_item_id}", response_model=OwedItemRead)

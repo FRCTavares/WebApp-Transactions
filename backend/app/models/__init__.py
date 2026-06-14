@@ -6,6 +6,7 @@ from app.models.investment_event import InvestmentEvent
 from app.models.market_price import MarketPrice
 from app.models.market_price_history import MarketPriceHistory
 from app.models.owed_item import OwedItem
+from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
@@ -19,6 +20,8 @@ __all__ = [
     "MarketPrice",
     "MarketPriceHistory",
     "OwedItem",
+    "OwedPayment",
+    "OwedPaymentAllocation",
     "Transaction",
     "WealthAccount",
     "WealthSnapshot",
