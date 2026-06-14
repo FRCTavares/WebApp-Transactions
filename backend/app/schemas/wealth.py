@@ -48,7 +48,7 @@ class WealthAccountRead(WealthAccountBase):
 class WealthSnapshotBase(BaseModel):
     snapshot_date: DateType
     account_id: int
-    balance: Decimal = Field(gt=0)
+    balance: Decimal = Field(ge=0)
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     balance_eur: Decimal | None = Field(default=None, gt=0)
     fx_rate_to_eur: Decimal | None = Field(default=None, gt=0)
