@@ -48,3 +48,23 @@ def create_investment_event_dedupe_hash(
     )
 
     return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
+
+
+def create_owed_item_dedupe_hash(
+    source: str,
+    due_date,
+    amount_total: Decimal,
+    person: str,
+    reason: str,
+) -> str:
+    hash_input = "|".join(
+        [
+            source.strip().lower(),
+            due_date.isoformat() if due_date is not None else "",
+            normalise_decimal_for_hash(amount_total),
+            person.strip().lower(),
+            reason.strip(),
+        ]
+    )
+
+    return hashlib.sha256(hash_input.encode("utf-8")).hexdigest()

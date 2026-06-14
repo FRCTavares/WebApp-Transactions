@@ -13,6 +13,7 @@ from app.models.investment_event import InvestmentEvent
 from app.models.transaction import Transaction
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.import_preview import (
     ImportInvalidRow,
@@ -31,11 +32,13 @@ class ImportService:
         import_batch_repository: ImportBatchRepository,
         category_rule_service: CategoryRuleService | None = None,
         investment_event_repository: InvestmentEventRepository | None = None,
+        owed_repository: OwedRepository | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
         self.category_rule_service = category_rule_service
         self.investment_event_repository = investment_event_repository
+        self.owed_repository = owed_repository
         self.dedupe_service = DedupeService(
             transaction_repository=transaction_repository,
             investment_event_repository=investment_event_repository,
@@ -80,6 +83,7 @@ class ImportService:
         import_batch = self.get_import_batch(import_batch_id)
 
         deleted_investment_events = 0
+        deleted_owed_items = 0
 
         if self.investment_event_repository is not None:
             deleted_investment_events = (
@@ -91,12 +95,19 @@ class ImportService:
         deleted_transactions = self.transaction_repository.delete_by_import_batch(
             import_batch_id=import_batch_id,
         )
+
+        if self.owed_repository is not None:
+            deleted_owed_items = self.owed_repository.delete_by_import_batch(
+                import_batch_id=import_batch_id,
+            )
+
         self.import_batch_repository.delete(import_batch)
 
         return {
             "import_batch_id": import_batch_id,
             "deleted_transactions": deleted_transactions,
             "deleted_investment_events": deleted_investment_events,
+            "deleted_owed_items": deleted_owed_items,
             "status": "deleted",
         }
 

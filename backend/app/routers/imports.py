@@ -5,6 +5,7 @@ from app.database import get_db
 from app.repositories.category_rule_repository import CategoryRuleRepository
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.fx_match import FxMatchPreviewResponse
 from app.schemas.import_batch import ImportBatchRead
@@ -22,6 +23,7 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
     transaction_repository = TransactionRepository(db)
     import_batch_repository = ImportBatchRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
+    owed_repository = OwedRepository(db)
     category_rule_repository = CategoryRuleRepository(db)
     category_rule_service = CategoryRuleService(
         category_rule_repository=category_rule_repository,
@@ -33,6 +35,7 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
         import_batch_repository=import_batch_repository,
         category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
+        owed_repository=owed_repository,
     )
 
 
@@ -50,6 +53,7 @@ def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
         import_batch_repository=import_batch_repository,
         category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
+        owed_repository=owed_repository,
     )
 
     return FxMatchService(

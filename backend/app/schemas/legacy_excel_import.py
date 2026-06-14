@@ -35,6 +35,7 @@ class LegacyExcelPreviewOwedItem(BaseModel):
     due_date: DateType | None = None
     notes: str | None = None
     external_id: str
+    dedupe_hash: str
     is_duplicate: bool = False
 
 
@@ -68,3 +69,19 @@ class LegacyExcelPreviewResponse(BaseModel):
     transactions: list[LegacyExcelPreviewTransaction]
     owed_items: list[LegacyExcelPreviewOwedItem]
     invalid_rows: list[LegacyExcelPreviewInvalidRow]
+
+
+
+class LegacyExcelCommitResponse(BaseModel):
+    import_batch_id: int
+    source: str
+    filename: str
+    rows_total: int
+    rows_inserted: int
+    rows_skipped: int
+    transactions_inserted: int
+    owed_items_inserted: int
+    duplicate_transactions_skipped: int
+    duplicate_owed_items_skipped: int
+    invalid_rows_skipped: int
+    status: str
