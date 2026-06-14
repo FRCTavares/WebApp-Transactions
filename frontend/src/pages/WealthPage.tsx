@@ -15,7 +15,6 @@ import {
 import { StatusMessage } from '../components/StatusMessage'
 import {
   accountTypeOptions,
-  formatDerivedOrSnapshotBalance,
   getAccountGroups,
   getAccountLabel,
   getAccountName,
@@ -45,6 +44,7 @@ export function WealthPage() {
   const [summary, setSummary] = useState<WealthSummary | null>(null)
   const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
   const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
+  const [quickSnapshotBalances, setQuickSnapshotBalances] = useState<Record<number, string>>({})
   const [accountForm, setAccountForm] = useState<AccountFormState>(getInitialAccountForm)
   const [snapshotForm, setSnapshotForm] = useState<SnapshotFormState>(getInitialSnapshotForm)
   const [editingAccountId, setEditingAccountId] = useState<number | null>(null)
@@ -299,6 +299,78 @@ export function WealthPage() {
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete wealth snapshot')
     }
+  }
+
+  function updateQuickSnapshotBalance(accountId: number, value: string) {
+    setQuickSnapshotBalances((currentBalances) => ({
+      ...currentBalances,
+      [accountId]: value,
+    }))
+  }
+
+  async function saveQuickSnapshot(account: WealthAccount) {
+    setError(null)
+    setMessage(null)
+
+    if (account.currency !== 'EUR') {
+      setError('Quick snapshots currently support EUR accounts only.')
+      return
+    }
+
+    try {
+      const balance = toPositiveAmount(
+        quickSnapshotBalances[account.id] ?? '',
+        'Balance',
+      )
+
+      await createWealthSnapshot({
+        snapshot_date: new Date().toISOString().slice(0, 10),
+        account_id: account.id,
+        balance,
+        currency: account.currency,
+        fx_rate_to_eur: null,
+        interest_earned: null,
+        notes: 'Manual quick snapshot from accounts table.',
+      })
+
+      setQuickSnapshotBalances((currentBalances) => {
+        const nextBalances = { ...currentBalances }
+        delete nextBalances[account.id]
+        return nextBalances
+      })
+
+      setMessage(`Snapshot saved for ${account.name}.`)
+      loadWealthData()
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to save quick snapshot')
+    }
+  }
+
+  function renderAccountBalanceCell(
+    account: WealthAccount,
+    latestSnapshot: WealthSnapshot | undefined,
+  ) {
+    const derivedValue = getDerivedInvestmentValue(account, investmentPositions)
+
+    if (derivedValue !== null) {
+      return <span>{formatMoney(derivedValue.toFixed(2))} · derived</span>
+    }
+
+    return (
+      <div className="wealth-quick-snapshot">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={quickSnapshotBalances[account.id] ?? ''}
+          onChange={(event) => updateQuickSnapshotBalance(account.id, event.target.value)}
+          placeholder={latestSnapshot?.balance_eur ?? '0.00'}
+        />
+        <button type="button" className="small-button" onClick={() => saveQuickSnapshot(account)}>
+          Save
+        </button>
+      </div>
+    )
   }
 
   function toggleAccountGroup(groupKey: string) {
@@ -627,7 +699,7 @@ export function WealthPage() {
                       </td>
                       <td>{getAccountTypeLabel(account.account_type)}</td>
                       <td className="right">
-                        {formatDerivedOrSnapshotBalance(account, latestSnapshot, investmentPositions)}
+                        {renderAccountBalanceCell(account, latestSnapshot)}
                       </td>
                       <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
                       <td>
@@ -724,7 +796,7 @@ export function WealthPage() {
                               </td>
                               <td>{getAccountTypeLabel(account.account_type)}</td>
                               <td className="right">
-                                {formatDerivedOrSnapshotBalance(account, latestSnapshot, investmentPositions)}
+                                {renderAccountBalanceCell(account, latestSnapshot)}
                               </td>
                               <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
                               <td>
