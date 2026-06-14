@@ -19,6 +19,7 @@ from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router
 from app.routers.imports import router as imports_router
 from app.routers.investment_events import router as investment_events_router
+from app.routers.legacy_excel_imports import router as legacy_excel_imports_router
 from app.routers.market_prices import router as market_prices_router
 from app.routers.owed import router as owed_router
 from app.routers.summary import router as summary_router
@@ -46,6 +47,7 @@ app.include_router(owed_router)
 app.include_router(summary_router)
 app.include_router(imports_router)
 app.include_router(investment_events_router)
+app.include_router(legacy_excel_imports_router)
 app.include_router(market_prices_router)
 app.include_router(cashflow_rules_router)
 app.include_router(category_rules_router)
