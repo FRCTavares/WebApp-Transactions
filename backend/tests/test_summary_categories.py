@@ -75,7 +75,7 @@ def test_get_category_summary_groups_by_category_subcategory_direction_and_month
     category, subcategory, gross_total, owed_total, personal_total, count = rows[0]
 
     assert category == "Groceries"
-    assert subcategory == "Supermarket"
+    assert subcategory is None
     assert gross_total == Decimal("25.50")
     assert owed_total == Decimal("0")
     assert personal_total == Decimal("25.50")

@@ -261,7 +261,6 @@ class TransactionRepository:
         statement = (
             select(
                 category_label.label("category"),
-                Transaction.subcategory,
                 gross_total.label("gross_total"),
                 owed_total.label("owed_total"),
                 personal_total.label("personal_total"),
@@ -271,7 +270,7 @@ class TransactionRepository:
                 owed_by_transaction,
                 owed_by_transaction.c.transaction_id == Transaction.id,
             )
-            .group_by(category_label, Transaction.subcategory)
+            .group_by(category_label)
             .order_by(personal_total.desc(), gross_total.desc())
         )
 
@@ -290,13 +289,13 @@ class TransactionRepository:
         return [
             (
                 str(category),
-                subcategory,
+                None,
                 Decimal(str(gross)),
                 Decimal(str(owed)),
                 Decimal(str(personal)),
                 count,
             )
-            for category, subcategory, gross, owed, personal, count in self.db.execute(statement).all()
+            for category, gross, owed, personal, count in self.db.execute(statement).all()
         ]
 
     def get_uncategorised_suggestions(

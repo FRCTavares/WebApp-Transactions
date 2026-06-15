@@ -166,3 +166,49 @@ main {
   font-size: 0.72rem;
   font-weight: 700;
 }
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f8fafc;
+}
+
+.category-drilldown-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.category-drilldown-button:hover {
+  color: #2563eb;
+}
+
+.category-detail-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: #ffffff;
+}
+
+.category-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.category-detail-header h3 {
+  margin-bottom: 0.25rem;
+}
+
+.category-detail-badge {
+  margin-left: 0.5rem;
+}
