@@ -108,3 +108,25 @@ main {
   color: #1d4ed8 !important;
   font-weight: 700;
 }
+
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.table-sort-button:hover {
+  color: #2563eb;
+}
+
+.table-sort-button-right {
+  justify-content: flex-end;
+  width: 100%;
+}

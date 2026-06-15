@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
@@ -15,6 +15,9 @@ type TransactionTableProps = {
   onDelete?: (transaction: TransactionTableRow) => void
   onMarkOwed?: (transaction: TransactionTableRow) => void
 }
+
+type SortField = 'date' | 'amount'
+type SortDirection = 'asc' | 'desc'
 
 function formatCashflowType(cashflowType: string) {
   return cashflowType.replaceAll('_', ' ')
@@ -50,19 +53,78 @@ export function TransactionTable({
   onDelete,
   onMarkOwed,
 }: TransactionTableProps) {
+  const [sortField, setSortField] = useState<SortField | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const showActions = Boolean(onEdit || onDelete || onMarkOwed || createRow || editRow)
+
+  function toggleSort(nextSortField: SortField) {
+    if (sortField === nextSortField) {
+      setSortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
+      return
+    }
+
+    setSortField(nextSortField)
+    setSortDirection('asc')
+  }
+
+  function getSortLabel(field: SortField) {
+    if (sortField !== field) {
+      return '↕'
+    }
+
+    return sortDirection === 'asc' ? '↑' : '↓'
+  }
+
+  const sortedTransactions = useMemo(() => {
+    if (!sortField) {
+      return transactions
+    }
+
+    return [...transactions].sort((firstTransaction, secondTransaction) => {
+      const firstValue = sortField === 'date'
+        ? new Date(firstTransaction.date).getTime()
+        : Number(firstTransaction.amount)
+      const secondValue = sortField === 'date'
+        ? new Date(secondTransaction.date).getTime()
+        : Number(secondTransaction.amount)
+
+      const comparison = firstValue - secondValue
+
+      if (comparison === 0) {
+        return firstTransaction.id - secondTransaction.id
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+  }, [transactions, sortField, sortDirection])
 
   return (
     <div className="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Date</th>
+            <th>
+              <button
+                type="button"
+                className="table-sort-button"
+                onClick={() => toggleSort('date')}
+              >
+                Date <span>{getSortLabel('date')}</span>
+              </button>
+            </th>
             <th>Description</th>
             <th>Type</th>
             <th>Category</th>
             <th>Source</th>
-            <th className="right">Amount</th>
+            <th className="right">
+              <button
+                type="button"
+                className="table-sort-button table-sort-button-right"
+                onClick={() => toggleSort('amount')}
+              >
+                Amount <span>{getSortLabel('amount')}</span>
+              </button>
+            </th>
             {showActions && <th>Actions</th>}
           </tr>
         </thead>
@@ -77,7 +139,7 @@ export function TransactionTable({
             </tr>
           )}
 
-          {transactions.map((transaction) => {
+          {sortedTransactions.map((transaction) => {
             const customEditRow = editRow?.(transaction)
 
             if (customEditRow) {
