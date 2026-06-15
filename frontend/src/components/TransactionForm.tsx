@@ -97,14 +97,12 @@ export function TransactionForm({
           onChange={(value) => onChange('category', value)}
         />
 
-        <label>
-          Subcategory
-          <input
-            value={form.subcategory}
-            onChange={(event) => onChange('subcategory', event.target.value)}
-            placeholder="Optional"
-          />
-        </label>
+        <CategorySelect
+          label="Subcategory"
+          value={form.subcategory}
+          onChange={(value) => onChange('subcategory', value)}
+          placeholder="Optional, type to search or create"
+        />
       </div>
 
       <div className="form-row">

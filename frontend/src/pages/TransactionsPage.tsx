@@ -12,6 +12,7 @@ import {
   type TransactionFilterState,
 } from '../components/TransactionFilters'
 import type { TransactionFormState } from '../components/TransactionForm'
+import { CategorySelect } from '../components/CategorySelect'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
@@ -484,6 +485,12 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
   const selectedMonth = filters.month || monthKey
   const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth)
+  const categoryOptions = transactions
+    .map((transaction) => transaction.category)
+    .filter((category): category is string => Boolean(category))
+  const subcategoryOptions = transactions
+    .map((transaction) => transaction.subcategory)
+    .filter((subcategory): subcategory is string => Boolean(subcategory))
 
   return (
     <section>
@@ -557,17 +564,18 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
                 </select>
               </td>
               <td>
-                <input
-                  className="table-input"
+                <CategorySelect
                   value={form.category}
-                  onChange={(event) => updateForm('category', event.target.value)}
+                  onChange={(value) => updateForm('category', value)}
+                  options={categoryOptions}
                   placeholder="Category"
                 />
-                <input
-                  className="table-input table-input-secondary"
+                <CategorySelect
                   value={form.subcategory}
-                  onChange={(event) => updateForm('subcategory', event.target.value)}
+                  onChange={(value) => updateForm('subcategory', value)}
+                  options={subcategoryOptions}
                   placeholder="Subcategory"
+                  className="table-input-secondary"
                 />
               </td>
               <td>manual</td>
@@ -645,17 +653,18 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
                 </select>
               </td>
               <td>
-                <input
-                  className="table-input"
+                <CategorySelect
                   value={editForm.category}
-                  onChange={(event) => updateEditForm('category', event.target.value)}
+                  onChange={(value) => updateEditForm('category', value)}
+                  options={categoryOptions}
                   placeholder="Category"
                 />
-                <input
-                  className="table-input table-input-secondary"
+                <CategorySelect
                   value={editForm.subcategory}
-                  onChange={(event) => updateEditForm('subcategory', event.target.value)}
+                  onChange={(value) => updateEditForm('subcategory', value)}
+                  options={subcategoryOptions}
                   placeholder="Subcategory"
+                  className="table-input-secondary"
                 />
               </td>
               <td>{transaction.source}</td>
