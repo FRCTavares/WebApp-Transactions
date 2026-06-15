@@ -33,16 +33,37 @@ class SummaryRepository:
         end_date: date,
         limit: int = 5,
     ) -> list[tuple[str, Decimal]]:
+        category_label = func.coalesce(Transaction.category, "Uncategorised")
+        owed_by_transaction = (
+            select(
+                OwedItem.linked_transaction_id.label("transaction_id"),
+                func.coalesce(func.sum(OwedItem.amount_total), 0).label("owed_total"),
+            )
+            .where(OwedItem.status != "cancelled")
+            .where(OwedItem.linked_transaction_id.is_not(None))
+            .group_by(OwedItem.linked_transaction_id)
+            .subquery()
+        )
+        personal_total = func.coalesce(
+            func.sum(Transaction.amount - func.coalesce(owed_by_transaction.c.owed_total, 0)),
+            0,
+        )
+
         statement = (
             select(
-                func.coalesce(Transaction.category, "Uncategorised"),
-                func.coalesce(func.sum(Transaction.amount), 0),
+                category_label,
+                personal_total,
+            )
+            .outerjoin(
+                owed_by_transaction,
+                owed_by_transaction.c.transaction_id == Transaction.id,
             )
             .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
-            .group_by(func.coalesce(Transaction.category, "Uncategorised"))
-            .order_by(func.sum(Transaction.amount).desc())
+            .group_by(category_label)
+            .having(personal_total > 0)
+            .order_by(personal_total.desc())
             .limit(limit)
         )
 

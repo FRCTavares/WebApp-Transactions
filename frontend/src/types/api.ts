@@ -360,6 +360,9 @@ export type CategorySummaryItem = {
   category: string
   subcategory: string | null
   total: string
+  gross_total: string
+  owed_total: string
+  personal_total: string
   count: number
 }
 

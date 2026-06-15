@@ -102,10 +102,13 @@ class SummaryService:
             CategorySummaryItem(
                 category=category,
                 subcategory=subcategory,
-                total=total,
+                total=personal_total,
+                gross_total=gross_total,
+                owed_total=owed_total,
+                personal_total=personal_total,
                 count=count,
             )
-            for category, subcategory, total, count in rows
+            for category, subcategory, gross_total, owed_total, personal_total, count in rows
         ]
 
         return CategorySummaryResponse(

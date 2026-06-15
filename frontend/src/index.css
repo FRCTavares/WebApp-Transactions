@@ -130,3 +130,39 @@ main {
   justify-content: flex-end;
   width: 100%;
 }
+
+.dashboard-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.dashboard-section-header h2 {
+  margin-bottom: 0.25rem;
+}
+
+.amount-primary {
+  font-weight: 800;
+}
+
+.amount-muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.fully-reimbursed-row {
+  background: #f8fafc;
+}
+
+.fully-reimbursed-row td:first-child::after {
+  content: " reimbursed";
+  margin-left: 0.45rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 700;
+}

@@ -239,18 +239,40 @@ class TransactionRepository:
         month: int | None = None,
         direction: str | None = None,
         cashflow_type: str | None = None,
-    ) -> list[tuple[str, str | None, Decimal, int]]:
+    ) -> list[tuple[str, str | None, Decimal, Decimal, Decimal, int]]:
         category_label = func.coalesce(Transaction.category, "Uncategorised")
+        owed_by_transaction = (
+            select(
+                OwedItem.linked_transaction_id.label("transaction_id"),
+                func.coalesce(func.sum(OwedItem.amount_total), 0).label("owed_total"),
+            )
+            .where(OwedItem.status != "cancelled")
+            .where(OwedItem.linked_transaction_id.is_not(None))
+            .group_by(OwedItem.linked_transaction_id)
+            .subquery()
+        )
+        gross_total = func.coalesce(func.sum(Transaction.amount), 0)
+        owed_total = func.coalesce(func.sum(func.coalesce(owed_by_transaction.c.owed_total, 0)), 0)
+        personal_total = func.coalesce(
+            func.sum(Transaction.amount - func.coalesce(owed_by_transaction.c.owed_total, 0)),
+            0,
+        )
 
         statement = (
             select(
                 category_label.label("category"),
                 Transaction.subcategory,
-                func.sum(Transaction.amount).label("total"),
+                gross_total.label("gross_total"),
+                owed_total.label("owed_total"),
+                personal_total.label("personal_total"),
                 func.count(Transaction.id).label("count"),
             )
+            .outerjoin(
+                owed_by_transaction,
+                owed_by_transaction.c.transaction_id == Transaction.id,
+            )
             .group_by(category_label, Transaction.subcategory)
-            .order_by(func.sum(Transaction.amount).desc())
+            .order_by(personal_total.desc(), gross_total.desc())
         )
 
         if year is not None:
@@ -265,7 +287,17 @@ class TransactionRepository:
         if cashflow_type is not None:
             statement = statement.where(Transaction.cashflow_type == cashflow_type)
 
-        return list(self.db.execute(statement).all())
+        return [
+            (
+                str(category),
+                subcategory,
+                Decimal(str(gross)),
+                Decimal(str(owed)),
+                Decimal(str(personal)),
+                count,
+            )
+            for category, subcategory, gross, owed, personal, count in self.db.execute(statement).all()
+        ]
 
     def get_uncategorised_suggestions(
         self,
