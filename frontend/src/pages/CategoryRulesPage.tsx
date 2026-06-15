@@ -445,9 +445,6 @@ export function CategoryRulesPage() {
         <div className="section-header">
           <div>
             <h2>Description Suggestions</h2>
-            <p className="muted small">
-              Create cleaning rules from repeated raw bank descriptions.
-            </p>
           </div>
         </div>
 

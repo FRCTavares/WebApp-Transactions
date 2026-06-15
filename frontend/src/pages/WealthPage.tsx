@@ -399,9 +399,6 @@ export function WealthPage() {
       <div className="page-header">
         <div>
           <h1>Wealth</h1>
-          <p className="muted small">
-            Manual net worth snapshots by account. This is balance history, not cashflow history.
-          </p>
         </div>
 
         <div className="action-group">

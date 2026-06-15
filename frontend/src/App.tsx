@@ -7,6 +7,8 @@ import { CategoryRulesPage } from './pages/CategoryRulesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
 import { CleanupPage } from './pages/CleanupPage'
+import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
+import { PeriodProvider } from './context/PeriodContext'
 
 type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
 
@@ -39,9 +41,11 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
 
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
+  const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories'
 
   return (
-    <div className="app-shell">
+    <PeriodProvider>
+      <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2>F - Transactions</h2>
@@ -70,6 +74,12 @@ function App() {
       </aside>
 
       <main>
+        {shouldShowGlobalPeriodSelector && (
+          <div className="global-topbar">
+            <GlobalPeriodSelector />
+          </div>
+        )}
+
         {page === 'dashboard' && <DashboardPage />}
         {page === 'money-in' && <TransactionsPage direction="in" title="Money In" />}
         {page === 'money-out' && <TransactionsPage direction="out" title="Money Out" />}
@@ -80,7 +90,8 @@ function App() {
         {page === 'import' && <ImportPage />}
         {page === 'categories' && <CategoryRulesPage />}
       </main>
-    </div>
+      </div>
+    </PeriodProvider>
   )
 }
 

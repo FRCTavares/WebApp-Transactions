@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { listTransactions } from '../api/transactions'
 import { StatusMessage } from '../components/StatusMessage'
+import { usePeriod } from '../context/PeriodContext'
 import { TransactionTable } from '../components/TransactionTable'
 import type { CashflowType, Transaction } from '../types/api'
 
@@ -9,11 +10,6 @@ type ReviewGroup = {
   description: string
   transactions: Transaction[]
 }
-
-function getCurrentMonth() {
-  return new Date().toISOString().slice(0, 7)
-}
-
 function getMonthDateRange(month: string) {
   if (!month) {
     return {
@@ -92,8 +88,8 @@ function getReviewGroups(transactions: Transaction[]): ReviewGroup[] {
 }
 
 export function CleanupPage() {
+  const { monthKey } = usePeriod()
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [month, setMonth] = useState(getCurrentMonth)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -101,7 +97,7 @@ export function CleanupPage() {
     setError(null)
     setMessage(null)
 
-    const monthDateRange = getMonthDateRange(month)
+    const monthDateRange = getMonthDateRange(monthKey)
 
     listTransactions({
       date_from: monthDateRange.dateFrom || undefined,
@@ -116,7 +112,7 @@ export function CleanupPage() {
 
   useEffect(() => {
     loadReviewTransactions()
-  }, [])
+  }, [monthKey])
 
   const reviewGroups = getReviewGroups(transactions)
   const reviewItemCount = reviewGroups.reduce(
@@ -130,32 +126,6 @@ export function CleanupPage() {
       <div className="page-header">
         <div>
           <h1>Monthly Review</h1>
-          <p className="muted small">
-            {transactions.length} transactions loaded · {reviewItemCount} items to review
-          </p>
-        </div>
-
-        <div className="action-group">
-          <input
-            aria-label="Review month"
-            type="month"
-            value={month}
-            onChange={(event) => setMonth(event.target.value)}
-          />
-          <button type="button" onClick={loadReviewTransactions}>
-            Load
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMonth(getCurrentMonth())
-            }}
-          >
-            Current
-          </button>
-          <button type="button" onClick={loadReviewTransactions}>
-            Refresh
-          </button>
         </div>
       </div>
 

@@ -438,9 +438,6 @@ export function OwedPage() {
       <div className="page-header">
         <div>
           <h1>Money Owed To Me</h1>
-          <p className="muted small">
-            Reimbursement tracker for things you paid for someone else.
-          </p>
         </div>
 
         <div className="action-group">

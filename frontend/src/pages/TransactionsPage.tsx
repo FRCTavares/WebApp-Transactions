@@ -14,6 +14,7 @@ import {
 import type { TransactionFormState } from '../components/TransactionForm'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
+import { usePeriod } from '../context/PeriodContext'
 import type { CashflowType, Direction, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
@@ -32,11 +33,6 @@ type OwedFromTransactionFormState = {
 function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
 }
-
-function getCurrentMonth() {
-  return getTodayDate().slice(0, 7)
-}
-
 function getMonthLabel(month: string) {
   const [year, monthNumber] = month.split('-').map(Number)
   const date = new Date(year, monthNumber - 1, 1)
@@ -45,15 +41,6 @@ function getMonthLabel(month: string) {
     month: 'short',
     year: 'numeric',
   })
-}
-
-function shiftMonth(month: string, offset: number) {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const shiftedDate = new Date(year, monthNumber - 1 + offset, 1)
-  const shiftedYear = shiftedDate.getFullYear()
-  const shiftedMonth = String(shiftedDate.getMonth() + 1).padStart(2, '0')
-
-  return `${shiftedYear}-${shiftedMonth}`
 }
 
 function getDefaultCashflowType(direction: Direction): CashflowType {
@@ -78,7 +65,7 @@ function getInitialFilterState(direction: Direction): TransactionFilterState {
     category: '',
     source: '',
     cashflowType: getDefaultCashflowType(direction),
-    month: getCurrentMonth(),
+    month: '',
     dateFrom: '',
     dateTo: '',
   }
@@ -96,9 +83,6 @@ function getFormStateFromTransaction(transaction: Transaction): TransactionFormS
   }
 }
 
-function getTransactionsTotal(transactions: Transaction[]) {
-  return transactions.reduce((total, transaction) => total + Number(transaction.amount), 0)
-}
 
 function isTrading212Cashback(transaction: Transaction) {
   return (
@@ -212,6 +196,7 @@ function getExportFilename(direction: Direction) {
 }
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
+  const { monthKey } = usePeriod()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getInitialFilterState(direction),
@@ -233,7 +218,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   function loadTransactions(activeFilters = filters) {
     setError(null)
 
-    const selectedMonth = activeFilters.month || getCurrentMonth()
+    const selectedMonth = activeFilters.month || monthKey
     const monthDateRange = getMonthDateRange(selectedMonth)
 
     listTransactions({
@@ -256,7 +241,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     setError(null)
     setMessage(null)
 
-    const selectedMonth = filters.month || getCurrentMonth()
+    const selectedMonth = filters.month || monthKey
     const monthDateRange = getMonthDateRange(selectedMonth)
 
     try {
@@ -301,20 +286,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       ...currentFilters,
       [field]: value,
     }))
-  }
-
-  function selectMonth(month: string) {
-    const safeMonth = month || getCurrentMonth()
-
-    const nextFilters = {
-      ...filters,
-      month: safeMonth,
-      dateFrom: '',
-      dateTo: '',
-    }
-
-    setFilters(nextFilters)
-    loadTransactions(nextFilters)
   }
 
   function clearFilters() {
@@ -511,18 +482,14 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }
   }
 
-  const transactionTotal = getTransactionsTotal(transactions)
-  const selectedMonth = filters.month || getCurrentMonth()
+  const selectedMonth = filters.month || monthKey
   const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth)
 
   return (
     <section>
-      <div className="page-header">
+      <div className="page-header transactions-page-header">
         <div>
           <h1>{title}</h1>
-          <p className="muted small">
-            {transactions.length} transactions · {formatMoney(transactionTotal)} total
-          </p>
         </div>
 
         <div className="action-group">
@@ -540,30 +507,6 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
       </div>
 
       <StatusMessage error={error} message={message} />
-
-      <div className="month-navigator" aria-label="Transaction month navigation">
-        <button type="button" onClick={() => selectMonth(shiftMonth(selectedMonth, -1))}>
-          ‹ Previous
-        </button>
-
-        <div className="month-navigator-current">
-          <strong>{getMonthLabel(selectedMonth)}</strong>
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(event) => selectMonth(event.target.value)}
-            aria-label="Selected transaction month"
-          />
-        </div>
-
-        <button type="button" onClick={() => selectMonth(shiftMonth(selectedMonth, 1))}>
-          Next ›
-        </button>
-
-        <button type="button" onClick={() => selectMonth(getCurrentMonth())}>
-          Today
-        </button>
-      </div>
 
       <TransactionFilters
         filters={filters}

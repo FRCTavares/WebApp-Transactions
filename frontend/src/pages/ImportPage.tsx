@@ -122,10 +122,6 @@ function PreviewTransactionsTable({
           </tbody>
         </table>
       </div>
-
-      {transactions.length > 50 && (
-        <p className="muted small">Showing first 50 of {transactions.length} rows.</p>
-      )}
     </>
   )
 }
@@ -552,7 +548,6 @@ export function ImportPage() {
             {visibleBatches.length === 0 && (
               <tr>
                 <td colSpan={9}>
-                  <p className="muted">No import batches yet.</p>
                 </td>
               </tr>
             )}

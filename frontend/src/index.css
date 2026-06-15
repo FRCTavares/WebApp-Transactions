@@ -8,3 +8,64 @@
 @import './styles/market-data.css';
 @import './styles/owed.css';
 @import './styles/wealth.css';
+
+.global-topbar {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.global-period-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #93c5fd;
+  border-radius: 0.85rem;
+  background: #eff6ff;
+  box-shadow: 0 6px 18px rgb(37 99 235 / 0.16);
+  pointer-events: auto;
+}
+
+.global-period-selector label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.global-period-selector label span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.global-period-selector input {
+  width: 8.5rem;
+  height: 2.25rem;
+  background: white;
+}
+
+.global-period-selector button {
+  width: auto;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.65rem;
+}
+
+.global-period-selector strong {
+  display: none;
+}
+
+
+
+main {
+  position: relative;
+}
+
+.page-header {
+  min-height: 3.5rem;
+}

@@ -540,9 +540,6 @@ export function InvestmentsPage() {
       <div className="page-header">
         <div>
           <h1>Investments</h1>
-          <p className="muted small">
-            {events.length} investment events loaded from broker imports.
-          </p>
         </div>
 
         <div className="action-group">

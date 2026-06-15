@@ -4,30 +4,7 @@ import { getCategorySummary, getMonthlySummary } from '../api/summary'
 import type { CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary } from '../types/api'
 import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
-
-const monthOptions = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
-]
-
-function getCurrentYearMonth() {
-  const now = new Date()
-
-  return {
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-  }
-}
+import { usePeriod } from '../context/PeriodContext'
 
 function calculateDashboardNet(
   summary: MonthlySummary,
@@ -43,9 +20,7 @@ function calculateDashboardNet(
 }
 
 export function DashboardPage() {
-  const currentYearMonth = getCurrentYearMonth()
-  const [year, setYear] = useState(currentYearMonth.year)
-  const [month, setMonth] = useState(currentYearMonth.month)
+  const { year, month } = usePeriod()
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
@@ -73,40 +48,6 @@ export function DashboardPage() {
   return (
     <section>
       <h1>Dashboard</h1>
-      <p className="muted page-subtitle">
-        Showing {String(month).padStart(2, '0')}/{year}
-      </p>
-
-      <div className="filter-panel">
-        <h2>Period</h2>
-
-        <div className="form-row">
-          <label>
-            Month
-            <select
-              value={month}
-              onChange={(event) => setMonth(Number(event.target.value))}
-            >
-              {monthOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Year
-            <input
-              type="number"
-              min="2000"
-              max="2100"
-              value={year}
-              onChange={(event) => setYear(Number(event.target.value))}
-            />
-          </label>
-        </div>
-      </div>
 
       <StatusMessage error={error} />
 
@@ -120,7 +61,6 @@ export function DashboardPage() {
             <div className="card">
               <span>Money Spent</span>
               <strong>{formatMoney(summary.personal_money_out)}</strong>
-              <p className="muted small">After reimbursements</p>
             </div>
             <div className="card">
               <span>Investments</span>
