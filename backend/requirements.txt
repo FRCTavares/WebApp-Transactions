@@ -5,5 +5,4 @@ pydantic
 python-multipart
 pytest
 openpyxl
-httpx2
 yfinance
