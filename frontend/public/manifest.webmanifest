@@ -1,0 +1,18 @@
+{
+  "name": "F - Transactions",
+  "short_name": "Transactions",
+  "description": "Local-first personal finance tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
