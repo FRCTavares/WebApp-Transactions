@@ -1,6 +1,8 @@
 import os
+import secrets
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
@@ -54,6 +56,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+ACCESS_TOKEN_HEADER = "X-App-Access-Token"
+
+
+@app.middleware("http")
+async def require_app_access_token(request: Request, call_next):
+    expected_token = os.getenv("APP_ACCESS_TOKEN", "").strip()
+
+    if not expected_token:
+        return await call_next(request)
+
+    if not request.url.path.startswith("/api/"):
+        return await call_next(request)
+
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    if request.url.path == "/api/health":
+        return await call_next(request)
+
+    provided_token = request.headers.get(ACCESS_TOKEN_HEADER, "")
+
+    if not secrets.compare_digest(provided_token, expected_token):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Invalid or missing app access token"},
+        )
+
+    return await call_next(request)
+
 
 app.include_router(transactions_router)
 app.include_router(owed_router)

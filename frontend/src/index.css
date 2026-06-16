@@ -212,3 +212,56 @@ main {
 .category-detail-badge {
   margin-left: 0.5rem;
 }
+
+.unlock-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1.5rem;
+  background: #f8fafc;
+}
+
+.unlock-card {
+  width: min(26rem, 100%);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 18px 45px rgb(15 23 42 / 0.12);
+}
+
+.unlock-card h1 {
+  margin-bottom: 0.5rem;
+}
+
+.unlock-card p {
+  margin-bottom: 1rem;
+  color: var(--muted);
+}
+
+.unlock-card label {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.unlock-card input {
+  width: 100%;
+}
+
+.unlock-card button {
+  width: 100%;
+}
+
+.lock-button {
+  width: 100%;
+  margin-top: 0.85rem;
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.lock-button:hover {
+  background: #e2e8f0;
+}

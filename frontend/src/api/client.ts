@@ -1,6 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const ACCESS_TOKEN_STORAGE_KEY = 'f_transactions_access_token'
+const ACCESS_TOKEN_HEADER = 'X-App-Access-Token'
 
 type QueryValue = string | number | boolean | null | undefined
+
+export function getStoredAccessToken(): string {
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? ''
+}
+
+export function storeAccessToken(token: string): void {
+  localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token)
+}
+
+export function clearAccessToken(): void {
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
+}
 
 export function buildQuery(params: Record<string, QueryValue>): string {
   const searchParams = new URLSearchParams()
@@ -13,6 +27,24 @@ export function buildQuery(params: Record<string, QueryValue>): string {
 
   const query = searchParams.toString()
   return query ? `?${query}` : ''
+}
+
+function buildHeaders(headers?: HeadersInit): Headers {
+  const nextHeaders = new Headers(headers)
+  const accessToken = getStoredAccessToken()
+
+  if (accessToken) {
+    nextHeaders.set(ACCESS_TOKEN_HEADER, accessToken)
+  }
+
+  return nextHeaders
+}
+
+async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: buildHeaders(init.headers),
+  })
 }
 
 async function raiseForBadResponse(
@@ -82,17 +114,6 @@ async function readErrorDetail(response: Response): Promise<string | null> {
 
         return JSON.stringify(detail)
       }
-
-      if (typeof detail === 'object' && detail !== null) {
-        if (
-          'message' in detail &&
-          typeof detail.message === 'string'
-        ) {
-          return detail.message
-        }
-
-        return JSON.stringify(detail)
-      }
     }
   } catch {
     return null
@@ -102,7 +123,7 @@ async function readErrorDetail(response: Response): Promise<string | null> {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`)
+  const response = await apiFetch(path)
 
   await raiseForBadResponse(response, 'GET', path)
 
@@ -110,7 +131,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiGetBlob(path: string): Promise<Blob> {
-  const response = await fetch(`${API_BASE_URL}${path}`)
+  const response = await apiFetch(path)
 
   await raiseForBadResponse(response, 'GET', path)
 
@@ -121,7 +142,7 @@ export async function apiPostForm<T>(
   path: string,
   formData: FormData,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(path, {
     method: 'POST',
     body: formData,
   })
@@ -135,7 +156,7 @@ export async function apiPostJson<T>(
   path: string,
   payload: unknown,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -150,7 +171,7 @@ export async function apiPatchJson<T>(
   path: string,
   payload: unknown,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(path, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -162,7 +183,7 @@ export async function apiPatchJson<T>(
 }
 
 export async function apiDelete(path: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await apiFetch(path, {
     method: 'DELETE',
   })
 
