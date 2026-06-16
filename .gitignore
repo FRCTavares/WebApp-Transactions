@@ -27,3 +27,10 @@ frontend/node_modules/.tmp/
 # Runtime/log files
 *.log
 backups/
+
+# Local environment files
+.env.local
+*.local.env
+backend/.env
+frontend/.env
+
