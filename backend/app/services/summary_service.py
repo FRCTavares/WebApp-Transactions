@@ -81,6 +81,7 @@ class SummaryService:
         month: int | None = None,
         direction: str | None = None,
         cashflow_type: str | None = None,
+        current_user: CurrentUser | None = None,
     ) -> CategorySummaryResponse:
         if self.transaction_repository is None:
             raise RuntimeError("Transaction repository is required for category summary")

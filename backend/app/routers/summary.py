@@ -27,8 +27,13 @@ def get_monthly_summary(
     year: int | None = Query(default=None, ge=2000, le=2100),
     month: int | None = Query(default=None, ge=1, le=12),
     service: SummaryService = Depends(get_summary_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_monthly_summary(year=year, month=month)
+    return service.get_monthly_summary(
+        year=year,
+        month=month,
+        current_user=current_user,
+    )
 
 
 @router.get("/categories", response_model=CategorySummaryResponse)
@@ -41,10 +46,12 @@ def get_category_summary(
         pattern="^(income|expense|internal_transfer|investment|reimbursement|reimbursed_expense)$",
     ),
     service: SummaryService = Depends(get_summary_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.get_category_summary(
         year=year,
         month=month,
         direction=direction,
         cashflow_type=cashflow_type,
+        current_user=current_user,
     )
