@@ -1,4 +1,6 @@
 from datetime import date
+
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from decimal import Decimal
 
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
@@ -39,7 +41,7 @@ def test_cashflow_rule_crud(db_session):
 
     service.delete_rule(rule.id)
 
-    assert repository.get_by_id(rule.id) is None
+    assert repository.get_by_id(rule.id, LOCAL_DEFAULT_USER_ID) is None
 
 
 def test_duplicate_cashflow_rule_is_rejected(db_session):
@@ -197,3 +199,36 @@ def test_cashflow_rule_can_set_reimbursed_expense_type(db_session):
     )
 
     assert rule.cashflow_type == "reimbursed_expense"
+
+
+def test_cashflow_rules_are_isolated_by_user(db_session):
+    from fastapi import HTTPException
+    import pytest
+
+    from app.auth.current_user import CurrentUser
+
+    repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(repository)
+
+    first_user = CurrentUser(id="user-one")
+    second_user = CurrentUser(id="user-two")
+
+    payload = CashflowRuleCreate(
+        name="Trading 212 investment",
+        cashflow_type="investment",
+        match_text="Trading 212",
+        match_field="raw_description",
+        direction="out",
+        source="activobank",
+    )
+
+    first_rule = service.create_rule(payload, first_user)
+    second_rule = service.create_rule(payload, second_user)
+
+    assert [rule.id for rule in service.list_rules(current_user=first_user)] == [first_rule.id]
+    assert [rule.id for rule in service.list_rules(current_user=second_user)] == [second_rule.id]
+
+    with pytest.raises(HTTPException) as caught_error:
+        service.get_rule(second_rule.id, first_user)
+
+    assert caught_error.value.status_code == 404

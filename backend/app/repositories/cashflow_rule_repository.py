@@ -9,8 +9,15 @@ class CashflowRuleRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, rule_data: CashflowRuleCreate) -> CashflowRule:
-        rule = CashflowRule(**rule_data.model_dump())
+    def create(
+        self,
+        rule_data: CashflowRuleCreate,
+        user_id: str,
+    ) -> CashflowRule:
+        rule = CashflowRule(
+            **rule_data.model_dump(),
+            user_id=user_id,
+        )
         self.db.add(rule)
         self.db.commit()
         self.db.refresh(rule)
@@ -18,11 +25,16 @@ class CashflowRuleRepository:
 
     def list(
         self,
+        user_id: str,
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
     ) -> list[CashflowRule]:
-        statement = select(CashflowRule).order_by(CashflowRule.id.asc())
+        statement = (
+            select(CashflowRule)
+            .where(CashflowRule.user_id == user_id)
+            .order_by(CashflowRule.id.asc())
+        )
 
         if active_only:
             statement = statement.where(CashflowRule.is_active.is_(True))
@@ -31,12 +43,26 @@ class CashflowRuleRepository:
 
         return list(self.db.scalars(statement).all())
 
-    def list_all(self) -> list[CashflowRule]:
-        statement = select(CashflowRule).order_by(CashflowRule.id.asc())
+    def list_all(self, user_id: str) -> list[CashflowRule]:
+        statement = (
+            select(CashflowRule)
+            .where(CashflowRule.user_id == user_id)
+            .order_by(CashflowRule.id.asc())
+        )
         return list(self.db.scalars(statement).all())
 
-    def get_by_id(self, rule_id: int) -> CashflowRule | None:
-        return self.db.get(CashflowRule, rule_id)
+    def get_by_id(
+        self,
+        rule_id: int,
+        user_id: str,
+    ) -> CashflowRule | None:
+        statement = (
+            select(CashflowRule)
+            .where(CashflowRule.id == rule_id)
+            .where(CashflowRule.user_id == user_id)
+            .limit(1)
+        )
+        return self.db.scalar(statement)
 
     def update(
         self,

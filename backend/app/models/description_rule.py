@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.database import Base
 
 
@@ -15,6 +16,11 @@ class DescriptionRule(Base):
     __tablename__ = "description_rules"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(
+        String(100),
+        default=LOCAL_DEFAULT_USER_ID,
+        index=True,
+    )
 
     name: Mapped[str] = mapped_column(String(100))
     cleaned_description: Mapped[str] = mapped_column(String(255), index=True)

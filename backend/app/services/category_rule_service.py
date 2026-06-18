@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.importers.base import NormalisedTransaction
 from app.models.category_rule import CategoryRule
 from app.models.transaction import Transaction
@@ -27,8 +27,9 @@ class CategoryRuleService:
         rule_data: CategoryRuleCreate,
         current_user: CurrentUser | None = None,
     ) -> CategoryRule:
-        self._raise_if_duplicate_rule(rule_data)
-        return self.category_rule_repository.create(rule_data)
+        user_id = self._get_user_id(current_user)
+        self._raise_if_duplicate_rule(rule_data, user_id)
+        return self.category_rule_repository.create(rule_data, user_id)
 
     def list_rules(
         self,
@@ -37,7 +38,10 @@ class CategoryRuleService:
         offset: int = 0,
         current_user: CurrentUser | None = None,
     ) -> list[CategoryRule]:
+        user_id = self._get_user_id(current_user)
+
         return self.category_rule_repository.list(
+            user_id=user_id,
             active_only=active_only,
             limit=limit,
             offset=offset,
@@ -48,7 +52,8 @@ class CategoryRuleService:
         rule_id: int,
         current_user: CurrentUser | None = None,
     ) -> CategoryRule:
-        rule = self.category_rule_repository.get_by_id(rule_id)
+        user_id = self._get_user_id(current_user)
+        rule = self.category_rule_repository.get_by_id(rule_id, user_id)
 
         if rule is None:
             raise HTTPException(
@@ -65,7 +70,8 @@ class CategoryRuleService:
         current_user: CurrentUser | None = None,
     ) -> CategoryRule:
         rule = self.get_rule(rule_id, current_user)
-        self._raise_if_duplicate_rule_update(rule, rule_data)
+        user_id = self._get_user_id(current_user)
+        self._raise_if_duplicate_rule_update(rule, rule_data, user_id)
         return self.category_rule_repository.update(rule, rule_data)
 
     def delete_rule(
@@ -109,7 +115,10 @@ class CategoryRuleService:
         transaction: NormalisedTransaction,
         current_user: CurrentUser | None = None,
     ) -> tuple[str | None, str | None]:
-        rules = self.category_rule_repository.list(active_only=True)
+        rules = self.category_rule_repository.list(
+            user_id=self._get_user_id(current_user),
+            active_only=True,
+        )
 
         for rule in rules:
             if self._matches_rule(transaction, rule):
@@ -156,6 +165,7 @@ class CategoryRuleService:
     def _raise_if_duplicate_rule(
         self,
         rule_data: CategoryRuleCreate,
+        user_id: str,
         exclude_rule_id: int | None = None,
     ) -> None:
         new_fingerprint = self._rule_fingerprint(
@@ -167,7 +177,7 @@ class CategoryRuleService:
             subcategory=rule_data.subcategory,
         )
 
-        for existing_rule in self.category_rule_repository.list_all():
+        for existing_rule in self.category_rule_repository.list_all(user_id):
             if exclude_rule_id is not None and existing_rule.id == exclude_rule_id:
                 continue
 
@@ -190,6 +200,7 @@ class CategoryRuleService:
         self,
         rule: CategoryRule,
         rule_data: CategoryRuleUpdate,
+        user_id: str,
     ) -> None:
         update_data = rule_data.model_dump(exclude_unset=True)
 
@@ -206,8 +217,16 @@ class CategoryRuleService:
 
         self._raise_if_duplicate_rule(
             candidate_rule_data,
+            user_id=user_id,
             exclude_rule_id=rule.id,
         )
+
+
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id
 
     def _rule_fingerprint(
         self,

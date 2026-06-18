@@ -119,3 +119,46 @@ def test_category_rule_service_rejects_duplicate_rule_update(db_session):
         )
 
     assert caught_error.value.status_code == 409
+
+
+def test_category_rules_are_isolated_by_user(db_session):
+    from app.auth.current_user import CurrentUser
+
+    repository = CategoryRuleRepository(db_session)
+    service = CategoryRuleService(repository)
+
+    first_user = CurrentUser(id="user-one")
+    second_user = CurrentUser(id="user-two")
+
+    first_rule_data = CategoryRuleCreate(
+        name="Auchan groceries",
+        category="Groceries",
+        subcategory="Supermarket",
+        match_text="AUCHAN",
+        match_field="description",
+        direction="out",
+        source="trading212",
+        is_active=True,
+    )
+
+    second_rule_data = CategoryRuleCreate(
+        name="Auchan groceries other user",
+        category="Groceries",
+        subcategory="Supermarket",
+        match_text="AUCHAN",
+        match_field="description",
+        direction="out",
+        source="trading212",
+        is_active=True,
+    )
+
+    first_rule = service.create_rule(first_rule_data, first_user)
+    second_rule = service.create_rule(second_rule_data, second_user)
+
+    assert [rule.id for rule in service.list_rules(current_user=first_user)] == [first_rule.id]
+    assert [rule.id for rule in service.list_rules(current_user=second_user)] == [second_rule.id]
+
+    with pytest.raises(HTTPException) as caught_error:
+        service.get_rule(second_rule.id, first_user)
+
+    assert caught_error.value.status_code == 404

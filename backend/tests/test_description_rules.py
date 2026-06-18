@@ -254,3 +254,34 @@ def test_description_rule_suggestions_endpoint(client):
             "total": "3.99",
         }
     ]
+
+
+def test_description_rules_are_isolated_by_user(db_session):
+    from app.auth.current_user import CurrentUser
+
+    repository = DescriptionRuleRepository(db_session)
+    service = DescriptionRuleService(repository)
+
+    first_user = CurrentUser(id="user-one")
+    second_user = CurrentUser(id="user-two")
+
+    payload = DescriptionRuleCreate(
+        name="Too Good To Go",
+        cleaned_description="Too Good To Go",
+        match_text="TGTG",
+        match_field="raw_description",
+        direction="out",
+        source="revolut",
+        is_active=True,
+    )
+
+    first_rule = service.create_rule(payload, first_user)
+    second_rule = service.create_rule(payload, second_user)
+
+    assert [rule.id for rule in service.list_rules(current_user=first_user)] == [first_rule.id]
+    assert [rule.id for rule in service.list_rules(current_user=second_user)] == [second_rule.id]
+
+    with pytest.raises(HTTPException) as caught_error:
+        service.get_rule(second_rule.id, first_user)
+
+    assert caught_error.value.status_code == 404
