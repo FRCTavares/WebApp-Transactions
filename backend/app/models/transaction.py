@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
-from sqlalchemy import Date, DateTime, Numeric, String, Text
+from sqlalchemy import Date, DateTime, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -15,6 +15,14 @@ def utc_now() -> datetime:
 
 class Transaction(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        Index(
+            "ix_transactions_user_dedupe_hash",
+            "user_id",
+            "dedupe_hash",
+            unique=True,
+        ),
+    )
 
     def __init__(self, **kwargs: Any) -> None:
         if kwargs.get("cashflow_type") is None:
@@ -54,7 +62,7 @@ class Transaction(Base):
 
     import_batch_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
     external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(

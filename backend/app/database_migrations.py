@@ -14,9 +14,57 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_rule_user_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
     _run_wealth_user_migrations(engine=engine)
+    _run_user_scoped_dedupe_index_migrations(engine=engine)
 
 
 
+
+
+def _run_user_scoped_dedupe_index_migrations(engine: Engine) -> None:
+    dedupe_index_migrations = [
+        (
+            "transactions",
+            "ix_transactions_dedupe_hash",
+            "ix_transactions_user_dedupe_hash",
+        ),
+        (
+            "investment_events",
+            "ix_investment_events_dedupe_hash",
+            "ix_investment_events_user_dedupe_hash",
+        ),
+        (
+            "owed_items",
+            "ix_owed_items_dedupe_hash",
+            "ix_owed_items_user_dedupe_hash",
+        ),
+        (
+            "wealth_snapshots",
+            "ix_wealth_snapshots_dedupe_hash",
+            "ix_wealth_snapshots_user_dedupe_hash",
+        ),
+    ]
+
+    for table_name, old_index_name, new_index_name in dedupe_index_migrations:
+        if not _table_exists(engine=engine, table_name=table_name):
+            continue
+
+        if _index_exists(
+            engine=engine,
+            table_name=table_name,
+            index_name=old_index_name,
+        ):
+            _drop_index_if_exists(engine=engine, index_name=old_index_name)
+
+        if not _index_exists(
+            engine=engine,
+            table_name=table_name,
+            index_name=new_index_name,
+        ):
+            _create_user_scoped_dedupe_index(
+                engine=engine,
+                table_name=table_name,
+                index_name=new_index_name,
+            )
 
 
 def _run_import_batch_user_migrations(engine: Engine) -> None:
@@ -248,6 +296,40 @@ def _column_exists(engine: Engine, table_name: str, column_name: str) -> bool:
     inspector = inspect(engine)
     columns = {column["name"] for column in inspector.get_columns(table_name)}
     return column_name in columns
+
+
+def _index_exists(engine: Engine, table_name: str, index_name: str) -> bool:
+    inspector = inspect(engine)
+
+    return any(
+        index["name"] == index_name
+        for index in inspector.get_indexes(table_name)
+    )
+
+
+def _drop_index_if_exists(engine: Engine, index_name: str) -> None:
+    try:
+        with engine.begin() as connection:
+            connection.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
+    except OperationalError as error:
+        if "no such index" in str(error).lower():
+            return
+
+        raise
+
+
+def _create_user_scoped_dedupe_index(
+    engine: Engine,
+    table_name: str,
+    index_name: str,
+) -> None:
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                f"CREATE UNIQUE INDEX {index_name} "
+                f"ON {table_name} (user_id, dedupe_hash)"
+            )
+        )
 
 
 def _add_column_if_missing(
