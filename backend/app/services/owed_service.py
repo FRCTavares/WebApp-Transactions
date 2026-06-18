@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.repositories.owed_repository import OwedRepository
@@ -159,7 +160,11 @@ class OwedService:
             )
         ]
 
-    def get_payment(self, payment_id: int) -> OwedPaymentRead:
+    def get_payment(
+        self,
+        payment_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> OwedPaymentRead:
         payment = self.repository.get_payment_by_id(payment_id)
 
         if payment is None:

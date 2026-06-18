@@ -4,6 +4,7 @@ from io import StringIO
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.owed_repository import OwedRepository
 from app.schemas.owed_item import (
@@ -81,8 +82,10 @@ def list_owed_items(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_owed_items(
+        current_user=current_user,
         status=status,
         person=person,
         limit=limit,
@@ -135,8 +138,10 @@ def list_owed_payments(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_payments(
+        current_user=current_user,
         person=person,
         limit=limit,
         offset=offset,
@@ -147,8 +152,9 @@ def list_owed_payments(
 def get_owed_payment(
     payment_id: int,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_payment(payment_id)
+    return service.get_payment(payment_id, current_user)
 
 
 @router.get("/{owed_item_id}", response_model=OwedItemRead)
