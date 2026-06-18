@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.models.cashflow_rule import CashflowRule
 from app.models.transaction import Transaction
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
@@ -16,7 +17,11 @@ class CashflowRuleService:
         self.cashflow_rule_repository = cashflow_rule_repository
         self.transaction_repository = transaction_repository
 
-    def create_rule(self, rule_data: CashflowRuleCreate) -> CashflowRule:
+    def create_rule(
+        self,
+        rule_data: CashflowRuleCreate,
+        current_user: CurrentUser | None = None,
+    ) -> CashflowRule:
         self._raise_if_duplicate_rule(rule_data)
         return self.cashflow_rule_repository.create(rule_data)
 
@@ -25,6 +30,7 @@ class CashflowRuleService:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[CashflowRule]:
         return self.cashflow_rule_repository.list(
             active_only=active_only,
@@ -32,7 +38,11 @@ class CashflowRuleService:
             offset=offset,
         )
 
-    def get_rule(self, rule_id: int) -> CashflowRule:
+    def get_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> CashflowRule:
         rule = self.cashflow_rule_repository.get_by_id(rule_id)
 
         if rule is None:
@@ -47,16 +57,25 @@ class CashflowRuleService:
         self,
         rule_id: int,
         rule_data: CashflowRuleUpdate,
+        current_user: CurrentUser | None = None,
     ) -> CashflowRule:
-        rule = self.get_rule(rule_id)
+        rule = self.get_rule(rule_id, current_user)
         self._raise_if_duplicate_rule_update(rule, rule_data)
         return self.cashflow_rule_repository.update(rule, rule_data)
 
-    def delete_rule(self, rule_id: int) -> None:
-        rule = self.get_rule(rule_id)
+    def delete_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
+        rule = self.get_rule(rule_id, current_user)
         self.cashflow_rule_repository.delete(rule)
 
-    def apply_rules_to_existing_transactions(self, limit: int = 1000) -> dict[str, int]:
+    def apply_rules_to_existing_transactions(
+        self,
+        limit: int = 1000,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, int]:
         if self.transaction_repository is None:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
