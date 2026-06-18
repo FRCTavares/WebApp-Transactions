@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.models.description_rule import DescriptionRule
 from app.models.transaction import Transaction
 from app.repositories.description_rule_repository import DescriptionRuleRepository
@@ -20,7 +21,11 @@ class DescriptionRuleService:
         self.description_rule_repository = description_rule_repository
         self.transaction_repository = transaction_repository
 
-    def create_rule(self, rule_data: DescriptionRuleCreate) -> DescriptionRule:
+    def create_rule(
+        self,
+        rule_data: DescriptionRuleCreate,
+        current_user: CurrentUser | None = None,
+    ) -> DescriptionRule:
         self._raise_if_duplicate_rule(rule_data)
         return self.description_rule_repository.create(rule_data)
 
@@ -29,6 +34,7 @@ class DescriptionRuleService:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[DescriptionRule]:
         return self.description_rule_repository.list(
             active_only=active_only,
@@ -36,7 +42,11 @@ class DescriptionRuleService:
             offset=offset,
         )
 
-    def get_rule(self, rule_id: int) -> DescriptionRule:
+    def get_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> DescriptionRule:
         rule = self.description_rule_repository.get_by_id(rule_id)
 
         if rule is None:
@@ -51,16 +61,25 @@ class DescriptionRuleService:
         self,
         rule_id: int,
         rule_data: DescriptionRuleUpdate,
+        current_user: CurrentUser | None = None,
     ) -> DescriptionRule:
-        rule = self.get_rule(rule_id)
+        rule = self.get_rule(rule_id, current_user)
         self._raise_if_duplicate_rule_update(rule, rule_data)
         return self.description_rule_repository.update(rule, rule_data)
 
-    def delete_rule(self, rule_id: int) -> None:
-        rule = self.get_rule(rule_id)
+    def delete_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
+        rule = self.get_rule(rule_id, current_user)
         self.description_rule_repository.delete(rule)
 
-    def apply_rules_to_existing_transactions(self, limit: int = 1000) -> dict[str, int]:
+    def apply_rules_to_existing_transactions(
+        self,
+        limit: int = 1000,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, int]:
         if self.transaction_repository is None:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -97,6 +116,7 @@ class DescriptionRuleService:
         self,
         direction: str | None = None,
         limit: int = 50,
+        current_user: CurrentUser | None = None,
     ) -> list[DescriptionRuleSuggestion]:
         if self.transaction_repository is None:
             raise HTTPException(
