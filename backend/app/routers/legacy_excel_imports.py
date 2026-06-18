@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.owed_repository import OwedRepository
@@ -41,6 +42,7 @@ def get_legacy_excel_import_service(
 async def preview_legacy_excel_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "legacy_finance.xlsx"
@@ -48,6 +50,7 @@ async def preview_legacy_excel_import(
     return service.preview_import_from_file(
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 
 
@@ -56,6 +59,7 @@ async def preview_legacy_excel_import(
 async def commit_legacy_excel_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "legacy_finance.xlsx"
@@ -63,6 +67,7 @@ async def commit_legacy_excel_import(
     return service.commit_import_from_file(
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 
 
@@ -70,6 +75,7 @@ async def commit_legacy_excel_import(
 async def preview_legacy_excel_wealth_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "legacy_finance.xlsx"
@@ -77,6 +83,7 @@ async def preview_legacy_excel_wealth_import(
     return service.preview_wealth_import_from_file(
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 
 
@@ -84,6 +91,7 @@ async def preview_legacy_excel_wealth_import(
 async def commit_legacy_excel_wealth_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "legacy_finance.xlsx"
@@ -91,4 +99,5 @@ async def commit_legacy_excel_wealth_import(
     return service.commit_wealth_import_from_file(
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )

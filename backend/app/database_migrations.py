@@ -7,6 +7,7 @@ def run_startup_migrations(engine: Engine) -> None:
     """Small SQLite-safe migrations until the project adopts Alembic."""
 
     _run_transaction_migrations(engine=engine)
+    _run_import_batch_user_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
     _run_owed_item_migrations(engine=engine)
     _run_owed_user_migrations(engine=engine)
@@ -14,6 +15,22 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_wealth_migrations(engine=engine)
 
 
+
+
+
+def _run_import_batch_user_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="import_batches"):
+        return
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="import_batches",
+        column_name="user_id",
+        sql=(
+            "ALTER TABLE import_batches "
+            "ADD COLUMN user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user'"
+        ),
+    )
 
 
 def _run_owed_user_migrations(engine: Engine) -> None:

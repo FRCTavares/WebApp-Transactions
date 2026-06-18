@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.import_batch import ImportBatch
 from app.models.transaction import Transaction
 
@@ -14,8 +15,10 @@ def create_import_batch(
     rows_inserted=2,
     rows_skipped=0,
     status="success",
+    user_id=LOCAL_DEFAULT_USER_ID,
 ):
     import_batch = ImportBatch(
+        user_id=user_id,
         source=source,
         filename=filename,
         rows_total=rows_total,
@@ -38,8 +41,10 @@ def create_transaction(
     transaction_date,
     description,
     amount,
+    user_id=LOCAL_DEFAULT_USER_ID,
 ):
     transaction = Transaction(
+        user_id=user_id,
         date=transaction_date,
         description=description,
         raw_description=description,
@@ -228,3 +233,52 @@ def test_delete_import_batch_returns_404_when_missing(client):
     assert response.status_code == 404
     assert response.json()["detail"] == "Import batch not found"
 
+
+
+def test_import_batches_are_isolated_by_current_user(client, db_session):
+    first_batch = create_import_batch(
+        db_session,
+        filename="first-user.csv",
+        user_id="local-default-user",
+    )
+    second_batch = create_import_batch(
+        db_session,
+        filename="second-user.csv",
+        user_id="other-user",
+    )
+
+    first_transaction = create_transaction(
+        db_session,
+        import_batch_id=first_batch.id,
+        transaction_date=date(2026, 6, 1),
+        description="First user transaction",
+        amount="10.00",
+        user_id="local-default-user",
+    )
+    create_transaction(
+        db_session,
+        import_batch_id=second_batch.id,
+        transaction_date=date(2026, 6, 1),
+        description="Second user transaction",
+        amount="20.00",
+        user_id="other-user",
+    )
+
+    list_response = client.get("/api/import/batches?limit=10")
+
+    assert list_response.status_code == 200
+    data = list_response.json()
+    assert [batch["id"] for batch in data] == [first_batch.id]
+
+    missing_response = client.get(f"/api/import/batches/{second_batch.id}")
+    assert missing_response.status_code == 404
+
+    transactions_response = client.get(
+        f"/api/import/batches/{first_batch.id}/transactions"
+    )
+    assert transactions_response.status_code == 200
+    transactions = transactions_response.json()
+    assert [transaction["id"] for transaction in transactions] == [first_transaction.id]
+
+    delete_response = client.delete(f"/api/import/batches/{second_batch.id}")
+    assert delete_response.status_code == 404

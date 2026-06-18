@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.import_batch import ImportBatch
 
 
@@ -16,8 +17,10 @@ class ImportBatchRepository:
         rows_inserted: int,
         rows_skipped: int,
         status: str,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> ImportBatch:
         import_batch = ImportBatch(
+            user_id=user_id,
             source=source,
             filename=filename,
             rows_total=rows_total,
@@ -35,9 +38,11 @@ class ImportBatchRepository:
         self,
         limit: int = 100,
         offset: int = 0,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[ImportBatch]:
         statement = (
             select(ImportBatch)
+            .where(ImportBatch.user_id == user_id)
             .order_by(ImportBatch.imported_at.desc(), ImportBatch.id.desc())
             .offset(offset)
             .limit(limit)
@@ -45,8 +50,17 @@ class ImportBatchRepository:
 
         return list(self.db.scalars(statement).all())
 
-    def get_by_id(self, import_batch_id: int) -> ImportBatch | None:
-        return self.db.get(ImportBatch, import_batch_id)
+    def get_by_id(
+        self,
+        import_batch_id: int,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> ImportBatch | None:
+        statement = (
+            select(ImportBatch)
+            .where(ImportBatch.id == import_batch_id)
+            .where(ImportBatch.user_id == user_id)
+        )
+        return self.db.scalar(statement)
 
 
     def delete(self, import_batch: ImportBatch) -> None:

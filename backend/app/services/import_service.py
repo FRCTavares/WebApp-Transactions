@@ -57,6 +57,7 @@ class ImportService:
         return self.import_batch_repository.list(
             limit=limit,
             offset=offset,
+            user_id=self._get_user_id(current_user),
         )
 
     def get_import_batch(
@@ -64,7 +65,10 @@ class ImportService:
         import_batch_id: int,
         current_user: CurrentUser | None = None,
     ) -> ImportBatch:
-        import_batch = self.import_batch_repository.get_by_id(import_batch_id)
+        import_batch = self.import_batch_repository.get_by_id(
+            import_batch_id,
+            user_id=self._get_user_id(current_user),
+        )
 
         if import_batch is None:
             raise HTTPException(
@@ -372,6 +376,7 @@ class ImportService:
                 rows_inserted=rows_inserted,
                 rows_skipped=rows_skipped,
             ),
+            user_id=self._get_user_id(current_user),
         )
 
         transactions_to_insert = self._build_transactions_to_insert(
