@@ -94,6 +94,7 @@ class DescriptionRuleService:
 
         transactions = self.transaction_repository.list_for_description_rule_application(
             limit=limit,
+            user_id=self._get_user_id(current_user),
         )
         rules = self.description_rule_repository.list(
             user_id=self._get_user_id(current_user),
@@ -137,6 +138,7 @@ class DescriptionRuleService:
         rows = self.transaction_repository.get_description_rule_suggestions(
             direction=direction,
             limit=limit,
+            user_id=self._get_user_id(current_user),
         )
 
         return [

@@ -64,6 +64,7 @@ def _run_transaction_migrations(engine: Engine) -> None:
         "original_currency": "ALTER TABLE transactions ADD COLUMN original_currency VARCHAR(3)",
         "fx_rate_to_eur": "ALTER TABLE transactions ADD COLUMN fx_rate_to_eur NUMERIC(18, 8)",
         "fx_rate_source": "ALTER TABLE transactions ADD COLUMN fx_rate_source VARCHAR(30)",
+        "user_id": "ALTER TABLE transactions ADD COLUMN user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user'",
     }
 
     for column_name, sql in transaction_column_migrations.items():

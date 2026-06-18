@@ -90,6 +90,7 @@ class CashflowRuleService:
 
         transactions = self.transaction_repository.list_for_description_rule_application(
             limit=limit,
+            user_id=self._get_user_id(current_user),
         )
         rules = self.cashflow_rule_repository.list(
             user_id=self._get_user_id(current_user),

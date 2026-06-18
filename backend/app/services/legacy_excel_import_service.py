@@ -63,7 +63,7 @@ class LegacyExcelImportService:
                 currency=transaction.currency,
             )
             is_duplicate = (
-                self.transaction_repository.exists_by_dedupe_hash(dedupe_hash)
+                self.transaction_repository.exists_by_dedupe_hash(dedupe_hash, LOCAL_DEFAULT_USER_ID)
                 or dedupe_hash in seen_transaction_hashes
             )
             seen_transaction_hashes.add(dedupe_hash)
@@ -224,7 +224,10 @@ class LegacyExcelImportService:
         )
 
         if transactions_to_insert:
-            self.transaction_repository.bulk_insert(transactions_to_insert)
+            self.transaction_repository.bulk_insert(
+                transactions_to_insert,
+                LOCAL_DEFAULT_USER_ID,
+            )
 
         if owed_items_to_insert:
             self.owed_repository.bulk_insert(owed_items_to_insert, LOCAL_DEFAULT_USER_ID)
@@ -456,6 +459,7 @@ class LegacyExcelImportService:
 
             transactions_to_insert.append(
                 Transaction(
+                    user_id=LOCAL_DEFAULT_USER_ID,
                     date=preview_transaction.date,
                     description=preview_transaction.description,
                     raw_description=preview_transaction.raw_description,

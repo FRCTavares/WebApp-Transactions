@@ -48,6 +48,7 @@ def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
     import_batch_repository = ImportBatchRepository(db)
     wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
+    owed_repository = OwedRepository(db)
     category_rule_repository = CategoryRuleRepository(db)
     category_rule_service = CategoryRuleService(
         category_rule_repository=category_rule_repository,

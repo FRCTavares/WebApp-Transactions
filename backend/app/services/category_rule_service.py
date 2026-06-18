@@ -97,6 +97,7 @@ class CategoryRuleService:
         rows = self.transaction_repository.get_uncategorised_suggestions(
             direction=direction,
             limit=limit,
+            user_id=self._get_user_id(current_user),
         )
 
         return [
@@ -137,7 +138,10 @@ class CategoryRuleService:
                 detail="Transaction repository is required to apply category rules",
             )
 
-        transactions = self.transaction_repository.list_uncategorised(limit=limit)
+        transactions = self.transaction_repository.list_uncategorised(
+            limit=limit,
+            user_id=self._get_user_id(current_user),
+        )
         updated_count = 0
 
         for transaction in transactions:

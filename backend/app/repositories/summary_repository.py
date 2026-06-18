@@ -4,6 +4,7 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 
@@ -17,9 +18,11 @@ class SummaryRepository:
         cashflow_type: str,
         start_date: date,
         end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(Transaction.amount), 0))
+            .where(Transaction.user_id == user_id)
             .where(Transaction.cashflow_type == cashflow_type)
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
@@ -32,6 +35,7 @@ class SummaryRepository:
         start_date: date,
         end_date: date,
         limit: int = 5,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[tuple[str, Decimal]]:
         category_label = func.coalesce(Transaction.category, "Uncategorised")
         owed_by_transaction = (
@@ -39,6 +43,7 @@ class SummaryRepository:
                 OwedItem.linked_transaction_id.label("transaction_id"),
                 func.coalesce(func.sum(OwedItem.amount_total), 0).label("owed_total"),
             )
+            .where(OwedItem.user_id == user_id)
             .where(OwedItem.status != "cancelled")
             .where(OwedItem.linked_transaction_id.is_not(None))
             .group_by(OwedItem.linked_transaction_id)
@@ -58,6 +63,7 @@ class SummaryRepository:
                 owed_by_transaction,
                 owed_by_transaction.c.transaction_id == Transaction.id,
             )
+            .where(Transaction.user_id == user_id)
             .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
@@ -75,10 +81,13 @@ class SummaryRepository:
         self,
         start_date: date,
         end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(OwedItem.amount_total), 0))
             .join(Transaction, Transaction.id == OwedItem.linked_transaction_id)
+            .where(OwedItem.user_id == user_id)
+            .where(Transaction.user_id == user_id)
             .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
@@ -87,9 +96,13 @@ class SummaryRepository:
 
         return Decimal(str(self.db.scalar(statement)))
 
-    def get_open_owed_amount(self) -> Decimal:
+    def get_open_owed_amount(
+        self,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(OwedItem.amount_remaining), 0))
+            .where(OwedItem.user_id == user_id)
             .where(OwedItem.status != "paid")
             .where(OwedItem.status != "cancelled")
         )

@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.summary import (
@@ -37,22 +37,26 @@ class SummaryService:
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
 
+        user_id = self._get_user_id(current_user)
         money_in = self.repository.get_total_by_cashflow_type(
             cashflow_type="income",
             start_date=start_date,
             end_date=end_date,
+            user_id=user_id,
         )
         money_out = self.repository.get_total_by_cashflow_type(
             cashflow_type="expense",
             start_date=start_date,
             end_date=end_date,
+            user_id=user_id,
         )
         owed_expense_amount = self.repository.get_owed_expense_amount(
             start_date=start_date,
             end_date=end_date,
+            user_id=user_id,
         )
         personal_money_out = money_out - owed_expense_amount
-        open_owed_amount = self.repository.get_open_owed_amount()
+        open_owed_amount = self.repository.get_open_owed_amount(user_id=user_id)
 
         top_categories = [
             CategoryTotal(category=category, total=total)
@@ -60,6 +64,7 @@ class SummaryService:
                 start_date=start_date,
                 end_date=end_date,
                 limit=5,
+                user_id=user_id,
             )
         ]
 
@@ -99,6 +104,7 @@ class SummaryService:
             month=month,
             direction=direction,
             cashflow_type=effective_cashflow_type,
+            user_id=self._get_user_id(current_user),
         )
 
         items = [
@@ -126,3 +132,9 @@ class SummaryService:
             return date(year + 1, 1, 1)
 
         return date(year, month + 1, 1)
+
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id

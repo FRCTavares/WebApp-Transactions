@@ -1,4 +1,6 @@
 from datetime import date
+
+from app.auth.current_user import CurrentUser
 from decimal import Decimal
 
 from app.repositories.transaction_repository import TransactionRepository
@@ -159,3 +161,52 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
     assert summary.personal_money_out == Decimal("25.00")
     assert summary.net == Decimal("45.00")
     assert summary.personal_net == Decimal("75.00")
+
+
+
+def test_summary_is_isolated_by_current_user(db_session):
+    transaction_repository = TransactionRepository(db_session)
+    summary_repository = SummaryRepository(db_session)
+    service = SummaryService(
+        repository=summary_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 1),
+            description="User one salary",
+            raw_description="User one salary",
+            amount=Decimal("1000.00"),
+            direction="in",
+            source="manual",
+            currency="EUR",
+        ),
+        user_id="user-one",
+    )
+    transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 1),
+            description="User two salary",
+            raw_description="User two salary",
+            amount=Decimal("2000.00"),
+            direction="in",
+            source="manual",
+            currency="EUR",
+        ),
+        user_id="user-two",
+    )
+
+    first_summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=CurrentUser(id="user-one"),
+    )
+    second_summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=CurrentUser(id="user-two"),
+    )
+
+    assert first_summary.money_in == Decimal("1000.00")
+    assert second_summary.money_in == Decimal("2000.00")

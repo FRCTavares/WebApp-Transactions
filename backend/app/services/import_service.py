@@ -87,6 +87,7 @@ class ImportService:
             import_batch_id=import_batch_id,
             limit=limit,
             offset=offset,
+            user_id=self._get_user_id(current_user),
         )
 
     def delete_import_batch(
@@ -109,6 +110,7 @@ class ImportService:
 
         deleted_transactions = self.transaction_repository.delete_by_import_batch(
             import_batch_id=import_batch_id,
+            user_id=self._get_user_id(current_user),
         )
 
         if self.owed_repository is not None:
@@ -375,6 +377,7 @@ class ImportService:
         transactions_to_insert = self._build_transactions_to_insert(
             import_batch_id=import_batch.id,
             preview=preview,
+            current_user=current_user,
         )
         investment_events_to_insert = self._build_investment_events_to_insert(
             import_batch_id=import_batch.id,
@@ -382,7 +385,10 @@ class ImportService:
         )
 
         if transactions_to_insert:
-            self.transaction_repository.bulk_insert(transactions_to_insert)
+            self.transaction_repository.bulk_insert(
+                transactions_to_insert,
+                user_id=self._get_user_id(current_user),
+            )
 
         if investment_events_to_insert and self.investment_event_repository is not None:
             self.investment_event_repository.bulk_insert(investment_events_to_insert)
@@ -422,6 +428,7 @@ class ImportService:
         self,
         import_batch_id: int,
         preview: ImportPreviewResponse,
+        current_user: CurrentUser | None = None,
     ) -> list[Transaction]:
         transactions_to_insert: list[Transaction] = []
 
@@ -431,6 +438,7 @@ class ImportService:
 
             transactions_to_insert.append(
                 Transaction(
+                    user_id=self._get_user_id(current_user),
                     date=preview_transaction.date,
                     description=preview_transaction.description,
                     raw_description=preview_transaction.raw_description,
@@ -508,7 +516,10 @@ class ImportService:
     ) -> ImportPreviewTransaction:
         dedupe_hash = self.dedupe_service.create_hash(transaction)
         is_duplicate = (
-            self.dedupe_service.is_duplicate(dedupe_hash)
+            self.dedupe_service.is_duplicate(
+                dedupe_hash,
+                self._get_user_id(current_user),
+            )
             or dedupe_hash in seen_hashes
         )
         category, _subcategory = self._guess_category(transaction, current_user)

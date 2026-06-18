@@ -1,3 +1,4 @@
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.importers.base import NormalisedInvestmentEvent, NormalisedTransaction
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -33,8 +34,12 @@ class DedupeService:
             currency=event.currency,
         )
 
-    def is_duplicate(self, dedupe_hash: str) -> bool:
-        return self.transaction_repository.exists_by_dedupe_hash(dedupe_hash)
+    def is_duplicate(
+        self,
+        dedupe_hash: str,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> bool:
+        return self.transaction_repository.exists_by_dedupe_hash(dedupe_hash, user_id)
 
     def is_duplicate_investment_event(self, dedupe_hash: str) -> bool:
         if self.investment_event_repository is None:

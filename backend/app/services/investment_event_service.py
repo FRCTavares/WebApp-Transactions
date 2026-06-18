@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
@@ -310,6 +310,12 @@ class InvestmentEventService:
 
         return net_invested.quantize(Decimal("0.01"))
 
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id
+
     def _get_event_amount_eur(self, event: InvestmentEvent) -> Decimal | None:
         if event.currency == "EUR":
             return event.amount
@@ -577,7 +583,8 @@ class InvestmentEventService:
                 account="ActivoBank",
                 currency="EUR",
                 notes=resolution_data.notes,
-            )
+            ),
+            user_id=self._get_user_id(current_user),
         )
 
         updated_event = self.repository.update(

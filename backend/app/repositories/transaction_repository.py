@@ -4,6 +4,7 @@ from decimal import Decimal
 from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
@@ -13,8 +14,15 @@ class TransactionRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, transaction_data: TransactionCreate) -> Transaction:
-        transaction = Transaction(**transaction_data.model_dump())
+    def create(
+        self,
+        transaction_data: TransactionCreate,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Transaction:
+        transaction = Transaction(
+            user_id=user_id,
+            **transaction_data.model_dump(),
+        )
         self.db.add(transaction)
         self.db.commit()
         self.db.refresh(transaction)
@@ -32,8 +40,13 @@ class TransactionRepository:
         limit: int = 100,
         offset: int = 0,
         uncategorised_only: bool = False,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[Transaction]:
-        statement = select(Transaction).order_by(Transaction.date.desc(), Transaction.id.desc())
+        statement = (
+            select(Transaction)
+            .where(Transaction.user_id == user_id)
+            .order_by(Transaction.date.desc(), Transaction.id.desc())
+        )
 
         if direction is not None:
             statement = statement.where(Transaction.direction == direction)
@@ -73,9 +86,11 @@ class TransactionRepository:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
+            .where(Transaction.user_id == user_id)
             .where(Transaction.import_batch_id == import_batch_id)
             .order_by(Transaction.date.desc(), Transaction.id.desc())
             .offset(offset)
@@ -87,9 +102,11 @@ class TransactionRepository:
     def list_uncategorised(
         self,
         limit: int = 1000,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
+            .where(Transaction.user_id == user_id)
             .where(Transaction.category.is_(None))
             .order_by(Transaction.date.desc(), Transaction.id.desc())
             .limit(limit)
@@ -100,17 +117,28 @@ class TransactionRepository:
     def list_for_description_rule_application(
         self,
         limit: int = 1000,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
+            .where(Transaction.user_id == user_id)
             .order_by(Transaction.date.desc(), Transaction.id.desc())
             .limit(limit)
         )
 
         return list(self.db.scalars(statement).all())
 
-    def get_by_id(self, transaction_id: int) -> Transaction | None:
-        return self.db.get(Transaction, transaction_id)
+    def get_by_id(
+        self,
+        transaction_id: int,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Transaction | None:
+        statement = (
+            select(Transaction)
+            .where(Transaction.id == transaction_id)
+            .where(Transaction.user_id == user_id)
+        )
+        return self.db.scalar(statement)
 
     def list_owed_items_by_transaction_ids(
         self,
@@ -191,20 +219,41 @@ class TransactionRepository:
         self.db.delete(transaction)
         self.db.commit()
 
-    def delete_by_import_batch(self, import_batch_id: int) -> int:
-        statement = sqlalchemy_delete(Transaction).where(
-            Transaction.import_batch_id == import_batch_id
+    def delete_by_import_batch(
+        self,
+        import_batch_id: int,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> int:
+        statement = (
+            sqlalchemy_delete(Transaction)
+            .where(Transaction.user_id == user_id)
+            .where(Transaction.import_batch_id == import_batch_id)
         )
         result = self.db.execute(statement)
         self.db.commit()
 
         return result.rowcount or 0
 
-    def exists_by_dedupe_hash(self, dedupe_hash: str) -> bool:
-        statement = select(Transaction.id).where(Transaction.dedupe_hash == dedupe_hash)
+    def exists_by_dedupe_hash(
+        self,
+        dedupe_hash: str,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> bool:
+        statement = (
+            select(Transaction.id)
+            .where(Transaction.user_id == user_id)
+            .where(Transaction.dedupe_hash == dedupe_hash)
+        )
         return self.db.scalar(statement) is not None
 
-    def bulk_insert(self, transactions: list[Transaction]) -> list[Transaction]:
+    def bulk_insert(
+        self,
+        transactions: list[Transaction],
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> list[Transaction]:
+        for transaction in transactions:
+            transaction.user_id = user_id
+
         self.db.add_all(transactions)
         self.db.commit()
 
@@ -219,12 +268,14 @@ class TransactionRepository:
         source: str = "activobank",
         days_window: int = 3,
         limit: int = 20,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[Transaction]:
         date_from = target_date - timedelta(days=days_window)
         date_to = target_date + timedelta(days=days_window)
 
         statement = (
             select(Transaction)
+            .where(Transaction.user_id == user_id)
             .where(Transaction.source == source)
             .where(Transaction.direction == "out")
             .where(Transaction.currency == "EUR")
@@ -242,6 +293,7 @@ class TransactionRepository:
         month: int | None = None,
         direction: str | None = None,
         cashflow_type: str | None = None,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[tuple[str, str | None, Decimal, Decimal, Decimal, int]]:
         category_label = func.coalesce(Transaction.category, "Uncategorised")
         owed_by_transaction = (
@@ -249,6 +301,7 @@ class TransactionRepository:
                 OwedItem.linked_transaction_id.label("transaction_id"),
                 func.coalesce(func.sum(OwedItem.amount_total), 0).label("owed_total"),
             )
+            .where(OwedItem.user_id == user_id)
             .where(OwedItem.status != "cancelled")
             .where(OwedItem.linked_transaction_id.is_not(None))
             .group_by(OwedItem.linked_transaction_id)
@@ -273,6 +326,7 @@ class TransactionRepository:
                 owed_by_transaction,
                 owed_by_transaction.c.transaction_id == Transaction.id,
             )
+            .where(Transaction.user_id == user_id)
             .group_by(category_label)
             .order_by(personal_total.desc(), gross_total.desc())
         )
@@ -305,6 +359,7 @@ class TransactionRepository:
         self,
         direction: str | None = None,
         limit: int = 20,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[tuple[str, str, str, int, Decimal]]:
         total_amount = func.sum(Transaction.amount)
         transaction_count = func.count(Transaction.id)
@@ -317,6 +372,7 @@ class TransactionRepository:
                 transaction_count.label("count"),
                 total_amount.label("total"),
             )
+            .where(Transaction.user_id == user_id)
             .where(Transaction.category.is_(None))
             .group_by(
                 Transaction.description,
@@ -336,6 +392,7 @@ class TransactionRepository:
         self,
         direction: str | None = None,
         limit: int = 50,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[tuple[str, str, str, str, int, Decimal]]:
         total_amount = func.sum(Transaction.amount)
         transaction_count = func.count(Transaction.id)
@@ -349,6 +406,7 @@ class TransactionRepository:
                 transaction_count.label("count"),
                 total_amount.label("total"),
             )
+            .where(Transaction.user_id == user_id)
             .group_by(
                 Transaction.raw_description,
                 Transaction.description,

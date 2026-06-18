@@ -18,7 +18,10 @@ class TransactionService:
         transaction_data: TransactionCreate,
         current_user: CurrentUser | None = None,
     ) -> TransactionRead:
-        transaction = self.repository.create(transaction_data)
+        transaction = self.repository.create(
+            transaction_data,
+            user_id=self._get_user_id(current_user),
+        )
         return self._build_transaction_read(transaction, None)
 
     def list_transactions(
@@ -44,6 +47,7 @@ class TransactionService:
             search=search,
             limit=limit,
             offset=offset,
+            user_id=self._get_user_id(current_user),
         )
 
         user_id = self._get_user_id(current_user)
@@ -74,6 +78,7 @@ class TransactionService:
             limit=limit,
             offset=0,
             uncategorised_only=True,
+            user_id=self._get_user_id(current_user),
         )
 
         user_id = self._get_user_id(current_user)
@@ -95,8 +100,8 @@ class TransactionService:
         transaction_id: int,
         current_user: CurrentUser | None = None,
     ) -> TransactionRead:
-        transaction = self._get_transaction_model(transaction_id)
         user_id = self._get_user_id(current_user)
+        transaction = self._get_transaction_model(transaction_id, user_id)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [transaction.id],
             user_id,
@@ -113,9 +118,9 @@ class TransactionService:
         transaction_data: TransactionUpdate,
         current_user: CurrentUser | None = None,
     ) -> TransactionRead:
-        transaction = self._get_transaction_model(transaction_id)
-        updated_transaction = self.repository.update(transaction, transaction_data)
         user_id = self._get_user_id(current_user)
+        transaction = self._get_transaction_model(transaction_id, user_id)
+        updated_transaction = self.repository.update(transaction, transaction_data)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [updated_transaction.id],
             user_id,
@@ -131,11 +136,18 @@ class TransactionService:
         transaction_id: int,
         current_user: CurrentUser | None = None,
     ) -> None:
-        transaction = self._get_transaction_model(transaction_id)
+        transaction = self._get_transaction_model(
+            transaction_id,
+            self._get_user_id(current_user),
+        )
         self.repository.delete(transaction)
 
-    def _get_transaction_model(self, transaction_id: int) -> Transaction:
-        transaction = self.repository.get_by_id(transaction_id)
+    def _get_transaction_model(
+        self,
+        transaction_id: int,
+        user_id: str,
+    ) -> Transaction:
+        transaction = self.repository.get_by_id(transaction_id, user_id)
 
         if transaction is None:
             raise HTTPException(

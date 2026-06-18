@@ -1,11 +1,15 @@
 from datetime import date
 
+import pytest
+from fastapi import HTTPException
+
 from app.auth.current_user import CurrentUser
 from decimal import Decimal
 
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.transaction import TransactionCreate
 from app.services.transaction_service import TransactionService
 
 
@@ -160,3 +164,52 @@ def test_list_transactions_only_includes_current_user_owed_metadata(db_session):
     assert len(transactions) == 1
     assert transactions[0].is_owed is False
     assert transactions[0].owed_item_id is None
+
+
+
+def test_transactions_are_isolated_by_current_user(db_session):
+    repository = TransactionRepository(db_session)
+    service = TransactionService(repository)
+
+    first_transaction = repository.create(
+        TransactionCreate(
+            date=date(2026, 6, 1),
+            description="User one groceries",
+            raw_description="User one groceries",
+            amount=Decimal("10.00"),
+            direction="out",
+            source="manual",
+            currency="EUR",
+        ),
+        user_id="user-one",
+    )
+    second_transaction = repository.create(
+        TransactionCreate(
+            date=date(2026, 6, 2),
+            description="User two groceries",
+            raw_description="User two groceries",
+            amount=Decimal("20.00"),
+            direction="out",
+            source="manual",
+            currency="EUR",
+        ),
+        user_id="user-two",
+    )
+
+    first_user_rows = service.list_transactions(
+        current_user=CurrentUser(id="user-one"),
+    )
+    second_user_rows = service.list_transactions(
+        current_user=CurrentUser(id="user-two"),
+    )
+
+    assert [transaction.id for transaction in first_user_rows] == [first_transaction.id]
+    assert [transaction.id for transaction in second_user_rows] == [second_transaction.id]
+
+    with pytest.raises(HTTPException) as caught_error:
+        service.get_transaction(
+            second_transaction.id,
+            current_user=CurrentUser(id="user-one"),
+        )
+
+    assert caught_error.value.status_code == 404
