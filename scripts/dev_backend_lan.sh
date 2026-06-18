@@ -29,4 +29,11 @@ echo "Allowed frontend origins: $CORS_ORIGINS"
 echo ""
 
 cd backend
-PYTHONPATH=. uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+UVICORN_BIN=".venv/bin/uvicorn"
+if [ ! -x "$UVICORN_BIN" ]; then
+  echo "Error: $UVICORN_BIN not found or not executable"
+  echo "Run this first: cd backend && .venv/bin/pip install -r requirements.txt"
+  exit 1
+fi
+PYTHONPATH=. "$UVICORN_BIN" app.main:app --host 0.0.0.0 --port 8000 --reload
