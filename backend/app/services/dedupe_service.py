@@ -41,8 +41,15 @@ class DedupeService:
     ) -> bool:
         return self.transaction_repository.exists_by_dedupe_hash(dedupe_hash, user_id)
 
-    def is_duplicate_investment_event(self, dedupe_hash: str) -> bool:
+    def is_duplicate_investment_event(
+        self,
+        dedupe_hash: str,
+        user_id: str,
+    ) -> bool:
         if self.investment_event_repository is None:
             return False
 
-        return self.investment_event_repository.exists_by_dedupe_hash(dedupe_hash)
+        return self.investment_event_repository.exists_by_dedupe_hash(
+            dedupe_hash,
+            user_id,
+        )

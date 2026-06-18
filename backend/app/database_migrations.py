@@ -120,6 +120,7 @@ def _run_investment_event_migrations(engine: Engine) -> None:
         return
 
     investment_event_column_migrations = {
+        "user_id": "ALTER TABLE investment_events ADD COLUMN user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user'",
         "funding_source": "ALTER TABLE investment_events ADD COLUMN funding_source VARCHAR(50)",
         "funding_match_status": "ALTER TABLE investment_events ADD COLUMN funding_match_status VARCHAR(30)",
         "matched_transaction_id": "ALTER TABLE investment_events ADD COLUMN matched_transaction_id INTEGER",

@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 from app.models.transaction import Transaction
 
@@ -16,8 +17,10 @@ def create_event(
     description="Investment event",
     funding_source=None,
     funding_match_status=None,
+    user_id=LOCAL_DEFAULT_USER_ID,
 ):
     event = InvestmentEvent(
+        user_id=user_id,
         date=event_date,
         source=source,
         account="Trading 212",
@@ -39,8 +42,15 @@ def create_event(
     return event
 
 
-def create_transaction(db_session, *, transaction_date, amount):
+def create_transaction(
+    db_session,
+    *,
+    transaction_date,
+    amount,
+    user_id=LOCAL_DEFAULT_USER_ID,
+):
     transaction = Transaction(
+        user_id=user_id,
         date=transaction_date,
         description="Trading 212 deposit funding",
         raw_description="Manual funding transaction",
@@ -326,3 +336,60 @@ def test_get_investment_event_includes_matched_transaction(client, db_session):
 
     assert data["matched_transaction"]["id"] == transaction.id
     assert data["matched_transaction"]["description"] == "Trading 212 deposit funding"
+
+
+def test_investment_events_are_isolated_by_current_user(client, db_session):
+    first_event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+    second_event = create_event(
+        db_session,
+        event_date=date(2024, 9, 10),
+        event_type="market_buy",
+        amount="50.00",
+        user_id="other-user",
+    )
+
+    response = client.get("/api/investment-events")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert [event["id"] for event in data] == [first_event.id]
+
+    missing_response = client.get(f"/api/investment-events/{second_event.id}")
+
+    assert missing_response.status_code == 404
+
+
+def test_matched_transaction_metadata_is_isolated_by_current_user(client, db_session):
+    other_user_transaction = create_transaction(
+        db_session,
+        transaction_date=date(2024, 9, 9),
+        amount="34.10",
+        user_id="other-user",
+    )
+    event = create_event(
+        db_session,
+        event_date=date(2024, 9, 9),
+        event_type="deposit",
+        amount="37.00",
+        funding_source="activobank",
+        funding_match_status="manual",
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+    event.matched_transaction_id = other_user_transaction.id
+    event.transaction_id = other_user_transaction.id
+    db_session.add(event)
+    db_session.commit()
+
+    response = client.get(f"/api/investment-events/{event.id}")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["matched_transaction"] is None

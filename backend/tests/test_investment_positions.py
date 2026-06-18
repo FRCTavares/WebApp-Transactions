@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 
 
@@ -14,8 +15,10 @@ def create_market_event(
     quantity,
     amount,
     currency="USD",
+    user_id=LOCAL_DEFAULT_USER_ID,
 ):
     event = InvestmentEvent(
+        user_id=user_id,
         date=date(2024, 9, 9),
         source="trading212",
         account="Trading 212",
@@ -45,8 +48,10 @@ def create_non_position_event(
     event_type,
     amount,
     currency="USD",
+    user_id=LOCAL_DEFAULT_USER_ID,
 ):
     event = InvestmentEvent(
+        user_id=user_id,
         date=date(2024, 9, 9),
         source="trading212",
         account="Trading 212",

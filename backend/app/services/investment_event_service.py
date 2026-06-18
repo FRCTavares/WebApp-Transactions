@@ -35,7 +35,7 @@ class InvestmentEventService:
         event_data: InvestmentEventCreate,
         current_user: CurrentUser | None = None,
     ) -> InvestmentEvent:
-        return self.repository.create(event_data)
+        return self.repository.create(event_data, self._get_user_id(current_user))
 
     def list_events(
         self,
@@ -47,6 +47,7 @@ class InvestmentEventService:
         offset: int = 0,
         current_user: CurrentUser | None = None,
     ) -> list[InvestmentEvent]:
+        user_id = self._get_user_id(current_user)
         events = self.repository.list(
             source=source,
             event_type=event_type,
@@ -54,16 +55,23 @@ class InvestmentEventService:
             date_to=date_to,
             limit=limit,
             offset=offset,
+            user_id=user_id,
         )
 
-        return [self._attach_matched_transaction(event) for event in events]
+        return [
+            self._attach_matched_transaction(event, user_id)
+            for event in events
+        ]
 
     def list_positions(
         self,
         source: str | None = None,
         current_user: CurrentUser | None = None,
     ) -> list[dict[str, object]]:
-        events = self.repository.list_all(source=source)
+        events = self.repository.list_all(
+            source=source,
+            user_id=self._get_user_id(current_user),
+        )
         positions: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
 
         for event in events:
@@ -148,6 +156,7 @@ class InvestmentEventService:
                 isin=position["isin"],
                 quantity=quantity,
                 costs=costs,
+                current_user=current_user,
             )
 
             open_positions.append(
@@ -236,6 +245,7 @@ class InvestmentEventService:
                 price.currency,
                 ticker=holding["ticker"],
                 isin=holding["isin"],
+                current_user=current_user,
             )
 
             if fx_rate_to_eur is None:
@@ -256,7 +266,10 @@ class InvestmentEventService:
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
         holdings: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
 
-        for event in self.repository.list_until(value_date):
+        for event in self.repository.list_until(
+            value_date,
+            user_id=self._get_user_id(current_user),
+        ):
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
 
@@ -293,7 +306,11 @@ class InvestmentEventService:
     ) -> Decimal:
         net_invested = Decimal("0")
 
-        for event in self.repository.list_between(start_date, end_date):
+        for event in self.repository.list_between(
+            start_date,
+            end_date,
+            user_id=self._get_user_id(current_user),
+        ):
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
 
@@ -337,6 +354,7 @@ class InvestmentEventService:
         isin: str | None,
         quantity: Decimal,
         costs: list[dict[str, Decimal | str]],
+        current_user: CurrentUser | None = None,
     ) -> dict[str, Decimal | str | None]:
         empty_fields = {
             "market_price": None,
@@ -364,6 +382,7 @@ class InvestmentEventService:
             market_price.currency,
             ticker=ticker,
             isin=isin,
+            current_user=current_user,
         )
 
         if market_price.currency == "EUR":
@@ -385,6 +404,7 @@ class InvestmentEventService:
                 costs=costs,
                 ticker=ticker,
                 isin=isin,
+                current_user=current_user,
             )
 
             if total_cost_eur is not None and total_cost_eur > 0:
@@ -414,7 +434,7 @@ class InvestmentEventService:
             return Decimal("1")
 
         events = sorted(
-            self.repository.list_all(),
+            self.repository.list_all(user_id=self._get_user_id(current_user)),
             key=lambda item: item.date,
             reverse=True,
         )
@@ -481,6 +501,7 @@ class InvestmentEventService:
                 currency,
                 ticker=ticker,
                 isin=isin,
+                current_user=current_user,
             )
 
             if fx_rate_to_eur is None:
@@ -495,7 +516,10 @@ class InvestmentEventService:
         event_id: int,
         current_user: CurrentUser | None = None,
     ) -> InvestmentEvent:
-        event = self.repository.get_by_id(event_id)
+        event = self.repository.get_by_id(
+            event_id,
+            user_id=self._get_user_id(current_user),
+        )
 
         if event is None:
             raise HTTPException(
@@ -503,7 +527,7 @@ class InvestmentEventService:
                 detail="Investment event not found",
             )
 
-        return self._attach_matched_transaction(event)
+        return self._attach_matched_transaction(event, self._get_user_id(current_user))
 
     def update_event(
         self,
@@ -523,7 +547,11 @@ class InvestmentEventService:
         self.repository.delete(event)
 
 
-    def _attach_matched_transaction(self, event: InvestmentEvent) -> InvestmentEvent:
+    def _attach_matched_transaction(
+        self,
+        event: InvestmentEvent,
+        user_id: str,
+    ) -> InvestmentEvent:
         matched_transaction = None
 
         if (
@@ -531,7 +559,8 @@ class InvestmentEventService:
             and event.matched_transaction_id is not None
         ):
             matched_transaction = self.transaction_repository.get_by_id(
-                event.matched_transaction_id
+                event.matched_transaction_id,
+                user_id=user_id,
             )
 
         event.matched_transaction = matched_transaction

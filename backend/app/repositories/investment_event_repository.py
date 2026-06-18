@@ -3,6 +3,7 @@ from datetime import date
 from sqlalchemy import delete as sqlalchemy_delete, select
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 from app.schemas.investment_event import InvestmentEventCreate, InvestmentEventUpdate
 
@@ -11,8 +12,15 @@ class InvestmentEventRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, event_data: InvestmentEventCreate) -> InvestmentEvent:
-        event = InvestmentEvent(**event_data.model_dump())
+    def create(
+        self,
+        event_data: InvestmentEventCreate,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> InvestmentEvent:
+        event = InvestmentEvent(
+            user_id=user_id,
+            **event_data.model_dump(),
+        )
         self.db.add(event)
         self.db.commit()
         self.db.refresh(event)
@@ -26,10 +34,15 @@ class InvestmentEventRepository:
         date_to: date | None = None,
         limit: int = 100,
         offset: int = 0,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[InvestmentEvent]:
-        statement = select(InvestmentEvent).order_by(
-            InvestmentEvent.date.desc(),
-            InvestmentEvent.id.desc(),
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
+            .order_by(
+                InvestmentEvent.date.desc(),
+                InvestmentEvent.id.desc(),
+            )
         )
 
         if source is not None:
@@ -51,10 +64,15 @@ class InvestmentEventRepository:
     def list_all(
         self,
         source: str | None = None,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[InvestmentEvent]:
-        statement = select(InvestmentEvent).order_by(
-            InvestmentEvent.date.asc(),
-            InvestmentEvent.id.asc(),
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
+            .order_by(
+                InvestmentEvent.date.asc(),
+                InvestmentEvent.id.asc(),
+            )
         )
 
         if source is not None:
@@ -65,9 +83,11 @@ class InvestmentEventRepository:
     def list_until(
         self,
         end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
             .where(InvestmentEvent.date <= end_date)
             .order_by(InvestmentEvent.date.asc(), InvestmentEvent.id.asc())
         )
@@ -78,9 +98,11 @@ class InvestmentEventRepository:
         self,
         start_date: date,
         end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
             .where(InvestmentEvent.date >= start_date)
             .where(InvestmentEvent.date < end_date)
             .order_by(InvestmentEvent.date.asc(), InvestmentEvent.id.asc())
@@ -93,9 +115,11 @@ class InvestmentEventRepository:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
             .where(InvestmentEvent.import_batch_id == import_batch_id)
             .order_by(InvestmentEvent.date.desc(), InvestmentEvent.id.desc())
             .offset(offset)
@@ -104,8 +128,17 @@ class InvestmentEventRepository:
 
         return list(self.db.scalars(statement).all())
 
-    def get_by_id(self, event_id: int) -> InvestmentEvent | None:
-        return self.db.get(InvestmentEvent, event_id)
+    def get_by_id(
+        self,
+        event_id: int,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> InvestmentEvent | None:
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.id == event_id)
+            .where(InvestmentEvent.user_id == user_id)
+        )
+        return self.db.scalar(statement)
 
     def update(
         self,
@@ -126,22 +159,41 @@ class InvestmentEventRepository:
         self.db.delete(event)
         self.db.commit()
 
-    def delete_by_import_batch(self, import_batch_id: int) -> int:
-        statement = sqlalchemy_delete(InvestmentEvent).where(
-            InvestmentEvent.import_batch_id == import_batch_id
+    def delete_by_import_batch(
+        self,
+        import_batch_id: int,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> int:
+        statement = (
+            sqlalchemy_delete(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(InvestmentEvent.import_batch_id == import_batch_id)
         )
         result = self.db.execute(statement)
         self.db.commit()
 
         return result.rowcount or 0
 
-    def exists_by_dedupe_hash(self, dedupe_hash: str) -> bool:
-        statement = select(InvestmentEvent.id).where(
-            InvestmentEvent.dedupe_hash == dedupe_hash
+    def exists_by_dedupe_hash(
+        self,
+        dedupe_hash: str,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> bool:
+        statement = (
+            select(InvestmentEvent.id)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(InvestmentEvent.dedupe_hash == dedupe_hash)
         )
         return self.db.scalar(statement) is not None
 
-    def bulk_insert(self, events: list[InvestmentEvent]) -> list[InvestmentEvent]:
+    def bulk_insert(
+        self,
+        events: list[InvestmentEvent],
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> list[InvestmentEvent]:
+        for event in events:
+            event.user_id = user_id
+
         self.db.add_all(events)
         self.db.commit()
 

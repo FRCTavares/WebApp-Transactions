@@ -109,6 +109,7 @@ class ImportService:
             deleted_investment_events = (
                 self.investment_event_repository.delete_by_import_batch(
                     import_batch_id=import_batch_id,
+                    user_id=self._get_user_id(current_user),
                 )
             )
 
@@ -310,6 +311,7 @@ class ImportService:
                     row_number=index,
                     event=event,
                     seen_hashes=seen_event_hashes,
+                    current_user=current_user,
                 )
                 preview_investment_events.append(preview_event)
                 seen_event_hashes.add(preview_event.dedupe_hash)
@@ -387,6 +389,7 @@ class ImportService:
         investment_events_to_insert = self._build_investment_events_to_insert(
             import_batch_id=import_batch.id,
             preview=preview,
+            current_user=current_user,
         )
 
         if transactions_to_insert:
@@ -396,7 +399,10 @@ class ImportService:
             )
 
         if investment_events_to_insert and self.investment_event_repository is not None:
-            self.investment_event_repository.bulk_insert(investment_events_to_insert)
+            self.investment_event_repository.bulk_insert(
+                investment_events_to_insert,
+                user_id=self._get_user_id(current_user),
+            )
 
         return {
             "import_batch_id": import_batch.id,
@@ -471,6 +477,7 @@ class ImportService:
         self,
         import_batch_id: int,
         preview: ImportPreviewResponse,
+        current_user: CurrentUser | None = None,
     ) -> list[InvestmentEvent]:
         events_to_insert: list[InvestmentEvent] = []
 
@@ -480,6 +487,7 @@ class ImportService:
 
             events_to_insert.append(
                 InvestmentEvent(
+                    user_id=self._get_user_id(current_user),
                     date=preview_event.date,
                     source=preview_event.source,
                     account=preview_event.account,
@@ -556,10 +564,14 @@ class ImportService:
         row_number: int,
         event: NormalisedInvestmentEvent,
         seen_hashes: set[str],
+        current_user: CurrentUser | None = None,
     ) -> ImportPreviewInvestmentEvent:
         dedupe_hash = self.dedupe_service.create_investment_event_hash(event)
         is_duplicate = (
-            self.dedupe_service.is_duplicate_investment_event(dedupe_hash)
+            self.dedupe_service.is_duplicate_investment_event(
+                dedupe_hash,
+                self._get_user_id(current_user),
+            )
             or dedupe_hash in seen_hashes
         )
 
