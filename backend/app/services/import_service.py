@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.importers.activobank import ActivoBankImporter
 from app.importers.base import (
     ImportParseResult,
@@ -114,6 +114,7 @@ class ImportService:
         if self.owed_repository is not None:
             deleted_owed_items = self.owed_repository.delete_by_import_batch(
                 import_batch_id=import_batch_id,
+                user_id=self._get_user_id(current_user),
             )
 
         if import_batch.source == "legacy_excel_wealth" and self.wealth_repository is not None:
@@ -626,3 +627,10 @@ class ImportService:
             return "partial"
 
         return "failed"
+
+
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id

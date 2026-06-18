@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.repositories.owed_repository import OwedRepository
@@ -37,7 +37,8 @@ class OwedService:
             }
         )
 
-        return self.repository.create(owed_data, amount_remaining)
+        user_id = self._get_user_id(current_user)
+        return self.repository.create(owed_data, amount_remaining, user_id)
 
     def list_owed_items(
         self,
@@ -47,7 +48,10 @@ class OwedService:
         offset: int = 0,
         current_user: CurrentUser | None = None,
     ) -> list[OwedItem]:
+        user_id = self._get_user_id(current_user)
+
         return self.repository.list(
+            user_id=user_id,
             status=status,
             person=person,
             limit=limit,
@@ -59,7 +63,8 @@ class OwedService:
         owed_item_id: int,
         current_user: CurrentUser | None = None,
     ) -> OwedItem:
-        owed_item = self.repository.get_by_id(owed_item_id)
+        user_id = self._get_user_id(current_user)
+        owed_item = self.repository.get_by_id(owed_item_id, user_id)
 
         if owed_item is None:
             raise HTTPException(
@@ -125,7 +130,8 @@ class OwedService:
             linked_transaction_id=payment_data.linked_transaction_id,
         )
 
-        payment = self.repository.create_payment(payment)
+        user_id = self._get_user_id(current_user)
+        payment = self.repository.create_payment(payment, user_id)
 
         remaining_to_allocate = payment_data.amount
 
@@ -149,7 +155,10 @@ class OwedService:
                     remaining_to_allocate=remaining_to_allocate,
                 )
         else:
-            for owed_item in self.repository.list_open_by_person(payment_data.person):
+            for owed_item in self.repository.list_open_by_person(
+                payment_data.person,
+                user_id,
+            ):
                 if remaining_to_allocate <= 0:
                     break
 
@@ -164,7 +173,7 @@ class OwedService:
         self.repository.commit()
         self.repository.refresh(payment)
 
-        return self._build_payment_read(payment)
+        return self._build_payment_read(payment, user_id)
 
     def list_payments(
         self,
@@ -174,8 +183,11 @@ class OwedService:
         current_user: CurrentUser | None = None,
     ) -> list[OwedPaymentRead]:
         return [
-            self._build_payment_read(payment)
-            for payment in self.repository.list_payments(
+            self._build_payment_read(
+                payment,
+                self._get_user_id(current_user),
+            )            for payment in self.repository.list_payments(
+                user_id=self._get_user_id(current_user),
                 person=person,
                 limit=limit,
                 offset=offset,
@@ -187,7 +199,8 @@ class OwedService:
         payment_id: int,
         current_user: CurrentUser | None = None,
     ) -> OwedPaymentRead:
-        payment = self.repository.get_payment_by_id(payment_id)
+        user_id = self._get_user_id(current_user)
+        payment = self.repository.get_payment_by_id(payment_id, user_id)
 
         if payment is None:
             raise HTTPException(
@@ -195,7 +208,7 @@ class OwedService:
                 detail="Owed payment not found",
             )
 
-        return self._build_payment_read(payment)
+        return self._build_payment_read(payment, user_id)
 
     def _allocate_to_owed_item(
         self,
@@ -221,7 +234,7 @@ class OwedService:
             owed_item_id=owed_item.id,
             amount=amount,
         )
-        self.repository.create_allocation(allocation)
+        self.repository.create_allocation(allocation, owed_item.user_id)
 
         owed_item.amount_paid += amount
         owed_item.amount_remaining = self._calculate_amount_remaining(
@@ -236,9 +249,16 @@ class OwedService:
 
         return remaining_to_allocate - amount
 
-    def _build_payment_read(self, payment: OwedPayment) -> OwedPaymentRead:
-        allocations = self.repository.list_allocations_for_payment(payment.id)
-        allocated_amount = self.repository.get_allocated_total_for_payment(payment.id)
+    def _build_payment_read(
+        self,
+        payment: OwedPayment,
+        user_id: str,
+    ) -> OwedPaymentRead:
+        allocations = self.repository.list_allocations_for_payment(payment.id, user_id)
+        allocated_amount = self.repository.get_allocated_total_for_payment(
+            payment.id,
+            user_id,
+        )
 
         return OwedPaymentRead(
             id=payment.id,
@@ -281,3 +301,10 @@ class OwedService:
             return "partially_paid"
 
         return "open"
+
+
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id

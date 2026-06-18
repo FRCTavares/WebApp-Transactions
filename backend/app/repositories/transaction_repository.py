@@ -115,12 +115,15 @@ class TransactionRepository:
     def list_owed_items_by_transaction_ids(
         self,
         transaction_ids: list[int],
+        user_id: str,
     ) -> dict[int, OwedItem]:
         if not transaction_ids:
             return {}
 
-        statement = select(OwedItem).where(
-            OwedItem.linked_transaction_id.in_(transaction_ids)
+        statement = (
+            select(OwedItem)
+            .where(OwedItem.user_id == user_id)
+            .where(OwedItem.linked_transaction_id.in_(transaction_ids))
         )
 
         owed_items = list(self.db.scalars(statement).all())

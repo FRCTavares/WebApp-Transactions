@@ -5,6 +5,7 @@ from typing import Optional
 from sqlalchemy import Date, DateTime, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.database import Base
 
 
@@ -16,6 +17,11 @@ class OwedPayment(Base):
     __tablename__ = "owed_payments"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(
+        String(100),
+        default=LOCAL_DEFAULT_USER_ID,
+        index=True,
+    )
 
     person: Mapped[str] = mapped_column(String(100), index=True)
     payment_date: Mapped[date] = mapped_column(Date, index=True)
@@ -37,6 +43,11 @@ class OwedPaymentAllocation(Base):
     __tablename__ = "owed_payment_allocations"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(
+        String(100),
+        default=LOCAL_DEFAULT_USER_ID,
+        index=True,
+    )
 
     owed_payment_id: Mapped[int] = mapped_column(index=True)
     owed_item_id: Mapped[int] = mapped_column(index=True)

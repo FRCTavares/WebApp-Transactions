@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
@@ -46,8 +46,10 @@ class TransactionService:
             offset=offset,
         )
 
+        user_id = self._get_user_id(current_user)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [transaction.id for transaction in transactions]
+            [transaction.id for transaction in transactions],
+            user_id,
         )
 
         return [
@@ -74,8 +76,10 @@ class TransactionService:
             uncategorised_only=True,
         )
 
+        user_id = self._get_user_id(current_user)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [transaction.id for transaction in transactions]
+            [transaction.id for transaction in transactions],
+            user_id,
         )
 
         return [
@@ -92,8 +96,10 @@ class TransactionService:
         current_user: CurrentUser | None = None,
     ) -> TransactionRead:
         transaction = self._get_transaction_model(transaction_id)
+        user_id = self._get_user_id(current_user)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [transaction.id]
+            [transaction.id],
+            user_id,
         )
 
         return self._build_transaction_read(
@@ -109,8 +115,10 @@ class TransactionService:
     ) -> TransactionRead:
         transaction = self._get_transaction_model(transaction_id)
         updated_transaction = self.repository.update(transaction, transaction_data)
+        user_id = self._get_user_id(current_user)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [updated_transaction.id]
+            [updated_transaction.id],
+            user_id,
         )
 
         return self._build_transaction_read(
@@ -136,6 +144,13 @@ class TransactionService:
             )
 
         return transaction
+
+
+    def _get_user_id(self, current_user: CurrentUser | None) -> str:
+        if current_user is None:
+            return LOCAL_DEFAULT_USER_ID
+
+        return current_user.id
 
     def _build_transaction_read(
         self,

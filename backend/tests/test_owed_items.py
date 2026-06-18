@@ -1,3 +1,7 @@
+from app.auth.current_user import CurrentUser
+from app.repositories.owed_repository import OwedRepository
+from app.schemas.owed_item import OwedItemCreate, OwedPaymentCreate
+from app.services.owed_service import OwedService
 from decimal import Decimal
 
 
@@ -522,3 +526,89 @@ def test_list_and_get_owed_payments(client):
 
     assert len(list_response.json()) == 1
     assert get_response.json()["method"] == "mbway"
+
+
+def test_owed_items_are_isolated_by_user(db_session):
+    first_user = CurrentUser(id="user-one")
+    second_user = CurrentUser(id="user-two")
+    service = OwedService(OwedRepository(db_session))
+
+    first_item = service.create_owed_item(
+        OwedItemCreate(
+            person="Mother",
+            reason="Groceries",
+            amount_total=Decimal("20.00"),
+        ),
+        first_user,
+    )
+    second_item = service.create_owed_item(
+        OwedItemCreate(
+            person="Mother",
+            reason="Groceries",
+            amount_total=Decimal("20.00"),
+        ),
+        second_user,
+    )
+
+    assert [item.id for item in service.list_owed_items(current_user=first_user)] == [first_item.id]
+    assert [item.id for item in service.list_owed_items(current_user=second_user)] == [second_item.id]
+
+    missing = service.list_owed_items(person="Mother", current_user=CurrentUser(id="other-user"))
+    assert missing == []
+
+
+def test_owed_payments_are_isolated_by_user(db_session):
+    first_user = CurrentUser(id="user-one")
+    second_user = CurrentUser(id="user-two")
+    service = OwedService(OwedRepository(db_session))
+
+    first_item = service.create_owed_item(
+        OwedItemCreate(
+            person="Mother",
+            reason="Groceries",
+            amount_total=Decimal("20.00"),
+        ),
+        first_user,
+    )
+    second_item = service.create_owed_item(
+        OwedItemCreate(
+            person="Mother",
+            reason="Groceries",
+            amount_total=Decimal("20.00"),
+        ),
+        second_user,
+    )
+
+    first_payment = service.record_payment(
+        OwedPaymentCreate(
+            person="Mother",
+            payment_date="2026-06-14",
+            amount=Decimal("10.00"),
+            method="cash",
+            allocations=[
+                {
+                    "owed_item_id": first_item.id,
+                    "amount": Decimal("10.00"),
+                }
+            ],
+        ),
+        first_user,
+    )
+    second_payment = service.record_payment(
+        OwedPaymentCreate(
+            person="Mother",
+            payment_date="2026-06-14",
+            amount=Decimal("10.00"),
+            method="cash",
+            allocations=[
+                {
+                    "owed_item_id": second_item.id,
+                    "amount": Decimal("10.00"),
+                }
+            ],
+        ),
+        second_user,
+    )
+
+    assert [payment.id for payment in service.list_payments(current_user=first_user)] == [first_payment.id]
+    assert [payment.id for payment in service.list_payments(current_user=second_user)] == [second_payment.id]

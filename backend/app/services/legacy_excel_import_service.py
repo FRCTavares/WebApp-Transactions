@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.importers.legacy_excel import LegacyExcelImporter
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
@@ -97,7 +98,7 @@ class LegacyExcelImportService:
                 reason=owed_item.reason,
             )
             is_duplicate = (
-                self.owed_repository.exists_by_dedupe_hash(dedupe_hash)
+                self.owed_repository.exists_by_dedupe_hash(dedupe_hash, LOCAL_DEFAULT_USER_ID)
                 or dedupe_hash in seen_owed_hashes
             )
             seen_owed_hashes.add(dedupe_hash)
@@ -226,7 +227,7 @@ class LegacyExcelImportService:
             self.transaction_repository.bulk_insert(transactions_to_insert)
 
         if owed_items_to_insert:
-            self.owed_repository.bulk_insert(owed_items_to_insert)
+            self.owed_repository.bulk_insert(owed_items_to_insert, LOCAL_DEFAULT_USER_ID)
 
         return LegacyExcelCommitResponse(
             import_batch_id=import_batch.id,
