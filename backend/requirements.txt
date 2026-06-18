@@ -7,3 +7,4 @@ pytest
 openpyxl
 yfinance
 psycopg[binary]
+alembic
