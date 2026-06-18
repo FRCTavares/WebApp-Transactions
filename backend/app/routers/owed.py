@@ -71,8 +71,9 @@ def get_owed_service(db: Session = Depends(get_db)) -> OwedService:
 def create_owed_item(
     owed_data: OwedItemCreate,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_owed_item(owed_data)
+    return service.create_owed_item(owed_data, current_user)
 
 
 @router.get("", response_model=list[OwedItemRead])
@@ -100,8 +101,10 @@ def export_owed_items(
     limit: int = Query(default=10000, ge=1, le=50000),
     offset: int = Query(default=0, ge=0),
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     owed_items = service.list_owed_items(
+        current_user=current_user,
         status=status,
         person=person,
         limit=limit,
@@ -128,8 +131,9 @@ def export_owed_items(
 def record_owed_payment(
     payment_data: OwedPaymentCreate,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.record_payment(payment_data)
+    return service.record_payment(payment_data, current_user)
 
 
 @router.get("/payments", response_model=list[OwedPaymentRead])
@@ -161,8 +165,9 @@ def get_owed_payment(
 def get_owed_item(
     owed_item_id: int,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_owed_item(owed_item_id)
+    return service.get_owed_item(owed_item_id, current_user)
 
 
 @router.patch("/{owed_item_id}", response_model=OwedItemRead)
@@ -170,14 +175,16 @@ def update_owed_item(
     owed_item_id: int,
     owed_data: OwedItemUpdate,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_owed_item(owed_item_id, owed_data)
+    return service.update_owed_item(owed_item_id, owed_data, current_user)
 
 
 @router.delete("/{owed_item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_owed_item(
     owed_item_id: int,
     service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_owed_item(owed_item_id)
+    service.delete_owed_item(owed_item_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

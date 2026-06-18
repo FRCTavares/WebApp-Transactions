@@ -18,7 +18,11 @@ class OwedService:
     def __init__(self, repository: OwedRepository) -> None:
         self.repository = repository
 
-    def create_owed_item(self, owed_data: OwedItemCreate) -> OwedItem:
+    def create_owed_item(
+        self,
+        owed_data: OwedItemCreate,
+        current_user: CurrentUser | None = None,
+    ) -> OwedItem:
         amount_remaining = self._calculate_amount_remaining(
             amount_total=owed_data.amount_total,
             amount_paid=owed_data.amount_paid,
@@ -41,6 +45,7 @@ class OwedService:
         person: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[OwedItem]:
         return self.repository.list(
             status=status,
@@ -49,7 +54,11 @@ class OwedService:
             offset=offset,
         )
 
-    def get_owed_item(self, owed_item_id: int) -> OwedItem:
+    def get_owed_item(
+        self,
+        owed_item_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> OwedItem:
         owed_item = self.repository.get_by_id(owed_item_id)
 
         if owed_item is None:
@@ -64,8 +73,9 @@ class OwedService:
         self,
         owed_item_id: int,
         owed_data: OwedItemUpdate,
+        current_user: CurrentUser | None = None,
     ) -> OwedItem:
-        owed_item = self.get_owed_item(owed_item_id)
+        owed_item = self.get_owed_item(owed_item_id, current_user)
 
         amount_total = owed_data.amount_total
         if amount_total is None:
@@ -92,11 +102,19 @@ class OwedService:
 
         return self.repository.update(owed_item, owed_data, amount_remaining)
 
-    def delete_owed_item(self, owed_item_id: int) -> None:
-        owed_item = self.get_owed_item(owed_item_id)
+    def delete_owed_item(
+        self,
+        owed_item_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
+        owed_item = self.get_owed_item(owed_item_id, current_user)
         self.repository.delete(owed_item)
 
-    def record_payment(self, payment_data: OwedPaymentCreate) -> OwedPaymentRead:
+    def record_payment(
+        self,
+        payment_data: OwedPaymentCreate,
+        current_user: CurrentUser | None = None,
+    ) -> OwedPaymentRead:
         payment = OwedPayment(
             person=payment_data.person,
             payment_date=payment_data.payment_date,
@@ -113,7 +131,10 @@ class OwedService:
 
         if payment_data.allocations:
             for allocation_data in payment_data.allocations:
-                owed_item = self.get_owed_item(allocation_data.owed_item_id)
+                owed_item = self.get_owed_item(
+                    allocation_data.owed_item_id,
+                    current_user,
+                )
 
                 if owed_item.person != payment_data.person:
                     raise HTTPException(
@@ -150,6 +171,7 @@ class OwedService:
         person: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[OwedPaymentRead]:
         return [
             self._build_payment_read(payment)
