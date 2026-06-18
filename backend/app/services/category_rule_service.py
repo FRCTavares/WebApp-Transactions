@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.importers.base import NormalisedTransaction
 from app.models.category_rule import CategoryRule
 from app.models.transaction import Transaction
@@ -21,7 +22,11 @@ class CategoryRuleService:
         self.category_rule_repository = category_rule_repository
         self.transaction_repository = transaction_repository
 
-    def create_rule(self, rule_data: CategoryRuleCreate) -> CategoryRule:
+    def create_rule(
+        self,
+        rule_data: CategoryRuleCreate,
+        current_user: CurrentUser | None = None,
+    ) -> CategoryRule:
         self._raise_if_duplicate_rule(rule_data)
         return self.category_rule_repository.create(rule_data)
 
@@ -30,6 +35,7 @@ class CategoryRuleService:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[CategoryRule]:
         return self.category_rule_repository.list(
             active_only=active_only,
@@ -37,7 +43,11 @@ class CategoryRuleService:
             offset=offset,
         )
 
-    def get_rule(self, rule_id: int) -> CategoryRule:
+    def get_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> CategoryRule:
         rule = self.category_rule_repository.get_by_id(rule_id)
 
         if rule is None:
@@ -52,19 +62,25 @@ class CategoryRuleService:
         self,
         rule_id: int,
         rule_data: CategoryRuleUpdate,
+        current_user: CurrentUser | None = None,
     ) -> CategoryRule:
-        rule = self.get_rule(rule_id)
+        rule = self.get_rule(rule_id, current_user)
         self._raise_if_duplicate_rule_update(rule, rule_data)
         return self.category_rule_repository.update(rule, rule_data)
 
-    def delete_rule(self, rule_id: int) -> None:
-        rule = self.get_rule(rule_id)
+    def delete_rule(
+        self,
+        rule_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
+        rule = self.get_rule(rule_id, current_user)
         self.category_rule_repository.delete(rule)
 
     def get_rule_suggestions(
         self,
         direction: str | None = None,
         limit: int = 20,
+        current_user: CurrentUser | None = None,
     ) -> list[CategoryRuleSuggestion]:
         if self.transaction_repository is None:
             raise HTTPException(
@@ -91,6 +107,7 @@ class CategoryRuleService:
     def guess_category(
         self,
         transaction: NormalisedTransaction,
+        current_user: CurrentUser | None = None,
     ) -> tuple[str | None, str | None]:
         rules = self.category_rule_repository.list(active_only=True)
 
@@ -100,7 +117,11 @@ class CategoryRuleService:
 
         return None, None
 
-    def apply_rules_to_existing_transactions(self, limit: int = 1000) -> dict[str, int]:
+    def apply_rules_to_existing_transactions(
+        self,
+        limit: int = 1000,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, int]:
         if self.transaction_repository is None:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -112,7 +133,10 @@ class CategoryRuleService:
 
         for transaction in transactions:
             normalised_transaction = self._normalise_existing_transaction(transaction)
-            category, subcategory = self.guess_category(normalised_transaction)
+            category, subcategory = self.guess_category(
+                normalised_transaction,
+                current_user,
+            )
 
             if category is None:
                 continue
