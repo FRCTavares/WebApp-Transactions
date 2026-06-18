@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth.current_user import (
     USER_EMAIL_HEADER,
     get_allowed_user_emails,
+    is_supabase_auth_enabled,
     normalise_user_email,
 )
 from app.auth.local_network import (
@@ -98,6 +99,9 @@ async def require_local_network_client(request: Request, call_next):
 
 @app.middleware("http")
 async def require_app_access_token(request: Request, call_next):
+    if is_supabase_auth_enabled():
+        return await call_next(request)
+
     expected_token = os.getenv("APP_ACCESS_TOKEN", "").strip()
 
     if not expected_token:

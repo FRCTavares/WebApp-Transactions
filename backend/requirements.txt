@@ -8,3 +8,4 @@ openpyxl
 yfinance
 psycopg[binary]
 alembic
+PyJWT

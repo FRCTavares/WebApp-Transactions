@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
@@ -10,13 +9,7 @@ import { WealthPage } from './pages/WealthPage'
 import { CleanupPage } from './pages/CleanupPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
-import {
-  clearAccessSession,
-  getStoredAccessToken,
-  getStoredUserEmail,
-  storeAccessToken,
-  storeUserEmail,
-} from './api/client'
+import { useAuth } from './auth/AuthProvider'
 
 type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
 
@@ -49,71 +42,79 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
 
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
-  const [accessToken, setAccessToken] = useState(getStoredAccessToken)
-  const [userEmail, setUserEmail] = useState(getStoredUserEmail)
-  const [draftEmail, setDraftEmail] = useState(userEmail)
-  const [draftToken, setDraftToken] = useState('')
+  const [authError, setAuthError] = useState<string | null>(null)
+  const {
+    isAuthConfigured,
+    isLoading,
+    session,
+    signInWithGoogle,
+    signOut,
+    user,
+  } = useAuth()
   const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories'
 
-  function handleUnlock(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function handleLogin() {
+    setAuthError(null)
 
-    const nextEmail = draftEmail.trim().toLowerCase()
-    const nextToken = draftToken.trim()
-
-    if (!nextEmail || !nextToken) {
-      return
+    try {
+      await signInWithGoogle()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Login failed.')
     }
-
-    storeUserEmail(nextEmail)
-    storeAccessToken(nextToken)
-    setUserEmail(nextEmail)
-    setAccessToken(nextToken)
-    setDraftToken('')
   }
 
-  function handleLock() {
-    clearAccessSession()
-    setAccessToken('')
-    setUserEmail('')
-    setDraftEmail('')
-    setDraftToken('')
+  async function handleLogout() {
+    setAuthError(null)
+
+    try {
+      await signOut()
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Logout failed.')
+    }
   }
 
-  if (!accessToken || !userEmail) {
+  if (isLoading) {
     return (
       <div className="unlock-page">
-        <form className="unlock-card" onSubmit={handleUnlock}>
-          <p className="eyebrow">Local access gate</p>
-          <h1>Unlock F - Transactions</h1>
+        <section className="unlock-card">
+          <p className="eyebrow">Authentication</p>
+          <h1>Loading session...</h1>
+          <p>Checking your current login state.</p>
+        </section>
+      </div>
+    )
+  }
+
+  if (!isAuthConfigured) {
+    return (
+      <div className="unlock-page">
+        <section className="unlock-card">
+          <p className="eyebrow">Configuration missing</p>
+          <h1>Supabase auth is not configured</h1>
           <p>
-            Enter your allowed email and the app token configured on the backend.
-            This is a temporary access bridge before real OAuth is added.
+            Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using Google login.
+          </p>
+        </section>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return (
+      <div className="unlock-page">
+        <section className="unlock-card">
+          <p className="eyebrow">Private finance tracker</p>
+          <h1>Sign in to F - Transactions</h1>
+          <p>
+            Use your allowed Google account to access your personal finance dashboard.
           </p>
 
-          <label>
-            <span>Email</span>
-            <input
-              autoFocus
-              type="email"
-              value={draftEmail}
-              onChange={(event) => setDraftEmail(event.target.value)}
-              placeholder="you@example.com"
-            />
-          </label>
+          {authError && <p className="error-text">{authError}</p>}
 
-          <label>
-            <span>App token</span>
-            <input
-              type="password"
-              value={draftToken}
-              onChange={(event) => setDraftToken(event.target.value)}
-              placeholder="Enter app token"
-            />
-          </label>
-
-          <button type="submit">Unlock</button>
-        </form>
+          <button type="button" onClick={handleLogin}>
+            Sign in with Google
+          </button>
+        </section>
       </div>
     )
   }
@@ -124,14 +125,15 @@ function App() {
         <aside className="sidebar">
           <div className="sidebar-header">
             <h2>F - Transactions</h2>
-            <p>Local finance tracker</p>
+            <p>{user?.email ?? 'Signed in'}</p>
             <button
               type="button"
               className="lock-button"
-              onClick={handleLock}
+              onClick={handleLogout}
             >
-              Lock app
+              Sign out
             </button>
+            {authError && <p className="error-text">{authError}</p>}
           </div>
 
           <nav className="sidebar-nav">

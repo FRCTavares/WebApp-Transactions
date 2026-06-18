@@ -88,6 +88,18 @@ def test_api_route_accepts_allowed_user_email(monkeypatch):
     assert response.status_code != 401
     assert response.status_code != 403
 
+def test_app_access_token_middleware_is_skipped_when_supabase_auth_is_enabled(monkeypatch):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+    monkeypatch.setenv("APP_ACCESS_TOKEN", "secret-token")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    with TestClient(app) as client:
+        response = client.get("/api/summary")
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing bearer token"}
+
+
 
 def test_health_check_does_not_require_local_network_client(monkeypatch):
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
