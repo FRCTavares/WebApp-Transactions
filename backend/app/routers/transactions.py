@@ -5,6 +5,7 @@ from io import StringIO
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
@@ -72,8 +73,9 @@ def get_transaction_service(db: Session = Depends(get_db)) -> TransactionService
 def create_transaction(
     transaction_data: TransactionCreate,
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_transaction(transaction_data)
+    return service.create_transaction(transaction_data, current_user)
 
 
 @router.get("", response_model=list[TransactionRead])
@@ -91,8 +93,10 @@ def list_transactions(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_transactions(
+        current_user=current_user,
         direction=direction,
         category=category,
         source=source,
@@ -120,8 +124,10 @@ def export_transactions(
     limit: int = Query(default=10000, ge=1, le=50000),
     offset: int = Query(default=0, ge=0),
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     transactions = service.list_transactions(
+        current_user=current_user,
         direction=direction,
         category=category,
         source=source,
@@ -151,8 +157,10 @@ def list_uncategorised_transactions(
     source: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_uncategorised_transactions(
+        current_user=current_user,
         direction=direction,
         source=source,
         limit=limit,
@@ -163,8 +171,9 @@ def list_uncategorised_transactions(
 def get_transaction(
     transaction_id: int,
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_transaction(transaction_id)
+    return service.get_transaction(transaction_id, current_user)
 
 
 @router.patch("/{transaction_id}", response_model=TransactionRead)
@@ -172,14 +181,16 @@ def update_transaction(
     transaction_id: int,
     transaction_data: TransactionUpdate,
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_transaction(transaction_id, transaction_data)
+    return service.update_transaction(transaction_id, transaction_data, current_user)
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction(
     transaction_id: int,
     service: TransactionService = Depends(get_transaction_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_transaction(transaction_id)
+    service.delete_transaction(transaction_id, current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

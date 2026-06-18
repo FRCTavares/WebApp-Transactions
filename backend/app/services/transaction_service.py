@@ -2,6 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
@@ -12,7 +13,11 @@ class TransactionService:
     def __init__(self, repository: TransactionRepository) -> None:
         self.repository = repository
 
-    def create_transaction(self, transaction_data: TransactionCreate) -> TransactionRead:
+    def create_transaction(
+        self,
+        transaction_data: TransactionCreate,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionRead:
         transaction = self.repository.create(transaction_data)
         return self._build_transaction_read(transaction, None)
 
@@ -27,6 +32,7 @@ class TransactionService:
         search: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[TransactionRead]:
         transactions = self.repository.list(
             direction=direction,
@@ -57,6 +63,7 @@ class TransactionService:
         direction: str | None = None,
         source: str | None = None,
         limit: int = 100,
+        current_user: CurrentUser | None = None,
     ) -> list[TransactionRead]:
         transactions = self.repository.list(
             direction=direction,
@@ -79,7 +86,11 @@ class TransactionService:
             for transaction in transactions
         ]
 
-    def get_transaction(self, transaction_id: int) -> TransactionRead:
+    def get_transaction(
+        self,
+        transaction_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionRead:
         transaction = self._get_transaction_model(transaction_id)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [transaction.id]
@@ -94,6 +105,7 @@ class TransactionService:
         self,
         transaction_id: int,
         transaction_data: TransactionUpdate,
+        current_user: CurrentUser | None = None,
     ) -> TransactionRead:
         transaction = self._get_transaction_model(transaction_id)
         updated_transaction = self.repository.update(transaction, transaction_data)
@@ -106,7 +118,11 @@ class TransactionService:
             owed_items_by_transaction_id.get(updated_transaction.id),
         )
 
-    def delete_transaction(self, transaction_id: int) -> None:
+    def delete_transaction(
+        self,
+        transaction_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
         transaction = self._get_transaction_model(transaction_id)
         self.repository.delete(transaction)
 
