@@ -22,10 +22,12 @@ if [ -z "$LAN_IP" ]; then
 fi
 
 export CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://$LAN_IP:5173"
+export LOCAL_NETWORK_ONLY="${LOCAL_NETWORK_ONLY:-true}"
 
 echo "Starting backend on local network"
 echo "Backend URL: http://$LAN_IP:8000"
 echo "Allowed frontend origins: $CORS_ORIGINS"
+echo "Local network guard: $LOCAL_NETWORK_ONLY"
 echo ""
 
 cd backend

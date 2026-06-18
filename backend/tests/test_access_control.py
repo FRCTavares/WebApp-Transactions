@@ -87,3 +87,32 @@ def test_api_route_accepts_allowed_user_email(monkeypatch):
 
     assert response.status_code != 401
     assert response.status_code != 403
+
+
+def test_health_check_does_not_require_local_network_client(monkeypatch):
+    monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
+    monkeypatch.setenv("APP_ACCESS_TOKEN", "secret-token")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    with TestClient(app) as client:
+        response = client.get("/api/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_options_request_does_not_require_local_network_client(monkeypatch):
+    monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
+    monkeypatch.setenv("APP_ACCESS_TOKEN", "secret-token")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    with TestClient(app) as client:
+        response = client.options(
+            "/api/summary",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+
+    assert response.status_code == 200

@@ -10,6 +10,10 @@ from app.auth.current_user import (
     get_allowed_user_emails,
     normalise_user_email,
 )
+from app.auth.local_network import (
+    is_local_network_client,
+    is_local_network_only_enabled,
+)
 from app.database import Base, engine
 from app.database_migrations import run_startup_migrations
 from app.models import (
@@ -63,6 +67,29 @@ app.add_middleware(
 )
 
 ACCESS_TOKEN_HEADER = "X-App-Access-Token"
+
+
+
+@app.middleware("http")
+async def require_local_network_client(request: Request, call_next):
+    if not is_local_network_only_enabled():
+        return await call_next(request)
+
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    if request.url.path == "/api/health":
+        return await call_next(request)
+
+    client_host = request.client.host if request.client else None
+
+    if not is_local_network_client(client_host):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Client is not allowed by local network guard"},
+        )
+
+    return await call_next(request)
 
 
 @app.middleware("http")
