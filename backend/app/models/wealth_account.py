@@ -4,6 +4,7 @@ from typing import Optional
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.database import Base
 
 
@@ -15,6 +16,11 @@ class WealthAccount(Base):
     __tablename__ = "wealth_accounts"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(
+        String(100),
+        default=LOCAL_DEFAULT_USER_ID,
+        index=True,
+    )
 
     name: Mapped[str] = mapped_column(String(100), index=True)
     account_type: Mapped[str] = mapped_column(String(50), index=True)

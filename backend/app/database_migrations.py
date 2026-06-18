@@ -13,6 +13,7 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_owed_user_migrations(engine=engine)
     _run_rule_user_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
+    _run_wealth_user_migrations(engine=engine)
 
 
 
@@ -154,6 +155,27 @@ def _run_owed_item_migrations(engine: Engine) -> None:
             sql=sql,
         )
 
+
+
+def _run_wealth_user_migrations(engine: Engine) -> None:
+    wealth_tables = [
+        "wealth_accounts",
+        "wealth_snapshots",
+    ]
+
+    for table_name in wealth_tables:
+        if not _table_exists(engine=engine, table_name=table_name):
+            continue
+
+        _add_column_if_missing(
+            engine=engine,
+            table_name=table_name,
+            column_name="user_id",
+            sql=(
+                f"ALTER TABLE {table_name} "
+                "ADD COLUMN user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user'"
+            ),
+        )
 
 
 def _run_wealth_migrations(engine: Engine) -> None:

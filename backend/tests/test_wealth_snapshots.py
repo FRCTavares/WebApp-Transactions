@@ -1,3 +1,10 @@
+from datetime import date
+from decimal import Decimal
+
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
+from app.models.wealth_account import WealthAccount
+from app.models.wealth_snapshot import WealthSnapshot
+
 def create_account(client, name="ActivoBank Savings", account_type="savings_account"):
     response = client.post(
         "/api/wealth/accounts",
@@ -263,3 +270,62 @@ def test_wealth_monthly_totals_carry_forward_latest_account_balances(client):
         {"month": "2026-04", "total_wealth_eur": "150.00"},
         {"month": "2026-05", "total_wealth_eur": "170.00"},
     ]
+
+
+def test_wealth_snapshots_and_summary_are_isolated_by_current_user(client, db_session):
+    current_account = WealthAccount(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        name="Current User Savings",
+        account_type="savings_account",
+        currency="EUR",
+    )
+    other_account = WealthAccount(
+        user_id="other-user",
+        name="Other User Savings",
+        account_type="savings_account",
+        currency="EUR",
+    )
+    db_session.add_all([current_account, other_account])
+    db_session.commit()
+    db_session.refresh(current_account)
+    db_session.refresh(other_account)
+
+    db_session.add(
+        WealthSnapshot(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            snapshot_date=date(2026, 1, 31),
+            account_id=current_account.id,
+            balance=Decimal("100.00"),
+            currency="EUR",
+            balance_eur=Decimal("100.00"),
+            fx_rate_to_eur=Decimal("1"),
+        )
+    )
+    db_session.add(
+        WealthSnapshot(
+            user_id="other-user",
+            snapshot_date=date(2026, 1, 31),
+            account_id=other_account.id,
+            balance=Decimal("900.00"),
+            currency="EUR",
+            balance_eur=Decimal("900.00"),
+            fx_rate_to_eur=Decimal("1"),
+        )
+    )
+    db_session.commit()
+
+    snapshots_response = client.get("/api/wealth/snapshots")
+
+    assert snapshots_response.status_code == 200
+    snapshots = snapshots_response.json()
+
+    assert len(snapshots) == 1
+    assert snapshots[0]["account_id"] == current_account.id
+
+    summary_response = client.get("/api/wealth/summary")
+
+    assert summary_response.status_code == 200
+    summary = summary_response.json()
+
+    assert summary["current_total_wealth_eur"] == "100.00"
+    assert summary["account_count"] == 1

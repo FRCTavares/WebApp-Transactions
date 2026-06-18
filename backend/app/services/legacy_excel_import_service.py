@@ -279,15 +279,22 @@ class LegacyExcelImportService:
                 snapshot_date=snapshot.snapshot_date,
                 balance=snapshot.balance_eur,
             )
-            account = self.wealth_repository.get_account_by_name(snapshot.account_name)
+            account = self.wealth_repository.get_account_by_name(
+                snapshot.account_name,
+                self._get_user_id(current_user),
+            )
             is_duplicate = (
                 dedupe_hash in seen_hashes
-                or self.wealth_repository.exists_snapshot_by_dedupe_hash(dedupe_hash)
+                or self.wealth_repository.exists_snapshot_by_dedupe_hash(
+                    dedupe_hash,
+                    self._get_user_id(current_user),
+                )
                 or (
                     account is not None
                     and self.wealth_repository.exists_snapshot_for_account_date(
                         account_id=account.id,
                         snapshot_date=snapshot.snapshot_date,
+                        user_id=self._get_user_id(current_user),
                     )
                 )
             )
@@ -369,12 +376,14 @@ class LegacyExcelImportService:
 
         for preview_snapshot in snapshots_to_insert:
             account = self.wealth_repository.get_account_by_name(
-                preview_snapshot.account_name
+                preview_snapshot.account_name,
+                self._get_user_id(current_user),
             )
 
             if account is None:
                 self.wealth_repository.create_account(
-                    self._build_wealth_account_create_payload(preview_snapshot)
+                    self._build_wealth_account_create_payload(preview_snapshot),
+                    self._get_user_id(current_user),
                 )
                 accounts_created += 1
 
@@ -396,7 +405,8 @@ class LegacyExcelImportService:
 
         for preview_snapshot in snapshots_to_insert:
             account = self.wealth_repository.get_account_by_name(
-                preview_snapshot.account_name
+                preview_snapshot.account_name,
+                self._get_user_id(current_user),
             )
 
             if account is None:
@@ -404,6 +414,7 @@ class LegacyExcelImportService:
 
             snapshot_models.append(
                 WealthSnapshot(
+                    user_id=self._get_user_id(current_user),
                     snapshot_date=preview_snapshot.snapshot_date,
                     account_id=account.id,
                     balance=preview_snapshot.balance,
@@ -419,7 +430,10 @@ class LegacyExcelImportService:
                 )
             )
 
-        self.wealth_repository.bulk_insert_snapshots(snapshot_models)
+        self.wealth_repository.bulk_insert_snapshots(
+            snapshot_models,
+            self._get_user_id(current_user),
+        )
 
         return LegacyExcelWealthCommitResponse(
             import_batch_id=import_batch.id,

@@ -1,3 +1,6 @@
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
+from app.models.wealth_account import WealthAccount
+
 def test_create_list_update_delete_wealth_account(client):
     create_response = client.post(
         "/api/wealth/accounts",
@@ -72,3 +75,31 @@ def test_cannot_delete_wealth_account_with_snapshots(client):
     delete_response = client.delete(f"/api/wealth/accounts/{account_id}")
     assert delete_response.status_code == 400
     assert delete_response.json()["detail"] == "Cannot delete a wealth account with snapshots"
+
+
+def test_wealth_accounts_are_isolated_by_current_user(client, db_session):
+    db_session.add(
+        WealthAccount(
+            user_id="other-user",
+            name="Other User Account",
+            account_type="cash",
+            currency="EUR",
+        )
+    )
+    db_session.add(
+        WealthAccount(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            name="Current User Account",
+            account_type="cash",
+            currency="EUR",
+        )
+    )
+    db_session.commit()
+
+    response = client.get("/api/wealth/accounts")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Current User Account"
