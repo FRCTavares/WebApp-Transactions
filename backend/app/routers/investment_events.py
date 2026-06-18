@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
@@ -42,8 +43,9 @@ def get_investment_event_service(
 def create_investment_event(
     event_data: InvestmentEventCreate,
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_event(event_data)
+    return service.create_event(event_data, current_user)
 
 
 @router.get("", response_model=list[InvestmentEventRead])
@@ -55,6 +57,7 @@ def list_investment_events(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_events(
         source=source,
@@ -63,6 +66,7 @@ def list_investment_events(
         date_to=date_to,
         limit=limit,
         offset=offset,
+        current_user=current_user,
     )
 
 
@@ -70,8 +74,12 @@ def list_investment_events(
 def list_investment_positions(
     source: str | None = Query(default=None),
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_positions(source=source)
+    return service.list_positions(
+        source=source,
+        current_user=current_user,
+    )
 
 
 @router.get("/monthly-change", response_model=InvestmentMonthlyChangeRead)
@@ -79,16 +87,22 @@ def get_investment_monthly_change(
     year: int = Query(ge=1900, le=2200),
     month: int = Query(ge=1, le=12),
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_monthly_change(year=year, month=month)
+    return service.get_monthly_change(
+        year=year,
+        month=month,
+        current_user=current_user,
+    )
 
 
 @router.get("/{event_id}", response_model=InvestmentEventRead)
 def get_investment_event(
     event_id: int,
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_event(event_id)
+    return service.get_event(event_id, current_user)
 
 
 @router.post(
@@ -99,10 +113,12 @@ def resolve_manual_funding(
     event_id: int,
     resolution_data: ManualFundingResolutionCreate,
     service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     investment_event, transaction_id = service.resolve_manual_funding(
         event_id=event_id,
         resolution_data=resolution_data,
+        current_user=current_user,
     )
 
     return {
