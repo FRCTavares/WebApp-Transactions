@@ -165,5 +165,6 @@ async def preview_fx_matches(
         source=source,
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 

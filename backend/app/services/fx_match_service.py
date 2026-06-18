@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.fx_match import (
@@ -28,6 +29,7 @@ class FxMatchService:
         source: str,
         file_content: bytes,
         filename: str,
+        current_user: CurrentUser | None = None,
     ) -> FxMatchPreviewResponse:
         source = source.strip().lower()
 
@@ -41,6 +43,7 @@ class FxMatchService:
             source=source,
             file_content=file_content,
             filename=filename,
+            current_user=current_user,
         )
 
         pending_deposits = [
