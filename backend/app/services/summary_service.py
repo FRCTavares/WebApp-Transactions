@@ -1,5 +1,6 @@
 from datetime import date
 
+from app.auth.current_user import CurrentUser
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.summary import (
@@ -23,6 +24,7 @@ class SummaryService:
         self,
         year: int | None = None,
         month: int | None = None,
+        current_user: CurrentUser | None = None,
     ) -> MonthlySummary:
         today = date.today()
 
