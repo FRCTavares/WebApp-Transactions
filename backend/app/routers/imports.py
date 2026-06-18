@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.category_rule_repository import CategoryRuleRepository
 from app.repositories.import_batch_repository import ImportBatchRepository
@@ -72,10 +73,12 @@ def list_import_batches(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_import_batches(
         limit=limit,
         offset=offset,
+        current_user=current_user,
     )
 
 
@@ -83,8 +86,9 @@ def list_import_batches(
 def get_import_batch(
     batch_id: int,
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_import_batch(batch_id)
+    return service.get_import_batch(batch_id, current_user)
 
 
 @router.get("/batches/{batch_id}/transactions", response_model=list[TransactionRead])
@@ -93,11 +97,13 @@ def list_import_batch_transactions(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_import_batch_transactions(
         import_batch_id=batch_id,
         limit=limit,
         offset=offset,
+        current_user=current_user,
     )
 
 
@@ -105,8 +111,9 @@ def list_import_batch_transactions(
 def delete_import_batch(
     batch_id: int,
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.delete_import_batch(batch_id)
+    return service.delete_import_batch(batch_id, current_user)
 
 
 @router.post("/preview", response_model=ImportPreviewResponse)
@@ -114,6 +121,7 @@ async def preview_import(
     source: str = Form(...),
     file: UploadFile = File(...),
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "uploaded"
@@ -122,6 +130,7 @@ async def preview_import(
         source=source,
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 
 
@@ -130,6 +139,7 @@ async def commit_import(
     source: str = Form(...),
     file: UploadFile = File(...),
     service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "uploaded"
@@ -138,6 +148,7 @@ async def commit_import(
         source=source,
         file_content=file_content,
         filename=filename,
+        current_user=current_user,
     )
 
 @router.post("/fx-matches/preview", response_model=FxMatchPreviewResponse)
@@ -145,6 +156,7 @@ async def preview_fx_matches(
     source: str = Form(...),
     file: UploadFile = File(...),
     service: FxMatchService = Depends(get_fx_match_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     file_content = await file.read()
     filename = file.filename or "uploaded"

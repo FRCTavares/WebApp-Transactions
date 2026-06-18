@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from app.auth.current_user import CurrentUser
 from app.importers.activobank import ActivoBankImporter
 from app.importers.base import (
     ImportParseResult,
@@ -51,13 +52,18 @@ class ImportService:
         self,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[ImportBatch]:
         return self.import_batch_repository.list(
             limit=limit,
             offset=offset,
         )
 
-    def get_import_batch(self, import_batch_id: int) -> ImportBatch:
+    def get_import_batch(
+        self,
+        import_batch_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> ImportBatch:
         import_batch = self.import_batch_repository.get_by_id(import_batch_id)
 
         if import_batch is None:
@@ -73,8 +79,9 @@ class ImportService:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
+        current_user: CurrentUser | None = None,
     ) -> list[Transaction]:
-        self.get_import_batch(import_batch_id)
+        self.get_import_batch(import_batch_id, current_user)
 
         return self.transaction_repository.list_by_import_batch(
             import_batch_id=import_batch_id,
@@ -82,8 +89,12 @@ class ImportService:
             offset=offset,
         )
 
-    def delete_import_batch(self, import_batch_id: int) -> dict[str, int | str]:
-        import_batch = self.get_import_batch(import_batch_id)
+    def delete_import_batch(
+        self,
+        import_batch_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, int | str]:
+        import_batch = self.get_import_batch(import_batch_id, current_user)
 
         deleted_investment_events = 0
         deleted_owed_items = 0
@@ -126,6 +137,7 @@ class ImportService:
         source: str,
         file_content: bytes,
         filename: str,
+        current_user: CurrentUser | None = None,
     ) -> ImportPreviewResponse:
         parse_result = self._parse_file(
             source=source,
@@ -136,9 +148,15 @@ class ImportService:
         return self._build_preview_response(
             source=source,
             parse_result=parse_result,
+            current_user=current_user,
         )
 
-    def preview_import(self, source: str, csv_content: str) -> ImportPreviewResponse:
+    def preview_import(
+        self,
+        source: str,
+        csv_content: str,
+        current_user: CurrentUser | None = None,
+    ) -> ImportPreviewResponse:
         parse_result = self._parse_csv(
             source=source,
             csv_content=csv_content,
@@ -147,6 +165,7 @@ class ImportService:
         return self._build_preview_response(
             source=source,
             parse_result=parse_result,
+            current_user=current_user,
         )
 
     def commit_import_from_file(
@@ -154,17 +173,20 @@ class ImportService:
         source: str,
         file_content: bytes,
         filename: str,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, int | str]:
         preview = self.preview_import_from_file(
             source=source,
             file_content=file_content,
             filename=filename,
+            current_user=current_user,
         )
 
         return self._commit_preview(
             source=source,
             filename=filename,
             preview=preview,
+            current_user=current_user,
         )
 
     def commit_import(
@@ -172,13 +194,19 @@ class ImportService:
         source: str,
         csv_content: str,
         filename: str,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, int | str]:
-        preview = self.preview_import(source=source, csv_content=csv_content)
+        preview = self.preview_import(
+            source=source,
+            csv_content=csv_content,
+            current_user=current_user,
+        )
 
         return self._commit_preview(
             source=source,
             filename=filename,
             preview=preview,
+            current_user=current_user,
         )
 
     def _parse_file(
@@ -241,6 +269,7 @@ class ImportService:
         self,
         source: str,
         parse_result: ImportParseResult,
+        current_user: CurrentUser | None = None,
     ) -> ImportPreviewResponse:
         preview_transactions: list[ImportPreviewTransaction] = []
         preview_investment_events: list[ImportPreviewInvestmentEvent] = []
@@ -254,6 +283,7 @@ class ImportService:
                     row_number=index,
                     transaction=transaction,
                     seen_hashes=seen_transaction_hashes,
+                    current_user=current_user,
                 )
                 preview_transactions.append(preview_row)
                 seen_transaction_hashes.add(preview_row.dedupe_hash)
@@ -309,6 +339,7 @@ class ImportService:
         source: str,
         filename: str,
         preview: ImportPreviewResponse,
+        current_user: CurrentUser | None = None,
     ) -> dict[str, int | str]:
         self._raise_for_pending_fx(preview)
 
@@ -472,13 +503,14 @@ class ImportService:
         row_number: int,
         transaction: NormalisedTransaction,
         seen_hashes: set[str],
+        current_user: CurrentUser | None = None,
     ) -> ImportPreviewTransaction:
         dedupe_hash = self.dedupe_service.create_hash(transaction)
         is_duplicate = (
             self.dedupe_service.is_duplicate(dedupe_hash)
             or dedupe_hash in seen_hashes
         )
-        category, _subcategory = self._guess_category(transaction)
+        category, _subcategory = self._guess_category(transaction, current_user)
 
         return ImportPreviewTransaction(
             row_number=row_number,
@@ -557,11 +589,12 @@ class ImportService:
     def _guess_category(
         self,
         transaction: NormalisedTransaction,
+        current_user: CurrentUser | None = None,
     ) -> tuple[str | None, str | None]:
         if self.category_rule_service is None:
             return None, None
 
-        return self.category_rule_service.guess_category(transaction)
+        return self.category_rule_service.guess_category(transaction, current_user)
 
     def _get_csv_importer(self, source: str):
         source = source.strip().lower()
