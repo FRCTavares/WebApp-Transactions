@@ -1,5 +1,6 @@
 from app.database import (
     DEFAULT_SQLITE_DATABASE_URL,
+    get_database_dialect,
     get_database_url,
     get_engine_kwargs,
     is_sqlite_database_url,
@@ -37,6 +38,11 @@ def test_postgres_url_alias_is_normalised_for_sqlalchemy():
         normalise_database_url("postgres://user:password@example.com:5432/db")
         == "postgresql://user:password@example.com:5432/db"
     )
+
+
+def test_database_dialect_detection():
+    assert get_database_dialect("sqlite:///local.db") == "sqlite"
+    assert get_database_dialect("postgresql://user:password@example.com/db") == "postgresql"
 
 
 def test_sqlite_database_url_detection():

@@ -37,8 +37,12 @@ def normalise_database_url(database_url: str) -> str:
     return database_url
 
 
+def get_database_dialect(database_url: str) -> str:
+    return database_url.split(":", 1)[0].lower()
+
+
 def is_sqlite_database_url(database_url: str) -> bool:
-    return database_url.startswith("sqlite")
+    return get_database_dialect(database_url) == "sqlite"
 
 
 def get_engine_kwargs(database_url: str) -> dict[str, Any]:

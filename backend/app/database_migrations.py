@@ -2,9 +2,20 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
+from app.database import is_sqlite_database_url
+
 
 def run_startup_migrations(engine: Engine) -> None:
-    """Small SQLite-safe migrations until the project adopts Alembic."""
+    """Run legacy startup migrations.
+
+    These migrations are intentionally SQLite-only. They exist to keep the
+    current local database evolving safely. Postgres/Supabase should use a
+    proper migration tool before deployment instead of these raw SQLite-era
+    startup migrations.
+    """
+
+    if not is_sqlite_database_url(str(engine.url)):
+        return
 
     _run_transaction_migrations(engine=engine)
     _run_import_batch_user_migrations(engine=engine)
