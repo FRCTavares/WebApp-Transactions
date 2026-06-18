@@ -1,5 +1,7 @@
 import os
 import secrets
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -14,8 +16,7 @@ from app.auth.local_network import (
     is_local_network_client,
     is_local_network_only_enabled,
 )
-from app.database import Base, engine
-from app.database_migrations import run_startup_migrations
+from app.database import initialise_database
 from app.models import (
     CashflowRule,
     CategoryRule,
@@ -44,10 +45,13 @@ from app.routers.transactions import router as transactions_router
 from app.routers.wealth import router as wealth_router
 
 
-Base.metadata.create_all(bind=engine)
-run_startup_migrations(engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    initialise_database()
+    yield
 
-app = FastAPI(title="F - Transactions API")
+
+app = FastAPI(title="F - Transactions API", lifespan=lifespan)
 
 cors_origins = [
     origin.strip()

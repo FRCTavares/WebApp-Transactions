@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
@@ -77,3 +78,11 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def initialise_database(database_engine: Engine = engine) -> None:
+    from app.database_migrations import run_startup_migrations
+    import app.models  # noqa: F401
+
+    Base.metadata.create_all(bind=database_engine)
+    run_startup_migrations(database_engine)
