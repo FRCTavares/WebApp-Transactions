@@ -6,3 +6,4 @@ python-multipart
 pytest
 openpyxl
 yfinance
+psycopg[binary]
