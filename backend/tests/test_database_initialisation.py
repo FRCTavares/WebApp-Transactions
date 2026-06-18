@@ -40,3 +40,10 @@ def test_initialise_database_keeps_user_scoped_dedupe_index():
         "user_id",
         "dedupe_hash",
     ]
+
+
+def test_initialise_database_skips_non_sqlite_engines():
+    class FakePostgresEngine:
+        url = "postgresql://user:password@example.com/db"
+
+    initialise_database(FakePostgresEngine())
