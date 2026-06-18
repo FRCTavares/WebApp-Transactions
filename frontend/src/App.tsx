@@ -11,9 +11,11 @@ import { CleanupPage } from './pages/CleanupPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
 import {
-  clearAccessToken,
+  clearAccessSession,
   getStoredAccessToken,
+  getStoredUserEmail,
   storeAccessToken,
+  storeUserEmail,
 } from './api/client'
 
 type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
@@ -48,48 +50,65 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
   const [accessToken, setAccessToken] = useState(getStoredAccessToken)
+  const [userEmail, setUserEmail] = useState(getStoredUserEmail)
+  const [draftEmail, setDraftEmail] = useState(userEmail)
   const [draftToken, setDraftToken] = useState('')
   const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories'
 
   function handleUnlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    const nextEmail = draftEmail.trim().toLowerCase()
     const nextToken = draftToken.trim()
 
-    if (!nextToken) {
+    if (!nextEmail || !nextToken) {
       return
     }
 
+    storeUserEmail(nextEmail)
     storeAccessToken(nextToken)
+    setUserEmail(nextEmail)
     setAccessToken(nextToken)
     setDraftToken('')
   }
 
   function handleLock() {
-    clearAccessToken()
+    clearAccessSession()
     setAccessToken('')
+    setUserEmail('')
+    setDraftEmail('')
     setDraftToken('')
   }
 
-  if (!accessToken) {
+  if (!accessToken || !userEmail) {
     return (
       <div className="unlock-page">
         <form className="unlock-card" onSubmit={handleUnlock}>
           <p className="eyebrow">Local access gate</p>
           <h1>Unlock F - Transactions</h1>
           <p>
-            Enter the local app token configured on the backend.
-            This is not a user account, it is a simple shared secret for trusted local use.
+            Enter your allowed email and the app token configured on the backend.
+            This is a temporary access bridge before real OAuth is added.
           </p>
+
+          <label>
+            <span>Email</span>
+            <input
+              autoFocus
+              type="email"
+              value={draftEmail}
+              onChange={(event) => setDraftEmail(event.target.value)}
+              placeholder="you@example.com"
+            />
+          </label>
 
           <label>
             <span>App token</span>
             <input
-              autoFocus
               type="password"
               value={draftToken}
               onChange={(event) => setDraftToken(event.target.value)}
-              placeholder="Enter local app token"
+              placeholder="Enter app token"
             />
           </label>
 

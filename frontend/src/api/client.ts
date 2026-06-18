@@ -1,6 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 const ACCESS_TOKEN_STORAGE_KEY = 'f_transactions_access_token'
+const USER_EMAIL_STORAGE_KEY = 'f_transactions_user_email'
 const ACCESS_TOKEN_HEADER = 'X-App-Access-Token'
+const USER_EMAIL_HEADER = 'X-App-User-Email'
 
 type QueryValue = string | number | boolean | null | undefined
 
@@ -8,12 +10,29 @@ export function getStoredAccessToken(): string {
   return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) ?? ''
 }
 
+export function getStoredUserEmail(): string {
+  return localStorage.getItem(USER_EMAIL_STORAGE_KEY) ?? ''
+}
+
 export function storeAccessToken(token: string): void {
   localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token)
 }
 
+export function storeUserEmail(email: string): void {
+  localStorage.setItem(USER_EMAIL_STORAGE_KEY, email.trim().toLowerCase())
+}
+
 export function clearAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY)
+}
+
+export function clearUserEmail(): void {
+  localStorage.removeItem(USER_EMAIL_STORAGE_KEY)
+}
+
+export function clearAccessSession(): void {
+  clearAccessToken()
+  clearUserEmail()
 }
 
 export function buildQuery(params: Record<string, QueryValue>): string {
@@ -32,9 +51,14 @@ export function buildQuery(params: Record<string, QueryValue>): string {
 function buildHeaders(headers?: HeadersInit): Headers {
   const nextHeaders = new Headers(headers)
   const accessToken = getStoredAccessToken()
+  const userEmail = getStoredUserEmail()
 
   if (accessToken) {
     nextHeaders.set(ACCESS_TOKEN_HEADER, accessToken)
+  }
+
+  if (userEmail) {
+    nextHeaders.set(USER_EMAIL_HEADER, userEmail)
   }
 
   return nextHeaders

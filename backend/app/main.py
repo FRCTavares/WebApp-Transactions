@@ -5,6 +5,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth.current_user import (
+    USER_EMAIL_HEADER,
+    get_allowed_user_emails,
+    normalise_user_email,
+)
 from app.database import Base, engine
 from app.database_migrations import run_startup_migrations
 from app.models import (
@@ -83,6 +88,25 @@ async def require_app_access_token(request: Request, call_next):
             status_code=401,
             content={"detail": "Invalid or missing app access token"},
         )
+
+    allowed_emails = get_allowed_user_emails()
+
+    if allowed_emails:
+        provided_email = normalise_user_email(
+            request.headers.get(USER_EMAIL_HEADER, "")
+        )
+
+        if not provided_email:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing user email"},
+            )
+
+        if provided_email not in allowed_emails:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "User email is not allowed"},
+            )
 
     return await call_next(request)
 
