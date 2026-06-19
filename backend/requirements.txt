@@ -9,3 +9,4 @@ yfinance
 psycopg[binary]
 alembic
 PyJWT
+cryptography

@@ -1,10 +1,12 @@
 import os
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
 import jwt
 from fastapi import HTTPException, Request, status
-from jwt import InvalidTokenError
+from jwt import PyJWKClient
+from jwt.exceptions import InvalidTokenError, PyJWKClientError
 
 
 LOCAL_DEFAULT_USER_ID = "local-default-user"
@@ -50,8 +52,26 @@ def get_supabase_jwt_secret() -> str:
     return os.getenv("SUPABASE_JWT_SECRET", "").strip()
 
 
+def get_supabase_url() -> str:
+    return os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+
+
+def get_supabase_jwks_url() -> str:
+    explicit_url = os.getenv("SUPABASE_JWKS_URL", "").strip()
+
+    if explicit_url:
+        return explicit_url
+
+    supabase_url = get_supabase_url()
+
+    if not supabase_url:
+        return ""
+
+    return f"{supabase_url}/auth/v1/.well-known/jwks.json"
+
+
 def is_supabase_auth_enabled() -> bool:
-    return bool(get_supabase_jwt_secret())
+    return bool(get_supabase_jwt_secret() or get_supabase_jwks_url())
 
 
 def get_authorization_bearer_token(request: Request) -> str:
@@ -67,23 +87,58 @@ def get_authorization_bearer_token(request: Request) -> str:
     return token.strip()
 
 
-def decode_supabase_jwt(token: str) -> dict[str, Any]:
+@lru_cache(maxsize=4)
+def get_jwks_client(jwks_url: str) -> PyJWKClient:
+    return PyJWKClient(jwks_url)
+
+
+def decode_supabase_jwt_with_legacy_secret(token: str) -> dict[str, Any]:
     secret = get_supabase_jwt_secret()
 
     if not secret:
+        raise InvalidTokenError("Legacy JWT secret is not configured")
+
+    return jwt.decode(
+        token,
+        secret,
+        algorithms=["HS256"],
+        audience="authenticated",
+    )
+
+
+def decode_supabase_jwt_with_jwks(token: str) -> dict[str, Any]:
+    jwks_url = get_supabase_jwks_url()
+
+    if not jwks_url:
+        raise InvalidTokenError("Supabase JWKS URL is not configured")
+
+    signing_key = get_jwks_client(jwks_url).get_signing_key_from_jwt(token)
+
+    return jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["ES256", "RS256"],
+        audience="authenticated",
+    )
+
+
+def decode_supabase_jwt(token: str) -> dict[str, Any]:
+    try:
+        header = jwt.get_unverified_header(token)
+    except InvalidTokenError:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Supabase auth is not configured",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
         )
 
+    algorithm = header.get("alg")
+
     try:
-        payload = jwt.decode(
-            token,
-            secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
-    except InvalidTokenError:
+        if algorithm == "HS256":
+            payload = decode_supabase_jwt_with_legacy_secret(token)
+        else:
+            payload = decode_supabase_jwt_with_jwks(token)
+    except (InvalidTokenError, PyJWKClientError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid bearer token",
@@ -152,7 +207,7 @@ def get_current_user(request: Request) -> CurrentUser:
     """Return the current user for FastAPI dependency injection.
 
     Local development keeps the stable local default user when no auth config is
-    present. Production should set SUPABASE_JWT_SECRET and ALLOWED_USER_EMAILS.
+    present. Production should set SUPABASE_URL and ALLOWED_USER_EMAILS.
     """
 
     if is_supabase_auth_enabled():
