@@ -22,6 +22,7 @@ class OwedItem(Base):
             "dedupe_hash",
             unique=True,
         ),
+        Index("ix_owed_items_user_status_person", "user_id", "status", "person"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

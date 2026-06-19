@@ -22,6 +22,8 @@ class InvestmentEvent(Base):
             "dedupe_hash",
             unique=True,
         ),
+        Index("ix_investment_events_user_date", "user_id", "date"),
+        Index("ix_investment_events_user_source_date", "user_id", "source", "date"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

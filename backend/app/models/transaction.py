@@ -22,6 +22,14 @@ class Transaction(Base):
             "dedupe_hash",
             unique=True,
         ),
+        Index("ix_transactions_user_date", "user_id", "date"),
+        Index("ix_transactions_user_direction_date", "user_id", "direction", "date"),
+        Index(
+            "ix_transactions_user_cashflow_type_date",
+            "user_id",
+            "cashflow_type",
+            "date",
+        ),
     )
 
     def __init__(self, **kwargs: Any) -> None:

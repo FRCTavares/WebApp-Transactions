@@ -22,6 +22,12 @@ class WealthSnapshot(Base):
             "dedupe_hash",
             unique=True,
         ),
+        Index(
+            "ix_wealth_snapshots_user_account_date",
+            "user_id",
+            "account_id",
+            "snapshot_date",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
