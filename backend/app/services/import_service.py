@@ -124,20 +124,33 @@ class ImportService:
                 user_id=self._get_user_id(current_user),
             )
 
-        if import_batch.source == "legacy_excel_wealth" and self.wealth_repository is not None:
+        if self.wealth_repository is not None:
             deleted_wealth_snapshots = self.wealth_repository.delete_snapshots_by_import_batch(
                 import_batch_id,
                 user_id=self._get_user_id(current_user),
             )
 
+        deleted_total = (
+            deleted_transactions
+            + deleted_investment_events
+            + deleted_owed_items
+            + deleted_wealth_snapshots
+        )
+
+        source = import_batch.source
+        filename = import_batch.filename
+
         self.import_batch_repository.delete(import_batch)
 
         return {
             "import_batch_id": import_batch_id,
+            "source": source,
+            "filename": filename,
             "deleted_transactions": deleted_transactions,
             "deleted_investment_events": deleted_investment_events,
             "deleted_owed_items": deleted_owed_items,
             "deleted_wealth_snapshots": deleted_wealth_snapshots,
+            "deleted_total": deleted_total,
             "status": "deleted",
         }
 

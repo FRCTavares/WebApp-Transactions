@@ -10,7 +10,7 @@ from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.wealth_repository import WealthRepository
 from app.schemas.fx_match import FxMatchPreviewResponse
-from app.schemas.import_batch import ImportBatchRead
+from app.schemas.import_batch import ImportBatchDeleteResponse, ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.transaction import TransactionRead
 from app.services.category_rule_service import CategoryRuleService
@@ -108,7 +108,7 @@ def list_import_batch_transactions(
     )
 
 
-@router.delete("/batches/{batch_id}")
+@router.delete("/batches/{batch_id}", response_model=ImportBatchDeleteResponse)
 def delete_import_batch(
     batch_id: int,
     service: ImportService = Depends(get_import_service),
