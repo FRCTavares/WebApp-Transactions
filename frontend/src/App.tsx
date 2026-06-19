@@ -7,11 +7,12 @@ import { CategoryRulesPage } from './pages/CategoryRulesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
 import { CleanupPage } from './pages/CleanupPage'
+import { ExportPage } from './pages/ExportPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
 
-type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories'
+type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories' | 'export'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
   {
@@ -36,6 +37,7 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
     items: [
       { id: 'import', label: 'Import CSV/XLSX' },
       { id: 'categories', label: 'Categories / Rules' },
+      { id: 'export', label: 'Export / Backup' },
     ],
   },
 ]
@@ -51,7 +53,7 @@ function App() {
     signOut,
     user,
   } = useAuth()
-  const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories'
+  const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories' && page !== 'export'
 
   async function handleLogin() {
     setAuthError(null)
@@ -173,6 +175,7 @@ function App() {
           {page === 'cleanup' && <CleanupPage />}
           {page === 'import' && <ImportPage />}
           {page === 'categories' && <CategoryRulesPage />}
+          {page === 'export' && <ExportPage />}
         </main>
       </div>
     </PeriodProvider>
