@@ -57,3 +57,20 @@ Do not commit:
 Before relying on backups, test one restore into a temporary local or staging database.
 
 A backup is not trustworthy until a restore has been tested.
+
+## Validate a downloaded JSON export
+
+After downloading a JSON export from the web app, validate it locally before relying on it as a backup.
+
+Command:
+
+    cd ~/Desktop/Projects/WebApp-Transactions/backend || exit 1
+    .venv/bin/python scripts/validate_json_export.py ~/Downloads/f-transactions-export-CHANGE-ME.json
+
+Expected result:
+
+    PASS /path/to/f-transactions-export-CHANGE-ME.json
+    Table counts:
+    - transactions: ...
+
+This validator is read-only. It does not restore data and does not contact production.
