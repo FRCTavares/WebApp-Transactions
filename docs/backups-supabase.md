@@ -74,3 +74,28 @@ Expected result:
     - transactions: ...
 
 This validator is read-only. It does not restore data and does not contact production.
+
+## Restore dry-run from a JSON export
+
+After validating the downloaded JSON export, run a local restore dry-run.
+
+Command:
+
+    cd ~/Desktop/Projects/WebApp-Transactions/backend || exit 1
+    .venv/bin/python scripts/restore_json_export_dry_run.py ~/Downloads/f-transactions-export-CHANGE-ME.json
+
+Expected result:
+
+    PASS restore dry-run for /path/to/f-transactions-export-CHANGE-ME.json
+    Restored table counts:
+    - transactions: ...
+    Integrity audit:
+    - PASS transactions_amount_positive: 0 violation(s)
+
+This creates a temporary SQLite database, inserts the export, runs integrity checks, and then discards the temporary database.
+
+To keep the temporary database for manual inspection:
+
+    .venv/bin/python scripts/restore_json_export_dry_run.py ~/Downloads/f-transactions-export-CHANGE-ME.json --keep-db /tmp/f-transactions-restore.db
+
+Do not restore into production until a dry-run restore passes.
