@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -16,6 +16,20 @@ def utc_now() -> datetime:
 class OwedItem(Base):
     __tablename__ = "owed_items"
     __table_args__ = (
+        CheckConstraint("amount_total > 0", name="ck_owed_items_amount_total_positive"),
+        CheckConstraint("amount_paid >= 0", name="ck_owed_items_amount_paid_non_negative"),
+        CheckConstraint(
+            "amount_remaining >= 0",
+            name="ck_owed_items_amount_remaining_non_negative",
+        ),
+        CheckConstraint(
+            "abs((amount_paid + amount_remaining) - amount_total) <= 0.01",
+            name="ck_owed_items_balance_consistent",
+        ),
+        CheckConstraint(
+            "status IN ('open', 'partially_paid', 'paid', 'cancelled')",
+            name="ck_owed_items_status_known",
+        ),
         Index(
             "ix_owed_items_user_dedupe_hash",
             "user_id",

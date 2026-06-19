@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -16,6 +16,17 @@ def utc_now() -> datetime:
 class WealthSnapshot(Base):
     __tablename__ = "wealth_snapshots"
     __table_args__ = (
+        CheckConstraint("balance >= 0", name="ck_wealth_snapshots_balance_non_negative"),
+        CheckConstraint(
+            "balance_eur >= 0",
+            name="ck_wealth_snapshots_balance_eur_non_negative",
+        ),
+        CheckConstraint("fx_rate_to_eur > 0", name="ck_wealth_snapshots_fx_rate_positive"),
+        CheckConstraint(
+            "interest_earned IS NULL OR interest_earned >= 0",
+            name="ck_wealth_snapshots_interest_non_negative",
+        ),
+        CheckConstraint("length(currency) = 3", name="ck_wealth_snapshots_currency_length"),
         Index(
             "ix_wealth_snapshots_user_dedupe_hash",
             "user_id",

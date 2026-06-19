@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any, Optional
 
-from sqlalchemy import Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -16,6 +16,24 @@ def utc_now() -> datetime:
 class Transaction(Base):
     __tablename__ = "transactions"
     __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_transactions_amount_positive"),
+        CheckConstraint("direction IN ('in', 'out')", name="ck_transactions_direction_known"),
+        CheckConstraint(
+            "cashflow_type IN ("
+            "'income', "
+            "'expense', "
+            "'internal_transfer', "
+            "'investment', "
+            "'reimbursement', "
+            "'reimbursed_expense'"
+            ")",
+            name="ck_transactions_cashflow_type_known",
+        ),
+        CheckConstraint("length(currency) = 3", name="ck_transactions_currency_length"),
+        CheckConstraint(
+            "original_currency IS NULL OR length(original_currency) = 3",
+            name="ck_transactions_original_currency_length",
+        ),
         Index(
             "ix_transactions_user_dedupe_hash",
             "user_id",

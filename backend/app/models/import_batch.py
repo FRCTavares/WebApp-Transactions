@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, Index, String
+from sqlalchemy import CheckConstraint, DateTime, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -14,6 +14,19 @@ def utc_now() -> datetime:
 class ImportBatch(Base):
     __tablename__ = "import_batches"
     __table_args__ = (
+        CheckConstraint("rows_total >= 0", name="ck_import_batches_rows_total_non_negative"),
+        CheckConstraint(
+            "rows_inserted >= 0",
+            name="ck_import_batches_rows_inserted_non_negative",
+        ),
+        CheckConstraint(
+            "rows_skipped >= 0",
+            name="ck_import_batches_rows_skipped_non_negative",
+        ),
+        CheckConstraint(
+            "rows_inserted + rows_skipped = rows_total",
+            name="ck_import_batches_counts_consistent",
+        ),
         Index("ix_import_batches_user_imported_at", "user_id", "imported_at"),
     )
 

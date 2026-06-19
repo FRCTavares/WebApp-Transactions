@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -16,6 +16,12 @@ def utc_now() -> datetime:
 class InvestmentEvent(Base):
     __tablename__ = "investment_events"
     __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_investment_events_amount_positive"),
+        CheckConstraint("length(currency) = 3", name="ck_investment_events_currency_length"),
+        CheckConstraint(
+            "original_currency IS NULL OR length(original_currency) = 3",
+            name="ck_investment_events_original_currency_length",
+        ),
         Index(
             "ix_investment_events_user_dedupe_hash",
             "user_id",

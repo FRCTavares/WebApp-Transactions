@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -15,6 +15,14 @@ def utc_now() -> datetime:
 
 class OwedPayment(Base):
     __tablename__ = "owed_payments"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_owed_payments_amount_positive"),
+        CheckConstraint("length(currency) = 3", name="ck_owed_payments_currency_length"),
+        CheckConstraint(
+            "method IN ('cash', 'bank_transfer', 'mbway', 'other')",
+            name="ck_owed_payments_method_known",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[str] = mapped_column(
@@ -41,6 +49,9 @@ class OwedPayment(Base):
 
 class OwedPaymentAllocation(Base):
     __tablename__ = "owed_payment_allocations"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="ck_owed_payment_allocations_amount_positive"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[str] = mapped_column(

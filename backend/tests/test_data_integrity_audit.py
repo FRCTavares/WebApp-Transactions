@@ -40,10 +40,12 @@ def test_data_integrity_audit_passes_clean_database(tmp_path):
     assert all(result["passed"] for result in results)
 
 
+
 def test_data_integrity_audit_detects_invalid_transaction_data(tmp_path):
     engine, _ = create_test_engine(tmp_path)
 
     with engine.begin() as connection:
+        connection.execute(text("PRAGMA ignore_check_constraints = ON"))
         connection.execute(
             text(
                 """
@@ -83,7 +85,6 @@ def test_data_integrity_audit_detects_invalid_transaction_data(tmp_path):
     assert get_result(results, "transactions_direction_known")["violations"] == 1
     assert get_result(results, "transactions_cashflow_type_known")["violations"] == 1
     assert get_result(results, "transactions_currency_codes_valid")["violations"] == 1
-
 
 def test_data_integrity_audit_detects_broken_relationships(tmp_path):
     engine, _ = create_test_engine(tmp_path)
@@ -147,10 +148,12 @@ def test_data_integrity_audit_detects_broken_relationships(tmp_path):
     assert get_result(results, "wealth_snapshots_account_exists")["violations"] == 1
 
 
+
 def test_data_integrity_audit_script_exit_code_reflects_failures(tmp_path):
     engine, database_path = create_test_engine(tmp_path)
 
     with engine.begin() as connection:
+        connection.execute(text("PRAGMA ignore_check_constraints = ON"))
         connection.execute(
             text(
                 """
@@ -198,7 +201,6 @@ def test_data_integrity_audit_script_exit_code_reflects_failures(tmp_path):
 
     assert result.returncode == 1
     assert "FAIL transactions_amount_positive" in result.stdout
-
 
 def test_data_integrity_audit_has_no_false_positives_for_valid_rows(tmp_path):
     engine, _ = create_test_engine(tmp_path)
