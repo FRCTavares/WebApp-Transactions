@@ -27,13 +27,16 @@ def get_database_url() -> str:
 def normalise_database_url(database_url: str) -> str:
     """Return a SQLAlchemy-compatible database URL.
 
-    Some hosted Postgres providers expose postgres:// URLs. SQLAlchemy expects
-    postgresql://, so normalise that form here while keeping local SQLite
-    untouched.
+    Hosted Postgres providers may expose postgres:// or postgresql:// URLs.
+    The app installs psycopg, so make the driver explicit for SQLAlchemy.
+    Local SQLite URLs are kept untouched.
     """
 
     if database_url.startswith("postgres://"):
-        return database_url.replace("postgres://", "postgresql://", 1)
+        return database_url.replace("postgres://", "postgresql+psycopg://", 1)
+
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
     return database_url
 
