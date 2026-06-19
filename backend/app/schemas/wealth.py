@@ -50,7 +50,7 @@ class WealthSnapshotBase(BaseModel):
     account_id: int
     balance: Decimal = Field(ge=0)
     currency: str = Field(default="EUR", min_length=3, max_length=3)
-    balance_eur: Decimal | None = Field(default=None, gt=0)
+    balance_eur: Decimal | None = Field(default=None, ge=0)
     fx_rate_to_eur: Decimal | None = Field(default=None, gt=0)
     interest_earned: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
@@ -84,7 +84,7 @@ class WealthSnapshotUpdate(BaseModel):
     account_id: int | None = None
     balance: Decimal | None = Field(default=None, gt=0)
     currency: str | None = Field(default=None, min_length=3, max_length=3)
-    balance_eur: Decimal | None = Field(default=None, gt=0)
+    balance_eur: Decimal | None = Field(default=None, ge=0)
     fx_rate_to_eur: Decimal | None = Field(default=None, gt=0)
     interest_earned: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None

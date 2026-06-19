@@ -304,3 +304,44 @@ def test_data_integrity_audit_has_no_false_positives_for_valid_rows(tmp_path):
     results = run_audit(engine)
 
     assert all(result["passed"] for result in results)
+
+
+
+def test_data_integrity_audit_allows_zero_wealth_balance(tmp_path):
+    engine, _ = create_test_engine(tmp_path)
+
+    now = datetime.now(UTC)
+
+    from sqlalchemy.orm import Session
+
+    with Session(engine) as session:
+        wealth_account = WealthAccount(
+            user_id="local-default-user",
+            name="Zero account",
+            account_type="current_account",
+            currency="EUR",
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(wealth_account)
+        session.flush()
+
+        session.add(
+            WealthSnapshot(
+                user_id="local-default-user",
+                snapshot_date=date(2026, 6, 1),
+                account_id=wealth_account.id,
+                balance=Decimal("0.00"),
+                currency="EUR",
+                balance_eur=Decimal("0.00"),
+                fx_rate_to_eur=Decimal("1"),
+                source="manual",
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        session.commit()
+
+    results = run_audit(engine)
+
+    assert get_result(results, "wealth_snapshots_amounts_valid")["violations"] == 0

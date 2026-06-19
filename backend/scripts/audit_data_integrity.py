@@ -165,7 +165,7 @@ CHECKS = [
         sql="""
             SELECT COUNT(*) FROM wealth_snapshots
             WHERE balance < 0
-               OR balance_eur <= 0
+               OR balance_eur < 0
                OR fx_rate_to_eur <= 0
                OR interest_earned < 0
         """,

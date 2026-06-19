@@ -329,3 +329,34 @@ def test_wealth_snapshots_and_summary_are_isolated_by_current_user(client, db_se
 
     assert summary["current_total_wealth_eur"] == "100.00"
     assert summary["account_count"] == 1
+
+
+
+def test_create_wealth_snapshot_allows_zero_eur_balance(client, db_session):
+    account_response = client.post(
+        "/api/wealth/accounts",
+        json={
+            "name": "Zero Account",
+            "account_type": "current_account",
+            "currency": "EUR",
+        },
+    )
+    assert account_response.status_code == 201
+
+    response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-01",
+            "account_id": account_response.json()["id"],
+            "balance": "0.00",
+            "currency": "EUR",
+        },
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert data["balance"] == "0.00"
+    assert data["balance_eur"] == "0.00"
+    assert data["fx_rate_to_eur"] == "1.00000000"
