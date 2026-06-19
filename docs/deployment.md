@@ -112,6 +112,17 @@ This checks:
 - `/api/me` without a token returns `401`
 - CORS preflight from the frontend origin
 
+
+## Backup and export
+
+See `docs/backups-supabase.md`.
+
+The backend exposes:
+
+- `GET /api/export/json`
+
+This returns only the authenticated user's app data. Use it as a simple personal export path, not as the only database backup strategy.
+
 ## Before wider family/friends use
 
 Still required before wider sharing:

@@ -37,6 +37,7 @@ from app.models import (
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router
+from app.routers.export import router as export_router
 from app.routers.imports import router as imports_router
 from app.routers.investment_events import router as investment_events_router
 from app.routers.legacy_excel_imports import router as legacy_excel_imports_router
@@ -168,6 +169,7 @@ app.include_router(me_router)
 app.include_router(cashflow_rules_router)
 app.include_router(category_rules_router)
 app.include_router(description_rules_router)
+app.include_router(export_router)
 app.include_router(wealth_router)
 
 
