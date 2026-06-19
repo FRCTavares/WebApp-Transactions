@@ -113,6 +113,17 @@ This checks:
 - CORS preflight from the frontend origin
 
 
+
+## Data integrity audit
+
+See `docs/data-integrity.md`.
+
+Before adding stricter database constraints, run:
+
+`python scripts/audit_data_integrity.py`
+
+The script is read-only and reports violation counts without printing personal transaction rows.
+
 ## Backup and export
 
 See `docs/backups-supabase.md`.
