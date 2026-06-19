@@ -21,6 +21,7 @@ Expected settings:
 
 Required Render environment variables:
 
+- `APP_ENV=production`
 - `DATABASE_URL`
 - `SUPABASE_URL`
 - `ALLOWED_USER_EMAILS`
@@ -30,11 +31,24 @@ Production examples:
 
 - `SUPABASE_URL=https://your-project-ref.supabase.co`
 - `ALLOWED_USER_EMAILS=you@example.com`
-- `CORS_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:5173,http://127.0.0.1:5173`
+- `CORS_ORIGINS=https://your-vercel-app.vercel.app`
 
 `LOCAL_NETWORK_ONLY` must be false on Render.
 
 `APP_ACCESS_TOKEN` is legacy/local-only fallback auth. It is skipped when Supabase auth is enabled and should not be treated as the production auth mechanism.
+
+
+## Production safety guard
+
+When `APP_ENV=production`, the backend fails startup if:
+
+- `DATABASE_URL` is missing.
+- `SUPABASE_URL` is missing.
+- `ALLOWED_USER_EMAILS` is empty.
+- `CORS_ORIGINS` contains `*`.
+- `LOCAL_NETWORK_ONLY=true`.
+
+This prevents accidentally deploying an open or misconfigured finance API.
 
 ## Supabase/Postgres
 
@@ -64,6 +78,16 @@ Production examples:
 
 Only public Supabase keys belong in the frontend. Never put the service-role key, database password, Google client secret, or JWT secret in Vercel frontend variables.
 
+
+## Security headers
+
+The backend adds basic security headers to every response:
+
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: no-referrer`
+- `X-Frame-Options: DENY`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
 ## Auth debugging
 
 Use:
@@ -74,6 +98,19 @@ Use:
 Expected `/api/me` response:
 
 `{"user_id":"you@example.com","email":"you@example.com"}`
+
+
+## Production smoke test
+
+Run from the repo root:
+
+`API_BASE_URL=https://f-transactions-api.onrender.com ORIGIN=https://web-app-transactions.vercel.app ./scripts/smoke_production.sh`
+
+This checks:
+
+- `/api/health`
+- `/api/me` without a token returns `401`
+- CORS preflight from the frontend origin
 
 ## Before wider family/friends use
 

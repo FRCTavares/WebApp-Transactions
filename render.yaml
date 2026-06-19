@@ -10,9 +10,13 @@ services:
     healthCheckPath: /api/health
     autoDeployTrigger: off
     envVars:
+      - key: APP_ENV
+        value: "production"
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
+        sync: false
+      - key: SUPABASE_URL
         sync: false
       - key: APP_ACCESS_TOKEN
         sync: false

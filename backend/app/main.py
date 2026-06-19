@@ -17,6 +17,7 @@ from app.auth.local_network import (
     is_local_network_client,
     is_local_network_only_enabled,
 )
+from app.config import get_cors_origins, validate_production_config
 from app.database import initialise_database
 from app.models import (
     CashflowRule,
@@ -49,20 +50,14 @@ from app.routers.wealth import router as wealth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    validate_production_config()
     initialise_database()
     yield
 
 
 app = FastAPI(title="F - Transactions API", lifespan=lifespan)
 
-cors_origins = [
-    origin.strip()
-    for origin in os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
-    ).split(",")
-    if origin.strip()
-]
+cors_origins = get_cors_origins()
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,6 +68,21 @@ app.add_middleware(
 )
 
 ACCESS_TOKEN_HEADER = "X-App-Access-Token"
+
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(), geolocation=()"
+    )
+
+    return response
 
 
 
