@@ -128,3 +128,54 @@ def test_options_request_does_not_require_local_network_client(monkeypatch):
         )
 
     assert response.status_code == 200
+
+
+def test_me_route_returns_local_default_user_when_auth_is_disabled(monkeypatch):
+    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
+
+    with TestClient(app) as client:
+        response = client.get("/api/me")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "user_id": "local-default-user",
+        "email": None,
+    }
+
+
+def test_me_route_returns_allowed_header_bridge_user(monkeypatch):
+    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/api/me",
+            headers={"X-App-User-Email": "ME@example.com"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "user_id": "me@example.com",
+        "email": "me@example.com",
+    }
+
+
+def test_me_route_requires_bearer_token_when_supabase_auth_is_enabled(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    with TestClient(app) as client:
+        response = client.get("/api/me")
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing bearer token"}

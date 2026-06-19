@@ -1,65 +1,86 @@
 # Deployment notes
 
-This app is still local-first. These files prepare deployment, but do not mean the app is ready for public sharing.
-
-## Target setup
+This app is local-first in development, but the current production setup uses:
 
 - Backend: Render
 - Database: Supabase/Postgres
 - Frontend: Vercel
+- Auth: Supabase Google Auth
 
-## Do not commit secrets
-
-Set these in Render:
-
-- DATABASE_URL
-- CORS_ORIGINS
-- APP_ACCESS_TOKEN
-- ALLOWED_USER_EMAILS
-
-Set this in Vercel:
-
-- VITE_API_BASE_URL
+Do not commit secrets. Configure production values only in Render, Vercel, and Supabase dashboards.
 
 ## Render backend
 
-The root render.yaml defines the backend service.
-
 Expected settings:
 
-- Root directory: backend
-- Build command: pip install -r requirements.txt
-- Pre-deploy command: alembic upgrade head
-- Start command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-- Health check path: /api/health
+- Root directory: `backend`
+- Build command: `pip install -r requirements.txt`
+- Pre-deploy command: `alembic upgrade head`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Health check path: `/api/health`
 
-LOCAL_NETWORK_ONLY must be false on Render.
+Required Render environment variables:
+
+- `DATABASE_URL`
+- `SUPABASE_URL`
+- `ALLOWED_USER_EMAILS`
+- `CORS_ORIGINS`
+
+Production examples:
+
+- `SUPABASE_URL=https://your-project-ref.supabase.co`
+- `ALLOWED_USER_EMAILS=you@example.com`
+- `CORS_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:5173,http://127.0.0.1:5173`
+
+`LOCAL_NETWORK_ONLY` must be false on Render.
+
+`APP_ACCESS_TOKEN` is legacy/local-only fallback auth. It is skipped when Supabase auth is enabled and should not be treated as the production auth mechanism.
 
 ## Supabase/Postgres
 
-For non-SQLite databases, the FastAPI app does not run create_all on startup.
+For non-SQLite databases, the FastAPI app does not run `create_all` on startup.
 
 Schema creation must happen through Alembic:
 
-alembic upgrade head
+`alembic upgrade head`
 
 On Render this is configured as the pre-deploy command.
 
+Supabase Auth must have Google provider enabled. The Vercel production URL and local development URL should be allowed redirect URLs.
+
 ## Vercel frontend
 
-The frontend must receive the backend URL at build time.
+Required Vercel environment variables:
 
-Example Vercel environment variable:
+- `VITE_API_BASE_URL`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-VITE_API_BASE_URL=https://your-render-backend.onrender.com
+Production examples:
 
-## Not ready for public family/friends use yet
+- `VITE_API_BASE_URL=https://your-render-backend.onrender.com`
+- `VITE_SUPABASE_URL=https://your-project-ref.supabase.co`
+- `VITE_SUPABASE_ANON_KEY=your-public-anon-or-publishable-key`
 
-Still required before real sharing:
+Only public Supabase keys belong in the frontend. Never put the service-role key, database password, Google client secret, or JWT secret in Vercel frontend variables.
 
-1. Proper authentication and user accounts.
-2. Removal of the temporary shared access token bridge.
-3. Production CORS restricted to the final Vercel domain.
-4. Supabase/Postgres migration tested on a real database.
-5. Backup/export strategy for user data.
-6. Clear privacy model per user.
+## Auth debugging
+
+Use:
+
+- `GET /api/health` to confirm the backend is alive.
+- `GET /api/me` to confirm the backend accepts the current authenticated user.
+
+Expected `/api/me` response:
+
+`{"user_id":"you@example.com","email":"you@example.com"}`
+
+## Before wider family/friends use
+
+Still required before wider sharing:
+
+1. Decide whether each person gets isolated data or shared family data.
+2. Add account onboarding and clear user management.
+3. Confirm backup/export strategy for Supabase data.
+4. Keep production CORS restricted to the final frontend domains.
+5. Add basic operational checks for failed imports and auth failures.
