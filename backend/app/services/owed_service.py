@@ -1,3 +1,4 @@
+import hashlib
 from decimal import Decimal
 
 from fastapi import HTTPException, status
@@ -23,6 +24,18 @@ class OwedService:
         owed_data: OwedItemCreate,
         current_user: CurrentUser | None = None,
     ) -> OwedItem:
+        user_id = self._get_user_id(current_user)
+        owed_data = self._with_dedupe_hash(owed_data, user_id)
+
+        if owed_data.dedupe_hash and self.repository.exists_by_dedupe_hash(
+            owed_data.dedupe_hash,
+            user_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Owed item already exists for this transaction and person",
+            )
+
         amount_remaining = self._calculate_amount_remaining(
             amount_total=owed_data.amount_total,
             amount_paid=owed_data.amount_paid,
@@ -37,7 +50,6 @@ class OwedService:
             }
         )
 
-        user_id = self._get_user_id(current_user)
         return self.repository.create(owed_data, amount_remaining, user_id)
 
     def list_owed_items(
@@ -302,6 +314,26 @@ class OwedService:
 
         return "open"
 
+
+    def _with_dedupe_hash(
+        self,
+        owed_data: OwedItemCreate,
+        user_id: str,
+    ) -> OwedItemCreate:
+        if owed_data.dedupe_hash is not None or owed_data.linked_transaction_id is None:
+            return owed_data
+
+        hash_input = "|".join(
+            [
+                user_id,
+                str(owed_data.linked_transaction_id),
+                owed_data.person.strip().lower(),
+                owed_data.source,
+            ]
+        )
+        dedupe_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
+
+        return owed_data.model_copy(update={"dedupe_hash": dedupe_hash})
 
     def _get_user_id(self, current_user: CurrentUser | None) -> str:
         if current_user is None:

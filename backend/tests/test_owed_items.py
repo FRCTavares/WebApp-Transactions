@@ -47,6 +47,26 @@ def test_create_owed_item_calculates_remaining_and_open_status(client):
     assert data["status"] == "open"
 
 
+def test_create_owed_item_rejects_duplicate_linked_transaction_for_same_person(client):
+    payload = {
+        "person": "Mother",
+        "reason": "MiniPreco",
+        "amount_total": "6.48",
+        "amount_paid": "0.00",
+        "linked_transaction_id": 995,
+    }
+
+    first_response = client.post("/api/owed", json=payload)
+    second_response = client.post("/api/owed", json=payload)
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 409
+    assert (
+        second_response.json()["detail"]
+        == "Owed item already exists for this transaction and person"
+    )
+
+
 def test_create_owed_item_with_partial_payment_becomes_partially_paid(client):
     response = create_owed_item(
         client,

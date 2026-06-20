@@ -209,6 +209,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
+  const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
   const [owedForm, setOwedForm] = useState<OwedFromTransactionFormState>({
     person: 'Mother',
     amount: '',
@@ -447,7 +448,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   }
 
   async function createOwedItemFromDialog() {
-    if (!owedDraftTransaction) {
+    if (!owedDraftTransaction || isCreatingOwedItem) {
       return
     }
 
@@ -465,6 +466,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
     setError(null)
     setMessage(null)
+    setIsCreatingOwedItem(true)
 
     try {
       await createOwedItem({
@@ -484,8 +486,11 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
           : 'Open owed item created from transaction.',
       )
       closeOwedDialog()
-      } catch (caughtError: unknown) {
+      loadTransactions()
+    } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed item')
+    } finally {
+      setIsCreatingOwedItem(false)
     }
   }
 
@@ -707,8 +712,9 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
                 type="button"
                 className="primary-button"
                 onClick={createOwedItemFromDialog}
+                disabled={isCreatingOwedItem}
               >
-                Create owed item
+                {isCreatingOwedItem ? 'Creating...' : 'Create owed item'}
               </button>
             </div>
           </div>
