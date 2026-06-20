@@ -745,3 +745,89 @@ main {
     min-height: 36px;
   }
 }
+
+.dashboard-metric-card {
+  position: relative;
+  overflow: hidden;
+  border-color: #d1d5db;
+}
+
+.dashboard-metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: #94a3b8;
+}
+
+.dashboard-metric-card span,
+.dashboard-metric-card strong,
+.dashboard-metric-card p {
+  position: relative;
+}
+
+.dashboard-metric-income {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.dashboard-metric-income::before,
+.dashboard-metric-positive::before {
+  background: #22c55e;
+}
+
+.dashboard-metric-spent {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.dashboard-metric-spent::before {
+  background: #f97316;
+}
+
+.dashboard-metric-positive {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.dashboard-metric-negative {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.dashboard-metric-negative::before {
+  background: #ef4444;
+}
+
+.dashboard-metric-neutral {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+}
+
+.dashboard-metric-neutral::before {
+  background: #94a3b8;
+}
+
+.dashboard-metric-negative strong {
+  color: #991b1b;
+}
+
+.dashboard-metric-positive strong,
+.dashboard-metric-income strong {
+  color: #14532d;
+}
+
+.dashboard-metric-spent strong {
+  color: #9a3412;
+}
+
+@media (max-width: 800px) {
+  .dashboard-metric-card {
+    min-height: 96px;
+    padding-left: 14px;
+  }
+
+  .dashboard-metric-card::before {
+    width: 4px;
+  }
+}

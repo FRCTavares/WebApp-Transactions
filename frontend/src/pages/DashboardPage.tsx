@@ -33,6 +33,20 @@ function calculateDashboardNet(
   ).toFixed(2)
 }
 
+function getMetricTone(value: string | number | null | undefined) {
+  const amount = Number(value ?? 0)
+
+  if (amount > 0) {
+    return 'positive'
+  }
+
+  if (amount < 0) {
+    return 'negative'
+  }
+
+  return 'neutral'
+}
+
 function toNumber(value: string) {
   return Number(value)
 }
@@ -268,16 +282,20 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       {summary && (
         <>
           <div className="cards">
-            <div className="card">
+            <div className="card dashboard-metric-card dashboard-metric-income">
               <span>Money In</span>
               <strong>{formatMoney(summary.money_in)}</strong>
             </div>
-            <div className="card">
+            <div className="card dashboard-metric-card dashboard-metric-spent">
               <span>Money Spent</span>
               <strong>{formatMoney(summary.personal_money_out)}</strong>
               <p className="muted small">Excludes owed/reimbursable spending</p>
             </div>
-            <div className="card">
+            <div
+              className={`card dashboard-metric-card dashboard-metric-${getMetricTone(
+                investmentMonthlyChange?.unrealised_monthly_change,
+              )}`}
+            >
               <span>Investments</span>
               <strong>
                 {investmentMonthlyChange?.unrealised_monthly_change
@@ -286,7 +304,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               </strong>
               <p className="muted small">Unrealised monthly gain/loss</p>
             </div>
-            <div className="card">
+            <div
+              className={`card dashboard-metric-card dashboard-metric-${getMetricTone(
+                calculateDashboardNet(summary, investmentMonthlyChange),
+              )}`}
+            >
               <span>Net</span>
               <strong>{formatMoney(calculateDashboardNet(summary, investmentMonthlyChange))}</strong>
               <p className="muted small">Income - spent + investments</p>
