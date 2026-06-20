@@ -433,16 +433,13 @@ export function ImportPage() {
         )}
 
         <div className="action-group">
-          <button type="button" onClick={handlePreview} disabled={isCommitting}>
-            Preview
-          </button>
           <button
             type="button"
             className="primary-button"
-            onClick={handleCommit}
-            disabled={!canCommit}
+            onClick={handlePreview}
+            disabled={isCommitting}
           >
-            {isCommitting ? 'Committing...' : 'Commit Import'}
+            Preview file
           </button>
         </div>
       </div>
@@ -451,9 +448,17 @@ export function ImportPage() {
 
 
       {preview && (
-        <>
-          <h2>Preview Summary</h2>
-          <div className="summary-grid">
+        <section className="panel-card import-preview-panel">
+          <div className="section-header">
+            <div>
+              <h2>Preview summary</h2>
+              <p className="muted small">
+                Review the rows below before committing this import.
+              </p>
+            </div>
+          </div>
+
+          <div className="summary-grid import-summary-grid">
             <article className="summary-card">
               <h2>Total rows</h2>
               <strong>{preview.rows_total}</strong>
@@ -462,7 +467,7 @@ export function ImportPage() {
               <h2>Valid</h2>
               <strong>{preview.rows_valid}</strong>
             </article>
-            <article className="summary-card">
+            <article className="summary-card import-summary-card-primary">
               <h2>Rows to import</h2>
               <strong>{rowsToImportCount}</strong>
             </article>
@@ -482,6 +487,20 @@ export function ImportPage() {
               <h2>Invalid</h2>
               <strong>{preview.rows_invalid}</strong>
             </article>
+          </div>
+
+          <div className={`import-decision-card ${
+            canCommit ? 'import-decision-ready' : 'import-decision-blocked'
+          }`}>
+            <div>
+              <h3>{canCommit ? 'Ready to commit' : 'Review required'}</h3>
+              <p>
+                {canCommit
+                  ? `${rowsToImportCount} new rows can be imported safely.`
+                  : 'Commit is disabled until the preview has new rows and no blocking transaction FX issues.'}
+              </p>
+            </div>
+            <strong>{rowsToImportCount}</strong>
           </div>
 
           {rowsToImportCount === 0 && (
@@ -525,7 +544,24 @@ export function ImportPage() {
           />
 
           <InvalidRowsTable rows={preview.invalid_rows} />
-        </>
+
+          <div className="import-commit-panel">
+            <div>
+              <h2>Commit reviewed import</h2>
+              <p className="muted small">
+                This will save only the non-duplicate rows shown above.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={handleCommit}
+              disabled={!canCommit}
+            >
+              {isCommitting ? 'Committing...' : `Commit ${rowsToImportCount} rows`}
+            </button>
+          </div>
+        </section>
       )}
 
       <h2>Import Batches</h2>
