@@ -25,10 +25,10 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.5rem 0.65rem;
-  border: 1px solid #93c5fd;
+  border: 1px solid #e5e7eb;
   border-radius: 0.85rem;
-  background: #eff6ff;
-  box-shadow: 0 6px 18px rgb(37 99 235 / 0.16);
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.08);
   pointer-events: auto;
 }
 
@@ -157,7 +157,7 @@ main {
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -377,7 +377,7 @@ main {
     grid-template-columns: 34px 1fr 34px auto;
     gap: 6px;
     padding: 6px;
-    border-color: #bfdbfe;
+    border-color: #e5e7eb;
     border-radius: 12px;
     box-shadow: none;
   }
@@ -446,7 +446,7 @@ main {
     width: 100%;
     padding: 6px;
     border-radius: 12px;
-    background: #eff6ff;
+    background: #ffffff;
     box-shadow: none;
   }
 
@@ -498,7 +498,7 @@ main {
     gap: 12px;
     width: 100%;
     padding: 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     background: #ffffff;
     text-align: left;
@@ -623,7 +623,7 @@ main {
 .expense-chart-centre span {
   color: #6b7280;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -788,7 +788,7 @@ main {
 .dashboard-metric-card {
   position: relative;
   overflow: hidden;
-  border-color: #d1d5db;
+  border-color: #e5e7eb;
 }
 
 .dashboard-metric-card::before {
@@ -862,7 +862,7 @@ main {
 
 @media (max-width: 800px) {
   .dashboard-metric-card {
-    min-height: 96px;
+    min-height: 82px;
     padding-left: 14px;
   }
 
