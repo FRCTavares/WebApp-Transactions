@@ -183,7 +183,7 @@ main {
 }
 
 .amount-primary {
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .amount-muted {
@@ -608,33 +608,57 @@ main {
 @media (max-width: 800px) {
   .expense-chart-card {
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    margin: 10px 0;
+    padding: 10px;
     border-radius: 14px;
   }
 
   .expense-chart-visual {
-    min-height: 190px;
+    min-height: 142px;
   }
 
   .expense-chart-visual svg {
-    width: 190px;
+    width: 142px;
+  }
+
+  .expense-chart-centre {
+    gap: 2px;
+  }
+
+  .expense-chart-centre span {
+    font-size: 10px;
+    letter-spacing: 0.04em;
   }
 
   .expense-chart-centre strong {
-    font-size: 18px;
+    font-size: 16px;
   }
 
-  .expense-chart-list h3 {
+  .expense-chart-list {
+    gap: 9px;
+  }
+
+  .expense-chart-list h3,
+  .expense-chart-list-header p {
     display: none;
   }
 
+  .expense-chart-legend {
+    gap: 6px;
+  }
+
   .expense-chart-legend-row {
-    padding: 9px;
+    gap: 8px;
+    padding: 8px;
   }
 
   .expense-chart-legend-row strong {
     font-size: 13px;
+  }
+
+  .expense-chart-legend-row small {
+    font-size: 11px;
   }
 
   .dashboard-mobile-category-list {
@@ -684,7 +708,7 @@ main {
 @media (max-width: 800px) {
   .expense-chart-list-header {
     display: grid;
-    gap: 10px;
+    gap: 8px;
   }
 
   .expense-chart-actions {
@@ -696,7 +720,7 @@ main {
   }
 
   .dashboard-chart-toggle button {
-    min-height: 36px;
+    min-height: 34px;
   }
 }
 
@@ -777,11 +801,23 @@ main {
 
 @media (max-width: 800px) {
   .dashboard-metric-card {
-    min-height: 82px;
-    padding-left: 14px;
+    min-height: 74px;
+    padding: 10px 10px 10px 14px;
   }
 
   .dashboard-metric-card::before {
     width: 4px;
+  }
+
+  .dashboard-metric-card span {
+    margin-bottom: 4px;
+  }
+
+  .dashboard-metric-card strong {
+    font-size: 17px;
+  }
+
+  .dashboard-metric-card p {
+    display: none;
   }
 }
