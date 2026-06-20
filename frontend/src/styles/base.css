@@ -269,50 +269,6 @@ main {
     min-height: 100vh;
   }
 
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: 0;
-    border-bottom: 1px solid #d1d5db;
-    padding: 12px 14px;
-    overflow: visible;
-  }
-
-  .sidebar-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 4px 10px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  .sidebar-header h2 {
-    margin: 0;
-    font-size: 20px;
-    line-height: 1.2;
-  }
-
-  .sidebar-header p {
-    grid-column: 1 / -1;
-    overflow: hidden;
-    font-size: 13px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .lock-button {
-    width: auto;
-    min-height: 34px;
-    margin-top: 0;
-    padding: 6px 10px;
-    font-size: 13px;
-    white-space: nowrap;
-  }
-
-  .sidebar-nav {
-    display: none;
-  }
-
   main {
     padding: 14px;
     overflow-x: hidden;
