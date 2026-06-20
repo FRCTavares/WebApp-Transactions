@@ -254,12 +254,6 @@ main {
     min-width: 0;
   }
 
-  h1 {
-    margin-bottom: 12px;
-    font-size: 24px;
-    line-height: 1.15;
-  }
-
   h2 {
     margin-top: 20px;
   }
@@ -269,24 +263,6 @@ main {
     min-height: 100vh;
   }
 
-  main {
-    padding: 14px;
-    overflow-x: hidden;
-  }
-
-  .cards {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  .card {
-    padding: 12px;
-  }
-
-  .card strong {
-    font-size: 20px;
-  }
 }
 
 .manual-form {
