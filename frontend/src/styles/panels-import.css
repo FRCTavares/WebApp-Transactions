@@ -53,43 +53,77 @@
   color: #991b1b;
 }
 
+.import-upload-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.import-upload-panel .section-header {
+  margin-bottom: 0;
+}
+
+.import-upload-panel .form-row {
+  align-items: end;
+  margin-bottom: 0;
+}
+
+.import-upload-panel .action-group {
+  margin-top: 0;
+}
+
+.import-upload-panel .primary-button {
+  min-width: 140px;
+}
+
 .import-preview-panel {
   display: grid;
-  gap: 18px;
+  gap: 20px;
+  padding: 18px;
+}
+
+.import-preview-panel > .section-header {
+  margin-bottom: -4px;
 }
 
 .import-summary-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(120px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 0;
 }
 
 .import-summary-grid .summary-card {
-  min-height: 92px;
+  min-height: 96px;
   margin-bottom: 0;
-  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .import-summary-grid .summary-card h2 {
-  margin: 0 0 8px;
-  color: #6b7280;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
 .import-summary-grid .summary-card strong {
-  font-size: 26px;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1;
 }
 
 .import-summary-card-primary {
-  border-color: #bfdbfe;
-  background: #eff6ff;
+  border-color: #dbeafe !important;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%) !important;
 }
 
-.import-decision-card,
-.import-commit-panel {
+.import-decision-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -97,25 +131,25 @@
   padding: 14px 16px;
   border: 1px solid #d1d5db;
   border-radius: 14px;
-  background: #ffffff;
 }
 
-.import-decision-card h3,
-.import-commit-panel h2 {
-  margin: 0 0 4px;
+.import-decision-card h3 {
+  margin: 0 0 3px;
+  font-size: 17px;
 }
 
-.import-decision-card p,
-.import-commit-panel p {
+.import-decision-card p {
   margin: 0;
+  color: #334155;
 }
 
 .import-decision-card strong {
-  font-size: 28px;
+  font-size: 30px;
+  line-height: 1;
 }
 
 .import-decision-ready {
-  border-color: #bbf7d0;
+  border-color: #86efac;
   background: #f0fdf4;
 }
 
@@ -134,35 +168,104 @@
   color: #9a3412;
 }
 
+.import-preview-section {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.import-preview-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.import-preview-section-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.import-preview-section-header span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.import-preview-section .table-wrap {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.import-preview-section table {
+  margin: 0;
+}
+
+.import-invalid-section {
+  border-color: #fecaca;
+}
+
+.import-invalid-section .import-preview-section-header {
+  background: #fef2f2;
+}
+
 .import-commit-panel {
   position: sticky;
   bottom: 12px;
   z-index: 10;
-  box-shadow: 0 14px 35px rgb(15 23 42 / 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.96);
+  box-shadow: 0 18px 45px rgb(15 23 42 / 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.import-commit-panel h2 {
+  margin: 0 0 3px;
+  font-size: 17px;
+}
+
+.import-commit-panel p {
+  margin: 0;
 }
 
 .import-commit-panel button {
-  min-width: 180px;
+  min-width: 190px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .import-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 800px) {
+  .import-upload-panel .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .import-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .import-summary-grid .summary-card {
-    min-height: 84px;
+    min-height: 86px;
     padding: 12px;
   }
 
   .import-summary-grid .summary-card strong {
-    font-size: 22px;
+    font-size: 24px;
   }
 
   .import-decision-card,
@@ -173,6 +276,11 @@
 
   .import-decision-card strong {
     font-size: 24px;
+  }
+
+  .import-preview-section-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .import-commit-panel {

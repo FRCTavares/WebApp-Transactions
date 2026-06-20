@@ -71,8 +71,11 @@ function PreviewTransactionsTable({
   }
 
   return (
-    <>
-      <h2>{title}</h2>
+    <section className="import-preview-section">
+      <div className="import-preview-section-header">
+        <h2>{title}</h2>
+        <span>{transactions.length} rows</span>
+      </div>
       <div className="table-wrap">
         <table>
           <thead>
@@ -122,7 +125,7 @@ function PreviewTransactionsTable({
           </tbody>
         </table>
       </div>
-    </>
+    </section>
   )
 }
 
@@ -138,8 +141,11 @@ function PreviewInvestmentEventsTable({
   }
 
   return (
-    <>
-      <h2>{title}</h2>
+    <section className="import-preview-section">
+      <div className="import-preview-section-header">
+        <h2>{title}</h2>
+        <span>{events.length} rows</span>
+      </div>
       <div className="table-wrap">
         <table>
           <thead>
@@ -183,7 +189,7 @@ function PreviewInvestmentEventsTable({
       {events.length > 50 && (
         <p className="muted small">Showing first 50 of {events.length} investment events.</p>
       )}
-    </>
+    </section>
   )
 }
 
@@ -194,8 +200,11 @@ function InvalidRowsTable({ rows }: { rows: ImportInvalidRow[] }) {
   }
 
   return (
-    <>
-      <h2>Invalid Rows</h2>
+    <section className="import-preview-section import-invalid-section">
+      <div className="import-preview-section-header">
+        <h2>Invalid rows</h2>
+        <span>{rows.length} rows</span>
+      </div>
       <div className="table-wrap">
         <table>
           <thead>
@@ -218,7 +227,7 @@ function InvalidRowsTable({ rows }: { rows: ImportInvalidRow[] }) {
       {rows.length > 50 && (
         <p className="muted small">Showing first 50 of {rows.length} invalid rows.</p>
       )}
-    </>
+    </section>
   )
 }
 
@@ -389,7 +398,7 @@ export function ImportPage() {
         </button>
       </div>
 
-      <div className="panel-card">
+      <div className="panel-card import-upload-panel">
         <div className="section-header">
           <div>
             <h2>Upload file</h2>
@@ -524,22 +533,22 @@ export function ImportPage() {
           )}
 
           <PreviewTransactionsTable
-            title="Transactions To Import"
+            title="Transactions to import"
             transactions={newTransactions}
           />
 
           <PreviewInvestmentEventsTable
-            title="Investment Events To Import"
+            title="Investment events to import"
             events={newInvestmentEvents}
           />
 
           <PreviewTransactionsTable
-            title="Duplicate Transaction Rows"
+            title="Duplicate transaction rows"
             transactions={duplicateTransactions}
           />
 
           <PreviewInvestmentEventsTable
-            title="Duplicate Investment Event Rows"
+            title="Duplicate investment event rows"
             events={duplicateInvestmentEvents}
           />
 
