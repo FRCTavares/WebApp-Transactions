@@ -5,6 +5,7 @@ import { getCategorySummary, getMonthlySummary } from '../api/summary'
 import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
+import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
 import { usePeriod } from '../context/PeriodContext'
 
 type CategoryRollup = {
@@ -17,6 +18,7 @@ type CategoryRollup = {
 
 type CategorySortField = 'category' | 'count' | 'personal' | 'owed' | 'gross'
 type SortDirection = 'asc' | 'desc'
+type DashboardChartMode = 'income' | 'expenses'
 
 function calculateDashboardNet(
   summary: MonthlySummary,
@@ -149,11 +151,15 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
   const [categories, setCategories] = useState<CategorySummaryResponse | null>(null)
+  const [incomeCategories, setIncomeCategories] =
+    useState<CategorySummaryResponse | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categoryTransactions, setCategoryTransactions] = useState<Transaction[]>([])
   const [categoryDetailsLoading, setCategoryDetailsLoading] = useState(false)
   const [categorySortField, setCategorySortField] = useState<CategorySortField>('personal')
   const [categorySortDirection, setCategorySortDirection] = useState<SortDirection>('desc')
+  const [dashboardChartMode, setDashboardChartMode] =
+    useState<DashboardChartMode>('expenses')
   const [error, setError] = useState<string | null>(null)
 
   const categoryRollups = useMemo(
@@ -163,6 +169,14 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const sortedCategoryRollups = useMemo(
     () => sortCategoryRollups(categoryRollups, categorySortField, categorySortDirection),
     [categoryRollups, categorySortField, categorySortDirection],
+  )
+  const incomeCategoryRollups = useMemo(
+    () => buildCategoryRollups(incomeCategories?.items ?? []),
+    [incomeCategories],
+  )
+  const sortedIncomeCategoryRollups = useMemo(
+    () => sortCategoryRollups(incomeCategoryRollups, 'personal', 'desc'),
+    [incomeCategoryRollups],
   )
 
   useEffect(() => {
@@ -174,11 +188,18 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       getMonthlySummary(year, month),
       getInvestmentMonthlyChange(year, month),
       getCategorySummary('out', year, month),
+      getCategorySummary('in', year, month),
     ])
-      .then(([summaryData, investmentMonthlyChangeData, categoryData]) => {
+      .then(([
+        summaryData,
+        investmentMonthlyChangeData,
+        categoryData,
+        incomeCategoryData,
+      ]) => {
         setSummary(summaryData)
         setInvestmentMonthlyChange(investmentMonthlyChangeData)
         setCategories(categoryData)
+        setIncomeCategories(incomeCategoryData)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
@@ -377,11 +398,59 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         <>
           <div className="dashboard-section-header">
             <div>
-              <h2>Expense Categories This Month</h2>
-              <p className="muted small">Click a category to see the transactions behind it. Personal is after owed/reimbursable parts.</p>
+              <h2>Money Breakdown This Month</h2>
+              <p className="muted small">
+                Switch between income and expenses. Expense values are personal spending after owed/reimbursable parts.
+              </p>
             </div>
           </div>
-          <div className="dashboard-mobile-category-list">
+
+          <ExpenseCategoryDonutChart
+            items={
+              dashboardChartMode === 'income'
+                ? sortedIncomeCategoryRollups
+                : sortedCategoryRollups
+            }
+            title={dashboardChartMode === 'income' ? 'Money in split' : 'Expense split'}
+            description={
+              dashboardChartMode === 'income'
+                ? 'Incoming money by category.'
+                : 'Personal spending by category.'
+            }
+            emptyMessage={
+              dashboardChartMode === 'income'
+                ? 'No incoming money found for this month.'
+                : 'No personal spending found for this month.'
+            }
+            onSelectCategory={
+              dashboardChartMode === 'expenses' ? handleCategoryClick : undefined
+            }
+            actions={
+              <div className="dashboard-chart-toggle" aria-label="Dashboard chart type">
+                <button
+                  type="button"
+                  className={dashboardChartMode === 'income' ? 'active' : ''}
+                  onClick={() => {
+                    setDashboardChartMode('income')
+                    setSelectedCategory(null)
+                    setCategoryTransactions([])
+                  }}
+                >
+                  Money In
+                </button>
+                <button
+                  type="button"
+                  className={dashboardChartMode === 'expenses' ? 'active' : ''}
+                  onClick={() => setDashboardChartMode('expenses')}
+                >
+                  Expenses
+                </button>
+              </div>
+            }
+          />
+
+          {dashboardChartMode === 'expenses' && (
+            <div className="dashboard-mobile-category-list">
             {sortedCategoryRollups.map((item) => (
               <button
                 key={item.category}
@@ -401,9 +470,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 </div>
               </button>
             ))}
-          </div>
+            </div>
+          )}
 
-          <div className="table-wrap dashboard-category-table-wrap">
+          {dashboardChartMode === 'expenses' && (
+            <div className="table-wrap dashboard-category-table-wrap">
             <table>
               <thead>
                 <tr>
@@ -474,7 +545,8 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
         </>
       )}
     </section>
