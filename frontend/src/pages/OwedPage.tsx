@@ -29,6 +29,24 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function getCurrentMonthKey() {
+  return getTodayDate().slice(0, 7)
+}
+
+function getMonthLabel(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number)
+  const date = new Date(year, month - 1, 1)
+
+  return date.toLocaleDateString('en-GB', {
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function isItemInMonth(item: OwedItem, monthKey: string) {
+  return item.created_at.slice(0, 7) === monthKey
+}
+
 function getInitialPaymentFormState(): PaymentFormState {
   return {
     person: '',
@@ -147,6 +165,7 @@ export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
   const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatusFilter>('active')
+  const [tableMonthFilter, setTableMonthFilter] = useState<'current' | 'all'>('current')
   const [form, setForm] = useState<OwedFormState>(getInitialFormState)
   const [editForm, setEditForm] = useState<OwedFormState>(getInitialFormState)
   const [editingItem, setEditingItem] = useState<OwedItem | null>(null)
@@ -429,6 +448,11 @@ export function OwedPage() {
   const activeItems = getActiveItems(items)
   const paidItems = getPaidItems(items)
   const cancelledItems = getCancelledItems(items)
+  const currentMonthKey = getCurrentMonthKey()
+  const visibleItems =
+    tableMonthFilter === 'current'
+      ? items.filter((item) => isItemInMonth(item, currentMonthKey))
+      : items
   const totalStillOwed = getItemsTotal(activeItems, 'amount_remaining')
   const totalAlreadyReimbursed = getItemsTotal(items, 'amount_paid')
   const totalOriginalAmount = getItemsTotal(items, 'amount_total')
@@ -486,6 +510,32 @@ export function OwedPage() {
           loadLinkedTransactions()
         }}
       />
+
+      <div className="panel-card owed-table-filter-card">
+        <div>
+          <h2>Table view</h2>
+          <p className="muted small">
+            Showing {visibleItems.length} of {items.length} owed items.
+          </p>
+        </div>
+
+        <div className="segmented-control">
+          <button
+            type="button"
+            className={tableMonthFilter === 'current' ? 'active' : ''}
+            onClick={() => setTableMonthFilter('current')}
+          >
+            {getMonthLabel(currentMonthKey)}
+          </button>
+          <button
+            type="button"
+            className={tableMonthFilter === 'all' ? 'active' : ''}
+            onClick={() => setTableMonthFilter('all')}
+          >
+            All
+          </button>
+        </div>
+      </div>
 
 
       {isPaymentModalOpen && (
@@ -613,7 +663,7 @@ export function OwedPage() {
       )}
 
       <OwedItemsTable
-        items={items}
+        items={visibleItems}
         linkedTransactions={linkedTransactions}
         isCreateRowOpen={isCreateRowOpen}
         form={form}
