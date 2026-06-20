@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
@@ -99,6 +99,7 @@ function App() {
   const [mobileTransactionDirection, setMobileTransactionDirection] =
     useState<Direction>('out')
   const [authError, setAuthError] = useState<string | null>(null)
+  const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
     isAuthConfigured,
     isLoading,
@@ -110,6 +111,19 @@ function App() {
   const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories' && page !== 'export'
   const displayName = getUserDisplayName(user)
   const greeting = getGreeting()
+
+  useEffect(() => {
+    function handleSlowApiState(event: Event) {
+      const customEvent = event as CustomEvent<{ isSlow: boolean }>
+      setIsBackendWakeNoticeVisible(Boolean(customEvent.detail?.isSlow))
+    }
+
+    window.addEventListener('finance-api-slow-state', handleSlowApiState)
+
+    return () => {
+      window.removeEventListener('finance-api-slow-state', handleSlowApiState)
+    }
+  }, [])
 
   async function handleLogin() {
     setAuthError(null)
@@ -218,6 +232,13 @@ function App() {
         </aside>
 
         <main>
+          {isBackendWakeNoticeVisible && (
+            <div className="backend-wake-notice" role="status">
+              <strong>Loading data...</strong>
+              <span>The backend may be waking up. This can take up to a minute.</span>
+            </div>
+          )}
+
           {shouldShowGlobalPeriodSelector && (
             <div className="global-topbar">
               <GlobalPeriodSelector />

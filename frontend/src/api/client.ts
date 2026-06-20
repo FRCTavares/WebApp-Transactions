@@ -1,7 +1,41 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const SLOW_API_NOTICE_DELAY_MS = 4000
 
 type QueryValue = string | number | boolean | null | undefined
 type AccessTokenProvider = (() => Promise<string | null>) | null
+
+let slowApiRequestCount = 0
+
+function emitSlowApiState(isSlow: boolean): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.dispatchEvent(new CustomEvent('finance-api-slow-state', {
+    detail: { isSlow },
+  }))
+}
+
+function startSlowApiNoticeTimer(): ReturnType<typeof setTimeout> {
+  return setTimeout(() => {
+    slowApiRequestCount += 1
+    emitSlowApiState(true)
+  }, SLOW_API_NOTICE_DELAY_MS)
+}
+
+function stopSlowApiNoticeTimer(timer: ReturnType<typeof setTimeout>): void {
+  clearTimeout(timer)
+
+  if (slowApiRequestCount === 0) {
+    return
+  }
+
+  slowApiRequestCount -= 1
+
+  if (slowApiRequestCount === 0) {
+    emitSlowApiState(false)
+  }
+}
 
 let accessTokenProvider: AccessTokenProvider = null
 
@@ -34,10 +68,16 @@ async function buildHeaders(headers?: HeadersInit): Promise<Headers> {
 }
 
 async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  return fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: await buildHeaders(init.headers),
-  })
+  const slowApiNoticeTimer = startSlowApiNoticeTimer()
+
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: await buildHeaders(init.headers),
+    })
+  } finally {
+    stopSlowApiNoticeTimer(slowApiNoticeTimer)
+  }
 }
 
 async function raiseForBadResponse(
