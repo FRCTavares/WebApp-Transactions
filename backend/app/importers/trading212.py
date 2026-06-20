@@ -131,14 +131,35 @@ class Trading212Importer:
 
         investment_markers = (
             "market buy",
+            "market order",
             "market sell",
             "dividend",
             "interest on cash",
+            "interest",
             "fx conversion",
             "currency conversion",
             "bank transfer",
             "deposit",
             "withdrawal",
+            "ações compradas",
+            "acao comprada",
+            "ações vendidas",
+            "acao vendida",
+            "compra de ações",
+            "compra de acoes",
+            "venda de ações",
+            "venda de acoes",
+            "juros sobre capital",
+            "juros sobre dinheiro",
+            "transferência bancária",
+            "transferencia bancaria",
+            "levantamento",
+            "retirada",
+            "bitcoin",
+            "btc",
+            "crypto buy",
+            "crypto sell",
+            "cripto",
         )
 
         return (
@@ -158,26 +179,59 @@ class Trading212Importer:
         if (
             "bank transfer" in combined_text
             or "deposit" in combined_text
+            or "transferência bancária" in combined_text
+            or "transferencia bancaria" in combined_text
             or description_text.startswith("transaction id:")
         ):
             return "deposit"
 
-        if "withdrawal" in combined_text:
+        if (
+            "withdrawal" in combined_text
+            or "levantamento" in combined_text
+            or "retirada" in combined_text
+        ):
             return "withdrawal"
 
-        if "market buy" in combined_text:
+        if (
+            "market buy" in combined_text
+            or "market order" in combined_text
+            or "ações compradas" in combined_text
+            or "acao comprada" in combined_text
+            or "compra de ações" in combined_text
+            or "compra de acoes" in combined_text
+            or "crypto buy" in combined_text
+            or "bitcoin" in combined_text
+            or "btc" in combined_text
+        ):
             return "market_buy"
 
-        if "market sell" in combined_text:
+        if (
+            "market sell" in combined_text
+            or "ações vendidas" in combined_text
+            or "acao vendida" in combined_text
+            or "venda de ações" in combined_text
+            or "venda de acoes" in combined_text
+            or "crypto sell" in combined_text
+        ):
             return "market_sell"
 
-        if "dividend" in combined_text:
+        if "dividend" in combined_text or "dividendo" in combined_text:
             return "dividend"
 
-        if "interest on cash" in combined_text:
+        if (
+            "interest on cash" in combined_text
+            or "juros sobre capital" in combined_text
+            or "juros sobre dinheiro" in combined_text
+            or "interest" in combined_text
+        ):
             return "interest"
 
-        if "fx conversion" in combined_text or "currency conversion" in combined_text:
+        if (
+            "fx conversion" in combined_text
+            or "currency conversion" in combined_text
+            or "conversão de moeda" in combined_text
+            or "conversao de moeda" in combined_text
+        ):
             return "fx_conversion"
 
         return "broker_event"
@@ -221,14 +275,29 @@ class Trading212Importer:
             or "deposit" in description_text
             or "withdrawal" in action_text
             or "withdrawal" in description_text
+            or "transferência bancária" in action_text
+            or "transferência bancária" in description_text
+            or "transferencia bancaria" in action_text
+            or "transferencia bancaria" in description_text
+            or "levantamento" in action_text
+            or "levantamento" in description_text
             or description_text.startswith("transaction id:")
         ):
             return "investment"
 
-        if "spending cashback" in action_text or "spending cashback" in description_text:
+        if (
+            "spending cashback" in action_text
+            or "spending cashback" in description_text
+            or "cashback" in action_text
+            or "cashback" in description_text
+        ):
             return "income"
 
-        if "card debit" in action_text:
+        if (
+            "card debit" in action_text
+            or "cartão" in action_text
+            or "cartao" in action_text
+        ):
             return "expense"
 
         if direction == "in":

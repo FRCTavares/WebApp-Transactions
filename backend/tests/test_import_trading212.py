@@ -82,3 +82,42 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
 
     assert result.investment_events[4].description == "Interest on cash"
     assert result.investment_events[4].event_type == "interest"
+
+def test_trading212_importer_handles_portuguese_and_crypto_rows():
+    csv_content = """Action,Time,Notes,ID,Total,Currency (Total),Charge amount,Currency (Charge amount),Deposit fee,Currency (Deposit fee),Merchant name,Merchant category,Name,Ticker,ISIN,No. of shares,Price / share
+Ações compradas,2026-06-01 09:00:00,CSPX buy,pt-market-1,123.45,EUR,,,,,,,iShares Core S&P 500,CSPX,IE00B5BMR087,0.10,1234.50
+Juros sobre capital,2026-06-02 09:00:00,Juros sobre capital,pt-interest-1,0.04,EUR,,,,,,,,,,
+Compra de cripto,2026-06-03 09:00:00,Bitcoin,btc-buy-1,11.97,EUR,,,,,,,Bitcoin,BTC,,0.00012,99750.00
+Débito cartão,2026-06-04 09:00:00,,card-pt-1,-7.50,EUR,,,,,Continente,Groceries,,,,,
+Cashback,2026-06-05 09:00:00,Cashback,card-cashback-1,0.01,EUR,,,,,,,,,,
+"""
+
+    importer = Trading212Importer()
+    result = importer.parse_full(csv_content)
+
+    assert len(result.transactions) == 2
+    assert len(result.investment_events) == 3
+
+    assert result.investment_events[0].event_type == "market_buy"
+    assert result.investment_events[0].instrument_name == "iShares Core S&P 500"
+    assert result.investment_events[0].ticker == "CSPX"
+    assert result.investment_events[0].amount == Decimal("123.45")
+
+    assert result.investment_events[1].event_type == "interest"
+    assert result.investment_events[1].amount == Decimal("0.04")
+
+    assert result.investment_events[2].event_type == "market_buy"
+    assert result.investment_events[2].instrument_name == "Bitcoin"
+    assert result.investment_events[2].ticker == "BTC"
+    assert result.investment_events[2].amount == Decimal("11.97")
+
+    assert result.transactions[0].description == "Continente"
+    assert result.transactions[0].direction == "out"
+    assert result.transactions[0].cashflow_type == "expense"
+    assert result.transactions[0].amount == Decimal("7.50")
+
+    assert result.transactions[1].description == "Cashback"
+    assert result.transactions[1].direction == "in"
+    assert result.transactions[1].cashflow_type == "income"
+    assert result.transactions[1].amount == Decimal("0.01")
+
