@@ -604,6 +604,7 @@ export type WealthSummary = {
   account_count: number
   latest_snapshot_date: string | null
   total_interest_earned: string
+  money_owed_to_me_eur: string
 }
 
 export type WealthMonthlyTotal = {

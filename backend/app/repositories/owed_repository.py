@@ -205,6 +205,18 @@ class OwedRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def get_active_remaining_total(
+        self,
+        user_id: str,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(OwedItem.amount_remaining), 0))
+            .where(OwedItem.user_id == user_id)
+            .where(OwedItem.status.in_(["open", "partially_paid"]))
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
     def get_allocated_total_for_payment(
         self,
         payment_id: int,

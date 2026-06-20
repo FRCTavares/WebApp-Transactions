@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
+from app.repositories.owed_repository import OwedRepository
 from app.repositories.wealth_repository import WealthRepository
 from app.schemas.wealth import (
     WealthAccountCreate,
@@ -24,7 +25,8 @@ router = APIRouter(prefix="/api/wealth", tags=["wealth"])
 
 def get_wealth_service(db: Session = Depends(get_db)) -> WealthService:
     repository = WealthRepository(db)
-    return WealthService(repository)
+    owed_repository = OwedRepository(db)
+    return WealthService(repository, owed_repository)
 
 
 @router.post(

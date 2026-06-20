@@ -115,6 +115,7 @@ class WealthSummaryRead(BaseModel):
     account_count: int
     latest_snapshot_date: DateType | None = None
     total_interest_earned: Decimal
+    money_owed_to_me_eur: Decimal = Decimal("0")
 
 
 class WealthMonthlyRead(BaseModel):

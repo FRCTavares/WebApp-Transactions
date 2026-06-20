@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
+from app.repositories.owed_repository import OwedRepository
 from app.repositories.wealth_repository import WealthRepository
 from app.schemas.wealth import (
     WealthAccountCreate,
@@ -19,8 +20,13 @@ from app.schemas.wealth import (
 
 
 class WealthService:
-    def __init__(self, repository: WealthRepository) -> None:
+    def __init__(
+        self,
+        repository: WealthRepository,
+        owed_repository: OwedRepository | None = None,
+    ) -> None:
         self.repository = repository
+        self.owed_repository = owed_repository
 
     def create_account(
         self,
@@ -171,16 +177,19 @@ class WealthService:
         snapshots = self.repository.list_all_snapshots_ascending(self._get_user_id(current_user))
         latest_by_account = self._get_latest_snapshot_by_account(snapshots)
 
-        total_wealth = sum(
+        user_id = self._get_user_id(current_user)
+        snapshot_total = sum(
             (snapshot.balance_eur for snapshot in latest_by_account.values()),
             Decimal("0"),
         )
+        money_owed_to_me = self._get_money_owed_to_me(user_id)
 
         return WealthSummaryRead(
-            current_total_wealth_eur=total_wealth,
-            account_count=self.repository.count_active_accounts(self._get_user_id(current_user)),
-            latest_snapshot_date=self.repository.get_latest_snapshot_date(self._get_user_id(current_user)),
-            total_interest_earned=self.repository.sum_interest_earned(self._get_user_id(current_user)),
+            current_total_wealth_eur=snapshot_total + money_owed_to_me,
+            account_count=self.repository.count_active_accounts(user_id),
+            latest_snapshot_date=self.repository.get_latest_snapshot_date(user_id),
+            total_interest_earned=self.repository.sum_interest_earned(user_id),
+            money_owed_to_me_eur=money_owed_to_me,
         )
 
     def get_monthly_totals(
@@ -214,6 +223,12 @@ class WealthService:
             )
 
         return rows
+
+    def _get_money_owed_to_me(self, user_id: str) -> Decimal:
+        if self.owed_repository is None:
+            return Decimal("0")
+
+        return self.owed_repository.get_active_remaining_total(user_id)
 
     def _get_user_id(self, current_user: CurrentUser | None) -> str:
         if current_user is None:

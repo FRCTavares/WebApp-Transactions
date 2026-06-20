@@ -444,15 +444,15 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         </article>
 
         <article className="wealth-summary-card">
-          <span>Active accounts</span>
-          <strong>{summary?.account_count ?? 0}</strong>
-          <small>{showInactiveAccounts ? 'Showing active and inactive' : 'Showing active only'}</small>
+          <span>Money Owed To Me</span>
+          <strong>{formatMoney(summary?.money_owed_to_me_eur ?? '0')}</strong>
+          <small>Active remaining owed total</small>
         </article>
 
         <article className="wealth-summary-card">
-          <span>Latest snapshot</span>
-          <strong>{formatDate(summary?.latest_snapshot_date ?? null)}</strong>
-          <small>Most recent balance date</small>
+          <span>Active accounts</span>
+          <strong>{summary?.account_count ?? 0}</strong>
+          <small>{showInactiveAccounts ? 'Showing active and inactive' : 'Showing active only'}</small>
         </article>
 
         <article
