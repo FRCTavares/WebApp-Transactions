@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { createOwedItem } from '../api/owed'
 import {
   createTransaction,
@@ -11,7 +11,7 @@ import {
   TransactionFilters,
   type TransactionFilterState,
 } from '../components/TransactionFilters'
-import type { TransactionFormState } from '../components/TransactionForm'
+import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
 import { CategorySelect } from '../components/CategorySelect'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { StatusMessage } from '../components/StatusMessage'
@@ -339,6 +339,12 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }
   }
 
+
+  function handleCreateTransactionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    void createTransactionFromForm()
+  }
+
   function handleStartEdit(transaction: Transaction) {
     setEditingTransaction(transaction)
     setEditForm(getFormStateFromTransaction(transaction))
@@ -522,97 +528,23 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         onClear={clearFilters}
       />
 
+      {isCreateFormOpen ? (
+        <TransactionForm
+          title={`Add ${direction === 'in' ? 'Money In' : 'Money Out'}`}
+          form={form}
+          submitLabel="Save"
+          direction={direction}
+          onSubmit={handleCreateTransactionSubmit}
+          onChange={updateForm}
+          onCancel={() => {
+            setForm(getInitialFormState(direction))
+            setIsCreateFormOpen(false)
+          }}
+        />
+      ) : null}
+
       <TransactionTable
         transactions={displayTransactions}
-        createRow={
-          isCreateFormOpen ? (
-            <tr className="inline-create-row">
-              <td>
-                <input
-                  className="table-input"
-                  type="date"
-                  value={form.date}
-                  onChange={(event) => updateForm('date', event.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  className="table-input"
-                  value={form.description}
-                  onChange={(event) => updateForm('description', event.target.value)}
-                  placeholder="Description"
-                />
-                <input
-                  className="table-input table-input-secondary"
-                  value={form.notes}
-                  onChange={(event) => updateForm('notes', event.target.value)}
-                  placeholder="Notes"
-                />
-              </td>
-              <td>
-                <select
-                  className="table-input"
-                  value={form.cashflow_type}
-                  onChange={(event) => updateForm('cashflow_type', event.target.value)}
-                >
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                  <option value="internal_transfer">Internal Transfer</option>
-                  <option value="investment">Investment</option>
-                  <option value="reimbursement">Reimbursement</option>
-                  <option value="reimbursed_expense">Reimbursed Expense</option>
-                </select>
-              </td>
-              <td>
-                <CategorySelect
-                  value={form.category}
-                  onChange={(value) => updateForm('category', value)}
-                  options={categoryOptions}
-                  placeholder="Category"
-                />
-                <CategorySelect
-                  value={form.subcategory}
-                  onChange={(value) => updateForm('subcategory', value)}
-                  options={subcategoryOptions}
-                  placeholder="Subcategory"
-                  className="table-input-secondary"
-                />
-              </td>
-              <td>manual</td>
-              <td className="right">
-                <input
-                  className="table-input right"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(event) => updateForm('amount', event.target.value)}
-                  placeholder="0.00"
-                />
-              </td>
-              <td className="actions-cell">
-                <div className="table-action-group">
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={createTransactionFromForm}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setForm(getInitialFormState(direction))
-                      setIsCreateFormOpen(false)
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ) : null
-        }
         editRow={(transaction) =>
           editingTransaction?.id === transaction.id ? (
             <tr key={transaction.id} className="inline-edit-row">

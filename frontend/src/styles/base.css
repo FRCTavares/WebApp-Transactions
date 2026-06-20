@@ -21,7 +21,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -44,7 +45,8 @@ button:disabled {
   opacity: 0.5;
 }
 input,
-select {
+select,
+textarea {
   border: 1px solid #9ca3af;
   border-radius: 6px;
   padding: 8px 10px;
@@ -833,5 +835,45 @@ main {
 
   .global-period-selector {
     border-radius: 16px;
+  }
+}
+
+@media (max-width: 800px) {
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .manual-form {
+    display: grid;
+    gap: 12px;
+    margin-right: 0;
+    margin-left: 0;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .manual-form h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .manual-form .form-row {
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .manual-form .action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .manual-form .action-group button {
+    width: 100%;
+    min-height: 44px;
   }
 }
