@@ -230,8 +230,33 @@ main {
 }
 
 @media (max-width: 800px) {
+  body {
+    background: #f9fafb;
+  }
+
+  button {
+    min-height: 38px;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  h1 {
+    margin-bottom: 12px;
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  h2 {
+    margin-top: 20px;
+  }
+
   .app-shell {
-    grid-template-columns: 1fr;
+    display: block;
+    min-height: 100vh;
   }
 
   .sidebar {
@@ -239,39 +264,62 @@ main {
     height: auto;
     border-right: 0;
     border-bottom: 1px solid #d1d5db;
-    padding: 14px;
+    padding: 12px 14px;
+    overflow: visible;
   }
 
   .sidebar-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    align-items: center;
     margin-bottom: 12px;
   }
 
-  .sidebar-nav {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding-bottom: 4px;
+  .sidebar-header h2 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.2;
   }
 
-  .nav-group {
-    min-width: max-content;
-  }
-
-  .nav-items {
-    display: flex;
-    gap: 6px;
-  }
-
-  .sidebar button {
+  .sidebar-header p {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .lock-button {
+    width: auto;
+    min-height: 34px;
+    margin-top: 0;
+    padding: 6px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .sidebar-nav {
+    display: none;
+  }
+
   main {
-    padding: 16px;
+    padding: 14px;
+    overflow-x: hidden;
   }
 
   .cards {
     grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .card strong {
+    font-size: 20px;
   }
 }
 
@@ -453,4 +501,337 @@ main {
 
 .section-header h2 {
   margin-bottom: 4px;
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    padding: 10px 12px 12px;
+    background: #ffffff;
+  }
+
+  .sidebar-header {
+    grid-template-columns: 1fr auto;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-header h2 {
+    font-size: 18px;
+  }
+
+  .sidebar-header p {
+    font-size: 12px;
+  }
+
+  .lock-button {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+    font-size: 22px;
+  }
+
+  .page-header {
+    min-height: 0;
+    margin-bottom: 12px;
+  }
+
+  .toolbar {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar button,
+  .page-header button {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+
+  .cards {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .card span {
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .card strong {
+    font-size: 19px;
+  }
+
+  .card p {
+    margin-top: 6px;
+    margin-bottom: 0;
+  }
+
+  .filter-panel,
+  .manual-form {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .compact-filter-panel summary {
+    padding: 10px 12px;
+  }
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+.account-summary {
+  min-width: 0;
+}
+
+.account-greeting {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.account-subtitle {
+  margin: 3px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    padding-bottom: 68px;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+
+  .sidebar-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 0;
+  }
+
+  .account-greeting {
+    overflow: hidden;
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-subtitle {
+    font-size: 11px;
+  }
+
+  .lock-button {
+    width: auto;
+    min-height: 32px;
+    margin-top: 0;
+    padding: 5px 9px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .sidebar-nav {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-top: 1px solid #d1d5db;
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-bottom-nav button {
+    min-height: 44px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .mobile-bottom-nav button.active {
+    background: #111827;
+    color: #ffffff;
+  }
+
+  main {
+    padding: 10px 12px 16px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card {
+    min-height: 88px;
+  }
+
+  .card strong {
+    font-size: 18px;
+  }
+
+  .card .small {
+    font-size: 11px;
+  }
+}
+
+.desktop-only {
+  display: initial;
+}
+
+@media (max-width: 800px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .page-header .action-group {
+    justify-content: flex-start;
+  }
+
+  .page-header .primary-button {
+    min-width: 86px;
+  }
+}
+
+.dashboard-hero {
+  margin-bottom: 20px;
+}
+
+.dashboard-hero p {
+  margin: 0 0 4px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-hero h1 {
+  margin-bottom: 0;
+}
+
+@media (max-width: 800px) {
+  .dashboard-hero {
+    margin-bottom: 12px;
+  }
+
+  .dashboard-hero p {
+    font-size: 13px;
+  }
+
+  .account-greeting {
+    font-size: 14px;
+  }
+
+  .account-subtitle {
+    display: none;
+  }
+}
+
+.mobile-segmented-control {
+  display: none;
+}
+
+.mobile-more-page {
+  display: grid;
+  gap: 16px;
+}
+
+.mobile-more-actions {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 800px) {
+  .mobile-segmented-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background: #ffffff;
+  }
+
+  .mobile-segmented-control button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .mobile-segmented-control button.active {
+    background: #111827;
+    color: #ffffff;
+  }
+
+  .mobile-more-actions button {
+    min-height: 48px;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: left;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    display: none;
+  }
+
+  .app-shell {
+    padding-bottom: 72px;
+  }
+
+  main {
+    padding-top: 12px;
+  }
+
+  .global-period-selector {
+    border-radius: 16px;
+  }
 }

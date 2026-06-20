@@ -138,7 +138,12 @@ function sortCategoryRollups(
   })
 }
 
-export function DashboardPage() {
+type DashboardPageProps = {
+  greeting: string
+  displayName: string
+}
+
+export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const { year, month } = usePeriod()
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
@@ -232,7 +237,10 @@ export function DashboardPage() {
 
   return (
     <section>
-      <h1>Dashboard</h1>
+      <div className="dashboard-hero">
+        <p>{greeting}, {displayName}</p>
+        <h1>Dashboard</h1>
+      </div>
 
       <StatusMessage error={error} />
 
@@ -283,7 +291,39 @@ export function DashboardPage() {
               {categoryDetailsLoading ? (
                 <p className="muted">Loading category details...</p>
               ) : (
-                <div className="table-wrap">
+                <>
+                  <div className="dashboard-mobile-category-transactions">
+                    {categoryTransactions.map((transaction) => (
+                      <article key={transaction.id} className="dashboard-mobile-category-transaction">
+                        <div className="dashboard-mobile-category-transaction-main">
+                          <div>
+                            <strong>{transaction.description}</strong>
+                            <p>{transaction.date}</p>
+                          </div>
+                          <strong>{formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}</strong>
+                        </div>
+
+                        <div className="dashboard-mobile-category-transaction-meta">
+                          {getTransactionOwedAmount(transaction) > 0 && (
+                            <span className="badge badge-neutral">
+                              Owed {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
+                            </span>
+                          )}
+                          <span className="muted small">Gross {formatMoney(transaction.amount)}</span>
+                        </div>
+
+                        <p className="muted small">{getReasonText(transaction)}</p>
+                      </article>
+                    ))}
+
+                    {categoryTransactions.length === 0 && (
+                      <div className="dashboard-mobile-category-empty">
+                        <p className="muted">No transactions found for this category.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="table-wrap dashboard-category-detail-table-wrap">
                   <table>
                     <thead>
                       <tr>
@@ -327,7 +367,8 @@ export function DashboardPage() {
                       )}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -340,7 +381,29 @@ export function DashboardPage() {
               <p className="muted small">Click a category to see the transactions behind it. Personal is after owed/reimbursable parts.</p>
             </div>
           </div>
-          <div className="table-wrap">
+          <div className="dashboard-mobile-category-list">
+            {sortedCategoryRollups.map((item) => (
+              <button
+                key={item.category}
+                type="button"
+                className={`dashboard-mobile-category-card ${isFullyReimbursed(item) ? 'fully-reimbursed-row' : ''}`}
+                onClick={() => handleCategoryClick(item.category)}
+              >
+                <div>
+                  <strong>{item.category}</strong>
+                  <span>{item.count} {item.count === 1 ? 'transaction' : 'transactions'}</span>
+                </div>
+                <div>
+                  <strong>{formatMoney(item.personalTotal.toFixed(2))}</strong>
+                  {item.owedTotal > 0 && (
+                    <span>Owed {formatMoney(item.owedTotal.toFixed(2))}</span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="table-wrap dashboard-category-table-wrap">
             <table>
               <thead>
                 <tr>

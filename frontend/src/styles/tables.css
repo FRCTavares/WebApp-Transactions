@@ -226,3 +226,205 @@ td[colspan] {
   gap: 0.5rem;
   margin: 0.75rem 0;
 }
+
+@media (max-width: 800px) {
+  .table-wrap {
+    margin-right: -14px;
+    margin-left: -14px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table {
+    min-width: 760px;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 3px 7px;
+  }
+
+  .transaction-description-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .action-group {
+    gap: 6px;
+  }
+
+  td .action-group button {
+    min-height: 34px;
+    padding: 5px 7px;
+    font-size: 12px;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0.75rem;
+  }
+
+  .modal-card {
+    max-height: calc(100vh - 1.5rem);
+    overflow-y: auto;
+  }
+
+  .modal-header,
+  .modal-actions,
+  .modal-transaction-summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .modal-actions {
+    gap: 0.5rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 800px) {
+  .table-wrap {
+    margin-right: -12px;
+    margin-left: -12px;
+    margin-bottom: 16px;
+  }
+
+  .table-wrap table {
+    min-width: 680px;
+  }
+
+  th,
+  td {
+    padding: 7px;
+    font-size: 12px;
+  }
+
+  thead th {
+    top: 0;
+  }
+
+  td[colspan] {
+    padding: 18px 10px;
+  }
+
+  .table-sort-button {
+    font-size: 12px;
+  }
+
+  .badge {
+    font-size: 10px;
+  }
+
+  .month-navigator {
+    gap: 6px;
+  }
+
+  .month-navigator button {
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: 13px;
+  }
+
+  .month-navigator-current {
+    min-height: 34px;
+    padding: 0 8px;
+  }
+
+  .month-navigator-current input {
+    width: 110px;
+    font-size: 12px;
+  }
+}
+.transaction-mobile-list {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .transaction-mobile-list {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .transaction-mobile-card {
+    display: grid;
+    gap: 8px;
+    padding: 11px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .transaction-mobile-card-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .transaction-mobile-card-main strong {
+    display: block;
+    color: #111827;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .transaction-mobile-card-main p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  .transaction-mobile-card-main > span {
+    flex: 0 0 auto;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .transaction-mobile-card-meta {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .transaction-mobile-raw {
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .transaction-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .transaction-mobile-actions button {
+    min-height: 34px;
+    padding: 5px 7px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .transaction-desktop-table-wrap {
+    display: none;
+  }
+
+  .transaction-desktop-table-wrap.transaction-table-has-inline-form {
+    display: block;
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { listInvestmentPositions } from '../api/investmentEvents'
 import {
   createWealthAccount,
@@ -14,6 +14,7 @@ import {
 } from '../api/wealth'
 import { StatusMessage } from '../components/StatusMessage'
 import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
+import { WealthMobileAccounts } from '../components/wealth/WealthMobileAccounts'
 import {
   accountTypeOptions,
   getAccountGroups,
@@ -39,7 +40,11 @@ import type {
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
-export function WealthPage() {
+type WealthPageProps = {
+  onOpenInvestments?: () => void
+}
+
+export function WealthPage({ onOpenInvestments }: WealthPageProps) {
   const [accounts, setAccounts] = useState<WealthAccount[]>([])
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
   const [summary, setSummary] = useState<WealthSummary | null>(null)
@@ -450,12 +455,27 @@ export function WealthPage() {
           <small>Most recent balance date</small>
         </article>
 
-        <article className="wealth-summary-card">
-          <span>Total interest</span>
-          <strong>{formatMoney(summary?.total_interest_earned ?? '0')}</strong>
-          <small>Manual savings interest entries</small>
+        <article
+          className={`wealth-summary-card wealth-investments-shortcut ${onOpenInvestments ? 'wealth-summary-card-button' : ''}`}
+          onClick={onOpenInvestments}
+        >
+          <span>Investments</span>
+          <strong>
+            {formatMoney(
+              investmentPositions
+                .reduce((total, position) => total + Number(position.market_value ?? 0), 0)
+                .toFixed(2),
+            )}
+          </strong>
+          <small>{investmentPositions.length} open positions. Tap to inspect investments.</small>
         </article>
       </div>
+
+      <WealthMobileAccounts
+        accountGroups={accountGroups}
+        latestByAccount={latestByAccount}
+        investmentPositions={investmentPositions}
+      />
 
       {isAccountFormOpen ? (
         <section className="panel-card">
@@ -648,7 +668,7 @@ export function WealthPage() {
         </section>
       ) : null}
 
-      <section className="panel-card">
+      <section className="panel-card wealth-accounts-panel">
         <div className="section-header">
           <div>
             <h2>Accounts</h2>
@@ -748,8 +768,8 @@ export function WealthPage() {
                   .at(-1)
 
                 return (
-                  <>
-                    <tr key={group.key} className="wealth-account-group-row">
+                  <Fragment key={group.key}>
+                    <tr className="wealth-account-group-row">
                       <td>
                         <button
                           type="button"
@@ -819,7 +839,7 @@ export function WealthPage() {
                           )
                         })
                       : null}
-                  </>
+                  </Fragment>
                 )
               })}
 
@@ -839,7 +859,7 @@ export function WealthPage() {
         </div>
       </section>
 
-      <section className="panel-card">
+      <section className="panel-card wealth-monthly-panel">
         <div className="section-header">
           <div>
             <h2>Monthly totals</h2>
@@ -852,7 +872,7 @@ export function WealthPage() {
         <WealthMonthlyChart monthlyTotals={monthlyTotals} />
       </section>
 
-      <section className="panel-card">
+      <section className="panel-card wealth-snapshots-panel">
         <div className="section-header">
           <div>
             <h2>Snapshots</h2>

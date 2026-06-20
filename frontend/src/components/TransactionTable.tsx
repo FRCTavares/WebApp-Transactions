@@ -98,9 +98,86 @@ export function TransactionTable({
     })
   }, [transactions, sortField, sortDirection])
 
+  const hasInlineForm = Boolean(createRow)
+
   return (
-    <div className="table-wrap">
-      <table>
+    <>
+      {!hasInlineForm && (
+        <div className="transaction-mobile-list">
+          {sortedTransactions.length === 0 ? (
+            <p className="muted">No transactions found.</p>
+          ) : (
+            sortedTransactions.map((transaction) => (
+              <article
+                key={transaction.is_grouped ? `mobile-grouped-${transaction.dedupe_hash}` : `mobile-${transaction.id}`}
+                className="transaction-mobile-card"
+              >
+                <div className="transaction-mobile-card-main">
+                  <div>
+                    <strong>{transaction.description}</strong>
+                    <p>
+                      {formatDate(transaction.date)}
+                      {transaction.category ? ` · ${transaction.category}` : ''}
+                    </p>
+                  </div>
+                  <span>{formatMoney(transaction.amount, transaction.currency)}</span>
+                </div>
+
+                <div className="transaction-mobile-card-meta">
+                  <span className={getCashflowBadgeClass(transaction.cashflow_type)}>
+                    {formatCashflowType(transaction.cashflow_type)}
+                  </span>
+                  {getOwedLabel(transaction) && (
+                    <span className={`badge ${
+                      transaction.owed_status === 'paid'
+                        ? 'badge-owed-paid'
+                        : 'badge-owed-open'
+                    }`}>
+                      {getOwedLabel(transaction)}
+                    </span>
+                  )}
+                  {transaction.source && (
+                    <span className="badge badge-source">{transaction.source}</span>
+                  )}
+                </div>
+
+                {transaction.raw_description && transaction.raw_description !== transaction.description && (
+                  <p className="transaction-mobile-raw muted small">
+                    {transaction.raw_description}
+                  </p>
+                )}
+
+                {showActions && !transaction.is_grouped && (
+                  <div className="transaction-mobile-actions">
+                    {onEdit && (
+                      <button type="button" onClick={() => onEdit(transaction)}>
+                        Edit
+                      </button>
+                    )}
+                    {!transaction.is_owed && onMarkOwed && transaction.direction === 'out' && (
+                      <button type="button" onClick={() => onMarkOwed(transaction)}>
+                        Owed
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() => onDelete(transaction)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                )}
+              </article>
+            ))
+          )}
+        </div>
+      )}
+
+      <div className={`table-wrap transaction-desktop-table-wrap ${hasInlineForm ? 'transaction-table-has-inline-form' : ''}`}>
+        <table>
         <thead>
           <tr>
             <th>
@@ -221,6 +298,7 @@ export function TransactionTable({
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }

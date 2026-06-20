@@ -127,3 +127,206 @@
     justify-content: flex-start;
   }
 }
+
+@media (max-width: 800px) {
+  .owed-summary-card {
+    padding: 12px;
+  }
+
+  .owed-summary-card strong {
+    font-size: 22px;
+  }
+
+  .owed-toolbar select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .owed-toolbar-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .owed-toolbar-actions button {
+    width: 100%;
+  }
+
+  .owed-table {
+    min-width: 820px;
+  }
+
+  .owed-table th,
+  .owed-table td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 800px) {
+  .owed-page {
+    gap: 12px;
+  }
+
+  .owed-summary-grid {
+    gap: 8px;
+  }
+
+  .owed-summary-card {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .owed-summary-card span {
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+
+  .owed-summary-card strong {
+    margin-bottom: 5px;
+    font-size: 22px;
+  }
+
+  .owed-toolbar {
+    gap: 8px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .owed-toolbar-actions {
+    gap: 6px;
+  }
+
+  .owed-toolbar-actions button {
+    min-height: 36px;
+    font-size: 14px;
+  }
+
+  .owed-table {
+    min-width: 720px;
+  }
+}
+
+.owed-mobile-groups {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .owed-summary-card:not(.owed-summary-card-primary) {
+    display: none;
+  }
+
+  .owed-toolbar-actions {
+    display: none;
+  }
+
+  .owed-mobile-groups {
+    display: grid;
+    gap: 10px;
+  }
+
+  .owed-mobile-empty {
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .owed-person-card {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+    background: #ffffff;
+  }
+
+  .owed-person-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .owed-person-card-header h2 {
+    margin: 0 0 3px;
+    font-size: 18px;
+    line-height: 1.15;
+  }
+
+  .owed-person-card-header p {
+    margin: 0;
+  }
+
+  .owed-person-card-header > strong {
+    color: #111827;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+
+  .owed-person-items {
+    display: grid;
+    gap: 8px;
+  }
+
+  .owed-person-item {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+  }
+
+  .owed-person-item-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .owed-person-item-main strong {
+    display: block;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .owed-person-item-main p {
+    margin: 4px 0 0;
+    line-height: 1.35;
+  }
+
+  .owed-person-item-main > span {
+    flex: 0 0 auto;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .owed-person-item-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .owed-person-item-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .owed-person-item-actions button {
+    min-height: 34px;
+    padding: 5px 7px;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .owed-desktop-table-wrap {
+    display: none;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form {
+    display: block;
+  }
+}

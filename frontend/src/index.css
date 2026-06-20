@@ -265,3 +265,273 @@ main {
 .lock-button:hover {
   background: #e2e8f0;
 }
+
+@media (max-width: 800px) {
+  .global-topbar {
+    position: sticky;
+    top: 0;
+    left: auto;
+    z-index: 30;
+    justify-content: stretch;
+    margin: -14px -14px 14px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #d1d5db;
+    background: #f9fafb;
+    transform: none;
+  }
+
+  .global-period-selector {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    width: 100%;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem;
+    border-radius: 0.7rem;
+  }
+
+  .global-period-selector label {
+    min-width: 0;
+  }
+
+  .global-period-selector label span {
+    display: none;
+  }
+
+  .global-period-selector input {
+    width: 100%;
+    min-width: 0;
+    height: 2.2rem;
+    font-size: 14px;
+  }
+
+  .global-period-selector button {
+    min-width: 2.2rem;
+    height: 2.2rem;
+    padding: 0 0.55rem;
+    font-size: 14px;
+  }
+
+  .dashboard-section-header,
+  .category-detail-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .category-detail-panel {
+    margin-right: -14px;
+    margin-left: -14px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 800px) {
+  .global-topbar {
+    margin: -12px -12px 12px;
+    padding: 8px 12px;
+    background: #f3f4f6;
+  }
+
+  .global-period-selector {
+    grid-template-columns: 34px 1fr 34px auto;
+    gap: 6px;
+    padding: 6px;
+    border-color: #bfdbfe;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .global-period-selector input {
+    height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .global-period-selector button {
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .global-period-selector button:last-child {
+    min-width: 56px;
+  }
+
+  .dashboard-section-header {
+    margin-top: 1.35rem;
+  }
+
+  .dashboard-section-header h2 {
+    font-size: 17px;
+  }
+
+  .category-detail-panel {
+    margin-right: -12px;
+    margin-left: -12px;
+    padding: 12px;
+  }
+
+  .unlock-page {
+    padding: 1rem;
+  }
+
+  .unlock-card {
+    padding: 1.15rem;
+    border-radius: 0.9rem;
+  }
+
+  .unlock-card h1 {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+}
+
+@media (max-width: 800px) {
+  .global-topbar {
+    position: static;
+    margin: 0 0 10px;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+    transform: none;
+  }
+
+  .global-period-selector {
+    display: grid;
+    grid-template-columns: 36px 1fr 36px 58px;
+    gap: 6px;
+    width: 100%;
+    padding: 6px;
+    border-radius: 12px;
+    background: #eff6ff;
+    box-shadow: none;
+  }
+
+  .global-period-selector label {
+    min-width: 0;
+  }
+
+  .global-period-selector label span {
+    display: none;
+  }
+
+  .global-period-selector input {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .global-period-selector button {
+    min-width: 36px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+}
+
+.dashboard-mobile-category-list,
+.dashboard-mobile-category-transactions {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .dashboard-category-table-wrap,
+  .dashboard-category-detail-table-wrap {
+    display: none;
+  }
+
+  .dashboard-mobile-category-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .dashboard-mobile-category-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: left;
+  }
+
+  .dashboard-mobile-category-card > div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .dashboard-mobile-category-card > div:last-child {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .dashboard-mobile-category-card strong {
+    color: #111827;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .dashboard-mobile-category-card span {
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  .dashboard-mobile-category-transactions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .dashboard-mobile-category-transaction,
+  .dashboard-mobile-category-empty {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .dashboard-mobile-category-transaction-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .dashboard-mobile-category-transaction-main strong {
+    color: #111827;
+    font-size: 14px;
+    line-height: 1.25;
+  }
+
+  .dashboard-mobile-category-transaction-main p {
+    margin: 3px 0 0;
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  .dashboard-mobile-category-transaction-main > strong {
+    white-space: nowrap;
+  }
+
+  .dashboard-mobile-category-transaction-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .dashboard-section-header h2 {
+    font-size: 18px;
+  }
+}

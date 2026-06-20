@@ -11,6 +11,44 @@ export type OwedFormState = {
   notes: string
 }
 
+function getPersonGroups(items: OwedItem[]) {
+  const groups = new Map<string, OwedItem[]>()
+
+  for (const item of items) {
+    const currentItems = groups.get(item.person) ?? []
+    currentItems.push(item)
+    groups.set(item.person, currentItems)
+  }
+
+  return [...groups.entries()]
+    .map(([person, personItems]) => ({
+      person,
+      items: personItems,
+      totalRemaining: personItems.reduce(
+        (total, item) => total + Number(item.amount_remaining),
+        0,
+      ),
+    }))
+    .sort((firstGroup, secondGroup) => {
+      const totalDifference = secondGroup.totalRemaining - firstGroup.totalRemaining
+
+      if (totalDifference !== 0) {
+        return totalDifference
+      }
+
+      return firstGroup.person.localeCompare(secondGroup.person)
+    })
+}
+
+function getStatusLabel(item: OwedItem) {
+  if (item.status === 'partially_paid') {
+    return 'part paid'
+  }
+
+  return item.status.replaceAll('_', ' ')
+}
+
+
 type OwedItemsTableProps = {
   items: OwedItem[]
   linkedTransactions: Transaction[]
@@ -52,9 +90,84 @@ export function OwedItemsTable({
   onCancelEdit,
   formatLinkedTransactionOption,
 }: OwedItemsTableProps) {
+  const shouldShowTableOnMobile = isCreateRowOpen || Boolean(editingItem)
+  const personGroups = getPersonGroups(items)
+
   return (
-    <div className="table-wrap owed-table-wrap">
-      <table className="owed-table">
+    <>
+      {!shouldShowTableOnMobile && (
+        <div className="owed-mobile-groups">
+          {personGroups.length === 0 ? (
+            <div className="owed-empty-state owed-mobile-empty">
+              <strong>No current owed items</strong>
+              <p className="muted">
+                Add a new item when someone owes you money.
+              </p>
+            </div>
+          ) : (
+            personGroups.map((group) => (
+              <article key={group.person} className="owed-person-card">
+                <div className="owed-person-card-header">
+                  <div>
+                    <h2>{group.person}</h2>
+                    <p className="muted small">
+                      {group.items.length} {group.items.length === 1 ? 'item' : 'items'}
+                    </p>
+                  </div>
+                  <strong>{formatMoney(group.totalRemaining.toFixed(2))}</strong>
+                </div>
+
+                <div className="owed-person-items">
+                  {group.items.map((item) => (
+                    <article key={item.id} className="owed-person-item">
+                      <div className="owed-person-item-main">
+                        <div>
+                          <strong>{item.reason}</strong>
+                          {item.notes && <p className="muted small">{item.notes}</p>}
+                        </div>
+                        <span>{formatMoney(item.amount_remaining)}</span>
+                      </div>
+
+                      <div className="owed-person-item-meta">
+                        <span className="badge badge-neutral">{getStatusLabel(item)}</span>
+                        {item.due_date && (
+                          <span className="muted small">Due {formatDate(item.due_date)}</span>
+                        )}
+                        {item.amount_paid !== '0.00' && (
+                          <span className="muted small">
+                            Paid {formatMoney(item.amount_paid)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="owed-person-item-actions">
+                        <button type="button" onClick={() => onStartEdit(item)}>
+                          Edit
+                        </button>
+                        {item.status !== 'paid' && item.status !== 'cancelled' && (
+                          <button type="button" onClick={() => onMarkPaid(item)}>
+                            Paid
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() => onDelete(item)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      )}
+
+      <div className={`table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowTableOnMobile ? 'owed-table-has-inline-form' : ''}`}>
+        <table className="owed-table">
         <thead>
           <tr>
             <th>Person</th>
@@ -302,6 +415,7 @@ export function OwedItemsTable({
           )}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }

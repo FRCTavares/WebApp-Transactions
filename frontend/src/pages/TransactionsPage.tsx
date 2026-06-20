@@ -500,7 +500,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
         </div>
 
         <div className="action-group">
-          <button type="button" onClick={handleExportCsv}>
+          <button className="desktop-only" type="button" onClick={handleExportCsv}>
             Export CSV
           </button>
           <button

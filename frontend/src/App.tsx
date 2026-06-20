@@ -11,8 +11,10 @@ import { ExportPage } from './pages/ExportPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
+import type { User } from '@supabase/supabase-js'
+import type { Direction } from './types/api'
 
-type Page = 'dashboard' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'cleanup' | 'import' | 'categories' | 'export'
+type Page = 'dashboard' | 'transactions' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'more' | 'cleanup' | 'import' | 'categories' | 'export'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
   {
@@ -42,8 +44,60 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
   },
 ]
 
+function getGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 12) {
+    return 'Good morning'
+  }
+
+  if (hour < 18) {
+    return 'Good afternoon'
+  }
+
+  return 'Good evening'
+}
+
+function titleCaseName(value: string) {
+  return value
+    .split(/[.\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ')
+}
+
+function getUserDisplayName(user: User | null) {
+  const fullName = user?.user_metadata?.full_name
+  const name = user?.user_metadata?.name
+  const metadataName =
+    typeof fullName === 'string'
+      ? fullName
+      : typeof name === 'string'
+        ? name
+        : ''
+
+  if (metadataName.trim()) {
+    return metadataName.trim().split(/\s+/)[0]
+  }
+
+  const emailName = user?.email?.split('@')[0] ?? 'there'
+  const fallbackName = titleCaseName(emailName).split(/\s+/)[0]
+
+  return fallbackName || 'there'
+}
+
+const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
+  { id: 'dashboard', label: 'Home' },
+  { id: 'transactions', label: 'Transactions' },
+  { id: 'owed', label: 'Owed' },
+  { id: 'wealth', label: 'Wealth' },
+  { id: 'more', label: 'More' },
+]
+
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
+  const [mobileTransactionDirection, setMobileTransactionDirection] =
+    useState<Direction>('out')
   const [authError, setAuthError] = useState<string | null>(null)
   const {
     isAuthConfigured,
@@ -54,6 +108,8 @@ function App() {
     user,
   } = useAuth()
   const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories' && page !== 'export'
+  const displayName = getUserDisplayName(user)
+  const greeting = getGreeting()
 
   async function handleLogin() {
     setAuthError(null)
@@ -106,7 +162,7 @@ function App() {
       <div className="unlock-page">
         <section className="unlock-card">
           <p className="eyebrow">Private finance tracker</p>
-          <h1>Sign in to F - Transactions</h1>
+          <h1>Sign in to your finance dashboard</h1>
           <p>
             Use your allowed Google account to access your personal finance dashboard.
           </p>
@@ -126,8 +182,10 @@ function App() {
       <div className="app-shell">
         <aside className="sidebar">
           <div className="sidebar-header">
-            <h2>F - Transactions</h2>
-            <p>{user?.email ?? 'Signed in'}</p>
+            <div className="account-summary">
+              <p className="account-greeting">Profile</p>
+              <p className="account-subtitle">Signed in</p>
+            </div>
             <button
               type="button"
               className="lock-button"
@@ -166,17 +224,67 @@ function App() {
             </div>
           )}
 
-          {page === 'dashboard' && <DashboardPage />}
+          {page === 'dashboard' && <DashboardPage greeting={greeting} displayName={displayName} />}
+          {page === 'transactions' && (
+            <section>
+              <div className="mobile-segmented-control" aria-label="Transaction direction">
+                <button
+                  type="button"
+                  className={mobileTransactionDirection === 'in' ? 'active' : ''}
+                  onClick={() => setMobileTransactionDirection('in')}
+                >
+                  Money In
+                </button>
+                <button
+                  type="button"
+                  className={mobileTransactionDirection === 'out' ? 'active' : ''}
+                  onClick={() => setMobileTransactionDirection('out')}
+                >
+                  Money Out
+                </button>
+              </div>
+              <TransactionsPage
+                direction={mobileTransactionDirection}
+                title={mobileTransactionDirection === 'in' ? 'Money In' : 'Money Out'}
+              />
+            </section>
+          )}
           {page === 'money-in' && <TransactionsPage direction="in" title="Money In" />}
           {page === 'money-out' && <TransactionsPage direction="out" title="Money Out" />}
-          {page === 'wealth' && <WealthPage />}
+          {page === 'wealth' && <WealthPage onOpenInvestments={() => setPage('investments')} />}
           {page === 'investments' && <InvestmentsPage />}
           {page === 'owed' && <OwedPage />}
+          {page === 'more' && (
+            <section className="mobile-more-page">
+              <h1>More</h1>
+              <div className="mobile-more-actions">
+                <button type="button" onClick={() => setPage('investments')}>
+                  Investments
+                </button>
+                <button type="button" onClick={handleLogout}>
+                  Sign out
+                </button>
+              </div>
+            </section>
+          )}
           {page === 'cleanup' && <CleanupPage />}
           {page === 'import' && <ImportPage />}
           {page === 'categories' && <CategoryRulesPage />}
           {page === 'export' && <ExportPage />}
         </main>
+
+        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+          {MOBILE_NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={page === item.id ? 'active' : ''}
+              onClick={() => setPage(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
       </div>
     </PeriodProvider>
   )
