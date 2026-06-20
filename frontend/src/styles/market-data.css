@@ -8,14 +8,61 @@
   margin-bottom: 0;
 }
 
-.market-data-panel details {
+.market-data-refresh-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  padding: 16px;
+}
+
+.market-data-refresh-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.market-data-refresh-card .primary-button {
+  min-width: 160px;
+}
+
+.market-data-holdings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.market-data-holding-card {
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.market-data-holding-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.market-data-holding-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.market-data-advanced {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   background: #f9fafb;
   overflow: hidden;
 }
 
-.market-data-panel summary {
+.market-data-advanced summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -26,36 +73,36 @@
   font-weight: 700;
 }
 
-.market-data-panel summary::-webkit-details-marker {
+.market-data-advanced summary::-webkit-details-marker {
   display: none;
 }
 
-.market-data-panel summary::after {
+.market-data-advanced summary::after {
   content: "Show";
   color: #6b7280;
   font-size: 12px;
   font-weight: 500;
 }
 
-.market-data-panel details[open] summary {
+.market-data-advanced[open] summary {
   border-bottom: 1px solid #e5e7eb;
   background: #ffffff;
 }
 
-.market-data-panel details[open] summary::after {
+.market-data-advanced[open] summary::after {
   content: "Hide";
 }
 
-.market-data-panel details .form-row {
+.market-data-advanced .form-row {
   grid-template-columns: repeat(4, minmax(160px, 1fr));
   margin: 12px;
 }
 
-.market-data-panel details .action-group {
+.market-data-advanced .action-group {
   margin: 0 12px 12px;
 }
 
-.market-data-panel details input {
+.market-data-advanced input {
   width: 100%;
   min-width: 0;
 }
@@ -98,13 +145,30 @@
 }
 
 @media (max-width: 1100px) {
-  .market-data-panel details .form-row {
+  .market-data-advanced .form-row {
     grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .market-data-holdings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 700px) {
-  .market-data-panel details .form-row {
+  .market-data-advanced .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .market-data-refresh-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .market-data-refresh-card .primary-button {
+    width: 100%;
+  }
+
+  .market-data-holdings-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -4,7 +4,6 @@ import {
   createOrUpdateMarketPrice,
   deleteMarketPrice,
   fetchLatestMarketPrice,
-  fetchMarketPriceHistory,
   listMarketPrices,
   updateMarketPrice,
 } from '../api/marketPrices'
@@ -13,11 +12,7 @@ import { InvestmentEventsTable } from '../components/investments/InvestmentEvent
 import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
-import {
-  MarketDataPanel,
-  type MarketDataFetchHistoryFormState,
-  type MarketDataFetchLatestFormState,
-} from '../components/investments/MarketDataPanel'
+import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
 import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatMoney } from '../utils/format'
@@ -136,6 +131,32 @@ function getEventCount(events: InvestmentEvent[], eventType: string) {
   return events.filter((event) => event.event_type === eventType).length
 }
 
+function getDefaultYahooSymbol(position: InvestmentPosition) {
+  const ticker = position.ticker?.toUpperCase()
+
+  if (ticker === 'VWCE') {
+    return 'VWCE.DE'
+  }
+
+  if (ticker === 'CSPX') {
+    return 'CSPX.L'
+  }
+
+  if (ticker === 'BTC') {
+    return 'BTC-EUR'
+  }
+
+  return position.ticker ?? ''
+}
+
+function getPositionCurrency(position: InvestmentPosition) {
+  return position.market_price_currency ?? position.costs[0]?.currency ?? ''
+}
+
+function getMarketDataLabel(position: InvestmentPosition) {
+  return position.ticker ?? position.isin ?? position.instrument_name ?? 'holding'
+}
+
 async function listAllInvestmentEvents(
   filters: Parameters<typeof listInvestmentEvents>[0] = {},
 ) {
@@ -223,20 +244,7 @@ export function InvestmentsPage() {
     currency: 'EUR',
     source: 'manual',
   })
-  const [latestMarketDataForm, setLatestMarketDataForm] = useState<MarketDataFetchLatestFormState>({
-    symbol: '',
-    ticker: '',
-    isin: '',
-    currency: '',
-  })
-  const [historyMarketDataForm, setHistoryMarketDataForm] = useState<MarketDataFetchHistoryFormState>({
-    symbol: '',
-    ticker: '',
-    isin: '',
-    currency: '',
-    dateFrom: '',
-    dateTo: '',
-  })
+  const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isEventsOpen, setIsEventsOpen] = useState(false)
@@ -358,57 +366,63 @@ export function InvestmentsPage() {
     }
   }
 
-  async function fetchLatestMarketData() {
+  async function refreshAllMarketData() {
     setError(null)
     setMessage(null)
 
-    if (!latestMarketDataForm.symbol.trim()) {
-      setError('Enter a Yahoo symbol, for example VWCE.DE.')
+    if (positions.length === 0) {
+      setError('No open positions to refresh.')
       return
     }
 
-    try {
-      const fetchedPrice = await fetchLatestMarketPrice({
-        symbol: latestMarketDataForm.symbol.trim(),
-        ticker: latestMarketDataForm.ticker.trim() || null,
-        isin: latestMarketDataForm.isin.trim() || null,
-        currency: latestMarketDataForm.currency.trim().toUpperCase() || null,
-      })
+    const requests = positions
+      .map((position) => ({
+        position,
+        symbol: getDefaultYahooSymbol(position),
+      }))
+      .filter((request) => request.symbol.trim())
 
-      setMessage(`Fetched latest price for ${fetchedPrice.ticker ?? fetchedPrice.isin ?? latestMarketDataForm.symbol}.`)
+    if (requests.length === 0) {
+      setError('No Yahoo symbols could be inferred for the current positions.')
+      return
+    }
+
+    setIsFetchingMarketData(true)
+
+    try {
+      const results = await Promise.allSettled(
+        requests.map((request) =>
+          fetchLatestMarketPrice({
+            symbol: request.symbol,
+            ticker: request.position.ticker ?? null,
+            isin: request.position.isin ?? null,
+            currency: getPositionCurrency(request.position) || null,
+          }),
+        ),
+      )
+
+      const failedLabels = results
+        .map((result, index) => ({
+          result,
+          label: getMarketDataLabel(requests[index].position),
+        }))
+        .filter(({ result }) => result.status === 'rejected')
+        .map(({ label }) => label)
+
+      const successCount = results.length - failedLabels.length
+
+      if (failedLabels.length > 0) {
+        setMessage(`Updated ${successCount} of ${results.length} market prices.`)
+        setError(`Failed to update: ${failedLabels.join(', ')}`)
+      } else {
+        setMessage(`Updated ${successCount} market prices.`)
+      }
+
       loadEvents()
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch latest market price')
-    }
-  }
-
-  async function fetchHistoricalMarketData() {
-    setError(null)
-    setMessage(null)
-
-    if (!historyMarketDataForm.symbol.trim()) {
-      setError('Enter a Yahoo symbol, for example VWCE.DE.')
-      return
-    }
-
-    if (!historyMarketDataForm.dateFrom || !historyMarketDataForm.dateTo) {
-      setError('Enter a start date and end date.')
-      return
-    }
-
-    try {
-      const history = await fetchMarketPriceHistory({
-        symbol: historyMarketDataForm.symbol.trim(),
-        ticker: historyMarketDataForm.ticker.trim() || null,
-        isin: historyMarketDataForm.isin.trim() || null,
-        currency: historyMarketDataForm.currency.trim().toUpperCase() || null,
-        date_from: historyMarketDataForm.dateFrom,
-        date_to: historyMarketDataForm.dateTo,
-      })
-
-      setMessage(`Fetched ${history.length} historical price rows.`)
-    } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to fetch historical market prices')
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to refresh market data')
+    } finally {
+      setIsFetchingMarketData(false)
     }
   }
 
@@ -566,16 +580,12 @@ export function InvestmentsPage() {
 
       <MarketDataPanel
         positions={positions}
-        latestForm={latestMarketDataForm}
-        historyForm={historyMarketDataForm}
         manualForm={marketPriceForm}
         isEditingManualPrice={editingMarketPriceId !== null}
         marketPrices={marketPrices}
-        onLatestFormChange={setLatestMarketDataForm}
-        onHistoryFormChange={setHistoryMarketDataForm}
+        isFetchingMarketData={isFetchingMarketData}
+        onFetchAllLatest={refreshAllMarketData}
         onManualFormChange={setMarketPriceForm}
-        onFetchLatest={fetchLatestMarketData}
-        onFetchHistory={fetchHistoricalMarketData}
         onSubmitManualPrice={submitMarketPrice}
         onCancelManualEdit={cancelMarketPriceEdit}
         onEditManualPrice={startMarketPriceEdit}
