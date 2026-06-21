@@ -2,7 +2,7 @@ name: Keep backend warm
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "7/10 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -11,23 +11,16 @@ permissions:
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
 
     steps:
       - name: Ping backend health endpoint
         run: |
-          set +e
+          set -euo pipefail
+
+          BACKEND_URL="https://f-transactions-api.onrender.com"
 
           echo "Pinging backend health endpoint..."
-          curl --silent --show-error --location --max-time 90 \
+          curl --fail --silent --show-error --location --max-time 120 \
             --write-out "\nHTTP status: %{http_code}\nTotal time: %{time_total}s\n" \
-            https://f-transactions-api.onrender.com/api/health
-
-          exit_code=$?
-
-          if [ "$exit_code" -ne 0 ]; then
-            echo "Backend ping failed or timed out with exit code $exit_code."
-            echo "Ignoring this because the keep-warm workflow should not create notification noise."
-          fi
-
-          exit 0
+            "$BACKEND_URL/api/health"
