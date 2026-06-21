@@ -63,6 +63,24 @@ export function MarketDataPanel({
 
   return (
     <section className="panel-card market-data-panel">
+      <div className="market-data-mobile-simple">
+        <div>
+          <h2>Market prices</h2>
+          <p className="muted small">
+            {pricedPositions} of {positions.length} updated.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="primary-button"
+          disabled={isFetchingMarketData || positions.length === 0}
+          onClick={onFetchAllLatest}
+        >
+          {isFetchingMarketData ? 'Updating...' : 'Update prices'}
+        </button>
+      </div>
+
       <details className="market-data-details">
         <summary>Market data</summary>
 

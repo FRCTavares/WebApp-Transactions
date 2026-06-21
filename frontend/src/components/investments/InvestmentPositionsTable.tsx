@@ -5,6 +5,28 @@ type InvestmentPositionsTableProps = {
   positions: InvestmentPosition[]
 }
 
+function getGainClassName(value: string | null) {
+  if (value === null) {
+    return 'investment-gain-neutral'
+  }
+
+  const numericValue = Number(value)
+
+  if (Number.isNaN(numericValue)) {
+    return 'investment-gain-neutral'
+  }
+
+  if (numericValue > 0) {
+    return 'investment-gain-positive'
+  }
+
+  if (numericValue < 0) {
+    return 'investment-gain-negative'
+  }
+
+  return 'investment-gain-neutral'
+}
+
 export function InvestmentPositionsTable({ positions }: InvestmentPositionsTableProps) {
   return (
     <section className="panel-card">
@@ -65,9 +87,11 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
               <div>
                 <dt>Gain/Loss</dt>
                 <dd>
-                  {position.unrealised_gain && position.market_value_currency
-                    ? formatMoney(position.unrealised_gain, position.market_value_currency)
-                    : '-'}
+                  <span className={getGainClassName(position.unrealised_gain)}>
+                    {position.unrealised_gain && position.market_value_currency
+                      ? formatMoney(position.unrealised_gain, position.market_value_currency)
+                      : '-'}
+                  </span>
                 </dd>
               </div>
             </dl>
@@ -131,9 +155,11 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                     : '-'}
                 </td>
                 <td className="right">
-                  {position.unrealised_gain && position.market_value_currency
-                    ? formatMoney(position.unrealised_gain, position.market_value_currency)
-                    : '-'}
+                  <span className={getGainClassName(position.unrealised_gain)}>
+                    {position.unrealised_gain && position.market_value_currency
+                      ? formatMoney(position.unrealised_gain, position.market_value_currency)
+                      : '-'}
+                  </span>
                 </td>
               </tr>
             ))}

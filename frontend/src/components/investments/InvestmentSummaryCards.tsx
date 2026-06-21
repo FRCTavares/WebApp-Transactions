@@ -26,6 +26,26 @@ function formatCurrencyTotals(totals: InvestmentCurrencyTotal[]) {
     .join(' / ')
 }
 
+function getFirstMoneyValue(totals: InvestmentCurrencyTotal[]) {
+  return totals[0] ?? null
+}
+
+function getGainClassName(value: number | null) {
+  if (value === null) {
+    return 'investment-gain-neutral'
+  }
+
+  if (value > 0) {
+    return 'investment-gain-positive'
+  }
+
+  if (value < 0) {
+    return 'investment-gain-negative'
+  }
+
+  return 'investment-gain-neutral'
+}
+
 export function InvestmentSummaryCards({
   eventCount,
   depositCount,
@@ -36,36 +56,59 @@ export function InvestmentSummaryCards({
   marketValueTotals,
   unrealisedGainTotals,
 }: InvestmentSummaryCardsProps) {
+  const primaryMarketValue = getFirstMoneyValue(marketValueTotals)
+  const primaryCostBasis = getFirstMoneyValue(costTotals)
+  const primaryGain = getFirstMoneyValue(unrealisedGainTotals)
+  const gainClassName = getGainClassName(primaryGain?.amount ?? null)
+
   return (
-    <section className="portfolio-snapshot">
+    <section className="portfolio-snapshot investment-summary-card">
       <div className="portfolio-snapshot-header">
         <div>
-          <h2>Portfolio snapshot</h2>
-          <p className="muted small">
-            {eventCount} events · {marketBuyCount} market buys · {depositCount} deposits · {unmatchedDepositCount} unmatched deposits
+          <h2>Portfolio</h2>
+          <p className="muted small investment-summary-meta">
+            {eventCount} events · {marketBuyCount} buys · {depositCount} deposits · {unmatchedDepositCount} unmatched
           </p>
         </div>
       </div>
 
-      <div className="portfolio-metrics">
+      <div className="investment-summary-mobile-hero">
+        <p className="muted small">Market value</p>
+        <strong>
+          {primaryMarketValue
+            ? formatMoney(String(primaryMarketValue.amount), primaryMarketValue.currency)
+            : '-'}
+        </strong>
+        <span className={gainClassName}>
+          {primaryGain
+            ? formatMoney(String(primaryGain.amount), primaryGain.currency)
+            : '-'} unrealised
+        </span>
+      </div>
+
+      <div className="portfolio-metrics investment-summary-grid">
         <article>
-          <span>Open positions</span>
+          <span>Positions</span>
           <strong>{openPositionCount}</strong>
         </article>
 
         <article>
           <span>Cost basis</span>
-          <strong>{formatCurrencyTotals(costTotals)}</strong>
+          <strong>
+            {primaryCostBasis
+              ? formatMoney(String(primaryCostBasis.amount), primaryCostBasis.currency)
+              : formatCurrencyTotals(costTotals)}
+          </strong>
         </article>
 
-        <article>
+        <article className="investment-summary-desktop-only">
           <span>Market value</span>
           <strong>{formatCurrencyTotals(marketValueTotals)}</strong>
         </article>
 
-        <article>
+        <article className="investment-summary-desktop-only">
           <span>Unrealised gain</span>
-          <strong>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
+          <strong className={gainClassName}>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
         </article>
       </div>
     </section>
