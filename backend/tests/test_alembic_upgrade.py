@@ -41,3 +41,12 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
         transaction_indexes["ix_transactions_user_dedupe_hash"]
         == ["user_id", "dedupe_hash"]
     )
+
+
+    owed_payment_columns = {
+        column["name"]
+        for column in inspector.get_columns("owed_payments")
+    }
+
+    assert "unallocated_category" in owed_payment_columns
+    assert "unallocated_notes" in owed_payment_columns

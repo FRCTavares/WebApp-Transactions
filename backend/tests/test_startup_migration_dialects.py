@@ -62,3 +62,41 @@ def test_startup_migrations_are_idempotent_for_sqlite():
 
     assert "ix_transactions_dedupe_hash" not in indexes
     assert "ix_transactions_user_dedupe_hash" in indexes
+
+def test_startup_migrations_add_owed_payment_unallocated_classification_columns():
+    engine = create_sqlite_memory_engine()
+
+    Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE owed_payments"))
+        connection.execute(
+            text(
+                "CREATE TABLE owed_payments ("
+                "id INTEGER NOT NULL, "
+                "user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user', "
+                "person VARCHAR(100) NOT NULL, "
+                "payment_date DATE NOT NULL, "
+                "amount NUMERIC(12, 2) NOT NULL, "
+                "currency VARCHAR(3) NOT NULL DEFAULT 'EUR', "
+                "method VARCHAR(30) NOT NULL DEFAULT 'cash', "
+                "notes TEXT, "
+                "linked_transaction_id INTEGER, "
+                "created_at DATETIME NOT NULL, "
+                "updated_at DATETIME NOT NULL, "
+                "PRIMARY KEY (id)"
+                ")"
+            )
+        )
+
+    run_startup_migrations(engine)
+
+    inspector = inspect(engine)
+    column_names = {
+        column["name"]
+        for column in inspector.get_columns("owed_payments")
+    }
+
+    assert "unallocated_category" in column_names
+    assert "unallocated_notes" in column_names
+

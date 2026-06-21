@@ -21,6 +21,7 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_import_batch_user_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
     _run_owed_item_migrations(engine=engine)
+    _run_owed_payment_migrations(engine=engine)
     _run_owed_user_migrations(engine=engine)
     _run_rule_user_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
@@ -210,6 +211,25 @@ def _run_owed_item_migrations(engine: Engine) -> None:
         _add_column_if_missing(
             engine=engine,
             table_name="owed_items",
+            column_name=column_name,
+            sql=sql,
+        )
+
+
+
+def _run_owed_payment_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="owed_payments"):
+        return
+
+    owed_payment_column_migrations = {
+        "unallocated_category": "ALTER TABLE owed_payments ADD COLUMN unallocated_category VARCHAR(100)",
+        "unallocated_notes": "ALTER TABLE owed_payments ADD COLUMN unallocated_notes TEXT",
+    }
+
+    for column_name, sql in owed_payment_column_migrations.items():
+        _add_column_if_missing(
+            engine=engine,
+            table_name="owed_payments",
             column_name=column_name,
             sql=sql,
         )

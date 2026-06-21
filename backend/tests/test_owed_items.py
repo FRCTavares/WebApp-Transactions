@@ -496,6 +496,43 @@ def test_record_overpayment_keeps_unallocated_amount(client):
     assert owed_item["amount_remaining"] == "0.00"
 
 
+def test_record_overpayment_keeps_unallocated_classification(client):
+    create_response = create_owed_item(
+        client,
+        person="Grandma",
+        reason="Pizza",
+        amount_total="29.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-14",
+            "amount": "50.00",
+            "method": "cash",
+            "unallocated_category": "Gift",
+            "unallocated_notes": "Grandma gave extra",
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "29.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+
+    payment = response.json()
+
+    assert payment["allocated_amount"] == "29.00"
+    assert payment["unallocated_amount"] == "21.00"
+    assert payment["unallocated_category"] == "Gift"
+    assert payment["unallocated_notes"] == "Grandma gave extra"
+
+
 def test_record_payment_auto_allocates_oldest_first(client):
     first_response = create_owed_item(
         client,

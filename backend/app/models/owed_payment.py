@@ -38,6 +38,11 @@ class OwedPayment(Base):
     method: Mapped[str] = mapped_column(String(30), default="cash", index=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     linked_transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    unallocated_category: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    unallocated_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(

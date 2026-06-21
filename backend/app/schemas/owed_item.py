@@ -78,6 +78,8 @@ class OwedPaymentCreate(BaseModel):
     method: PaymentMethod = "cash"
     notes: str | None = None
     linked_transaction_id: int | None = None
+    unallocated_category: str | None = Field(default=None, max_length=100)
+    unallocated_notes: str | None = None
     allocations: list[OwedPaymentAllocationCreate] = Field(default_factory=list)
 
 
@@ -90,6 +92,8 @@ class OwedPaymentRead(BaseModel):
     method: PaymentMethod
     notes: str | None
     linked_transaction_id: int | None
+    unallocated_category: str | None
+    unallocated_notes: str | None
     allocated_amount: Decimal
     unallocated_amount: Decimal
     allocations: list[OwedPaymentAllocationRead]

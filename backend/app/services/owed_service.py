@@ -163,6 +163,8 @@ class OwedService:
             method=payment_data.method,
             notes=payment_data.notes,
             linked_transaction_id=payment_data.linked_transaction_id,
+            unallocated_category=payment_data.unallocated_category,
+            unallocated_notes=payment_data.unallocated_notes,
         )
 
         user_id = self._get_user_id(current_user)
@@ -311,6 +313,8 @@ class OwedService:
             method=payment.method,
             notes=payment.notes,
             linked_transaction_id=payment.linked_transaction_id,
+            unallocated_category=payment.unallocated_category,
+            unallocated_notes=payment.unallocated_notes,
             allocated_amount=allocated_amount,
             unallocated_amount=payment.amount - allocated_amount,
             allocations=allocations,
