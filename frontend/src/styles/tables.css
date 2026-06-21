@@ -361,9 +361,9 @@ td[colspan] {
 
   .transaction-mobile-card {
     display: grid;
-    gap: 8px;
-    padding: 11px 12px;
-    border: 1px solid #d1d5db;
+    gap: 7px;
+    padding: 10px 11px;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     background: #ffffff;
   }
@@ -404,20 +404,35 @@ td[colspan] {
 
   .transaction-mobile-raw {
     margin: 0;
+    overflow: hidden;
+    color: #9ca3af;
     line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .transaction-mobile-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    justify-content: flex-end;
     gap: 6px;
+    padding-top: 2px;
   }
 
   .transaction-mobile-actions button {
-    min-height: 34px;
-    padding: 5px 7px;
+    width: auto;
+    min-height: 30px;
+    min-width: 0;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f9fafb;
     font-size: 12px;
     text-align: center;
+  }
+
+  .transaction-mobile-action-danger {
+    border-color: #fecaca;
+    background: #fff7f7 !important;
+    color: #991b1b;
   }
 
   .transaction-desktop-table-wrap {

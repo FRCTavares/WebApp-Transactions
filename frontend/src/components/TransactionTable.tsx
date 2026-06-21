@@ -150,19 +150,27 @@ export function TransactionTable({
                 {showActions && !transaction.is_grouped && (
                   <div className="transaction-mobile-actions">
                     {onEdit && (
-                      <button type="button" onClick={() => onEdit(transaction)}>
+                      <button
+                        type="button"
+                        className="transaction-mobile-action"
+                        onClick={() => onEdit(transaction)}
+                      >
                         Edit
                       </button>
                     )}
                     {!transaction.is_owed && onMarkOwed && transaction.direction === 'out' && (
-                      <button type="button" onClick={() => onMarkOwed(transaction)}>
+                      <button
+                        type="button"
+                        className="transaction-mobile-action"
+                        onClick={() => onMarkOwed(transaction)}
+                      >
                         Owed
                       </button>
                     )}
                     {onDelete && (
                       <button
                         type="button"
-                        className="danger-button"
+                        className="transaction-mobile-action transaction-mobile-action-danger"
                         onClick={() => onDelete(transaction)}
                       >
                         Delete
