@@ -166,6 +166,12 @@ class OwedService:
         )
 
         user_id = self._get_user_id(current_user)
+        self._validate_linked_payment_transaction(
+            linked_transaction_id=payment_data.linked_transaction_id,
+            amount=payment_data.amount,
+            user_id=user_id,
+        )
+
         payment = self.repository.create_payment(payment, user_id)
 
         remaining_to_allocate = payment_data.amount
@@ -221,7 +227,8 @@ class OwedService:
             self._build_payment_read(
                 payment,
                 self._get_user_id(current_user),
-            )            for payment in self.repository.list_payments(
+            )
+            for payment in self.repository.list_payments(
                 user_id=self._get_user_id(current_user),
                 person=person,
                 limit=limit,
@@ -310,6 +317,46 @@ class OwedService:
             created_at=payment.created_at,
             updated_at=payment.updated_at,
         )
+
+    def _validate_linked_payment_transaction(
+        self,
+        linked_transaction_id: int | None,
+        amount: Decimal,
+        user_id: str,
+    ) -> None:
+        if linked_transaction_id is None:
+            return
+
+        if self.transaction_repository is None:
+            return
+
+        transaction = self.transaction_repository.get_by_id(
+            linked_transaction_id,
+            user_id,
+        )
+
+        if transaction is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Linked payment transaction not found",
+            )
+
+        if transaction.direction != "in":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Owed payments can only be linked to money in transactions",
+            )
+
+        existing_payment_total = self.repository.get_linked_transaction_payment_total(
+            linked_transaction_id=linked_transaction_id,
+            user_id=user_id,
+        )
+
+        if existing_payment_total + amount > transaction.amount:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Linked payment total cannot exceed money in transaction amount",
+            )
 
     def _validate_linked_transaction_capacity(
         self,

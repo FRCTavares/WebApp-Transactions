@@ -638,6 +638,140 @@ def test_list_and_get_owed_payments(client):
     assert get_response.json()["method"] == "mbway"
 
 
+
+def test_record_payment_linked_to_money_in_transaction_succeeds(client, db_session):
+    transaction = Transaction(
+        date=date(2026, 6, 17),
+        description="Grandma transfer",
+        raw_description="TRF GRANDMA",
+        amount=Decimal("50.00"),
+        direction="in",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add(transaction)
+    db_session.commit()
+
+    create_response = create_owed_item(
+        client,
+        person="Grandma",
+        reason="Pizza",
+        amount_total="29.00",
+    )
+    owed_item_id = create_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-17",
+            "amount": "50.00",
+            "method": "bank_transfer",
+            "linked_transaction_id": transaction.id,
+            "allocations": [
+                {
+                    "owed_item_id": owed_item_id,
+                    "amount": "29.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 201
+    payment = response.json()
+    assert payment["linked_transaction_id"] == transaction.id
+    assert payment["allocated_amount"] == "29.00"
+    assert payment["unallocated_amount"] == "21.00"
+
+
+def test_record_payment_rejects_missing_linked_transaction(client):
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-17",
+            "amount": "50.00",
+            "method": "bank_transfer",
+            "linked_transaction_id": 999999,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Linked payment transaction not found"
+
+
+def test_record_payment_rejects_money_out_linked_transaction(client, db_session):
+    transaction = Transaction(
+        date=date(2026, 6, 17),
+        description="Supermarket",
+        raw_description="SUPERMARKET",
+        amount=Decimal("25.38"),
+        direction="out",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add(transaction)
+    db_session.commit()
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-17",
+            "amount": "25.38",
+            "method": "bank_transfer",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.json()["detail"]
+        == "Owed payments can only be linked to money in transactions"
+    )
+
+
+def test_record_payment_rejects_linked_transaction_over_allocation(client, db_session):
+    transaction = Transaction(
+        date=date(2026, 6, 17),
+        description="Grandma transfer",
+        raw_description="TRF GRANDMA",
+        amount=Decimal("50.00"),
+        direction="in",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add(transaction)
+    db_session.commit()
+
+    first_response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-17",
+            "amount": "40.00",
+            "method": "bank_transfer",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+    second_response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Grandma",
+            "payment_date": "2026-06-17",
+            "amount": "15.00",
+            "method": "bank_transfer",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 400
+    assert (
+        second_response.json()["detail"]
+        == "Linked payment total cannot exceed money in transaction amount"
+    )
+
 def test_owed_items_are_isolated_by_user(db_session):
     first_user = CurrentUser(id="user-one")
     second_user = CurrentUser(id="user-two")

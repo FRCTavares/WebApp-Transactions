@@ -246,7 +246,20 @@ class OwedRepository:
             .where(OwedPaymentAllocation.owed_payment_id == payment_id)
         )
 
-        return Decimal(self.db.scalar(statement) or 0)
+        return Decimal(str(self.db.scalar(statement) or 0))
+
+    def get_linked_transaction_payment_total(
+        self,
+        linked_transaction_id: int,
+        user_id: str,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(OwedPayment.amount), 0))
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.linked_transaction_id == linked_transaction_id)
+        )
+
+        return Decimal(str(self.db.scalar(statement) or 0))
 
     def get_allocated_total_for_owed_item(
         self,
@@ -259,7 +272,7 @@ class OwedRepository:
             .where(OwedPaymentAllocation.owed_item_id == owed_item_id)
         )
 
-        return Decimal(self.db.scalar(statement) or 0)
+        return Decimal(str(self.db.scalar(statement) or 0))
 
     def save_owed_item(self, owed_item: OwedItem) -> OwedItem:
         self.db.add(owed_item)
