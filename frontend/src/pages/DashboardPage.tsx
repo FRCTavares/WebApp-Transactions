@@ -174,6 +174,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [categorySortDirection, setCategorySortDirection] = useState<SortDirection>('desc')
   const [dashboardChartMode, setDashboardChartMode] =
     useState<DashboardChartMode>('expenses')
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const categoryRollups = useMemo(
@@ -197,6 +198,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
     setError(null)
     setSelectedCategory(null)
     setCategoryTransactions([])
+    setSummary(null)
+    setInvestmentMonthlyChange(null)
+    setCategories(null)
+    setIncomeCategories(null)
+    setIsDashboardLoading(true)
 
     Promise.all([
       getMonthlySummary(year, month),
@@ -217,6 +223,9 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
+      })
+      .finally(() => {
+        setIsDashboardLoading(false)
       })
   }, [year, month])
 
@@ -278,6 +287,27 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       </div>
 
       <StatusMessage error={error} />
+
+      {isDashboardLoading && summary === null && (
+        <div className="dashboard-loading-state" role="status" aria-live="polite">
+          <section className="dashboard-loading-panel">
+            <p className="eyebrow">Loading your finance data</p>
+            <h2>Preparing your dashboard...</h2>
+            <p>
+              The backend may be waking up. This can take up to a minute on the hosted version.
+            </p>
+          </section>
+
+          <div className="dashboard-loading-grid">
+            <div className="dashboard-loading-card" />
+            <div className="dashboard-loading-card" />
+            <div className="dashboard-loading-card" />
+            <div className="dashboard-loading-card" />
+          </div>
+
+          <div className="dashboard-loading-wide-card" />
+        </div>
+      )}
 
       {summary && (
         <>
