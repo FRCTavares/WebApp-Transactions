@@ -318,10 +318,10 @@ main {
 
   .global-period-selector {
     display: grid;
-    grid-template-columns: 36px 1fr 36px 58px;
+    grid-template-columns: 32px 1fr 32px 50px;
     width: 100%;
-    gap: 6px;
-    padding: 6px;
+    gap: 5px;
+    padding: 4px;
     border-color: #e5e7eb;
     border-radius: 12px;
     background: #ffffff;
@@ -339,17 +339,17 @@ main {
   .global-period-selector input {
     width: 100%;
     min-width: 0;
-    height: 34px;
-    padding: 6px 8px;
+    height: 32px;
+    padding: 5px 8px;
     font-size: 13px;
   }
 
   .global-period-selector button {
-    min-width: 36px;
-    height: 34px;
-    min-height: 34px;
-    padding: 0 8px;
-    font-size: 13px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 7px;
+    font-size: 12px;
   }
 
   .dashboard-section-header,
@@ -359,11 +359,16 @@ main {
   }
 
   .dashboard-section-header {
-    margin-top: 1.35rem;
+    margin-top: 1rem;
   }
 
   .dashboard-section-header h2 {
+    margin-bottom: 0;
     font-size: 17px;
+  }
+
+  .dashboard-section-header p {
+    display: none;
   }
 
   .category-detail-panel {
@@ -608,18 +613,18 @@ main {
 @media (max-width: 800px) {
   .expense-chart-card {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin: 10px 0;
+    gap: 8px;
+    margin: 8px 0;
     padding: 10px;
     border-radius: 14px;
   }
 
   .expense-chart-visual {
-    min-height: 142px;
+    min-height: 132px;
   }
 
   .expense-chart-visual svg {
-    width: 142px;
+    width: 132px;
   }
 
   .expense-chart-centre {
@@ -695,7 +700,7 @@ main {
   background: transparent;
   color: #6b7280;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
   white-space: nowrap;
 }
