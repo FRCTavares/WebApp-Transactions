@@ -403,12 +403,7 @@ td[colspan] {
   }
 
   .transaction-mobile-raw {
-    margin: 0;
-    overflow: hidden;
-    color: #9ca3af;
-    line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: none;
   }
 
   .transaction-mobile-actions {
