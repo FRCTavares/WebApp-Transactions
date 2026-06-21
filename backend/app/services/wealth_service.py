@@ -174,19 +174,24 @@ class WealthService:
         self,
         current_user: CurrentUser | None = None,
     ) -> WealthSummaryRead:
-        snapshots = self.repository.list_all_snapshots_ascending(self._get_user_id(current_user))
-        latest_by_account = self._get_latest_snapshot_by_account(snapshots)
-
         user_id = self._get_user_id(current_user)
+        snapshots = self.repository.list_all_snapshots_ascending(user_id)
+        latest_by_account = self._get_latest_snapshot_by_account(snapshots)
+        owed_like_account_ids = self._get_owed_like_account_ids(user_id)
+
         snapshot_total = sum(
-            (snapshot.balance_eur for snapshot in latest_by_account.values()),
+            (
+                snapshot.balance_eur
+                for snapshot in latest_by_account.values()
+                if snapshot.account_id not in owed_like_account_ids
+            ),
             Decimal("0"),
         )
         money_owed_to_me = self._get_money_owed_to_me(user_id)
 
         return WealthSummaryRead(
             current_total_wealth_eur=snapshot_total + money_owed_to_me,
-            account_count=self.repository.count_active_accounts(user_id),
+            account_count=self._count_active_non_owed_accounts(user_id),
             latest_snapshot_date=self.repository.get_latest_snapshot_date(user_id),
             total_interest_earned=self.repository.sum_interest_earned(user_id),
             money_owed_to_me_eur=money_owed_to_me,
@@ -196,7 +201,9 @@ class WealthService:
         self,
         current_user: CurrentUser | None = None,
     ) -> list[WealthMonthlyRead]:
-        snapshots = self.repository.list_all_snapshots_ascending(self._get_user_id(current_user))
+        user_id = self._get_user_id(current_user)
+        snapshots = self.repository.list_all_snapshots_ascending(user_id)
+        owed_like_account_ids = self._get_owed_like_account_ids(user_id)
         snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
@@ -211,7 +218,11 @@ class WealthService:
                 latest_by_account[snapshot.account_id] = snapshot
 
             total = sum(
-                (snapshot.balance_eur for snapshot in latest_by_account.values()),
+                (
+                    snapshot.balance_eur
+                    for snapshot in latest_by_account.values()
+                    if snapshot.account_id not in owed_like_account_ids
+                ),
                 Decimal("0"),
             )
 
@@ -222,6 +233,14 @@ class WealthService:
                 )
             )
 
+        if rows:
+            latest_row = rows[-1]
+            rows[-1] = WealthMonthlyRead(
+                month=latest_row.month,
+                total_wealth_eur=latest_row.total_wealth_eur
+                + self._get_money_owed_to_me(user_id),
+            )
+
         return rows
 
     def _get_money_owed_to_me(self, user_id: str) -> Decimal:
@@ -229,6 +248,49 @@ class WealthService:
             return Decimal("0")
 
         return self.owed_repository.get_active_remaining_total(user_id)
+
+    def _get_owed_like_account_ids(self, user_id: str) -> set[int]:
+        accounts = self.repository.list_accounts(
+            active_only=False,
+            limit=10000,
+            offset=0,
+            user_id=user_id,
+        )
+
+        return {
+            account.id
+            for account in accounts
+            if self._is_money_owed_account(account)
+        }
+
+    def _count_active_non_owed_accounts(self, user_id: str) -> int:
+        accounts = self.repository.list_accounts(
+            active_only=False,
+            limit=10000,
+            offset=0,
+            user_id=user_id,
+        )
+
+        return sum(
+            1
+            for account in accounts
+            if account.is_active and not self._is_money_owed_account(account)
+        )
+
+    def _is_money_owed_account(self, account: WealthAccount) -> bool:
+        values = [
+            account.name,
+            account.institution,
+            account.notes,
+        ]
+        text = " ".join(value or "" for value in values).lower()
+
+        return (
+            "money owed" in text
+            or "owed to me" in text
+            or "dívidas" in text
+            or "dividas" in text
+        )
 
     def _get_user_id(self, current_user: CurrentUser | None) -> str:
         if current_user is None:

@@ -443,20 +443,20 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
           <small>Latest snapshot per account</small>
         </article>
 
-        <article className="wealth-summary-card">
+        <article className="wealth-summary-card wealth-owed-summary-card">
           <span>Money Owed To Me</span>
           <strong>{formatMoney(summary?.money_owed_to_me_eur ?? '0')}</strong>
-          <small>Active remaining owed total</small>
+          <small>Live total from active owed items</small>
         </article>
 
-        <article className="wealth-summary-card">
+        <article className="wealth-summary-card wealth-active-summary-card">
           <span>Active accounts</span>
           <strong>{summary?.account_count ?? 0}</strong>
           <small>{showInactiveAccounts ? 'Showing active and inactive' : 'Showing active only'}</small>
         </article>
 
         <article
-          className={`wealth-summary-card wealth-investments-shortcut ${onOpenInvestments ? 'wealth-summary-card-button' : ''}`}
+          className={`wealth-summary-card wealth-investments-summary-card wealth-investments-shortcut ${onOpenInvestments ? 'wealth-summary-card-button' : ''}`}
           onClick={onOpenInvestments}
         >
           <span>Investments</span>

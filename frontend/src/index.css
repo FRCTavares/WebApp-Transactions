@@ -9,6 +9,7 @@
 @import './styles/market-data.css';
 @import './styles/owed.css';
 @import './styles/wealth.css';
+@import './styles/typography.css';
 
 .global-topbar {
   position: absolute;
@@ -846,5 +847,121 @@ main {
 
   .dashboard-metric-card p {
     display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .wealth-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .wealth-summary-card {
+    min-height: auto;
+    padding: 13px 14px;
+    border-radius: 18px;
+  }
+
+  .wealth-summary-card small {
+    display: none;
+  }
+
+  .wealth-summary-card-primary {
+    gap: 8px;
+    padding: 18px;
+    background:
+      linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.96));
+  }
+
+  .wealth-summary-card-primary span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .wealth-summary-card-primary strong {
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+
+  .wealth-summary-card:not(.wealth-summary-card-primary) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .wealth-summary-card:not(.wealth-summary-card-primary) span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .wealth-summary-card:not(.wealth-summary-card-primary) strong {
+    font-size: 19px;
+    letter-spacing: -0.03em;
+  }
+}
+
+@media (max-width: 800px) {
+  .wealth-mobile-account-group {
+    overflow: hidden;
+  }
+
+  .wealth-mobile-account-group-header {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .wealth-mobile-account-group-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .wealth-mobile-account-group-header::after {
+    content: "Show";
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
+    content: "Hide";
+  }
+
+  .wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
+    display: none;
+  }
+
+  .wealth-mobile-account-group[open] .wealth-mobile-account-list {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 800px) {
+  .wealth-owed-summary-card {
+    display: flex !important;
+    order: 2;
+    border-color: rgba(21, 128, 61, 0.18);
+    background:
+      linear-gradient(180deg, rgba(240, 253, 244, 0.78), rgba(255, 255, 255, 0.96));
+  }
+
+  .wealth-owed-summary-card strong {
+    color: #15803d;
+  }
+
+  .wealth-investments-summary-card {
+    order: 3;
+  }
+
+  .wealth-active-summary-card {
+    display: none !important;
+  }
+
+  .wealth-mobile-accounts {
+    order: 4;
   }
 }

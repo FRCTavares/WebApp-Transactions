@@ -89,14 +89,14 @@ export function WealthMobileAccounts({
       <h2>Accounts</h2>
 
       {accountGroups.map((group) => (
-        <article key={group.key} className="wealth-mobile-account-group">
-          <div className="wealth-mobile-account-group-header">
+        <details key={group.key} className="wealth-mobile-account-group">
+          <summary className="wealth-mobile-account-group-header">
             <div>
               <strong>{group.label}</strong>
               <span>{group.accounts.length} account{group.accounts.length === 1 ? '' : 's'}</span>
             </div>
             <strong>{formatMoney(getGroupTotal(group.accounts, latestByAccount, investmentPositions))}</strong>
-          </div>
+          </summary>
 
           <div className="wealth-mobile-account-list">
             {group.accounts.map((account) => {
@@ -117,7 +117,7 @@ export function WealthMobileAccounts({
               )
             })}
           </div>
-        </article>
+        </details>
       ))}
     </section>
   )

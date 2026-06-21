@@ -96,6 +96,23 @@ function getNormalisedText(value: string | null | undefined) {
   return (value ?? '').trim().toLowerCase()
 }
 
+export function isMoneyOwedAccount(account: WealthAccount) {
+  const text = [
+    account.name,
+    account.institution,
+    account.notes,
+  ]
+    .map(getNormalisedText)
+    .join(' ')
+
+  return (
+    text.includes('money owed') ||
+    text.includes('owed to me') ||
+    text.includes('dívidas') ||
+    text.includes('dividas')
+  )
+}
+
 function getGroupSortRank(groupLabel: string) {
   const label = getNormalisedText(groupLabel)
 
@@ -173,7 +190,7 @@ function getAccountSortRank(account: WealthAccount) {
 export function getAccountGroups(accounts: WealthAccount[]) {
   const grouped = new Map<string, WealthAccount[]>()
 
-  for (const account of accounts) {
+  for (const account of accounts.filter((account) => !isMoneyOwedAccount(account))) {
     const key = account.institution?.trim() || account.name
     grouped.set(key, [...(grouped.get(key) ?? []), account])
   }
