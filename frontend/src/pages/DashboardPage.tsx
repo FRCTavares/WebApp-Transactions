@@ -289,24 +289,14 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       <StatusMessage error={error} />
 
       {isDashboardLoading && summary === null && (
-        <div className="dashboard-loading-state" role="status" aria-live="polite">
-          <section className="dashboard-loading-panel">
-            <p className="eyebrow">Loading your finance data</p>
-            <h2>Preparing your dashboard...</h2>
-            <p>
-              The backend may be waking up. This can take up to a minute on the hosted version.
-            </p>
-          </section>
-
-          <div className="dashboard-loading-grid">
-            <div className="dashboard-loading-card" />
-            <div className="dashboard-loading-card" />
-            <div className="dashboard-loading-card" />
-            <div className="dashboard-loading-card" />
+        <section className="dashboard-loading-panel" role="status" aria-live="polite">
+          <div className="dashboard-loading-spinner" aria-hidden="true" />
+          <div>
+            <p className="eyebrow">Loading data</p>
+            <h2>Preparing dashboard</h2>
+            <p>The hosted backend may need a few seconds to wake up.</p>
           </div>
-
-          <div className="dashboard-loading-wide-card" />
-        </div>
+        </section>
       )}
 
       {summary && (

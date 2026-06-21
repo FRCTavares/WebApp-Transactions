@@ -237,7 +237,7 @@ function App() {
         </aside>
 
         <main>
-          {isBackendWakeNoticeVisible && (
+          {isBackendWakeNoticeVisible && page !== 'dashboard' && (
             <div className="backend-wake-notice" role="status">
               <strong>Loading data...</strong>
               <span>The backend may be waking up. This can take up to a minute.</span>

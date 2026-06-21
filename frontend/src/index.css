@@ -205,14 +205,13 @@ main {
   margin-bottom: 0.25rem;
 }
 
-.dashboard-loading-state {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
 .dashboard-loading-panel {
-  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: min(34rem, 100%);
+  margin-top: 1.35rem;
+  padding: 1rem;
   border: 1px solid #bfdbfe;
   border-radius: 1rem;
   background: #eff6ff;
@@ -220,72 +219,37 @@ main {
 }
 
 .dashboard-loading-panel h2 {
-  margin: 0.15rem 0 0.35rem;
+  margin: 0.1rem 0 0.25rem;
   color: #0f172a;
+  font-size: 1.05rem;
 }
 
 .dashboard-loading-panel p:last-child {
   margin: 0;
   color: #1d4ed8;
+  font-size: 0.9rem;
 }
 
-.dashboard-loading-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+.dashboard-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border: 3px solid #bfdbfe;
+  border-top-color: #2563eb;
+  border-radius: 999px;
+  animation: dashboard-loading-spin 0.8s linear infinite;
 }
 
-.dashboard-loading-card,
-.dashboard-loading-wide-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  background: #f8fafc;
-}
-
-.dashboard-loading-card {
-  min-height: 7.5rem;
-}
-
-.dashboard-loading-wide-card {
-  min-height: 16rem;
-}
-
-.dashboard-loading-card::after,
-.dashboard-loading-wide-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 0.75),
-    transparent
-  );
-  transform: translateX(-100%);
-  animation: dashboard-loading-shimmer 1.4s infinite;
-}
-
-@keyframes dashboard-loading-shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@media (max-width: 900px) {
-  .dashboard-loading-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@keyframes dashboard-loading-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
 @media (max-width: 640px) {
-  .dashboard-loading-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-loading-card {
-    min-height: 5.5rem;
+  .dashboard-loading-panel {
+    align-items: flex-start;
+    padding: 0.9rem;
   }
 }
 
