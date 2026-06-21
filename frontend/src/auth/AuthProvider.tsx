@@ -8,11 +8,12 @@ import {
 import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { setAccessTokenProvider } from '../api/client'
-import { isSupabaseAuthConfigured, supabase } from './supabaseClient'
+import { isSupabaseAuthConfigured, isSupabaseAuthEnabled, supabase } from './supabaseClient'
 
 type AuthContextValue = {
   accessToken: string | null
   isAuthConfigured: boolean
+  isAuthEnabled: boolean
   isLoading: boolean
   session: Session | null
   signInWithGoogle: () => Promise<void>
@@ -74,9 +75,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     () => ({
       accessToken: session?.access_token ?? null,
       isAuthConfigured: isSupabaseAuthConfigured,
+      isAuthEnabled: isSupabaseAuthEnabled,
       isLoading,
       session,
       signInWithGoogle: async () => {
+        if (!isSupabaseAuthEnabled) {
+          throw new Error('Supabase authentication is disabled.')
+        }
+
         if (!supabase) {
           throw new Error('Supabase authentication is not configured.')
         }

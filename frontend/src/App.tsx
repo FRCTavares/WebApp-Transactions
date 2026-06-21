@@ -102,6 +102,7 @@ function App() {
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
     isAuthConfigured,
+    isAuthEnabled,
     isLoading,
     session,
     signInWithGoogle,
@@ -157,7 +158,7 @@ function App() {
     )
   }
 
-  if (!isAuthConfigured) {
+  if (isAuthEnabled && !isAuthConfigured) {
     return (
       <div className="unlock-page">
         <section className="unlock-card">
@@ -171,7 +172,7 @@ function App() {
     )
   }
 
-  if (!session) {
+  if (isAuthEnabled && !session) {
     return (
       <div className="unlock-page">
         <section className="unlock-card">
@@ -198,15 +199,19 @@ function App() {
           <div className="sidebar-header">
             <div className="account-summary">
               <p className="account-greeting">Profile</p>
-              <p className="account-subtitle">Signed in</p>
+              <p className="account-subtitle">
+                {isAuthEnabled ? 'Signed in' : 'Local mode'}
+              </p>
             </div>
-            <button
-              type="button"
-              className="lock-button"
-              onClick={handleLogout}
-            >
-              Sign out
-            </button>
+            {isAuthEnabled && (
+              <button
+                type="button"
+                className="lock-button"
+                onClick={handleLogout}
+              >
+                Sign out
+              </button>
+            )}
             {authError && <p className="error-text">{authError}</p>}
           </div>
 
@@ -315,17 +320,21 @@ function App() {
               <section className="mobile-more-section">
                 <div className="mobile-more-section-header">
                   <h2>Account</h2>
-                  <p>Signed in as {displayName}.</p>
+                  <p>
+                    {isAuthEnabled ? `Signed in as ${displayName}.` : 'Local mode.'}
+                  </p>
                 </div>
-                <div className="mobile-more-actions">
-                  <button
-                    type="button"
-                    className="mobile-more-danger"
-                    onClick={handleLogout}
-                  >
-                    Sign out
-                  </button>
-                </div>
+                {isAuthEnabled && (
+                  <div className="mobile-more-actions">
+                    <button
+                      type="button"
+                      className="mobile-more-danger"
+                      onClick={handleLogout}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
               </section>
             </section>
           )}
