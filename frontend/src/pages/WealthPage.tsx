@@ -5,6 +5,7 @@ import {
   createWealthSnapshot,
   deleteWealthAccount,
   deleteWealthSnapshot,
+  getWealthReconciliation,
   getWealthSummary,
   listWealthAccounts,
   listWealthMonthlyTotals,
@@ -15,6 +16,7 @@ import {
 import { StatusMessage } from '../components/StatusMessage'
 import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
 import { WealthMobileAccounts } from '../components/wealth/WealthMobileAccounts'
+import { WealthReconciliationCard } from '../components/wealth/WealthReconciliationCard'
 import {
   accountTypeOptions,
   getAccountGroups,
@@ -35,6 +37,7 @@ import type {
   WealthAccount,
   WealthAccountType,
   WealthMonthlyTotal,
+  WealthReconciliation,
   WealthSnapshot,
   WealthSummary,
 } from '../types/api'
@@ -49,6 +52,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
   const [summary, setSummary] = useState<WealthSummary | null>(null)
   const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
+  const [reconciliation, setReconciliation] = useState<WealthReconciliation | null>(null)
   const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
   const [quickSnapshotBalances, setQuickSnapshotBalances] = useState<Record<number, string>>({})
   const [accountForm, setAccountForm] = useState<AccountFormState>(getInitialAccountForm)
@@ -70,6 +74,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
       listWealthAccounts({ active_only: !showInactiveAccounts, limit: 500 }),
       listWealthSnapshots({ limit: 500 }),
       getWealthSummary(),
+      getWealthReconciliation(),
       listWealthMonthlyTotals(),
       listInvestmentPositions(),
     ])
@@ -77,12 +82,14 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         loadedAccounts,
         loadedSnapshots,
         loadedSummary,
+        loadedReconciliation,
         loadedMonthlyTotals,
         loadedInvestmentPositions,
       ]) => {
         setAccounts(loadedAccounts)
         setSnapshots(loadedSnapshots)
         setSummary(loadedSummary)
+        setReconciliation(loadedReconciliation)
         setMonthlyTotals(loadedMonthlyTotals)
         setInvestmentPositions(loadedInvestmentPositions)
       })
@@ -470,6 +477,8 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
           <small>{investmentPositions.length} open positions. Tap to inspect investments.</small>
         </article>
       </div>
+
+      <WealthReconciliationCard reconciliation={reconciliation} />
 
       <WealthMobileAccounts
         accountGroups={accountGroups}

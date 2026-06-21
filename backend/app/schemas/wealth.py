@@ -14,6 +14,23 @@ WealthAccountType = Literal[
     "other",
 ]
 
+WealthReconciliationStatus = Literal[
+    "matched",
+    "minor_difference",
+    "review_needed",
+    "manual_only",
+    "derived_only",
+    "not_supported",
+]
+
+WealthReconciliationSource = Literal[
+    "bank_account",
+    "brokerage",
+    "cash",
+    "owed",
+    "other",
+]
+
 
 class WealthAccountBase(BaseModel):
     name: str = Field(min_length=1, max_length=100)
@@ -121,3 +138,21 @@ class WealthSummaryRead(BaseModel):
 class WealthMonthlyRead(BaseModel):
     month: str
     total_wealth_eur: Decimal
+
+
+class WealthReconciliationItemRead(BaseModel):
+    name: str
+    source: WealthReconciliationSource
+    manual_value_eur: Decimal | None = None
+    derived_value_eur: Decimal | None = None
+    difference_eur: Decimal | None = None
+    status: WealthReconciliationStatus
+    notes: str | None = None
+
+
+class WealthReconciliationRead(BaseModel):
+    manual_total_eur: Decimal
+    derived_total_eur: Decimal
+    difference_eur: Decimal
+    status: WealthReconciliationStatus
+    items: list[WealthReconciliationItemRead]

@@ -5,18 +5,24 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
+from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
+from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.owed_repository import OwedRepository
+from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.wealth_repository import WealthRepository
 from app.schemas.wealth import (
     WealthAccountCreate,
     WealthAccountRead,
     WealthAccountUpdate,
     WealthMonthlyRead,
+    WealthReconciliationRead,
     WealthSnapshotCreate,
     WealthSnapshotRead,
     WealthSnapshotUpdate,
     WealthSummaryRead,
 )
+from app.services.investment_event_service import InvestmentEventService
 from app.services.wealth_service import WealthService
 
 
@@ -26,7 +32,17 @@ router = APIRouter(prefix="/api/wealth", tags=["wealth"])
 def get_wealth_service(db: Session = Depends(get_db)) -> WealthService:
     repository = WealthRepository(db)
     owed_repository = OwedRepository(db)
-    return WealthService(repository, owed_repository)
+    investment_event_service = InvestmentEventService(
+        repository=InvestmentEventRepository(db),
+        transaction_repository=TransactionRepository(db),
+        market_price_repository=MarketPriceRepository(db),
+        market_price_history_repository=MarketPriceHistoryRepository(db),
+    )
+    return WealthService(
+        repository=repository,
+        owed_repository=owed_repository,
+        investment_event_service=investment_event_service,
+    )
 
 
 @router.post(
@@ -155,6 +171,14 @@ def get_wealth_summary(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.get_summary(current_user)
+
+
+@router.get("/reconciliation", response_model=WealthReconciliationRead)
+def get_wealth_reconciliation(
+    service: WealthService = Depends(get_wealth_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.get_reconciliation(current_user)
 
 
 @router.get("/monthly", response_model=list[WealthMonthlyRead])

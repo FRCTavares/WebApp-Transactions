@@ -580,3 +580,171 @@
     display: none;
   }
 }
+
+
+.wealth-check-card {
+  display: grid;
+  gap: 14px;
+}
+
+.wealth-check-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.wealth-check-summary article {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.wealth-check-summary span {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wealth-check-summary strong {
+  color: #111827;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.wealth-check-note {
+  padding: 10px 12px;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wealth-check-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.wealth-check-status-matched {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.wealth-check-status-minor {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.wealth-check-status-review {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.wealth-check-status-neutral {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.wealth-check-table-wrap {
+  margin-bottom: 0;
+}
+
+.wealth-check-table-wrap table {
+  min-width: 960px;
+}
+
+.wealth-check-notes {
+  max-width: 360px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.wealth-check-mobile-list {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .wealth-check-card {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .wealth-check-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .wealth-check-summary article {
+    padding: 10px;
+  }
+
+  .wealth-check-summary strong {
+    font-size: 18px;
+  }
+
+  .wealth-check-table-wrap {
+    display: none;
+  }
+
+  .wealth-check-mobile-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .wealth-check-mobile-item {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .wealth-check-mobile-item > div:first-child {
+    display: grid;
+    gap: 3px;
+  }
+
+  .wealth-check-mobile-item > div:first-child span,
+  .wealth-check-mobile-item dt,
+  .wealth-check-mobile-item p {
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  .wealth-check-mobile-item dl {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .wealth-check-mobile-item dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .wealth-check-mobile-item dd {
+    margin: 0;
+    font-weight: 800;
+  }
+
+  .wealth-check-mobile-item p {
+    margin: 0;
+    line-height: 1.35;
+  }
+}

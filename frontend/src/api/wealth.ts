@@ -5,6 +5,7 @@ import type {
   WealthAccountFilters,
   WealthAccountUpdatePayload,
   WealthMonthlyTotal,
+  WealthReconciliation,
   WealthSnapshot,
   WealthSnapshotCreatePayload,
   WealthSnapshotFilters,
@@ -50,4 +51,8 @@ export function getWealthSummary() {
 
 export function listWealthMonthlyTotals() {
   return apiGet<WealthMonthlyTotal[]>('/api/wealth/monthly')
+}
+
+export function getWealthReconciliation() {
+  return apiGet<WealthReconciliation>('/api/wealth/reconciliation')
 }
