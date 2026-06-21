@@ -7,6 +7,7 @@ from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.repositories.owed_repository import OwedRepository
+from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.owed_item import (
     OwedItemCreate,
     OwedItemUpdate,
@@ -16,8 +17,13 @@ from app.schemas.owed_item import (
 
 
 class OwedService:
-    def __init__(self, repository: OwedRepository) -> None:
+    def __init__(
+        self,
+        repository: OwedRepository,
+        transaction_repository: TransactionRepository | None = None,
+    ) -> None:
         self.repository = repository
+        self.transaction_repository = transaction_repository
 
     def create_owed_item(
         self,
@@ -48,6 +54,13 @@ class OwedService:
                     amount_remaining=amount_remaining,
                 )
             }
+        )
+
+        self._validate_linked_transaction_capacity(
+            linked_transaction_id=owed_data.linked_transaction_id,
+            amount_total=owed_data.amount_total,
+            status_value=owed_data.status,
+            user_id=user_id,
         )
 
         return self.repository.create(owed_data, amount_remaining, user_id)
@@ -107,15 +120,25 @@ class OwedService:
             amount_paid=amount_paid,
         )
 
-        if owed_data.status is None:
-            owed_data = owed_data.model_copy(
-                update={
-                    "status": self._calculate_status(
-                        amount_paid=amount_paid,
-                        amount_remaining=amount_remaining,
-                    )
-                }
+        status_value = owed_data.status
+        if status_value is None:
+            status_value = self._calculate_status(
+                amount_paid=amount_paid,
+                amount_remaining=amount_remaining,
             )
+            owed_data = owed_data.model_copy(update={"status": status_value})
+
+        linked_transaction_id = owed_data.linked_transaction_id
+        if linked_transaction_id is None:
+            linked_transaction_id = owed_item.linked_transaction_id
+
+        self._validate_linked_transaction_capacity(
+            linked_transaction_id=linked_transaction_id,
+            amount_total=amount_total,
+            status_value=status_value,
+            user_id=owed_item.user_id,
+            exclude_owed_item_id=owed_item.id,
+        )
 
         return self.repository.update(owed_item, owed_data, amount_remaining)
 
@@ -287,6 +310,49 @@ class OwedService:
             created_at=payment.created_at,
             updated_at=payment.updated_at,
         )
+
+    def _validate_linked_transaction_capacity(
+        self,
+        linked_transaction_id: int | None,
+        amount_total: Decimal,
+        status_value: str,
+        user_id: str,
+        exclude_owed_item_id: int | None = None,
+    ) -> None:
+        if linked_transaction_id is None or status_value == "cancelled":
+            return
+
+        if self.transaction_repository is None:
+            return
+
+        transaction = self.transaction_repository.get_by_id(
+            linked_transaction_id,
+            user_id,
+        )
+
+        if transaction is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Linked transaction not found",
+            )
+
+        if transaction.direction != "out":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Owed items can only be linked to money out transactions",
+            )
+
+        existing_owed_total = self.repository.get_linked_transaction_owed_total(
+            linked_transaction_id=linked_transaction_id,
+            user_id=user_id,
+            exclude_owed_item_id=exclude_owed_item_id,
+        )
+
+        if existing_owed_total + amount_total > transaction.amount:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Total owed amount cannot exceed linked transaction amount",
+            )
 
     def _calculate_amount_remaining(
         self,

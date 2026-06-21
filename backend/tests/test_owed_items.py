@@ -1,4 +1,7 @@
+from datetime import date
+
 from app.auth.current_user import CurrentUser
+from app.models.transaction import Transaction
 from app.repositories.owed_repository import OwedRepository
 from app.schemas.owed_item import OwedItemCreate, OwedPaymentCreate
 from app.services.owed_service import OwedService
@@ -47,13 +50,28 @@ def test_create_owed_item_calculates_remaining_and_open_status(client):
     assert data["status"] == "open"
 
 
-def test_create_owed_item_rejects_duplicate_linked_transaction_for_same_person(client):
+def test_create_owed_item_rejects_duplicate_linked_transaction_for_same_person(
+    client,
+    db_session,
+):
+    transaction = Transaction(
+        date=date(2026, 6, 21),
+        description="MiniPreco",
+        raw_description="MINIPRECO",
+        amount=Decimal("6.48"),
+        direction="out",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add(transaction)
+    db_session.commit()
+
     payload = {
         "person": "Mother",
         "reason": "MiniPreco",
         "amount_total": "6.48",
         "amount_paid": "0.00",
-        "linked_transaction_id": 995,
+        "linked_transaction_id": transaction.id,
     }
 
     first_response = client.post("/api/owed", json=payload)
@@ -65,6 +83,78 @@ def test_create_owed_item_rejects_duplicate_linked_transaction_for_same_person(c
         second_response.json()["detail"]
         == "Owed item already exists for this transaction and person"
     )
+
+
+def test_create_owed_items_allows_split_people_until_transaction_total(
+    client,
+    db_session,
+):
+    transaction = Transaction(
+        date=date(2026, 6, 21),
+        description="Pharmacy",
+        raw_description="PHARMACY",
+        amount=Decimal("30.00"),
+        direction="out",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add(transaction)
+    db_session.commit()
+
+    mother_response = client.post(
+        "/api/owed",
+        json={
+            "person": "Mother",
+            "reason": "Medicine",
+            "amount_total": "10.00",
+            "amount_paid": "0.00",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+    father_response = client.post(
+        "/api/owed",
+        json={
+            "person": "Father",
+            "reason": "Medicine",
+            "amount_total": "10.00",
+            "amount_paid": "0.00",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+    excess_response = client.post(
+        "/api/owed",
+        json={
+            "person": "Grandma",
+            "reason": "Medicine",
+            "amount_total": "15.00",
+            "amount_paid": "0.00",
+            "linked_transaction_id": transaction.id,
+        },
+    )
+
+    assert mother_response.status_code == 201
+    assert father_response.status_code == 201
+    assert excess_response.status_code == 400
+    assert (
+        excess_response.json()["detail"]
+        == "Total owed amount cannot exceed linked transaction amount"
+    )
+
+
+def test_create_owed_item_rejects_missing_linked_transaction(client):
+    response = client.post(
+        "/api/owed",
+        json={
+            "person": "Mother",
+            "reason": "Missing transaction",
+            "amount_total": "10.00",
+            "amount_paid": "0.00",
+            "linked_transaction_id": 999999,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Linked transaction not found"
 
 
 def test_create_owed_item_with_partial_payment_becomes_partially_paid(client):

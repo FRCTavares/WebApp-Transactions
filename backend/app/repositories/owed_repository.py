@@ -69,6 +69,24 @@ class OwedRepository:
         )
         return self.db.scalar(statement)
 
+    def get_linked_transaction_owed_total(
+        self,
+        linked_transaction_id: int,
+        user_id: str,
+        exclude_owed_item_id: int | None = None,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(OwedItem.amount_total), 0))
+            .where(OwedItem.user_id == user_id)
+            .where(OwedItem.linked_transaction_id == linked_transaction_id)
+            .where(OwedItem.status != "cancelled")
+        )
+
+        if exclude_owed_item_id is not None:
+            statement = statement.where(OwedItem.id != exclude_owed_item_id)
+
+        return Decimal(str(self.db.scalar(statement) or 0))
+
     def update(
         self,
         owed_item: OwedItem,

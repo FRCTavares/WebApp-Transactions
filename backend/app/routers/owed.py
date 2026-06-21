@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.owed_repository import OwedRepository
+from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.owed_item import (
     OwedItemCreate,
     OwedItemRead,
@@ -59,8 +60,9 @@ def build_owed_items_csv(owed_items: list[OwedItemRead]) -> str:
 
 
 def get_owed_service(db: Session = Depends(get_db)) -> OwedService:
-    repository = OwedRepository(db)
-    return OwedService(repository)
+    owed_repository = OwedRepository(db)
+    transaction_repository = TransactionRepository(db)
+    return OwedService(owed_repository, transaction_repository)
 
 
 @router.post(
