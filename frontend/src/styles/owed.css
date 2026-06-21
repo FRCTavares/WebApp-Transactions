@@ -163,32 +163,41 @@
 
 @media (max-width: 800px) {
   .owed-page {
-    gap: 12px;
-  }
-
-  .owed-summary-grid {
     gap: 8px;
   }
 
+  .owed-summary-grid {
+    gap: 6px;
+  }
+
   .owed-summary-card {
-    padding: 12px;
+    padding: 10px 11px;
     border-radius: 10px;
   }
 
   .owed-summary-card span {
-    margin-bottom: 5px;
-    font-size: 11px;
+    margin-bottom: 4px;
+    font-size: 10.5px;
   }
 
   .owed-summary-card strong {
-    margin-bottom: 5px;
-    font-size: 22px;
+    margin-bottom: 3px;
+    font-size: 19px;
+  }
+
+  .owed-summary-card small {
+    font-size: 11px;
   }
 
   .owed-toolbar {
-    gap: 8px;
-    padding: 10px;
+    gap: 6px;
+    padding: 8px;
     border-radius: 10px;
+  }
+
+  .owed-toolbar-label {
+    margin-bottom: 4px;
+    font-size: 10.5px;
   }
 
   .owed-toolbar-actions {
@@ -196,8 +205,29 @@
   }
 
   .owed-toolbar-actions button {
-    min-height: 36px;
-    font-size: 14px;
+    min-height: 34px;
+    font-size: 13px;
+  }
+
+  .owed-table-filter-card {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .owed-table-filter-card h2,
+  .owed-table-filter-card p {
+    display: none;
+  }
+
+  .owed-table-filter-card .segmented-control {
+    width: 100%;
+  }
+
+  .owed-table-filter-card .segmented-control button {
+    min-height: 34px;
+    font-size: 13px;
   }
 
   .owed-table {
@@ -220,21 +250,21 @@
 
   .owed-mobile-groups {
     display: grid;
-    gap: 10px;
+    gap: 8px;
   }
 
   .owed-mobile-empty {
-    border: 1px solid #d1d5db;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     background: #ffffff;
   }
 
   .owed-person-card {
     display: grid;
-    gap: 10px;
-    padding: 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 14px;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
     background: #ffffff;
   }
 
@@ -242,38 +272,39 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 10px;
+    gap: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #e5e7eb;
   }
 
   .owed-person-card-header h2 {
-    margin: 0 0 3px;
-    font-size: 18px;
+    margin: 0 0 2px;
+    font-size: 16px;
     line-height: 1.15;
   }
 
   .owed-person-card-header p {
     margin: 0;
+    font-size: 11px;
   }
 
   .owed-person-card-header > strong {
     color: #111827;
-    font-size: 18px;
+    font-size: 16px;
     white-space: nowrap;
   }
 
   .owed-person-items {
     display: grid;
-    gap: 8px;
+    gap: 7px;
   }
 
   .owed-person-item {
     display: grid;
-    gap: 8px;
-    padding: 10px;
+    gap: 7px;
+    padding: 9px;
     border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    border-radius: 11px;
     background: #f9fafb;
   }
 
@@ -298,28 +329,38 @@
   .owed-person-item-main > span {
     flex: 0 0 auto;
     font-size: 14px;
-    font-weight: 800;
+    font-weight: 700;
     white-space: nowrap;
   }
 
   .owed-person-item-meta {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
     align-items: center;
   }
 
   .owed-person-item-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    justify-content: flex-end;
     gap: 6px;
   }
 
   .owed-person-item-actions button {
-    min-height: 34px;
-    padding: 5px 7px;
+    width: auto;
+    min-height: 30px;
+    min-width: 0;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #ffffff;
     font-size: 12px;
     text-align: center;
+  }
+
+  .owed-person-item-actions .danger-button {
+    border-color: #fecaca;
+    background: #fff7f7;
+    color: #991b1b;
   }
 
   .owed-desktop-table-wrap {
