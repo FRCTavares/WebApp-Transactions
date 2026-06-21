@@ -315,6 +315,8 @@ export type OwedPayment = {
   method: OwedPaymentMethod
   notes: string | null
   linked_transaction_id: number | null
+  unallocated_category: string | null
+  unallocated_notes: string | null
   allocated_amount: string
   unallocated_amount: string
   allocations: OwedPaymentAllocation[]
@@ -330,6 +332,8 @@ export type OwedPaymentCreatePayload = {
   method: OwedPaymentMethod
   notes?: string | null
   linked_transaction_id?: number | null
+  unallocated_category?: string | null
+  unallocated_notes?: string | null
   allocations?: OwedPaymentAllocationCreatePayload[]
 }
 

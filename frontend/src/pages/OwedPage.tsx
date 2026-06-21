@@ -21,6 +21,9 @@ type PaymentFormState = {
   amount: string
   paymentDate: string
   method: OwedPaymentMethod
+  linkedTransactionId: string
+  unallocatedCategory: string
+  unallocatedNotes: string
   notes: string
 }
 
@@ -53,6 +56,9 @@ function getInitialPaymentFormState(): PaymentFormState {
     amount: '',
     paymentDate: getTodayDate(),
     method: 'cash',
+    linkedTransactionId: '',
+    unallocatedCategory: '',
+    unallocatedNotes: '',
     notes: '',
   }
 }
@@ -164,6 +170,7 @@ function downloadBlob(blob: Blob, filename: string) {
 export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
   const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
+  const [paymentLinkedTransactions, setPaymentLinkedTransactions] = useState<Transaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatusFilter>('active')
   const [tableMonthFilter, setTableMonthFilter] = useState<'current' | 'all'>('current')
   const [form, setForm] = useState<OwedFormState>(getInitialFormState)
@@ -200,12 +207,24 @@ export function OwedPage() {
       })
   }
 
+  function loadPaymentLinkedTransactions() {
+    listTransactions({
+      direction: 'in',
+      limit: 100,
+    })
+      .then(setPaymentLinkedTransactions)
+      .catch((caughtError: unknown) => {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load money in transaction options')
+      })
+  }
+
   useEffect(() => {
     loadItems()
   }, [statusFilter])
 
   useEffect(() => {
     loadLinkedTransactions()
+    loadPaymentLinkedTransactions()
   }, [])
 
   function updateForm(field: keyof OwedFormState, value: string) {
@@ -262,6 +281,15 @@ export function OwedPage() {
       return
     }
 
+    let linkedTransactionId: number | null = null
+
+    try {
+      linkedTransactionId = parseLinkedTransactionId(paymentForm.linkedTransactionId)
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Invalid linked transaction ID.')
+      return
+    }
+
     try {
       const payment = await createOwedPayment({
         person: paymentForm.person.trim(),
@@ -270,6 +298,9 @@ export function OwedPage() {
         method: paymentForm.method,
         currency: 'EUR',
         notes: paymentForm.notes || null,
+        linked_transaction_id: linkedTransactionId,
+        unallocated_category: paymentForm.unallocatedCategory || null,
+        unallocated_notes: paymentForm.unallocatedNotes || null,
       })
 
       setMessage(
@@ -508,6 +539,7 @@ export function OwedPage() {
         onRefresh={() => {
           loadItems()
           loadLinkedTransactions()
+          loadPaymentLinkedTransactions()
         }}
       />
 
@@ -608,8 +640,57 @@ export function OwedPage() {
               </label>
             </div>
 
+            <div className="form-row">
+              <label>
+                Linked Money In
+                <select
+                  value={paymentForm.linkedTransactionId}
+                  onChange={(event) => updatePaymentForm('linkedTransactionId', event.target.value)}
+                >
+                  <option value="">No linked money in transaction</option>
+                  {paymentLinkedTransactions.map((transaction) => (
+                    <option key={transaction.id} value={transaction.id}>
+                      {formatLinkedTransactionOption(transaction)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Manual Money In Tx ID
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={paymentForm.linkedTransactionId}
+                  onChange={(event) => updatePaymentForm('linkedTransactionId', event.target.value)}
+                  placeholder="Optional"
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Unallocated category
+                <input
+                  value={paymentForm.unallocatedCategory}
+                  onChange={(event) => updatePaymentForm('unallocatedCategory', event.target.value)}
+                  placeholder="Gift"
+                />
+              </label>
+
+              <label>
+                Unallocated notes
+                <input
+                  value={paymentForm.unallocatedNotes}
+                  onChange={(event) => updatePaymentForm('unallocatedNotes', event.target.value)}
+                  placeholder="Grandma gave extra"
+                />
+              </label>
+            </div>
+
             <label>
-              Notes
+              Payment notes
               <textarea
                 value={paymentForm.notes}
                 onChange={(event) => updatePaymentForm('notes', event.target.value)}
