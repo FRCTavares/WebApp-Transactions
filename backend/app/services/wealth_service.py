@@ -9,13 +9,10 @@ from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.wealth_repository import WealthRepository
-from app.services.investment_event_service import InvestmentEventService
 from app.schemas.wealth import (
     WealthAccountCreate,
     WealthAccountUpdate,
     WealthMonthlyRead,
-    WealthReconciliationItemRead,
-    WealthReconciliationRead,
     WealthSnapshotCreate,
     WealthSnapshotUpdate,
     WealthSummaryRead,
@@ -27,11 +24,9 @@ class WealthService:
         self,
         repository: WealthRepository,
         owed_repository: OwedRepository | None = None,
-        investment_event_service: InvestmentEventService | None = None,
     ) -> None:
         self.repository = repository
         self.owed_repository = owed_repository
-        self.investment_event_service = investment_event_service
 
     def create_account(
         self,
@@ -202,62 +197,6 @@ class WealthService:
             money_owed_to_me_eur=money_owed_to_me,
         )
 
-    def get_reconciliation(
-        self,
-        current_user: CurrentUser | None = None,
-    ) -> WealthReconciliationRead:
-        user_id = self._get_user_id(current_user)
-        snapshots = self.repository.list_all_snapshots_ascending(user_id)
-        latest_by_account = self._get_latest_snapshot_by_account(snapshots)
-        owed_like_account_ids = self._get_owed_like_account_ids(user_id)
-
-        manual_total = sum(
-            (
-                snapshot.balance_eur
-                for snapshot in latest_by_account.values()
-                if snapshot.account_id not in owed_like_account_ids
-            ),
-            Decimal("0"),
-        ).quantize(Decimal("0.01"))
-
-        items = self._build_manual_reconciliation_items(
-            latest_by_account=latest_by_account,
-            owed_like_account_ids=owed_like_account_ids,
-            user_id=user_id,
-        )
-
-        derived_total = Decimal("0")
-        money_owed_to_me = self._get_money_owed_to_me(user_id).quantize(Decimal("0.01"))
-        derived_total += money_owed_to_me
-
-        items.append(
-            WealthReconciliationItemRead(
-                name="Money Owed To Me",
-                source="owed",
-                manual_value_eur=None,
-                derived_value_eur=money_owed_to_me,
-                difference_eur=None,
-                status="derived_only",
-                notes="Derived from active owed items, not from stale Wealth snapshots.",
-            )
-        )
-
-        for item in self._build_investment_reconciliation_items(current_user):
-            items.append(item)
-            if item.derived_value_eur is not None:
-                derived_total += item.derived_value_eur
-
-        derived_total = derived_total.quantize(Decimal("0.01"))
-        difference = (manual_total - derived_total).quantize(Decimal("0.01"))
-
-        return WealthReconciliationRead(
-            manual_total_eur=manual_total,
-            derived_total_eur=derived_total,
-            difference_eur=difference,
-            status=self._get_reconciliation_status(difference),
-            items=items,
-        )
-
     def get_monthly_totals(
         self,
         current_user: CurrentUser | None = None,
@@ -303,143 +242,6 @@ class WealthService:
             )
 
         return rows
-
-    def _build_manual_reconciliation_items(
-        self,
-        latest_by_account: dict[int, WealthSnapshot],
-        owed_like_account_ids: set[int],
-        user_id: str,
-    ) -> list[WealthReconciliationItemRead]:
-        accounts_by_id = {
-            account.id: account
-            for account in self.repository.list_accounts(
-                active_only=False,
-                limit=10000,
-                offset=0,
-                user_id=user_id,
-            )
-        }
-
-        items: list[WealthReconciliationItemRead] = []
-
-        for account_id, snapshot in latest_by_account.items():
-            if account_id in owed_like_account_ids:
-                continue
-
-            account = accounts_by_id.get(account_id)
-            if account is None:
-                continue
-
-            manual_value = snapshot.balance_eur.quantize(Decimal("0.01"))
-            source = self._get_reconciliation_source(account.account_type)
-
-            items.append(
-                WealthReconciliationItemRead(
-                    name=account.name,
-                    source=source,
-                    manual_value_eur=manual_value,
-                    derived_value_eur=None,
-                    difference_eur=None,
-                    status="manual_only",
-                    notes=self._get_manual_only_note(source),
-                )
-            )
-
-        return items
-
-    def _build_investment_reconciliation_items(
-        self,
-        current_user: CurrentUser | None,
-    ) -> list[WealthReconciliationItemRead]:
-        if self.investment_event_service is None:
-            return []
-
-        items: list[WealthReconciliationItemRead] = []
-
-        for position in self.investment_event_service.list_positions(
-            source=None,
-            current_user=current_user,
-        ):
-            market_value = position.get("market_value")
-            market_value_currency = position.get("market_value_currency")
-
-            name_parts = [
-                str(position.get("ticker") or position.get("instrument_name") or "Investment position"),
-                str(position.get("account") or position.get("source") or "").strip(),
-            ]
-            name = " - ".join(part for part in name_parts if part)
-
-            if market_value is None or market_value_currency != "EUR":
-                items.append(
-                    WealthReconciliationItemRead(
-                        name=name,
-                        source="brokerage",
-                        manual_value_eur=None,
-                        derived_value_eur=None,
-                        difference_eur=None,
-                        status="not_supported",
-                        notes="Position exists, but no EUR market value is available yet.",
-                    )
-                )
-                continue
-
-            items.append(
-                WealthReconciliationItemRead(
-                    name=name,
-                    source="brokerage",
-                    manual_value_eur=None,
-                    derived_value_eur=Decimal(str(market_value)).quantize(Decimal("0.01")),
-                    difference_eur=None,
-                    status="derived_only",
-                    notes="Derived from open investment positions and latest available market price.",
-                )
-            )
-
-        return items
-
-    def _get_reconciliation_source(
-        self,
-        account_type: str,
-    ) -> str:
-        if account_type in {"current_account", "savings_account"}:
-            return "bank_account"
-
-        if account_type == "brokerage":
-            return "brokerage"
-
-        if account_type == "cash":
-            return "cash"
-
-        return "other"
-
-    def _get_manual_only_note(
-        self,
-        source: str,
-    ) -> str:
-        if source == "bank_account":
-            return "Manual snapshot. Bank balances are not derived until opening balances and complete transaction coverage exist."
-
-        if source == "cash":
-            return "Manual snapshot. Physical cash is not derived from transactions."
-
-        if source == "brokerage":
-            return "Manual snapshot. Compare against derived investment position rows where available."
-
-        return "Manual snapshot. No derived check is available yet."
-
-    def _get_reconciliation_status(
-        self,
-        difference: Decimal,
-    ) -> str:
-        absolute_difference = abs(difference)
-
-        if absolute_difference == 0:
-            return "matched"
-
-        if absolute_difference <= Decimal("1.00"):
-            return "minor_difference"
-
-        return "review_needed"
 
     def _get_money_owed_to_me(self, user_id: str) -> Decimal:
         if self.owed_repository is None:

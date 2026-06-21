@@ -643,39 +643,6 @@ export type WealthMonthlyTotal = {
   total_wealth_eur: string
 }
 
-export type WealthReconciliationStatus =
-  | 'matched'
-  | 'minor_difference'
-  | 'review_needed'
-  | 'manual_only'
-  | 'derived_only'
-  | 'not_supported'
-
-export type WealthReconciliationSource =
-  | 'bank_account'
-  | 'brokerage'
-  | 'cash'
-  | 'owed'
-  | 'other'
-
-export type WealthReconciliationItem = {
-  name: string
-  source: WealthReconciliationSource
-  manual_value_eur: string | null
-  derived_value_eur: string | null
-  difference_eur: string | null
-  status: WealthReconciliationStatus
-  notes: string | null
-}
-
-export type WealthReconciliation = {
-  manual_total_eur: string
-  derived_total_eur: string
-  difference_eur: string
-  status: WealthReconciliationStatus
-  items: WealthReconciliationItem[]
-}
-
 
 export type LegacyExcelWealthPreviewSnapshot = {
   sheet_name: string
