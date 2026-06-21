@@ -24,6 +24,7 @@ type PaymentFormState = {
   linkedTransactionId: string
   unallocatedCategory: string
   unallocatedNotes: string
+  allocationAmounts: Record<string, string>
   notes: string
 }
 
@@ -59,6 +60,7 @@ function getInitialPaymentFormState(): PaymentFormState {
     linkedTransactionId: '',
     unallocatedCategory: '',
     unallocatedNotes: '',
+    allocationAmounts: {},
     notes: '',
   }
 }
@@ -87,6 +89,37 @@ function getAutoAllocationPreview(items: OwedItem[], person: string, amount: num
       }
     })
     .filter((allocation) => allocation.amount > 0)
+}
+
+function getPaymentAllocationItems(items: OwedItem[], person: string) {
+  return items
+    .filter((item) => item.person === person)
+    .filter((item) => item.status === 'open' || item.status === 'partially_paid')
+}
+
+function getManualPaymentAllocations(paymentForm: PaymentFormState) {
+  return Object.entries(paymentForm.allocationAmounts)
+    .map(([owedItemId, amount]) => ({
+      owed_item_id: Number(owedItemId),
+      amount: Math.abs(Number(amount.replace(',', '.'))),
+    }))
+    .filter((allocation) => (
+      Number.isInteger(allocation.owed_item_id) &&
+      allocation.owed_item_id > 0 &&
+      allocation.amount > 0 &&
+      !Number.isNaN(allocation.amount)
+    ))
+    .map((allocation) => ({
+      owed_item_id: allocation.owed_item_id,
+      amount: allocation.amount.toFixed(2),
+    }))
+}
+
+function getManualAllocationTotal(paymentForm: PaymentFormState) {
+  return getManualPaymentAllocations(paymentForm).reduce(
+    (total, allocation) => total + Number(allocation.amount),
+    0,
+  )
 }
 
 function getAllocationTotal(allocations: Array<{ amount: number }>) {
@@ -260,6 +293,24 @@ export function OwedPage() {
     }))
   }
 
+  function updatePaymentPerson(person: string) {
+    setPaymentForm((currentForm) => ({
+      ...currentForm,
+      person,
+      allocationAmounts: {},
+    }))
+  }
+
+  function updatePaymentAllocation(owedItemId: number, amount: string) {
+    setPaymentForm((currentForm) => ({
+      ...currentForm,
+      allocationAmounts: {
+        ...currentForm.allocationAmounts,
+        [owedItemId]: amount,
+      },
+    }))
+  }
+
   async function recordPaymentFromForm() {
     setError(null)
     setMessage(null)
@@ -290,6 +341,14 @@ export function OwedPage() {
       return
     }
 
+    const manualAllocations = getManualPaymentAllocations(paymentForm)
+    const manualAllocationTotal = getManualAllocationTotal(paymentForm)
+
+    if (manualAllocationTotal > amount) {
+      setError('Allocated amount cannot exceed payment amount.')
+      return
+    }
+
     try {
       const payment = await createOwedPayment({
         person: paymentForm.person.trim(),
@@ -301,6 +360,7 @@ export function OwedPage() {
         linked_transaction_id: linkedTransactionId,
         unallocated_category: paymentForm.unallocatedCategory || null,
         unallocated_notes: paymentForm.unallocatedNotes || null,
+        allocations: manualAllocations.length > 0 ? manualAllocations : undefined,
       })
 
       setMessage(
@@ -590,7 +650,7 @@ export function OwedPage() {
                 Person
                 <select
                   value={paymentForm.person}
-                  onChange={(event) => updatePaymentForm('person', event.target.value)}
+                  onChange={(event) => updatePaymentPerson(event.target.value)}
                 >
                   <option value="">Choose person</option>
                   {getPaymentPeople(items).map((person) => (
@@ -701,29 +761,52 @@ export function OwedPage() {
             {paymentForm.person && Number(paymentForm.amount) > 0 && (
               <div className="modal-transaction-summary">
                 <div>
-                  <strong>Auto-allocation preview</strong>
-                  {getAutoAllocationPreview(
-                    items,
-                    paymentForm.person,
-                    Math.abs(Number(paymentForm.amount)),
-                  ).map((allocation) => (
-                    <p key={allocation.item.id} className="muted small">
-                      {allocation.item.reason}: {formatMoney(allocation.amount.toFixed(2))}
-                    </p>
-                  ))}
+                  <strong>Choose owed items to pay</strong>
+                  <p className="muted small">
+                    Leave all amounts blank to auto-allocate oldest first.
+                  </p>
+
+                  {getPaymentAllocationItems(items, paymentForm.person).length === 0 ? (
+                    <p className="muted small">No open owed items for this person.</p>
+                  ) : (
+                    getPaymentAllocationItems(items, paymentForm.person).map((item) => (
+                      <label key={item.id}>
+                        {item.reason} · remaining {formatMoney(item.amount_remaining)}
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          max={item.amount_remaining}
+                          value={paymentForm.allocationAmounts[item.id] ?? ''}
+                          onChange={(event) => updatePaymentAllocation(item.id, event.target.value)}
+                          placeholder="0.00"
+                        />
+                      </label>
+                    ))
+                  )}
                 </div>
-                <span>
-                  Leftover: {formatMoney((
-                    Math.abs(Number(paymentForm.amount)) -
-                    getAllocationTotal(
-                      getAutoAllocationPreview(
-                        items,
-                        paymentForm.person,
-                        Math.abs(Number(paymentForm.amount)),
-                      ),
-                    )
-                  ).toFixed(2))}
-                </span>
+
+                {getManualPaymentAllocations(paymentForm).length > 0 ? (
+                  <span>
+                    Leftover: {formatMoney((
+                      Math.abs(Number(paymentForm.amount)) -
+                      getManualAllocationTotal(paymentForm)
+                    ).toFixed(2))}
+                  </span>
+                ) : (
+                  <span>
+                    Auto leftover: {formatMoney((
+                      Math.abs(Number(paymentForm.amount)) -
+                      getAllocationTotal(
+                        getAutoAllocationPreview(
+                          items,
+                          paymentForm.person,
+                          Math.abs(Number(paymentForm.amount)),
+                        ),
+                      )
+                    ).toFixed(2))}
+                  </span>
+                )}
               </div>
             )}
 
