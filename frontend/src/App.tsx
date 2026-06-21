@@ -278,14 +278,55 @@ function App() {
           {page === 'more' && (
             <section className="mobile-more-page">
               <h1>More</h1>
-              <div className="mobile-more-actions">
-                <button type="button" onClick={() => setPage('investments')}>
-                  Investments
-                </button>
-                <button type="button" onClick={handleLogout}>
-                  Sign out
-                </button>
-              </div>
+
+              <section className="mobile-more-section">
+                <div className="mobile-more-section-header">
+                  <h2>Finance</h2>
+                  <p>Review and organise your money.</p>
+                </div>
+                <div className="mobile-more-actions">
+                  <button type="button" onClick={() => setPage('investments')}>
+                    Investments
+                  </button>
+                  <button type="button" onClick={() => setPage('cleanup')}>
+                    Monthly Review
+                  </button>
+                  <button type="button" onClick={() => setPage('categories')}>
+                    Categories / Rules
+                  </button>
+                </div>
+              </section>
+
+              <section className="mobile-more-section">
+                <div className="mobile-more-section-header">
+                  <h2>Data</h2>
+                  <p>Import, export, and back up records.</p>
+                </div>
+                <div className="mobile-more-actions">
+                  <button type="button" onClick={() => setPage('import')}>
+                    Import CSV/XLSX
+                  </button>
+                  <button type="button" onClick={() => setPage('export')}>
+                    Export / Backup
+                  </button>
+                </div>
+              </section>
+
+              <section className="mobile-more-section">
+                <div className="mobile-more-section-header">
+                  <h2>Account</h2>
+                  <p>Signed in as {displayName}.</p>
+                </div>
+                <div className="mobile-more-actions">
+                  <button
+                    type="button"
+                    className="mobile-more-danger"
+                    onClick={handleLogout}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </section>
             </section>
           )}
           {page === 'cleanup' && <CleanupPage />}
