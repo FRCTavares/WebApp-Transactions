@@ -242,6 +242,33 @@ export type ManualFundingResolutionResponse = {
   transaction_id: number
 }
 
+export type InvestmentFundingMonth = {
+  id: number
+  month: string
+  source: string
+  manual_amount: string
+  cashback_rounding_amount: string
+  currency: string
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InvestmentFundingMonthPayload = {
+  month: string
+  source: string
+  manual_amount: string
+  cashback_rounding_amount: string
+  currency: string
+  notes?: string | null
+}
+
+export type InvestmentFundingMonthFilters = {
+  month?: string
+  source?: string
+}
+
+
 
 export type OwedStatus = 'open' | 'partially_paid' | 'paid' | 'cancelled'
 export type OwedStatusFilter = 'active' | OwedStatus

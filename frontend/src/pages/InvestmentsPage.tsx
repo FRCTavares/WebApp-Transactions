@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
+import { listInvestmentFundingMonths, upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
 import {
   createOrUpdateMarketPrice,
   deleteMarketPrice,
@@ -14,13 +15,22 @@ import { InvestmentPositionsTable } from '../components/investments/InvestmentPo
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import type { InvestmentEvent, InvestmentPosition, MarketPrice } from '../types/api'
+import type { InvestmentEvent, InvestmentFundingMonth, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 export type ManualFundingFormState = {
   eurAmount: string
   date: string
   description: string
+  notes: string
+}
+
+type MonthlyFundingFormState = {
+  month: string
+  source: string
+  manualAmount: string
+  cashbackRoundingAmount: string
+  currency: string
   notes: string
 }
 
@@ -191,6 +201,28 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
   }
 }
 
+function createDefaultMonthlyFundingForm(): MonthlyFundingFormState {
+  return {
+    month: '2026-06',
+    source: 'trading212',
+    manualAmount: '100.00',
+    cashbackRoundingAmount: '9.77',
+    currency: 'EUR',
+    notes: '100 EUR manual investment. Extra 9.77 EUR from cashback, rounding, and residual Trading 212 cash.',
+  }
+}
+
+function getMonthlyFundingTotal(funding: InvestmentFundingMonth | MonthlyFundingFormState) {
+  const manualAmount = 'manual_amount' in funding
+    ? Number(funding.manual_amount)
+    : Number(funding.manualAmount)
+  const cashbackRoundingAmount = 'cashback_rounding_amount' in funding
+    ? Number(funding.cashback_rounding_amount)
+    : Number(funding.cashbackRoundingAmount)
+
+  return manualAmount + cashbackRoundingAmount
+}
+
 function getSortedInvestmentEvents(
   events: InvestmentEvent[],
   sort: InvestmentEventSort,
@@ -224,6 +256,7 @@ export function InvestmentsPage() {
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
+  const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
   const [eventType, setEventType] = useState('')
   const [source, setSource] = useState('')
   const [month, setMonth] = useState('')
@@ -236,6 +269,9 @@ export function InvestmentsPage() {
     description: '',
     notes: '',
   })
+  const [monthlyFundingForm, setMonthlyFundingForm] = useState<MonthlyFundingFormState>(
+    createDefaultMonthlyFundingForm(),
+  )
   const [editingMarketPriceId, setEditingMarketPriceId] = useState<number | null>(null)
   const [marketPriceForm, setMarketPriceForm] = useState<MarketPriceFormState>({
     ticker: '',
@@ -266,12 +302,28 @@ export function InvestmentsPage() {
       }),
       listInvestmentPositions(source || undefined),
       listMarketPrices(),
+      listInvestmentFundingMonths({
+        month: month || '2026-06',
+        source: source || 'trading212',
+      }),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
+        setFundingMonths(loadedFundingMonths)
         setEventPage(1)
+
+        if (loadedFundingMonths[0]) {
+          setMonthlyFundingForm({
+            month: loadedFundingMonths[0].month,
+            source: loadedFundingMonths[0].source,
+            manualAmount: loadedFundingMonths[0].manual_amount,
+            cashbackRoundingAmount: loadedFundingMonths[0].cashback_rounding_amount,
+            currency: loadedFundingMonths[0].currency,
+            notes: loadedFundingMonths[0].notes ?? '',
+          })
+        }
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -293,11 +345,16 @@ export function InvestmentsPage() {
       listAllInvestmentEvents(),
       listInvestmentPositions(),
       listMarketPrices(),
+      listInvestmentFundingMonths({
+        month: '2026-06',
+        source: 'trading212',
+      }),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
+        setFundingMonths(loadedFundingMonths)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -319,6 +376,47 @@ export function InvestmentsPage() {
       description: '',
       notes: '',
     })
+  }
+
+  async function submitMonthlyFundingBreakdown() {
+    setError(null)
+    setMessage(null)
+
+    if (!monthlyFundingForm.month.match(/^\d{4}-\d{2}$/)) {
+      setError('Enter a month in YYYY-MM format.')
+      return
+    }
+
+    if (!monthlyFundingForm.source.trim()) {
+      setError('Enter an investment source.')
+      return
+    }
+
+    if (Number(monthlyFundingForm.manualAmount) < 0) {
+      setError('Manual amount cannot be negative.')
+      return
+    }
+
+    if (Number(monthlyFundingForm.cashbackRoundingAmount) < 0) {
+      setError('Cashback / rounding amount cannot be negative.')
+      return
+    }
+
+    try {
+      const savedFundingMonth = await upsertInvestmentFundingMonth({
+        month: monthlyFundingForm.month,
+        source: monthlyFundingForm.source.trim(),
+        manual_amount: monthlyFundingForm.manualAmount || '0.00',
+        cashback_rounding_amount: monthlyFundingForm.cashbackRoundingAmount || '0.00',
+        currency: monthlyFundingForm.currency.trim().toUpperCase() || 'EUR',
+        notes: monthlyFundingForm.notes || null,
+      })
+
+      setFundingMonths([savedFundingMonth])
+      setMessage('Investment funding breakdown saved.')
+    } catch (caughtError: unknown) {
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to save funding breakdown')
+    }
   }
 
   async function submitManualResolution(event: InvestmentEvent) {
@@ -532,6 +630,10 @@ export function InvestmentsPage() {
     (event) => event.event_type === 'deposit' && event.funding_match_status === 'unmatched',
   ).length
   const investmentTotals = getInvestmentTotals(positions)
+  const activeFundingMonth = fundingMonths[0]
+  const monthlyFundingTotal = activeFundingMonth
+    ? getMonthlyFundingTotal(activeFundingMonth)
+    : getMonthlyFundingTotal(monthlyFundingForm)
   const sortedEvents = getSortedInvestmentEvents(events, eventSort)
   const eventPageCount = Math.max(
     1,
@@ -577,6 +679,104 @@ export function InvestmentsPage() {
       />
 
       <InvestmentPositionsTable positions={positions} />
+
+      <section className="panel-card">
+        <div className="section-header">
+          <div>
+            <h2>Investment funding clarification</h2>
+            <p className="muted small">
+              Clarifies market buys that are funded by a mix of manual money, cashback, rounding, and residual broker cash.
+            </p>
+          </div>
+        </div>
+
+        <div className="form-grid">
+          <label>
+            Month
+            <input
+              type="month"
+              value={monthlyFundingForm.month}
+              onChange={(event) =>
+                setMonthlyFundingForm((currentValue) => ({
+                  ...currentValue,
+                  month: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label>
+            Source
+            <input
+              value={monthlyFundingForm.source}
+              onChange={(event) =>
+                setMonthlyFundingForm((currentValue) => ({
+                  ...currentValue,
+                  source: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label>
+            Manual investment
+            <input
+              min="0"
+              step="0.01"
+              type="number"
+              value={monthlyFundingForm.manualAmount}
+              onChange={(event) =>
+                setMonthlyFundingForm((currentValue) => ({
+                  ...currentValue,
+                  manualAmount: event.target.value,
+                }))
+              }
+            />
+          </label>
+
+          <label>
+            Cashback / rounding / residual cash
+            <input
+              min="0"
+              step="0.01"
+              type="number"
+              value={monthlyFundingForm.cashbackRoundingAmount}
+              onChange={(event) =>
+                setMonthlyFundingForm((currentValue) => ({
+                  ...currentValue,
+                  cashbackRoundingAmount: event.target.value,
+                }))
+              }
+            />
+          </label>
+        </div>
+
+        <label>
+          Notes
+          <textarea
+            rows={2}
+            value={monthlyFundingForm.notes}
+            onChange={(event) =>
+              setMonthlyFundingForm((currentValue) => ({
+                ...currentValue,
+                notes: event.target.value,
+              }))
+            }
+          />
+        </label>
+
+        <div className="section-header">
+          <p className="muted small">
+            Current split: {formatMoney(monthlyFundingForm.manualAmount)} manual +{' '}
+            {formatMoney(monthlyFundingForm.cashbackRoundingAmount)} cashback / rounding / residual cash
+            = {formatMoney(String(monthlyFundingTotal))}.
+          </p>
+
+          <button type="button" onClick={submitMonthlyFundingBreakdown}>
+            Save funding breakdown
+          </button>
+        </div>
+      </section>
 
       <MarketDataPanel
         positions={positions}

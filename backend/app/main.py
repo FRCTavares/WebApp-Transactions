@@ -25,6 +25,7 @@ from app.models import (
     DescriptionRule,
     ImportBatch,
     InvestmentEvent,
+    InvestmentFundingMonth,
     MarketPrice,
     MarketPriceHistory,
     OwedItem,
@@ -40,6 +41,7 @@ from app.routers.description_rules import router as description_rules_router
 from app.routers.export import router as export_router
 from app.routers.imports import router as imports_router
 from app.routers.investment_events import router as investment_events_router
+from app.routers.investment_funding_months import router as investment_funding_months_router
 from app.routers.legacy_excel_imports import router as legacy_excel_imports_router
 from app.routers.market_prices import router as market_prices_router
 from app.routers.me import router as me_router
@@ -163,6 +165,7 @@ app.include_router(owed_router)
 app.include_router(summary_router)
 app.include_router(imports_router)
 app.include_router(investment_events_router)
+app.include_router(investment_funding_months_router)
 app.include_router(legacy_excel_imports_router)
 app.include_router(market_prices_router)
 app.include_router(me_router)
