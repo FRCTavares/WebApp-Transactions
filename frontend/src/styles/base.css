@@ -644,6 +644,15 @@ main {
     color: #111827;
   }
 
+  .mobile-bottom-nav button:focus {
+    outline: none;
+  }
+
+  .mobile-bottom-nav button:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px #cbd5e1;
+  }
+
   main {
     padding: 8px 10px 14px;
     overflow-x: hidden;
