@@ -652,7 +652,7 @@ export function InvestmentsPage() {
   )
 
   return (
-    <section>
+    <section className="investments-page">
       <div className="page-header">
         <div>
           <h1>Investments</h1>
@@ -680,17 +680,24 @@ export function InvestmentsPage() {
 
       <InvestmentPositionsTable positions={positions} />
 
-      <section className="panel-card">
+      <section className="panel-card investment-funding-card">
         <div className="section-header">
           <div>
-            <h2>Investment funding clarification</h2>
+            <h2>Funding split</h2>
             <p className="muted small">
-              Clarifies market buys that are funded by a mix of manual money, cashback, rounding, and residual broker cash.
+              Manual money vs cashback, rounding, and residual broker cash.
             </p>
           </div>
         </div>
 
-        <div className="form-grid">
+        <p className="investment-funding-mobile-summary">
+          {formatMoney(String(monthlyFundingTotal))}
+        </p>
+
+        <details className="investment-funding-details">
+          <summary>Edit funding split</summary>
+
+          <div className="form-grid">
           <label>
             Month
             <input
@@ -751,31 +758,32 @@ export function InvestmentsPage() {
           </label>
         </div>
 
-        <label>
-          Notes
-          <textarea
-            rows={2}
-            value={monthlyFundingForm.notes}
-            onChange={(event) =>
-              setMonthlyFundingForm((currentValue) => ({
-                ...currentValue,
-                notes: event.target.value,
-              }))
-            }
-          />
-        </label>
+          <label>
+            Notes
+            <textarea
+              rows={2}
+              value={monthlyFundingForm.notes}
+              onChange={(event) =>
+                setMonthlyFundingForm((currentValue) => ({
+                  ...currentValue,
+                  notes: event.target.value,
+                }))
+              }
+            />
+          </label>
 
-        <div className="section-header">
-          <p className="muted small">
-            Current split: {formatMoney(monthlyFundingForm.manualAmount)} manual +{' '}
-            {formatMoney(monthlyFundingForm.cashbackRoundingAmount)} cashback / rounding / residual cash
-            = {formatMoney(String(monthlyFundingTotal))}.
-          </p>
+          <div className="section-header">
+            <p className="muted small">
+              Current split: {formatMoney(monthlyFundingForm.manualAmount)} manual +{' '}
+              {formatMoney(monthlyFundingForm.cashbackRoundingAmount)} extra
+              = {formatMoney(String(monthlyFundingTotal))}.
+            </p>
 
-          <button type="button" onClick={submitMonthlyFundingBreakdown}>
-            Save funding breakdown
-          </button>
-        </div>
+            <button type="button" onClick={submitMonthlyFundingBreakdown}>
+              Save split
+            </button>
+          </div>
+        </details>
       </section>
 
       <MarketDataPanel
@@ -813,7 +821,7 @@ export function InvestmentsPage() {
           <div>
             <h2>Investment events</h2>
             <p className="muted small">
-              {events.length} broker ledger entries. They do not affect Money In or Money Out unless a separate bank transaction exists.
+              {events.length} broker ledger entries.
             </p>
           </div>
 
@@ -886,7 +894,7 @@ export function InvestmentsPage() {
           </>
         ) : (
           <p className="muted small">
-            Event table hidden. Show events to inspect all {events.length} broker ledger rows, paginated 15 at a time.
+            Event table hidden.
           </p>
         )}
       </section>

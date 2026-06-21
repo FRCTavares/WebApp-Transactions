@@ -1,0 +1,268 @@
+.investment-funding-mobile-summary {
+  display: none;
+}
+
+.investment-funding-details summary,
+.market-data-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.investment-position-mobile-list {
+  display: none;
+}
+
+.investment-position-mobile-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(17, 24, 39, 0.07);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.investment-position-mobile-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.investment-position-mobile-header strong {
+  color: #111827;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+}
+
+.investment-position-mobile-header p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.investment-position-mobile-details {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.investment-position-mobile-details > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.investment-position-mobile-details dt {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.investment-position-mobile-details dd {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 800px) {
+  .investments-page {
+    display: grid;
+    gap: 14px;
+  }
+
+  .investments-page .page-header {
+    margin-bottom: 0;
+  }
+
+  .investments-page .page-header h1 {
+    font-size: 28px;
+    letter-spacing: -0.04em;
+  }
+
+  .investments-page .page-header .action-group {
+    display: none;
+  }
+
+  .investments-page .panel-card {
+    overflow: hidden;
+    padding: 16px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .investments-page .panel-card > .section-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .investments-page .panel-card > .section-header h2 {
+    font-size: 19px;
+    letter-spacing: -0.03em;
+  }
+
+  .investments-page .panel-card > .section-header p {
+    display: none;
+  }
+
+  .investments-page .muted.small {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .investments-page .form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .investments-page label {
+    gap: 5px;
+    font-size: 13px;
+  }
+
+  .investments-page input,
+  .investments-page select,
+  .investments-page textarea {
+    min-height: 40px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  .investment-position-table-wrap {
+    display: none;
+  }
+
+  .investment-position-mobile-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .investment-position-mobile-card .badge {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .investment-position-mobile-details > div:nth-child(2),
+  .investment-position-mobile-details > div:nth-child(3) {
+    display: none;
+  }
+
+  .investment-funding-card {
+    gap: 10px;
+  }
+
+  .investment-funding-card > .section-header {
+    margin-bottom: 4px;
+  }
+
+  .investment-funding-mobile-summary {
+    display: block;
+    margin: 0 0 8px;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+
+  .investment-funding-details {
+    margin-top: 2px;
+  }
+
+  .investment-funding-details summary,
+  .market-data-details summary {
+    padding: 2px 0;
+    color: #111827;
+    font-size: 15px;
+  }
+
+  .investment-funding-details[open] summary,
+  .market-data-details[open] summary {
+    margin-bottom: 12px;
+  }
+
+  .investment-funding-card .section-header:last-child {
+    margin-top: 10px;
+  }
+
+  .investment-funding-card .section-header:last-child p {
+    display: none;
+  }
+
+  .investment-funding-card button {
+    width: 100%;
+  }
+
+  .market-data-panel {
+    padding: 14px 16px;
+  }
+
+  .market-data-details {
+    display: grid;
+    gap: 12px;
+  }
+
+  .market-data-refresh-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .market-data-refresh-card .primary-button {
+    width: 100%;
+  }
+
+  .market-data-holdings-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .market-data-holding-card {
+    min-width: 0;
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .market-data-holding-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .market-data-panel .table-wrap {
+    display: none;
+  }
+
+  .market-data-advanced {
+    border-radius: 16px;
+  }
+
+  .investments-page > .panel-card:last-child .section-header {
+    gap: 12px;
+  }
+
+  .investments-page > .panel-card:last-child .action-group {
+    width: 100%;
+  }
+
+  .investments-page > .panel-card:last-child .action-group select,
+  .investments-page > .panel-card:last-child .action-group button {
+    width: 100%;
+  }
+
+  .investments-page > .panel-card:last-child > p {
+    display: none;
+  }
+}

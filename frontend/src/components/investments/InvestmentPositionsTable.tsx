@@ -17,7 +17,71 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
         </div>
       </div>
 
-      <div className="table-wrap">
+      <div className="investment-position-mobile-list">
+        {positions.map((position) => (
+          <article
+            className="investment-position-mobile-card"
+            key={`${position.source}-${position.account}-${position.ticker}-${position.isin}-mobile`}
+          >
+            <div className="investment-position-mobile-header">
+              <div>
+                <strong>{position.ticker ?? '-'}</strong>
+                <p className="muted small">{position.instrument_name ?? 'Unnamed holding'}</p>
+              </div>
+              <span className="badge badge-neutral">{position.isin ?? '-'}</span>
+            </div>
+
+            <dl className="investment-position-mobile-details">
+              <div>
+                <dt>Quantity</dt>
+                <dd>{position.quantity}</dd>
+              </div>
+              <div>
+                <dt>Cost basis</dt>
+                <dd>
+                  {position.costs.map((cost) => (
+                    <span key={cost.currency}>
+                      {formatMoney(cost.total_cost, cost.currency)}
+                    </span>
+                  ))}
+                </dd>
+              </div>
+              <div>
+                <dt>Current price</dt>
+                <dd>
+                  {position.market_price && position.market_price_currency
+                    ? formatMoney(position.market_price, position.market_price_currency)
+                    : '-'}
+                </dd>
+              </div>
+              <div>
+                <dt>Current value</dt>
+                <dd>
+                  {position.market_value && position.market_value_currency
+                    ? formatMoney(position.market_value, position.market_value_currency)
+                    : '-'}
+                </dd>
+              </div>
+              <div>
+                <dt>Gain/Loss</dt>
+                <dd>
+                  {position.unrealised_gain && position.market_value_currency
+                    ? formatMoney(position.unrealised_gain, position.market_value_currency)
+                    : '-'}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+
+        {positions.length === 0 && (
+          <div className="empty-state">
+            No open positions found.
+          </div>
+        )}
+      </div>
+
+      <div className="table-wrap investment-position-table-wrap">
         <table>
           <thead>
             <tr>

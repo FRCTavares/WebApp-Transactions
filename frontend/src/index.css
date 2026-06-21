@@ -5,6 +5,7 @@
 @import './styles/rules.css';
 @import './styles/table-actions.css';
 @import './styles/investments.css';
+@import './styles/investments-mobile.css';
 @import './styles/market-data.css';
 @import './styles/owed.css';
 @import './styles/wealth.css';
@@ -91,6 +92,27 @@ main {
 }
 
 @media (max-width: 800px) {
+  .investments-page .panel-card > .section-header p {
+    display: none;
+  }
+
+  .investment-funding-mobile-summary {
+    display: block;
+    margin: 0;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .investment-funding-details {
+    margin-top: 12px;
+  }
+
+  .market-data-details {
+    display: grid;
+    gap: 12px;
+  }
+
   .backend-wake-notice {
     align-items: flex-start;
     flex-direction: column;

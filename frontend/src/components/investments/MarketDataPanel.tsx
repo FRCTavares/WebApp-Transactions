@@ -63,16 +63,10 @@ export function MarketDataPanel({
 
   return (
     <section className="panel-card market-data-panel">
-      <div className="section-header">
-        <div>
-          <h2>Market data</h2>
-          <p className="muted small">
-            One refresh updates the latest cached value for each current holding.
-          </p>
-        </div>
-      </div>
+      <details className="market-data-details">
+        <summary>Market data</summary>
 
-      <div className="market-data-refresh-card">
+        <div className="market-data-refresh-card">
         <div>
           <strong>Refresh current prices</strong>
           <p className="muted small">
@@ -142,6 +136,7 @@ export function MarketDataPanel({
         onEdit={onEditManualPrice}
         onDelete={onDeleteManualPrice}
       />
+      </details>
     </section>
   )
 }
