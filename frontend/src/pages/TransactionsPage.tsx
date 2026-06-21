@@ -196,6 +196,13 @@ function getExportFilename(direction: Direction) {
   return direction === 'in' ? 'money-in-transactions.csv' : 'money-out-transactions.csv'
 }
 
+function getRemainingOwedAmount(transaction: TransactionTableRow) {
+  const transactionAmount = Number(transaction.amount)
+  const linkedOwedAmount = Number(transaction.owed_amount_total ?? '0')
+
+  return Math.max(transactionAmount - linkedOwedAmount, 0)
+}
+
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const { monthKey } = usePeriod()
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -416,12 +423,14 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   }
 
   function openOwedDialog(transaction: TransactionTableRow) {
+    const remainingOwedAmount = getRemainingOwedAmount(transaction)
+
     setError(null)
     setMessage(null)
     setOwedDraftTransaction(transaction)
     setOwedForm({
       person: 'Mother',
-      amount: transaction.amount,
+      amount: remainingOwedAmount.toFixed(2),
       alreadyPaid: false,
       notes: transaction.raw_description,
     })
@@ -461,6 +470,18 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
 
     if (!amount || Number.isNaN(amount)) {
       setError('Amount owed must be a positive number.')
+      return
+    }
+
+    const remainingOwedAmount = getRemainingOwedAmount(owedDraftTransaction)
+
+    if (amount > remainingOwedAmount) {
+      setError(
+        `Amount owed cannot exceed the remaining available amount of ${formatMoney(
+          remainingOwedAmount.toFixed(2),
+          owedDraftTransaction.currency,
+        )}.`,
+      )
       return
     }
 
@@ -663,6 +684,19 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
               <strong>{owedDraftTransaction.description}</strong>
               <span>{formatMoney(owedDraftTransaction.amount, owedDraftTransaction.currency)}</span>
             </div>
+
+            {owedDraftTransaction.is_owed && (
+              <p className="muted small">
+                Already linked: {formatMoney(
+                  owedDraftTransaction.owed_amount_total ?? '0.00',
+                  owedDraftTransaction.currency,
+                )}.
+                {' '}Remaining available: {formatMoney(
+                  getRemainingOwedAmount(owedDraftTransaction).toFixed(2),
+                  owedDraftTransaction.currency,
+                )}.
+              </p>
+            )}
 
             <div className="form-row">
               <label>

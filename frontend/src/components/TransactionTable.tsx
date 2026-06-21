@@ -45,6 +45,21 @@ function getOwedLabel(transaction: TransactionTableRow) {
   return null
 }
 
+function getRemainingOwedCapacity(transaction: TransactionTableRow) {
+  const transactionAmount = Number(transaction.amount)
+  const linkedOwedAmount = Number(transaction.owed_amount_total ?? '0')
+
+  return Math.max(transactionAmount - linkedOwedAmount, 0)
+}
+
+function canCreateOwedShare(transaction: TransactionTableRow) {
+  return transaction.direction === 'out' && getRemainingOwedCapacity(transaction) > 0
+}
+
+function getOwedActionLabel(transaction: TransactionTableRow) {
+  return transaction.is_owed ? 'Add owed' : 'Owed'
+}
+
 export function TransactionTable({
   transactions,
   createRow,
@@ -158,13 +173,13 @@ export function TransactionTable({
                         Edit
                       </button>
                     )}
-                    {!transaction.is_owed && onMarkOwed && transaction.direction === 'out' && (
+                    {onMarkOwed && canCreateOwedShare(transaction) && (
                       <button
                         type="button"
                         className="transaction-mobile-action"
                         onClick={() => onMarkOwed(transaction)}
                       >
-                        Owed
+                        {getOwedActionLabel(transaction)}
                       </button>
                     )}
                     {onDelete && (
@@ -281,9 +296,9 @@ export function TransactionTable({
                           Edit
                         </button>
                       )}
-                      {!transaction.is_grouped && !transaction.is_owed && onMarkOwed && transaction.direction === 'out' && (
+                      {!transaction.is_grouped && onMarkOwed && canCreateOwedShare(transaction) && (
                         <button type="button" onClick={() => onMarkOwed(transaction)}>
-                          Owed
+                          {getOwedActionLabel(transaction)}
                         </button>
                       )}
                       {!transaction.is_grouped && onDelete && (
