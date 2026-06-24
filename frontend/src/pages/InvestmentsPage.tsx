@@ -10,6 +10,7 @@ import {
 } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentEventsTable } from '../components/investments/InvestmentEventsTable'
+import { InvestmentAllocationCharts } from '../components/investments/InvestmentAllocationCharts'
 import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
@@ -652,9 +653,9 @@ export function InvestmentsPage() {
   )
 
   return (
-    <section className="investments-page">
-      <div className="page-header">
-        <div>
+    <section className="app-page investments-page investments-page-polished">
+      <div className="page-header investments-page-header">
+        <div className="page-title-block">
           <h1>Investments</h1>
         </div>
 
@@ -678,9 +679,12 @@ export function InvestmentsPage() {
         unrealisedGainTotals={investmentTotals.unrealisedGainTotals}
       />
 
+      <InvestmentAllocationCharts positions={positions} />
+
       <InvestmentPositionsTable positions={positions} />
 
-      <section className="panel-card investment-funding-card">
+      <div className="investment-tools-grid">
+      <section className="content-card panel-card investment-funding-card">
         <div className="section-header">
           <div>
             <h2>Funding split</h2>
@@ -799,6 +803,7 @@ export function InvestmentsPage() {
         onEditManualPrice={startMarketPriceEdit}
         onDeleteManualPrice={removeMarketPrice}
       />
+      </div>
 
       <InvestmentFiltersPanel
         activeFilterCount={activeFilterCount}
@@ -816,7 +821,7 @@ export function InvestmentsPage() {
         onClearFilters={clearFilters}
       />
 
-      <section className="panel-card">
+      <section className="content-card panel-card investment-events-card">
         <div className="section-header">
           <div>
             <h2>Investment events</h2>
@@ -826,21 +831,23 @@ export function InvestmentsPage() {
           </div>
 
           <div className="action-group">
-            <select
-              aria-label="Sort investment events"
-              value={eventSort}
-              onChange={(event) => {
-                setEventSort(event.target.value as InvestmentEventSort)
-                setEventPage(1)
-              }}
-              style={{ maxWidth: '220px' }}
-            >
-              <option value="date_desc">Date newest</option>
-              <option value="date_asc">Date oldest</option>
-              <option value="amount_desc">Amount highest</option>
-              <option value="amount_asc">Amount lowest</option>
-              <option value="event_type">Event type</option>
-            </select>
+            {isEventsOpen && (
+              <select
+                aria-label="Sort investment events"
+                value={eventSort}
+                onChange={(event) => {
+                  setEventSort(event.target.value as InvestmentEventSort)
+                  setEventPage(1)
+                }}
+                style={{ maxWidth: '220px' }}
+              >
+                <option value="date_desc">Date newest</option>
+                <option value="date_asc">Date oldest</option>
+                <option value="amount_desc">Amount highest</option>
+                <option value="amount_asc">Amount lowest</option>
+                <option value="event_type">Event type</option>
+              </select>
+            )}
 
             <button
               className="small-button"
@@ -892,11 +899,7 @@ export function InvestmentsPage() {
               onStartManualResolution={startManualResolution}
             />
           </>
-        ) : (
-          <p className="muted small">
-            Event table hidden.
-          </p>
-        )}
+        ) : null}
       </section>
     </section>
   )

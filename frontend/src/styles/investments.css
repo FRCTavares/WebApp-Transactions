@@ -75,3 +75,156 @@
   background: #fffbeb;
   color: #92400e;
 }
+
+/* Investment allocation charts */
+.investment-breakdown-card {
+  padding: 1rem;
+}
+
+.investment-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.investment-allocation-card,
+.investment-gain-ranking-card {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.85rem;
+  background: #f9fafb;
+}
+
+.investment-allocation-card h3,
+.investment-gain-ranking-card h3 {
+  margin: 0 0 0.25rem;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.investment-allocation-card p,
+.investment-gain-ranking-card p {
+  margin: 0;
+}
+
+.investment-allocation-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+}
+
+.investment-allocation-visual svg {
+  width: min(180px, 100%);
+  height: auto;
+  transform: rotate(-90deg);
+}
+
+.investment-allocation-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.investment-gain-ranking-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.investment-gain-ranking-row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.investment-gain-ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.investment-gain-ranking-header strong {
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.investment-gain-ranking-header span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.investment-gain-ranking-track {
+  overflow: hidden;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.investment-gain-ranking-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.investment-gain-ranking-track .positive {
+  background: #16a34a;
+}
+
+.investment-gain-ranking-track .negative {
+  background: #dc2626;
+}
+
+@media (max-width: 1180px) {
+  .investment-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .investment-allocation-card {
+    grid-template-columns: minmax(160px, 220px) 1fr;
+    align-items: center;
+  }
+}
+
+@media (max-width: 800px) {
+  .investment-breakdown-card {
+    padding: 14px;
+  }
+
+  .investment-allocation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .investment-allocation-visual {
+    min-height: 140px;
+  }
+
+  .investment-allocation-visual svg {
+    width: 140px;
+  }
+}
+
+/* Investment allocation polish */
+.investment-allocation-visual .expense-chart-centre {
+  max-width: 5.8rem;
+}
+
+.investment-allocation-visual .expense-chart-centre strong {
+  font-size: 1.1rem;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.investment-allocation-visual .expense-chart-centre span {
+  font-size: 0.68rem;
+}
+
+@media (max-width: 800px) {
+  .investment-allocation-visual .expense-chart-centre strong {
+    font-size: 1rem;
+  }
+}
+

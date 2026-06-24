@@ -29,7 +29,7 @@ function getGainClassName(value: string | null) {
 
 export function InvestmentPositionsTable({ positions }: InvestmentPositionsTableProps) {
   return (
-    <section className="panel-card">
+    <section className="content-card panel-card investment-positions-card">
       <div className="section-header">
         <div>
           <h2>Positions</h2>

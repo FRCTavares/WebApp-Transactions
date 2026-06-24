@@ -56,7 +56,7 @@ export function InvestmentEventsTable({
   onStartManualResolution,
 }: InvestmentEventsTableProps) {
   return (
-    <div className="table-wrap investments-table-wrap">
+    <div className="content-card table-wrap investments-table-wrap">
       <table className="investments-table">
         <thead>
           <tr>

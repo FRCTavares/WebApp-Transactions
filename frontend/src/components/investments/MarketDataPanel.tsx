@@ -62,7 +62,7 @@ export function MarketDataPanel({
   ).length
 
   return (
-    <section className="panel-card market-data-panel">
+    <section className="content-card panel-card market-data-panel">
       <div className="market-data-mobile-simple">
         <div>
           <h2>Market prices</h2>
