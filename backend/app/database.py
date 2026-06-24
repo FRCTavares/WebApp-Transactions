@@ -84,17 +84,19 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def initialise_database(database_engine: Engine = engine) -> None:
-    """Initialise the database for local SQLite development.
+    """Initialise database objects needed by the application.
 
-    Non-SQLite databases, such as Supabase/Postgres, should be initialised
-    through Alembic migrations instead of implicit app startup mutations.
+    SQLite uses SQLAlchemy table creation plus legacy startup migrations.
+    Hosted Postgres keeps implicit table creation disabled, but still runs
+    explicit idempotent startup migrations for tables that need backfilling.
     """
-
-    if not is_sqlite_database_url(str(database_engine.url)):
-        return
 
     from app.database_migrations import run_startup_migrations
     import app.models  # noqa: F401
+
+    if not is_sqlite_database_url(str(database_engine.url)):
+        run_startup_migrations(database_engine)
+        return
 
     Base.metadata.create_all(bind=database_engine)
     run_startup_migrations(database_engine)
