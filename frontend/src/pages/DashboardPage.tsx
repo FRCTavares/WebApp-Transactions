@@ -280,8 +280,8 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   }
 
   return (
-    <section>
-      <div className="dashboard-hero">
+    <section className="app-page dashboard-page">
+      <div className="page-title-block dashboard-hero">
         <p>{greeting}, {displayName}</p>
         <h1>Dashboard</h1>
       </div>
@@ -301,7 +301,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {summary && (
         <>
-          <div className="cards">
+          <div className="summary-grid cards">
             <div className="card dashboard-metric-card dashboard-metric-income">
               <span>Money In</span>
               <strong>{formatMoney(summary.money_in)}</strong>
@@ -340,7 +340,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
 
           {selectedCategory && (
-            <div className="category-detail-panel">
+            <div className="content-card category-detail-panel">
               <div className="category-detail-header">
                 <div>
                   <h3>{selectedCategory} details</h3>
@@ -438,7 +438,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {categories && (
         <>
-          <div className="dashboard-section-header">
+          <div className="page-section-header dashboard-section-header">
             <div>
               <h2>Money Breakdown This Month</h2>
               <p className="muted small">
@@ -516,7 +516,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
           )}
 
           {dashboardChartMode === 'expenses' && (
-            <div className="table-wrap dashboard-category-table-wrap">
+            <div className="content-card table-wrap dashboard-category-table-wrap">
             <table>
               <thead>
                 <tr>
