@@ -580,3 +580,67 @@
     display: none;
   }
 }
+
+/* Wealth page alignment with the shared Dashboard baseline. */
+.wealth-page-polished .wealth-page-header {
+  margin-bottom: 0;
+}
+
+.wealth-page-polished .page-title-block h1 {
+  margin-bottom: 0;
+}
+
+.wealth-page-polished .wealth-summary-grid {
+  gap: 0.85rem;
+}
+
+.wealth-page-polished .wealth-summary-card,
+.wealth-page-polished .panel-card {
+  border-radius: 0.95rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.wealth-page-polished .panel-card {
+  margin-bottom: 0;
+}
+
+.wealth-page-polished .section-header {
+  margin-bottom: 0.9rem;
+}
+
+.wealth-page-polished .section-header h2 {
+  margin-top: 0;
+}
+
+.wealth-page-polished .wealth-chart-card {
+  margin: 0;
+  border-radius: 0.95rem;
+}
+
+.wealth-page-polished .wealth-snapshots-panel .section-header {
+  margin-bottom: 0;
+}
+
+.wealth-page-polished .wealth-snapshots-panel:has(.wealth-table-wrap) .section-header {
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .wealth-page-polished {
+    gap: 0.85rem;
+  }
+
+  .wealth-page-polished .wealth-page-header {
+    gap: 0.75rem;
+  }
+
+  .wealth-page-polished .wealth-summary-grid {
+    gap: 0.65rem;
+  }
+
+  .wealth-page-polished .wealth-summary-card,
+  .wealth-page-polished .panel-card {
+    border-radius: 14px;
+  }
+}
+

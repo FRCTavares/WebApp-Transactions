@@ -400,9 +400,9 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
   })
 
   return (
-    <section className="wealth-page">
-      <div className="page-header">
-        <div>
+    <section className="app-page wealth-page wealth-page-polished">
+      <div className="page-header wealth-page-header">
+        <div className="page-title-block">
           <h1>Wealth</h1>
         </div>
 
@@ -478,7 +478,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
       />
 
       {isAccountFormOpen ? (
-        <section className="panel-card">
+        <section className="content-card panel-card">
           <div className="section-header">
             <div>
               <h2>{editingAccountId === null ? 'Add wealth account' : 'Edit wealth account'}</h2>
@@ -554,7 +554,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
       ) : null}
 
       {isSnapshotFormOpen ? (
-        <section className="panel-card">
+        <section className="content-card panel-card">
           <div className="section-header">
             <div>
               <h2>{editingSnapshotId === null ? 'Add wealth snapshot' : 'Edit wealth snapshot'}</h2>
@@ -668,7 +668,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         </section>
       ) : null}
 
-      <section className="panel-card wealth-accounts-panel">
+      <section className="content-card panel-card wealth-accounts-panel">
         <div className="section-header">
           <div>
             <h2>Accounts</h2>
@@ -859,7 +859,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         </div>
       </section>
 
-      <section className="panel-card wealth-monthly-panel">
+      <section className="content-card panel-card wealth-monthly-panel">
         <div className="section-header">
           <div>
             <h2>Monthly totals</h2>
@@ -872,7 +872,7 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         <WealthMonthlyChart monthlyTotals={monthlyTotals} />
       </section>
 
-      <section className="panel-card wealth-snapshots-panel">
+      <section className="content-card panel-card wealth-snapshots-panel">
         <div className="section-header">
           <div>
             <h2>Snapshots</h2>
