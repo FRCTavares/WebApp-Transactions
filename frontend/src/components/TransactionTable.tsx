@@ -199,7 +199,7 @@ export function TransactionTable({
         </div>
       )}
 
-      <div className={`table-wrap transaction-desktop-table-wrap ${hasInlineForm ? 'transaction-table-has-inline-form' : ''}`}>
+      <div className={`content-card table-wrap transaction-desktop-table-wrap ${hasInlineForm ? 'transaction-table-has-inline-form' : ''}`}>
         <table>
         <thead>
           <tr>
