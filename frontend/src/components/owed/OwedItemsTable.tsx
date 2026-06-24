@@ -166,7 +166,7 @@ export function OwedItemsTable({
         </div>
       )}
 
-      <div className={`table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowTableOnMobile ? 'owed-table-has-inline-form' : ''}`}>
+      <div className={`content-card table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowTableOnMobile ? 'owed-table-has-inline-form' : ''}`}>
         <table className="owed-table">
         <thead>
           <tr>

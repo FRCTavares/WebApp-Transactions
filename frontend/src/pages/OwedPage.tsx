@@ -549,9 +549,9 @@ export function OwedPage() {
   const totalOriginalAmount = getItemsTotal(items, 'amount_total')
 
   return (
-    <section className="owed-page">
-      <div className="page-header">
-        <div>
+    <section className="app-page owed-page owed-page-polished">
+      <div className="page-header owed-page-header">
+        <div className="page-title-block">
           <h1>Money Owed To Me</h1>
         </div>
 
@@ -603,7 +603,7 @@ export function OwedPage() {
         }}
       />
 
-      <div className="panel-card owed-table-filter-card">
+      <div className="content-card panel-card owed-table-filter-card">
         <div>
           <h2>Table view</h2>
           <p className="muted small">

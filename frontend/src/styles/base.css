@@ -881,3 +881,130 @@ main {
     min-height: 44px;
   }
 }
+
+/* Desktop sidebar compaction. */
+@media (min-width: 801px) {
+  .sidebar {
+    padding: 16px 14px;
+  }
+
+  .sidebar-header {
+    margin-bottom: 18px;
+  }
+
+  .sidebar-nav {
+    gap: 16px;
+  }
+
+  .nav-group h3 {
+    margin-bottom: 7px;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+  }
+
+  .nav-items {
+    gap: 6px;
+  }
+
+  .sidebar button {
+    min-height: 38px;
+    padding: 8px 11px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.15;
+  }
+}
+
+/* Desktop sidebar navigation polish. */
+@media (min-width: 801px) {
+  .app-shell {
+    grid-template-columns: 204px 1fr;
+  }
+
+  .sidebar {
+    padding: 16px 12px;
+    background: #fbfcfe;
+  }
+
+  .sidebar-header {
+    margin-bottom: 18px;
+    padding: 0 4px;
+  }
+
+  .sidebar-header h2,
+  .account-greeting {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .sidebar-header p,
+  .account-subtitle {
+    color: #6b7280;
+    font-size: 12px;
+  }
+
+  .sidebar-nav {
+    gap: 14px;
+  }
+
+  .nav-group h3 {
+    margin: 0 0 5px;
+    padding: 0 6px;
+    color: #6b7280;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  .nav-items {
+    gap: 1px;
+  }
+
+  .sidebar button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 31px;
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    padding: 6px 9px;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.15;
+    text-align: left;
+    box-shadow: none;
+  }
+
+  .sidebar button:hover {
+    border-color: #e5e7eb;
+    background: #ffffff;
+  }
+
+  .sidebar button.active {
+    border-color: #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .sidebar button.active::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: #2563eb;
+  }
+
+  .sidebar button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.16);
+  }
+}
+
