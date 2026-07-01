@@ -29,6 +29,15 @@ type PaymentFormState = {
 }
 
 
+const UNALLOCATED_CATEGORY_OPTIONS = [
+  { value: '', label: 'Not income / leave unclassified' },
+  { value: 'Allowance', label: 'Allowance' },
+  { value: 'Gift', label: 'Gift' },
+  { value: 'Income', label: 'Income' },
+  { value: 'Other', label: 'Other / not counted as income' },
+]
+
+
 function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -732,11 +741,19 @@ export function OwedPage() {
             <div className="form-row">
               <label>
                 Unallocated category
-                <input
+                <select
                   value={paymentForm.unallocatedCategory}
                   onChange={(event) => updatePaymentForm('unallocatedCategory', event.target.value)}
-                  placeholder="Gift"
-                />
+                >
+                  {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value || 'empty'} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="muted small">
+                  Use Allowance, Gift, or Income when leftover money should count as money in.
+                </span>
               </label>
 
               <label>
