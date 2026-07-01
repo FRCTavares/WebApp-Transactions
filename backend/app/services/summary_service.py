@@ -38,12 +38,28 @@ class SummaryService:
         end_date = self._get_next_month_start(year, month)
 
         user_id = self._get_user_id(current_user)
-        money_in = self.repository.get_total_by_cashflow_type(
+        gross_money_in = self.repository.get_gross_money_in(
+            start_date=start_date,
+            end_date=end_date,
+            user_id=user_id,
+        )
+        transaction_income = self.repository.get_total_by_cashflow_type(
             cashflow_type="income",
             start_date=start_date,
             end_date=end_date,
             user_id=user_id,
         )
+        reimbursement_received_amount = self.repository.get_reimbursement_received_amount(
+            start_date=start_date,
+            end_date=end_date,
+            user_id=user_id,
+        )
+        owed_payment_extra_income = self.repository.get_owed_payment_extra_income(
+            start_date=start_date,
+            end_date=end_date,
+            user_id=user_id,
+        )
+        money_in = transaction_income + owed_payment_extra_income
         money_out = self.repository.get_total_by_cashflow_type(
             cashflow_type="expense",
             start_date=start_date,
@@ -70,10 +86,13 @@ class SummaryService:
 
         return MonthlySummary(
             month=f"{year:04d}-{month:02d}",
+            gross_money_in=gross_money_in,
             money_in=money_in,
             money_out=money_out,
             owed_expense_amount=owed_expense_amount,
             personal_money_out=personal_money_out,
+            reimbursement_received_amount=reimbursement_received_amount,
+            owed_payment_extra_income=owed_payment_extra_income,
             net=money_in - money_out,
             personal_net=money_in - personal_money_out,
             open_owed_amount=open_owed_amount,

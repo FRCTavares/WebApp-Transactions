@@ -10,10 +10,13 @@ class CategoryTotal(BaseModel):
 
 class MonthlySummary(BaseModel):
     month: str
+    gross_money_in: Decimal
     money_in: Decimal
     money_out: Decimal
     owed_expense_amount: Decimal
     personal_money_out: Decimal
+    reimbursement_received_amount: Decimal
+    owed_payment_extra_income: Decimal
     net: Decimal
     personal_net: Decimal
     open_owed_amount: Decimal

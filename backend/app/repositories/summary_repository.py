@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
+from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 
 
@@ -26,6 +27,75 @@ class SummaryRepository:
             .where(Transaction.cashflow_type == cashflow_type)
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
+    def get_gross_money_in(
+        self,
+        start_date: date,
+        end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(Transaction.amount), 0))
+            .where(Transaction.user_id == user_id)
+            .where(Transaction.direction == "in")
+            .where(Transaction.date >= start_date)
+            .where(Transaction.date < end_date)
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
+    def get_reimbursement_received_amount(
+        self,
+        start_date: date,
+        end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Decimal:
+        statement = (
+            select(func.coalesce(func.sum(OwedPaymentAllocation.amount), 0))
+            .join(OwedPayment, OwedPayment.id == OwedPaymentAllocation.owed_payment_id)
+            .where(OwedPaymentAllocation.user_id == user_id)
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.payment_date >= start_date)
+            .where(OwedPayment.payment_date < end_date)
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
+    def get_owed_payment_extra_income(
+        self,
+        start_date: date,
+        end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Decimal:
+        income_like_categories = ("gift", "allowance", "income")
+        allocated_by_payment = (
+            select(
+                OwedPaymentAllocation.owed_payment_id.label("owed_payment_id"),
+                func.coalesce(func.sum(OwedPaymentAllocation.amount), 0).label("allocated_amount"),
+            )
+            .where(OwedPaymentAllocation.user_id == user_id)
+            .group_by(OwedPaymentAllocation.owed_payment_id)
+            .subquery()
+        )
+
+        unallocated_amount = OwedPayment.amount - func.coalesce(
+            allocated_by_payment.c.allocated_amount,
+            0,
+        )
+
+        statement = (
+            select(func.coalesce(func.sum(unallocated_amount), 0))
+            .outerjoin(
+                allocated_by_payment,
+                allocated_by_payment.c.owed_payment_id == OwedPayment.id,
+            )
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.payment_date >= start_date)
+            .where(OwedPayment.payment_date < end_date)
+            .where(func.lower(func.coalesce(OwedPayment.unallocated_category, "")).in_(income_like_categories))
         )
 
         return Decimal(str(self.db.scalar(statement)))

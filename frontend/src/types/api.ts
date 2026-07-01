@@ -377,10 +377,13 @@ export type CategoryTotal = {
 
 export type MonthlySummary = {
   month: string
+  gross_money_in: string
   money_in: string
   money_out: string
   owed_expense_amount: string
   personal_money_out: string
+  reimbursement_received_amount: string
+  owed_payment_extra_income: string
   net: string
   personal_net: string
   open_owed_amount: string
