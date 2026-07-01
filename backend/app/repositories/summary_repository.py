@@ -31,6 +31,29 @@ class SummaryRepository:
 
         return Decimal(str(self.db.scalar(statement)))
 
+    def get_transaction_income_excluding_linked_owed_payments(
+        self,
+        start_date: date,
+        end_date: date,
+        user_id: str = LOCAL_DEFAULT_USER_ID,
+    ) -> Decimal:
+        linked_owed_payment_transaction_ids = (
+            select(OwedPayment.linked_transaction_id)
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.linked_transaction_id.is_not(None))
+        )
+
+        statement = (
+            select(func.coalesce(func.sum(Transaction.amount), 0))
+            .where(Transaction.user_id == user_id)
+            .where(Transaction.cashflow_type == "income")
+            .where(Transaction.date >= start_date)
+            .where(Transaction.date < end_date)
+            .where(Transaction.id.not_in(linked_owed_payment_transaction_ids))
+        )
+
+        return Decimal(str(self.db.scalar(statement)))
+
     def get_gross_money_in(
         self,
         start_date: date,

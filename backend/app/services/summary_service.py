@@ -43,8 +43,7 @@ class SummaryService:
             end_date=end_date,
             user_id=user_id,
         )
-        transaction_income = self.repository.get_total_by_cashflow_type(
-            cashflow_type="income",
+        transaction_income = self.repository.get_transaction_income_excluding_linked_owed_payments(
             start_date=start_date,
             end_date=end_date,
             user_id=user_id,
