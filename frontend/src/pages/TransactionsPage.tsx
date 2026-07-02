@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOwedItem } from '../api/owed'
+import { createOwedItem, createOwedPayment } from '../api/owed'
 import {
   createTransaction,
   deleteTransaction,
@@ -24,12 +24,23 @@ type TransactionsPageProps = {
   title: string
 }
 
-type OwedFromTransactionFormState = {
+type OwedSplitRowState = {
+  id: string
   person: string
   amount: string
-  alreadyPaid: boolean
+  linkedPaymentTransactionId: string
+  unallocatedCategory: string
+  unallocatedNotes: string
   notes: string
 }
+
+const UNALLOCATED_CATEGORY_OPTIONS = [
+  { value: '', label: 'Not income / leave unclassified' },
+  { value: 'Allowance', label: 'Allowance' },
+  { value: 'Gift', label: 'Gift' },
+  { value: 'Income', label: 'Income' },
+  { value: 'Other', label: 'Other / not counted as income' },
+]
 
 function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
@@ -196,11 +207,45 @@ function getExportFilename(direction: Direction) {
   return direction === 'in' ? 'money-in-transactions.csv' : 'money-out-transactions.csv'
 }
 
+function createOwedSplitRow({
+  amount = '',
+  notes = '',
+}: {
+  amount?: string
+  notes?: string
+} = {}): OwedSplitRowState {
+  return {
+    id: `${Date.now()}-${Math.random()}`,
+    person: 'Mother',
+    amount,
+    linkedPaymentTransactionId: '',
+    unallocatedCategory: '',
+    unallocatedNotes: '',
+    notes,
+  }
+}
+
+function parseMoneyInput(value: string) {
+  return Math.abs(Number(value.replace(',', '.')))
+}
+
 function getRemainingOwedAmount(transaction: TransactionTableRow) {
   const transactionAmount = Number(transaction.amount)
   const linkedOwedAmount = Number(transaction.owed_amount_total ?? '0')
 
   return Math.max(transactionAmount - linkedOwedAmount, 0)
+}
+
+function getOwedRowsTotal(rows: OwedSplitRowState[]) {
+  return rows.reduce((total, row) => {
+    const amount = parseMoneyInput(row.amount)
+
+    if (!amount || Number.isNaN(amount)) {
+      return total
+    }
+
+    return total + amount
+  }, 0)
 }
 
 export function TransactionsPage({ direction, title }: TransactionsPageProps) {
@@ -216,13 +261,9 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
+  const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
   const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
-  const [owedForm, setOwedForm] = useState<OwedFromTransactionFormState>({
-    person: 'Mother',
-    amount: '',
-    alreadyPaid: false,
-    notes: '',
-  })
+  const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -422,62 +463,123 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     }
   }
 
+  function loadOwedPaymentTransactionsForDialog() {
+    const selectedMonthForDialog = filters.month || monthKey
+    const monthDateRange = getMonthDateRange(selectedMonthForDialog)
+
+    listTransactions({
+      direction: 'in',
+      date_from: filters.dateFrom || monthDateRange.dateFrom || undefined,
+      date_to: filters.dateTo || monthDateRange.dateTo || undefined,
+      limit: 500,
+    })
+      .then(setOwedPaymentTransactions)
+      .catch((caughtError: unknown) => {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load money in options')
+      })
+  }
+
   function openOwedDialog(transaction: TransactionTableRow) {
     const remainingOwedAmount = getRemainingOwedAmount(transaction)
 
     setError(null)
     setMessage(null)
     setOwedDraftTransaction(transaction)
-    setOwedForm({
-      person: 'Mother',
-      amount: remainingOwedAmount.toFixed(2),
-      alreadyPaid: false,
-      notes: transaction.raw_description,
-    })
+    setOwedRows([
+      createOwedSplitRow({
+        amount: remainingOwedAmount.toFixed(2),
+        notes: transaction.raw_description || transaction.description,
+      }),
+    ])
+    loadOwedPaymentTransactionsForDialog()
   }
 
   function closeOwedDialog() {
     setOwedDraftTransaction(null)
-    setOwedForm({
-      person: 'Mother',
-      amount: '',
-      alreadyPaid: false,
-      notes: '',
+    setOwedRows([])
+    setOwedPaymentTransactions([])
+  }
+
+  function updateOwedRow<K extends keyof OwedSplitRowState>(
+    rowId: string,
+    field: K,
+    value: OwedSplitRowState[K],
+  ) {
+    setOwedRows((currentRows) =>
+      currentRows.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: value,
+            }
+          : row,
+      ),
+    )
+  }
+
+  function addOwedRow() {
+    setOwedRows((currentRows) => [
+      ...currentRows,
+      createOwedSplitRow({
+        notes: owedDraftTransaction?.raw_description || owedDraftTransaction?.description || '',
+      }),
+    ])
+  }
+
+  function removeOwedRow(rowId: string) {
+    setOwedRows((currentRows) => {
+      if (currentRows.length <= 1) {
+        return currentRows
+      }
+
+      return currentRows.filter((row) => row.id !== rowId)
     })
   }
 
-  function updateOwedForm<K extends keyof OwedFromTransactionFormState>(
-    field: K,
-    value: OwedFromTransactionFormState[K],
-  ) {
-    setOwedForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
-    }))
+  function getSelectedOwedPaymentTransaction(row: OwedSplitRowState) {
+    if (!row.linkedPaymentTransactionId) {
+      return null
+    }
+
+    return (
+      owedPaymentTransactions.find(
+        (transaction) => transaction.id.toString() === row.linkedPaymentTransactionId,
+      ) ?? null
+    )
   }
 
-  async function createOwedItemFromDialog() {
+  async function createOwedItemsFromDialog() {
     if (!owedDraftTransaction || isCreatingOwedItem) {
       return
     }
 
-    const amount = Math.abs(Number(owedForm.amount.replace(',', '.')))
-
-    if (!owedForm.person.trim()) {
-      setError('Person is required.')
+    if (owedRows.length === 0) {
+      setError('Add at least one owed person.')
       return
     }
 
-    if (!amount || Number.isNaN(amount)) {
-      setError('Amount owed must be a positive number.')
+    const parsedRows = owedRows.map((row) => ({
+      ...row,
+      person: row.person.trim(),
+      amount: parseMoneyInput(row.amount),
+      linkedPaymentTransaction: getSelectedOwedPaymentTransaction(row),
+    }))
+
+    const invalidRow = parsedRows.find(
+      (row) => !row.person || !row.amount || Number.isNaN(row.amount),
+    )
+
+    if (invalidRow) {
+      setError('Each owed person needs a name and a positive owed amount.')
       return
     }
 
+    const totalOwedAmount = parsedRows.reduce((total, row) => total + row.amount, 0)
     const remainingOwedAmount = getRemainingOwedAmount(owedDraftTransaction)
 
-    if (amount > remainingOwedAmount) {
+    if (totalOwedAmount > remainingOwedAmount + 0.0001) {
       setError(
-        `Amount owed cannot exceed the remaining available amount of ${formatMoney(
+        `Total owed amount cannot exceed the remaining available amount of ${formatMoney(
           remainingOwedAmount.toFixed(2),
           owedDraftTransaction.currency,
         )}.`,
@@ -490,26 +592,61 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     setIsCreatingOwedItem(true)
 
     try {
-      await createOwedItem({
-        person: owedForm.person.trim(),
-        amount_total: amount.toFixed(2),
-        amount_paid: owedForm.alreadyPaid ? amount.toFixed(2) : '0.00',
-        reason: owedDraftTransaction.description,
-        status: owedForm.alreadyPaid ? 'paid' : 'open',
-        due_date: null,
-        linked_transaction_id: owedDraftTransaction.id,
-        notes: owedForm.notes || null,
-      })
+      let createdCount = 0
+      let paymentCount = 0
+
+      for (const row of parsedRows) {
+        const owedItem = await createOwedItem({
+          person: row.person,
+          amount_total: row.amount.toFixed(2),
+          amount_paid: '0.00',
+          reason: owedDraftTransaction.description,
+          status: 'open',
+          due_date: null,
+          linked_transaction_id: owedDraftTransaction.id,
+          notes: row.notes || null,
+        })
+
+        createdCount += 1
+
+        if (row.linkedPaymentTransaction) {
+          const paymentAmount = Number(row.linkedPaymentTransaction.amount)
+          const allocationAmount = Math.min(paymentAmount, row.amount)
+          const leftoverAmount = Math.max(paymentAmount - allocationAmount, 0)
+
+          await createOwedPayment({
+            person: row.person,
+            amount: paymentAmount.toFixed(2),
+            payment_date: row.linkedPaymentTransaction.date,
+            method: 'bank_transfer',
+            currency: row.linkedPaymentTransaction.currency || 'EUR',
+            notes: row.notes || null,
+            linked_transaction_id: row.linkedPaymentTransaction.id,
+            unallocated_category: leftoverAmount > 0 ? row.unallocatedCategory || null : null,
+            unallocated_notes: leftoverAmount > 0 ? row.unallocatedNotes || null : null,
+            allocations: allocationAmount > 0
+              ? [
+                  {
+                    owed_item_id: owedItem.id,
+                    amount: allocationAmount.toFixed(2),
+                  },
+                ]
+              : undefined,
+          })
+
+          paymentCount += 1
+        }
+      }
 
       setMessage(
-        owedForm.alreadyPaid
-          ? 'Paid owed item created from transaction.'
-          : 'Open owed item created from transaction.',
+        paymentCount > 0
+          ? `${createdCount} owed item${createdCount === 1 ? '' : 's'} created and ${paymentCount} payment${paymentCount === 1 ? '' : 's'} recorded.`
+          : `${createdCount} owed item${createdCount === 1 ? '' : 's'} created.`,
       )
       closeOwedDialog()
       loadTransactions()
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed item')
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed split')
     } finally {
       setIsCreatingOwedItem(false)
     }
@@ -670,9 +807,9 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
           <div className="modal-card">
             <div className="modal-header">
               <div>
-                <h2>Create owed item</h2>
+                <h2>Split owed expense</h2>
                 <p className="muted small">
-                  Link this expense to Money Owed To Me.
+                  Add who owes part of this expense. Optionally link matching Money In repayments now.
                 </p>
               </div>
               <button type="button" onClick={closeOwedDialog}>
@@ -685,75 +822,166 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
               <span>{formatMoney(owedDraftTransaction.amount, owedDraftTransaction.currency)}</span>
             </div>
 
-            {owedDraftTransaction.is_owed && (
-              <p className="muted small">
-                Already linked: {formatMoney(
-                  owedDraftTransaction.owed_amount_total ?? '0.00',
-                  owedDraftTransaction.currency,
-                )}.
-                {' '}Remaining available: {formatMoney(
-                  getRemainingOwedAmount(owedDraftTransaction).toFixed(2),
-                  owedDraftTransaction.currency,
-                )}.
-              </p>
-            )}
+            <p className="muted small">
+              Already linked: {formatMoney(
+                owedDraftTransaction.owed_amount_total ?? '0.00',
+                owedDraftTransaction.currency,
+              )}. Remaining available: {formatMoney(
+                getRemainingOwedAmount(owedDraftTransaction).toFixed(2),
+                owedDraftTransaction.currency,
+              )}. Current split total: {formatMoney(
+                getOwedRowsTotal(owedRows).toFixed(2),
+                owedDraftTransaction.currency,
+              )}.
+            </p>
 
-            <div className="form-row">
-              <label>
-                Person
-                <input
-                  value={owedForm.person}
-                  onChange={(event) => updateOwedForm('person', event.target.value)}
-                  placeholder="Mother"
-                />
-              </label>
+            {owedRows.map((row, index) => {
+              const linkedPaymentTransaction = getSelectedOwedPaymentTransaction(row)
+              const rowAmount = parseMoneyInput(row.amount)
+              const paymentAmount = linkedPaymentTransaction
+                ? Number(linkedPaymentTransaction.amount)
+                : 0
+              const allocationAmount = linkedPaymentTransaction
+                ? Math.min(paymentAmount, rowAmount || 0)
+                : 0
+              const leftoverAmount = linkedPaymentTransaction
+                ? Math.max(paymentAmount - allocationAmount, 0)
+                : 0
 
-              <label>
-                Amount owed
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={owedForm.amount}
-                  onChange={(event) => updateOwedForm('amount', event.target.value)}
-                />
-              </label>
-            </div>
+              return (
+                <div key={row.id} className="modal-transaction-summary">
+                  <div>
+                    <strong>Person {index + 1}</strong>
+                    <p className="muted small">
+                      Owed allocation for this expense.
+                    </p>
+                  </div>
 
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                checked={owedForm.alreadyPaid}
-                onChange={(event) => updateOwedForm('alreadyPaid', event.target.checked)}
-              />
-              Already reimbursed
-            </label>
+                  <div className="form-row">
+                    <label>
+                      Person
+                      <input
+                        value={row.person}
+                        onChange={(event) => updateOwedRow(row.id, 'person', event.target.value)}
+                        placeholder="Mother"
+                      />
+                    </label>
 
-            <label>
-              Notes
-              <textarea
-                value={owedForm.notes}
-                onChange={(event) => updateOwedForm('notes', event.target.value)}
-                rows={3}
-              />
-            </label>
+                    <label>
+                      Amount owed
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.amount}
+                        onChange={(event) => updateOwedRow(row.id, 'amount', event.target.value)}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="form-row">
+                    <label>
+                      Matching Money In
+                      <select
+                        value={row.linkedPaymentTransactionId}
+                        onChange={(event) =>
+                          updateOwedRow(row.id, 'linkedPaymentTransactionId', event.target.value)
+                        }
+                      >
+                        <option value="">No repayment selected</option>
+                        {owedPaymentTransactions.map((transaction) => (
+                          <option key={transaction.id} value={transaction.id}>
+                            #{transaction.id} | {transaction.date} | {transaction.description} | {formatMoney(
+                              transaction.amount,
+                              transaction.currency,
+                            )}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      Leftover category
+                      <select
+                        value={row.unallocatedCategory}
+                        onChange={(event) =>
+                          updateOwedRow(row.id, 'unallocatedCategory', event.target.value)
+                        }
+                        disabled={!linkedPaymentTransaction || leftoverAmount <= 0}
+                      >
+                        {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
+                          <option key={option.value || 'empty'} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="muted small">
+                        Use Allowance, Gift, or Income if extra money should count as Money In.
+                      </span>
+                    </label>
+                  </div>
+
+                  {linkedPaymentTransaction && (
+                    <p className="muted small">
+                      Payment {formatMoney(paymentAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                      {' '}→ allocated {formatMoney(allocationAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                      {' '}→ leftover {formatMoney(leftoverAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                    </p>
+                  )}
+
+                  <div className="form-row">
+                    <label>
+                      Notes
+                      <textarea
+                        value={row.notes}
+                        onChange={(event) => updateOwedRow(row.id, 'notes', event.target.value)}
+                        rows={3}
+                      />
+                    </label>
+
+                    <label>
+                      Leftover notes
+                      <textarea
+                        value={row.unallocatedNotes}
+                        onChange={(event) =>
+                          updateOwedRow(row.id, 'unallocatedNotes', event.target.value)
+                        }
+                        rows={3}
+                        disabled={!linkedPaymentTransaction || leftoverAmount <= 0}
+                        placeholder="Extra was a gift"
+                      />
+                    </label>
+                  </div>
+
+                  {owedRows.length > 1 && (
+                    <button type="button" className="danger-button" onClick={() => removeOwedRow(row.id)}>
+                      Remove person
+                    </button>
+                  )}
+                </div>
+              )
+            })}
 
             <div className="modal-actions">
+              <button type="button" onClick={addOwedRow}>
+                + Add person
+              </button>
               <button type="button" onClick={closeOwedDialog}>
                 Cancel
               </button>
               <button
                 type="button"
                 className="primary-button"
-                onClick={createOwedItemFromDialog}
+                onClick={createOwedItemsFromDialog}
                 disabled={isCreatingOwedItem}
               >
-                {isCreatingOwedItem ? 'Creating...' : 'Create owed item'}
+                {isCreatingOwedItem ? 'Creating...' : 'Create owed split'}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </section>
   )
 }
