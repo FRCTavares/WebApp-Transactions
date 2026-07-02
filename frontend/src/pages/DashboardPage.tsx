@@ -7,6 +7,7 @@ import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
 import { usePeriod } from '../context/PeriodContext'
+import { useAuth } from '../auth/AuthProvider'
 
 type CategoryRollup = {
   category: string
@@ -161,6 +162,11 @@ type DashboardPageProps = {
 
 export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const { year, month } = usePeriod()
+  const {
+    accessToken,
+    isAuthEnabled,
+    isLoading: isAuthLoading,
+  } = useAuth()
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
@@ -195,6 +201,16 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   )
 
   useEffect(() => {
+    if (isAuthLoading) {
+      setIsDashboardLoading(true)
+      return
+    }
+
+    if (isAuthEnabled && !accessToken) {
+      setIsDashboardLoading(false)
+      return
+    }
+
     setError(null)
     setSelectedCategory(null)
     setCategoryTransactions([])
@@ -227,7 +243,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       .finally(() => {
         setIsDashboardLoading(false)
       })
-  }, [year, month])
+  }, [accessToken, isAuthEnabled, isAuthLoading, year, month])
 
   function toggleCategorySort(nextSortField: CategorySortField) {
     if (categorySortField === nextSortField) {
