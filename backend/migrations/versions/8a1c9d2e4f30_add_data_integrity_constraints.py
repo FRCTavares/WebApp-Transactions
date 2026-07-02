@@ -99,6 +99,30 @@ CONSTRAINTS: list[tuple[str, str, str]] = [
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+
+    if bind.dialect.name == "postgresql":
+        for table_name, constraint_name, condition in CONSTRAINTS:
+            op.execute(
+                f"""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM pg_constraint
+                        WHERE conname = '{constraint_name}'
+                          AND conrelid = '{table_name}'::regclass
+                    ) THEN
+                        ALTER TABLE {table_name}
+                        ADD CONSTRAINT {constraint_name}
+                        CHECK ({condition}) NOT VALID;
+                    END IF;
+                END $$;
+                """
+            )
+
+        return
+
     constraints_by_table: dict[str, list[tuple[str, str]]] = {}
 
     for table_name, constraint_name, condition in CONSTRAINTS:
@@ -111,6 +135,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+
+    if bind.dialect.name == "postgresql":
+        for table_name, constraint_name, _condition in reversed(CONSTRAINTS):
+            op.execute(
+                f"ALTER TABLE {table_name} DROP CONSTRAINT IF EXISTS {constraint_name}"
+            )
+
+        return
+
     constraints_by_table: dict[str, list[str]] = {}
 
     for table_name, constraint_name, _condition in reversed(CONSTRAINTS):
