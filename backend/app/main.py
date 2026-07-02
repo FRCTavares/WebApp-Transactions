@@ -35,6 +35,7 @@ from app.models import (
     WealthAccount,
     WealthSnapshot,
 )
+from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router
@@ -160,6 +161,7 @@ async def require_app_access_token(request: Request, call_next):
     return await call_next(request)
 
 
+app.include_router(admin_router)
 app.include_router(transactions_router)
 app.include_router(owed_router)
 app.include_router(summary_router)
