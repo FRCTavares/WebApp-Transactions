@@ -214,7 +214,7 @@ export function OwedPage() {
   const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
   const [paymentLinkedTransactions, setPaymentLinkedTransactions] = useState<Transaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatusFilter>('active')
-  const [tableMonthFilter, setTableMonthFilter] = useState<'current' | 'all'>('current')
+  const [tableMonthFilter, setTableMonthFilter] = useState<'current' | 'all'>('all')
   const [form, setForm] = useState<OwedFormState>(getInitialFormState)
   const [editForm, setEditForm] = useState<OwedFormState>(getInitialFormState)
   const [editingItem, setEditingItem] = useState<OwedItem | null>(null)
@@ -614,7 +614,7 @@ export function OwedPage() {
 
       <div className="content-card panel-card owed-table-filter-card">
         <div>
-          <h2>Table view</h2>
+          <h2>Owed items</h2>
           <p className="muted small">
             Showing {visibleItems.length} of {items.length} owed items.
           </p>

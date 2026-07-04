@@ -99,9 +99,9 @@ export function OwedItemsTable({
         <div className="owed-mobile-groups">
           {personGroups.length === 0 ? (
             <div className="owed-empty-state owed-mobile-empty">
-              <strong>No current owed items</strong>
+              <strong>No owed items in this view</strong>
               <p className="muted">
-                Add a new item when someone owes you money.
+                Add a new item when someone owes you money, or switch the view filter.
               </p>
             </div>
           ) : (
@@ -278,9 +278,9 @@ export function OwedItemsTable({
             <tr>
               <td colSpan={9}>
                 <div className="owed-empty-state">
-                  <strong>No current owed items</strong>
+                  <strong>No owed items in this view</strong>
                   <p className="muted">
-                    Add a new item when someone owes you money. Paid legacy history is hidden in the default view.
+                    Add a new item when someone owes you money, or switch the view/status filters.
                   </p>
                 </div>
               </td>
@@ -311,7 +311,11 @@ export function OwedItemsTable({
                       placeholder="Notes"
                     />
                   </td>
-                  <td>{item.status}</td>
+                  <td>
+                    <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
+                      {getStatusLabel(item)}
+                    </span>
+                  </td>
                   <td>
                     <input
                       className="table-input"
@@ -384,7 +388,11 @@ export function OwedItemsTable({
                     <div>{item.reason}</div>
                     {item.notes && <div className="muted small">{item.notes}</div>}
                   </td>
-                  <td>{item.status}</td>
+                  <td>
+                    <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
+                      {getStatusLabel(item)}
+                    </span>
+                  </td>
                   <td>{formatDate(item.due_date)}</td>
                   <td>{item.linked_transaction_id ?? '-'}</td>
                   <td className="right">{formatMoney(item.amount_total)}</td>
@@ -392,17 +400,25 @@ export function OwedItemsTable({
                   <td className="right">{formatMoney(item.amount_remaining)}</td>
                   <td>
                     <div className="action-group">
-                      <button type="button" onClick={() => onStartEdit(item)}>
+                      <button
+                        type="button"
+                        className="owed-row-action owed-row-action-edit"
+                        onClick={() => onStartEdit(item)}
+                      >
                         Edit
                       </button>
                       {item.status !== 'paid' && item.status !== 'cancelled' && (
-                        <button type="button" onClick={() => onMarkPaid(item)}>
+                        <button
+                          type="button"
+                          className="owed-row-action owed-row-action-paid"
+                          onClick={() => onMarkPaid(item)}
+                        >
                           Mark Paid
                         </button>
                       )}
                       <button
                         type="button"
-                        className="danger-button"
+                        className="owed-row-action owed-row-action-delete"
                         onClick={() => onDelete(item)}
                       >
                         Delete
