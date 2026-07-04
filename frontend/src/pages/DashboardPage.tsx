@@ -17,10 +17,6 @@ type CategoryRollup = {
   personalTotal: number
 }
 
-type CategorySortField = 'category' | 'count' | 'personal' | 'owed' | 'gross'
-type SortDirection = 'asc' | 'desc'
-type DashboardChartMode = 'income' | 'expenses'
-
 function calculateDashboardNet(
   summary: MonthlySummary,
   investmentMonthlyChange: InvestmentMonthlyChange | null,
@@ -63,12 +59,27 @@ function getDateRange(year: number, month: number) {
   }
 }
 
+function getMonthLabel(year: number, month: number) {
+  return new Date(year, month - 1, 1).toLocaleDateString('en-GB', {
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 function getTransactionOwedAmount(transaction: Transaction) {
   return Number(transaction.owed_amount_total ?? 0)
 }
 
 function getTransactionPersonalAmount(transaction: Transaction) {
   return Number(transaction.amount) - getTransactionOwedAmount(transaction)
+}
+
+function getRecentTransactionAmount(transaction: Transaction) {
+  if (transaction.direction === 'out') {
+    return -getTransactionPersonalAmount(transaction)
+  }
+
+  return getTransactionPersonalAmount(transaction)
 }
 
 function getReasonText(transaction: Transaction) {
@@ -106,53 +117,28 @@ function buildCategoryRollups(items: CategorySummaryItem[]) {
   return Array.from(rollups.values())
 }
 
-function isFullyReimbursed(item: CategoryRollup) {
-  return item.personalTotal === 0 && item.owedTotal > 0
-}
-
-function getCategorySortValue(item: CategoryRollup, sortField: CategorySortField) {
-  if (sortField === 'category') {
-    return item.category.toLowerCase()
-  }
-
-  if (sortField === 'count') {
-    return item.count
-  }
-
-  if (sortField === 'owed') {
-    return item.owedTotal
-  }
-
-  if (sortField === 'gross') {
-    return item.grossTotal
-  }
-
-  return item.personalTotal
-}
-
-function sortCategoryRollups(
-  items: CategoryRollup[],
-  sortField: CategorySortField,
-  sortDirection: SortDirection,
-) {
+function sortCategoryRollups(items: CategoryRollup[]) {
   return [...items].sort((firstItem, secondItem) => {
-    const firstValue = getCategorySortValue(firstItem, sortField)
-    const secondValue = getCategorySortValue(secondItem, sortField)
+    const personalDifference = secondItem.personalTotal - firstItem.personalTotal
 
-    let comparison = 0
-
-    if (typeof firstValue === 'string' && typeof secondValue === 'string') {
-      comparison = firstValue.localeCompare(secondValue)
-    } else {
-      comparison = Number(firstValue) - Number(secondValue)
+    if (personalDifference !== 0) {
+      return personalDifference
     }
 
-    if (comparison === 0) {
-      comparison = firstItem.category.localeCompare(secondItem.category)
-    }
-
-    return sortDirection === 'asc' ? comparison : -comparison
+    return firstItem.category.localeCompare(secondItem.category)
   })
+}
+
+function getSummaryBarWidth(value: string | number, maxValue: number) {
+  if (maxValue <= 0) {
+    return '0%'
+  }
+
+  return `${Math.max(4, Math.min(100, (Number(value) / maxValue) * 100))}%`
+}
+
+function getCategoryLabel(transaction: Transaction) {
+  return transaction.category || 'Uncategorised'
 }
 
 type DashboardPageProps = {
@@ -171,33 +157,16 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
   const [categories, setCategories] = useState<CategorySummaryResponse | null>(null)
-  const [incomeCategories, setIncomeCategories] =
-    useState<CategorySummaryResponse | null>(null)
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categoryTransactions, setCategoryTransactions] = useState<Transaction[]>([])
   const [categoryDetailsLoading, setCategoryDetailsLoading] = useState(false)
-  const [categorySortField, setCategorySortField] = useState<CategorySortField>('personal')
-  const [categorySortDirection, setCategorySortDirection] = useState<SortDirection>('desc')
-  const [dashboardChartMode, setDashboardChartMode] =
-    useState<DashboardChartMode>('expenses')
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const categoryRollups = useMemo(
-    () => buildCategoryRollups(categories?.items ?? []),
-    [categories],
-  )
   const sortedCategoryRollups = useMemo(
-    () => sortCategoryRollups(categoryRollups, categorySortField, categorySortDirection),
-    [categoryRollups, categorySortField, categorySortDirection],
-  )
-  const incomeCategoryRollups = useMemo(
-    () => buildCategoryRollups(incomeCategories?.items ?? []),
-    [incomeCategories],
-  )
-  const sortedIncomeCategoryRollups = useMemo(
-    () => sortCategoryRollups(incomeCategoryRollups, 'personal', 'desc'),
-    [incomeCategoryRollups],
+    () => sortCategoryRollups(buildCategoryRollups(categories?.items ?? [])),
+    [categories],
   )
 
   useEffect(() => {
@@ -211,31 +180,38 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       return
     }
 
+    const { startDate, endDate } = getDateRange(year, month)
+
     setError(null)
     setSelectedCategory(null)
     setCategoryTransactions([])
     setSummary(null)
     setInvestmentMonthlyChange(null)
     setCategories(null)
-    setIncomeCategories(null)
+    setRecentTransactions([])
     setIsDashboardLoading(true)
 
     Promise.all([
       getMonthlySummary(year, month),
       getInvestmentMonthlyChange(year, month),
       getCategorySummary('out', year, month),
-      getCategorySummary('in', year, month),
+      listTransactions({
+        direction: 'out',
+        date_from: startDate,
+        date_to: endDate,
+        limit: 5,
+      }),
     ])
       .then(([
         summaryData,
         investmentMonthlyChangeData,
         categoryData,
-        incomeCategoryData,
+        recentTransactionData,
       ]) => {
         setSummary(summaryData)
         setInvestmentMonthlyChange(investmentMonthlyChangeData)
         setCategories(categoryData)
-        setIncomeCategories(incomeCategoryData)
+        setRecentTransactions(recentTransactionData)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
@@ -244,24 +220,6 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         setIsDashboardLoading(false)
       })
   }, [accessToken, isAuthEnabled, isAuthLoading, year, month])
-
-  function toggleCategorySort(nextSortField: CategorySortField) {
-    if (categorySortField === nextSortField) {
-      setCategorySortDirection((currentDirection) => currentDirection === 'asc' ? 'desc' : 'asc')
-      return
-    }
-
-    setCategorySortField(nextSortField)
-    setCategorySortDirection(nextSortField === 'category' ? 'asc' : 'desc')
-  }
-
-  function getCategorySortLabel(sortField: CategorySortField) {
-    if (categorySortField !== sortField) {
-      return '↕'
-    }
-
-    return categorySortDirection === 'asc' ? '↑' : '↓'
-  }
 
   function handleCategoryClick(category: string) {
     if (selectedCategory === category) {
@@ -295,6 +253,17 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       })
   }
 
+  const monthLabel = getMonthLabel(year, month)
+  const netAmount = summary ? calculateDashboardNet(summary, investmentMonthlyChange) : '0.00'
+  const investmentChange = investmentMonthlyChange?.unrealised_monthly_change ?? null
+  const summaryMaxValue = summary
+    ? Math.max(
+        Number(summary.money_in),
+        Number(summary.personal_money_out),
+        Math.abs(Number(netAmount)),
+      )
+    : 0
+
   return (
     <section className="app-page dashboard-page">
       <div className="page-title-block dashboard-hero">
@@ -317,50 +286,123 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {summary && (
         <>
-          <div className="summary-grid cards">
-            <div className="card dashboard-metric-card dashboard-metric-income">
-              <span>Money In</span>
-              <strong>{formatMoney(summary.money_in)}</strong>
-            </div>
-            <div className="card dashboard-metric-card dashboard-metric-spent">
-              <span>Money Spent</span>
-              <strong>{formatMoney(summary.personal_money_out)}</strong>
-              <p className="muted small">Excludes owed/reimbursable spending</p>
-            </div>
-            <div
-              className={`card dashboard-metric-card dashboard-metric-${getMetricTone(
-                investmentMonthlyChange?.unrealised_monthly_change,
+          <div className="dashboard-summary-grid">
+            <article className="dashboard-metric-card dashboard-metric-income">
+              <span className="dashboard-metric-icon" aria-hidden="true">↓</span>
+              <div>
+                <p>Money In</p>
+                <strong>{formatMoney(summary.money_in)}</strong>
+                <small>Income received</small>
+              </div>
+            </article>
+
+            <article className="dashboard-metric-card dashboard-metric-spent">
+              <span className="dashboard-metric-icon" aria-hidden="true">↑</span>
+              <div>
+                <p>Money Out</p>
+                <strong>{formatMoney(summary.personal_money_out)}</strong>
+                <small>Excludes owed/reimbursable spending</small>
+              </div>
+            </article>
+
+            <article
+              className={`dashboard-metric-card dashboard-metric-${getMetricTone(
+                investmentChange,
               )}`}
             >
-              <span>Investments</span>
-              <strong>
-                {investmentMonthlyChange?.unrealised_monthly_change
-                  ? formatMoney(investmentMonthlyChange.unrealised_monthly_change)
-                  : '-'}
-              </strong>
-              <p className="muted small">Unrealised monthly gain/loss</p>
-            </div>
-            <div
-              className={`card dashboard-metric-card dashboard-metric-${getMetricTone(
-                calculateDashboardNet(summary, investmentMonthlyChange),
-              )}`}
+              <span className="dashboard-metric-icon" aria-hidden="true">↗</span>
+              <div>
+                <p>Investments</p>
+                <strong>{investmentChange ? formatMoney(investmentChange) : '-'}</strong>
+                <small>Unrealised monthly gain/loss</small>
+              </div>
+            </article>
+
+            <article
+              className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
             >
-              <span>Net</span>
-              <strong>{formatMoney(calculateDashboardNet(summary, investmentMonthlyChange))}</strong>
-              <p className="muted small">Income - spent + investments</p>
-            </div>
+              <span className="dashboard-metric-icon" aria-hidden="true">=</span>
+              <div>
+                <p>Net</p>
+                <strong>{formatMoney(netAmount)}</strong>
+                <small>Income - spent + investments</small>
+              </div>
+            </article>
           </div>
 
-        </>
-      )}
+          <div className="dashboard-main-grid">
+            <section className="dashboard-panel dashboard-monthly-summary">
+              <div className="dashboard-panel-header">
+                <div>
+                  <h2>Monthly summary</h2>
+                  <p>Income vs spending over {monthLabel}</p>
+                </div>
+              </div>
 
+              <div className="dashboard-summary-bars">
+                <div className="dashboard-summary-bar-row">
+                  <div>
+                    <span className="dashboard-dot dashboard-dot-income" />
+                    <span>Income</span>
+                  </div>
+                  <strong>{formatMoney(summary.money_in)}</strong>
+                  <div className="dashboard-summary-bar-track">
+                    <span
+                      className="dashboard-summary-bar dashboard-summary-bar-income"
+                      style={{ width: getSummaryBarWidth(summary.money_in, summaryMaxValue) }}
+                    />
+                  </div>
+                </div>
+
+                <div className="dashboard-summary-bar-row">
+                  <div>
+                    <span className="dashboard-dot dashboard-dot-spent" />
+                    <span>Spent</span>
+                  </div>
+                  <strong>{formatMoney(summary.personal_money_out)}</strong>
+                  <div className="dashboard-summary-bar-track">
+                    <span
+                      className="dashboard-summary-bar dashboard-summary-bar-spent"
+                      style={{ width: getSummaryBarWidth(summary.personal_money_out, summaryMaxValue) }}
+                    />
+                  </div>
+                </div>
+
+                <div className="dashboard-summary-bar-row">
+                  <div>
+                    <span className="dashboard-dot dashboard-dot-net" />
+                    <span>Net</span>
+                  </div>
+                  <strong>{formatMoney(netAmount)}</strong>
+                  <div className="dashboard-summary-bar-track">
+                    <span
+                      className="dashboard-summary-bar dashboard-summary-bar-net"
+                      style={{ width: getSummaryBarWidth(Math.abs(Number(netAmount)), summaryMaxValue) }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="dashboard-panel dashboard-spending-panel">
+              {categories && (
+                <ExpenseCategoryDonutChart
+                  items={sortedCategoryRollups}
+                  title="Spending breakdown"
+                  description="Personal spending by category."
+                  emptyMessage="No personal spending found for this month."
+                  onSelectCategory={handleCategoryClick}
+                />
+              )}
+            </section>
+          </div>
 
           {selectedCategory && (
-            <div className="content-card category-detail-panel">
+            <section className="dashboard-panel category-detail-panel">
               <div className="category-detail-header">
                 <div>
                   <h3>{selectedCategory} details</h3>
-                  <p className="muted small">These are the transactions behind the selected category.</p>
+                  <p className="muted small">Transactions behind the selected category.</p>
                 </div>
                 <button type="button" onClick={() => handleCategoryClick(selectedCategory)}>
                   Close
@@ -403,208 +445,83 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                   </div>
 
                   <div className="table-wrap dashboard-category-detail-table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Description</th>
-                        <th className="right">Personal</th>
-                        <th className="right">Owed</th>
-                        <th className="right">Gross</th>
-                        <th>Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryTransactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td>{transaction.date}</td>
-                          <td>{transaction.description}</td>
-                          <td className="right amount-primary">
-                            {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
-                          </td>
-                          <td className="right amount-muted">
-                            {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
-                          </td>
-                          <td className="right amount-muted">{formatMoney(transaction.amount)}</td>
-                          <td>
-                            <span className="muted small">{getReasonText(transaction)}</span>
-                            {transaction.owed_person && (
-                              <span className="badge badge-neutral category-detail-badge">
-                                owed by {transaction.owed_person}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-
-                      {categoryTransactions.length === 0 && (
+                    <table>
+                      <thead>
                         <tr>
-                          <td colSpan={6}>
-                            <p className="muted">No transactions found for this category.</p>
-                          </td>
+                          <th>Date</th>
+                          <th>Description</th>
+                          <th className="right">Personal</th>
+                          <th className="right">Owed</th>
+                          <th className="right">Gross</th>
+                          <th>Reason</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {categoryTransactions.map((transaction) => (
+                          <tr key={transaction.id}>
+                            <td>{transaction.date}</td>
+                            <td>{transaction.description}</td>
+                            <td className="right amount-primary">
+                              {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
+                            </td>
+                            <td className="right amount-muted">
+                              {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
+                            </td>
+                            <td className="right amount-muted">{formatMoney(transaction.amount)}</td>
+                            <td>
+                              <span className="muted small">{getReasonText(transaction)}</span>
+                              {transaction.owed_person && (
+                                <span className="badge badge-neutral category-detail-badge">
+                                  owed by {transaction.owed_person}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+
+                        {categoryTransactions.length === 0 && (
+                          <tr>
+                            <td colSpan={6}>
+                              <p className="muted">No transactions found for this category.</p>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </>
               )}
-            </div>
+            </section>
           )}
 
-      {categories && (
-        <>
-          <div className="page-section-header dashboard-section-header">
-            <div>
-              <h2>Money Breakdown This Month</h2>
-              <p className="muted small">
-                Switch between income and expenses. Expense values are personal spending after owed/reimbursable parts.
-              </p>
-            </div>
-          </div>
-
-          <ExpenseCategoryDonutChart
-            items={
-              dashboardChartMode === 'income'
-                ? sortedIncomeCategoryRollups
-                : sortedCategoryRollups
-            }
-            title={dashboardChartMode === 'income' ? 'Money in split' : 'Expense split'}
-            description={
-              dashboardChartMode === 'income'
-                ? 'Incoming money by category.'
-                : 'Personal spending by category.'
-            }
-            emptyMessage={
-              dashboardChartMode === 'income'
-                ? 'No incoming money found for this month.'
-                : 'No personal spending found for this month.'
-            }
-            onSelectCategory={
-              dashboardChartMode === 'expenses' ? handleCategoryClick : undefined
-            }
-            actions={
-              <div className="dashboard-chart-toggle" aria-label="Dashboard chart type">
-                <button
-                  type="button"
-                  className={dashboardChartMode === 'income' ? 'active' : ''}
-                  onClick={() => {
-                    setDashboardChartMode('income')
-                    setSelectedCategory(null)
-                    setCategoryTransactions([])
-                  }}
-                >
-                  Money In
-                </button>
-                <button
-                  type="button"
-                  className={dashboardChartMode === 'expenses' ? 'active' : ''}
-                  onClick={() => setDashboardChartMode('expenses')}
-                >
-                  Expenses
-                </button>
+          <section className="dashboard-panel dashboard-recent-panel">
+            <div className="dashboard-panel-header">
+              <div>
+                <h2>Recent transactions</h2>
+                <p>Latest spending in {monthLabel}</p>
               </div>
-            }
-          />
-
-          {dashboardChartMode === 'expenses' && (
-            <div className="dashboard-mobile-category-list">
-            {sortedCategoryRollups.map((item) => (
-              <button
-                key={item.category}
-                type="button"
-                className={`dashboard-mobile-category-card ${isFullyReimbursed(item) ? 'fully-reimbursed-row' : ''}`}
-                onClick={() => handleCategoryClick(item.category)}
-              >
-                <div>
-                  <strong>{item.category}</strong>
-                  <span>{item.count} {item.count === 1 ? 'transaction' : 'transactions'}</span>
-                </div>
-                <div>
-                  <strong>{formatMoney(item.personalTotal.toFixed(2))}</strong>
-                  {item.owedTotal > 0 && (
-                    <span>Owed {formatMoney(item.owedTotal.toFixed(2))}</span>
-                  )}
-                </div>
-              </button>
-            ))}
             </div>
-          )}
 
-          {dashboardChartMode === 'expenses' && (
-            <div className="content-card table-wrap dashboard-category-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>
-                    <button
-                      type="button"
-                      className="table-sort-button"
-                      onClick={() => toggleCategorySort('category')}
-                    >
-                      Category <span>{getCategorySortLabel('category')}</span>
-                    </button>
-                  </th>
-                  <th>
-                    <button
-                      type="button"
-                      className="table-sort-button"
-                      onClick={() => toggleCategorySort('count')}
-                    >
-                      Count <span>{getCategorySortLabel('count')}</span>
-                    </button>
-                  </th>
-                  <th className="right">
-                    <button
-                      type="button"
-                      className="table-sort-button table-sort-button-right"
-                      onClick={() => toggleCategorySort('personal')}
-                    >
-                      Personal <span>{getCategorySortLabel('personal')}</span>
-                    </button>
-                  </th>
-                  <th className="right">
-                    <button
-                      type="button"
-                      className="table-sort-button table-sort-button-right"
-                      onClick={() => toggleCategorySort('owed')}
-                    >
-                      Owed <span>{getCategorySortLabel('owed')}</span>
-                    </button>
-                  </th>
-                  <th className="right">
-                    <button
-                      type="button"
-                      className="table-sort-button table-sort-button-right"
-                      onClick={() => toggleCategorySort('gross')}
-                    >
-                      Gross <span>{getCategorySortLabel('gross')}</span>
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedCategoryRollups.map((item) => (
-                  <tr
-                    key={item.category}
-                    className={`${isFullyReimbursed(item) ? 'fully-reimbursed-row' : ''} clickable-row`}
-                    onClick={() => handleCategoryClick(item.category)}
-                  >
-                    <td>
-                      <button type="button" className="category-drilldown-button">
-                        {item.category}
-                      </button>
-                    </td>
-                    <td>{item.count}</td>
-                    <td className="right amount-primary">{formatMoney(item.personalTotal.toFixed(2))}</td>
-                    <td className="right amount-muted">{formatMoney(item.owedTotal.toFixed(2))}</td>
-                    <td className="right amount-muted">{formatMoney(item.grossTotal.toFixed(2))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="dashboard-recent-list">
+              {recentTransactions.map((transaction) => (
+                <article key={transaction.id} className="dashboard-recent-row">
+                  <div className="dashboard-recent-main">
+                    <strong>{transaction.description}</strong>
+                    <span>{getReasonText(transaction)}</span>
+                  </div>
+                  <span className="dashboard-recent-category">{getCategoryLabel(transaction)}</span>
+                  <span className="dashboard-recent-date">{transaction.date}</span>
+                  <strong className="dashboard-recent-amount">
+                    {formatMoney(getRecentTransactionAmount(transaction).toFixed(2))}
+                  </strong>
+                </article>
+              ))}
+
+              {recentTransactions.length === 0 && (
+                <p className="muted">No recent spending found for this month.</p>
+              )}
             </div>
-          )}
+          </section>
         </>
       )}
     </section>
