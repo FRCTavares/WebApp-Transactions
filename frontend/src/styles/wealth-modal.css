@@ -169,3 +169,98 @@
     justify-content: flex-start;
   }
 }
+
+/* Wealth modal row layout polish. */
+@media (min-width: 901px) {
+  .wealth-modal-subaccount-row {
+    grid-template-areas:
+      "main balance status"
+      "main balance actions";
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem) auto;
+    gap: 0.45rem 1rem;
+    align-items: center;
+    padding: 0.95rem 1rem;
+  }
+
+  .wealth-modal-subaccount-main {
+    grid-area: main;
+  }
+
+  .wealth-modal-balance {
+    grid-area: balance;
+    justify-items: stretch;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .wealth-modal-balance > span:not(:first-child) {
+    justify-self: end;
+  }
+
+  .wealth-modal-subaccount-row > .badge {
+    grid-area: status;
+    justify-self: end;
+    align-self: end;
+  }
+
+  .wealth-modal-actions {
+    grid-area: actions;
+    justify-self: end;
+    align-self: start;
+  }
+
+  .wealth-modal-balance .wealth-quick-snapshot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+    gap: 0.45rem;
+  }
+
+  .wealth-modal-balance .wealth-quick-snapshot input {
+    width: 100%;
+  }
+}
+
+.wealth-modal-subaccount-row {
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.wealth-modal-subaccount-row:hover {
+  border-color: #dbeafe;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.045);
+}
+
+.wealth-modal-subaccount-main strong {
+  font-size: 1rem;
+}
+
+.wealth-modal-subaccount-main p {
+  color: #64748b;
+}
+
+.wealth-modal-balance .wealth-quick-snapshot .small-button {
+  min-width: 3.2rem;
+}
+
+.wealth-modal-actions button {
+  min-height: 2.05rem;
+}
+
+@media (max-width: 900px) {
+  .wealth-modal-subaccount-row > .badge {
+    justify-self: start;
+  }
+
+  .wealth-modal-balance .wealth-quick-snapshot {
+    width: 100%;
+  }
+
+  .wealth-modal-balance .wealth-quick-snapshot input {
+    width: 100%;
+  }
+}
+
