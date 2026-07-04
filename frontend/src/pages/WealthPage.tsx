@@ -1,11 +1,10 @@
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { listInvestmentPositions } from '../api/investmentEvents'
 import {
   createWealthAccount,
   createWealthSnapshot,
   deleteWealthAccount,
   deleteWealthSnapshot,
-  getWealthSummary,
   listWealthAccounts,
   listWealthMonthlyTotals,
   listWealthSnapshots,
@@ -14,13 +13,13 @@ import {
 } from '../api/wealth'
 import { StatusMessage } from '../components/StatusMessage'
 import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
+import { WealthAccountsPanel } from '../components/wealth/WealthAccountsPanel'
 import { WealthMobileAccounts } from '../components/wealth/WealthMobileAccounts'
 import {
   accountTypeOptions,
   getAccountGroups,
   getAccountLabel,
   getAccountName,
-  getAccountTypeLabel,
   getDerivedInvestmentValue,
   getInitialAccountForm,
   getInitialSnapshotForm,
@@ -36,7 +35,6 @@ import type {
   WealthAccountType,
   WealthMonthlyTotal,
   WealthSnapshot,
-  WealthSummary,
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 
@@ -44,10 +42,9 @@ type WealthPageProps = {
   onOpenInvestments?: () => void
 }
 
-export function WealthPage({ onOpenInvestments }: WealthPageProps) {
+export function WealthPage(_props: WealthPageProps) {
   const [accounts, setAccounts] = useState<WealthAccount[]>([])
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
-  const [summary, setSummary] = useState<WealthSummary | null>(null)
   const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
   const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
   const [quickSnapshotBalances, setQuickSnapshotBalances] = useState<Record<number, string>>({})
@@ -69,20 +66,17 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
     Promise.all([
       listWealthAccounts({ active_only: !showInactiveAccounts, limit: 500 }),
       listWealthSnapshots({ limit: 500 }),
-      getWealthSummary(),
       listWealthMonthlyTotals(),
       listInvestmentPositions(),
     ])
       .then(([
         loadedAccounts,
         loadedSnapshots,
-        loadedSummary,
         loadedMonthlyTotals,
         loadedInvestmentPositions,
       ]) => {
         setAccounts(loadedAccounts)
         setSnapshots(loadedSnapshots)
-        setSummary(loadedSummary)
         setMonthlyTotals(loadedMonthlyTotals)
         setInvestmentPositions(loadedInvestmentPositions)
       })
@@ -436,41 +430,6 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
 
       <StatusMessage error={error} message={message} />
 
-      <div className="wealth-summary-grid">
-        <article className="wealth-summary-card wealth-summary-card-primary">
-          <span>Total wealth</span>
-          <strong>{formatMoney(summary?.current_total_wealth_eur ?? '0')}</strong>
-          <small>Latest snapshot per account</small>
-        </article>
-
-        <article className="wealth-summary-card wealth-owed-summary-card">
-          <span>Money Owed To Me</span>
-          <strong>{formatMoney(summary?.money_owed_to_me_eur ?? '0')}</strong>
-          <small>Live total from active owed items</small>
-        </article>
-
-        <article className="wealth-summary-card wealth-active-summary-card">
-          <span>Active accounts</span>
-          <strong>{summary?.account_count ?? 0}</strong>
-          <small>{showInactiveAccounts ? 'Showing active and inactive' : 'Showing active only'}</small>
-        </article>
-
-        <article
-          className={`wealth-summary-card wealth-investments-summary-card wealth-investments-shortcut ${onOpenInvestments ? 'wealth-summary-card-button' : ''}`}
-          onClick={onOpenInvestments}
-        >
-          <span>Investments</span>
-          <strong>
-            {formatMoney(
-              investmentPositions
-                .reduce((total, position) => total + Number(position.market_value ?? 0), 0)
-                .toFixed(2),
-            )}
-          </strong>
-          <small>{investmentPositions.length} open positions. Tap to inspect investments.</small>
-        </article>
-      </div>
-
       <WealthMobileAccounts
         accountGroups={accountGroups}
         latestByAccount={latestByAccount}
@@ -668,209 +627,24 @@ export function WealthPage({ onOpenInvestments }: WealthPageProps) {
         </section>
       ) : null}
 
-      <section className="content-card panel-card wealth-accounts-panel">
-        <div className="section-header">
-          <div>
-            <h2>Accounts</h2>
-            <p className="muted small">
-              Accounts define what you track. Snapshots define the balances.
-            </p>
-          </div>
 
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={showInactiveAccounts}
-              onChange={(event) => setShowInactiveAccounts(event.target.checked)}
-            />
-            Show inactive
-          </label>
-        </div>
-
-        <div className="table-wrap wealth-table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Account</th>
-                <th>Type</th>
-                <th className="right">Latest balance</th>
-                <th>Latest date</th>
-                <th>Status</th>
-                <th className="actions-cell">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accountGroups.map((group) => {
-                const hasSubAccounts = group.accounts.length > 1
-
-                if (!hasSubAccounts) {
-                  const account = group.accounts[0]
-                  const latestSnapshot = latestByAccount.get(account.id)
-
-                  return (
-                    <tr key={account.id}>
-                      <td>
-                        <div className="wealth-account-cell">
-                          <strong>{account.name}</strong>
-                          <span>{account.institution ?? account.currency}</span>
-                        </div>
-                      </td>
-                      <td>{getAccountTypeLabel(account.account_type)}</td>
-                      <td className="right">
-                        {renderAccountBalanceCell(account, latestSnapshot)}
-                      </td>
-                      <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
-                      <td>
-                        <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
-                          {account.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="table-action-group">
-                          <button type="button" className="small-button" onClick={() => startAccountEdit(account)}>
-                            Edit
-                          </button>
-                          <button type="button" className="small-button" onClick={() => toggleAccountActive(account)}>
-                            {account.is_active ? 'Archive' : 'Restore'}
-                          </button>
-                          <button type="button" className="small-button danger-button" onClick={() => removeAccount(account)}>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                }
-
-                const isExpanded = expandedAccountGroups.has(group.key)
-                const groupBalance = group.accounts
-                  .reduce((total, account) => {
-                    const derivedValue = getDerivedInvestmentValue(account, investmentPositions)
-                    const latestSnapshot = latestByAccount.get(account.id)
-
-                    if (derivedValue !== null) {
-                      return total + derivedValue
-                    }
-
-                    if (latestSnapshot) {
-                      return total + Number(latestSnapshot.balance_eur)
-                    }
-
-                    return total
-                  }, 0)
-                  .toFixed(2)
-                const latestSnapshots = group.accounts
-                  .map((account) => latestByAccount.get(account.id))
-                  .filter((snapshot): snapshot is WealthSnapshot => Boolean(snapshot))
-                const groupLatestDate = latestSnapshots
-                  .map((snapshot) => snapshot.snapshot_date)
-                  .sort()
-                  .at(-1)
-
-                return (
-                  <Fragment key={group.key}>
-                    <tr className="wealth-account-group-row">
-                      <td>
-                        <button
-                          type="button"
-                          className="wealth-group-toggle"
-                          onClick={() => toggleAccountGroup(group.key)}
-                        >
-                          <span>{isExpanded ? '▾' : '▸'}</span>
-                          <strong>{group.label}</strong>
-                        </button>
-                        <div className="wealth-group-meta">
-                          {group.accounts.length} sub-accounts
-                        </div>
-                      </td>
-                      <td>Group</td>
-                      <td className="right">{formatMoney(groupBalance)}</td>
-                      <td>{groupLatestDate ? formatDate(groupLatestDate) : '-'}</td>
-                      <td>
-                        <span className="badge badge-active">Active</span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="small-button"
-                          onClick={() => toggleAccountGroup(group.key)}
-                        >
-                          {isExpanded ? 'Hide' : 'Show'}
-                        </button>
-                      </td>
-                    </tr>
-
-                    {isExpanded
-                      ? group.accounts.map((account) => {
-                          const latestSnapshot = latestByAccount.get(account.id)
-
-                          return (
-                            <tr key={account.id} className="wealth-sub-account-row">
-                              <td>
-                                <div className="wealth-account-cell">
-                                  <strong>{account.name.replace(`${group.label} `, '')}</strong>
-                                  <span>{account.institution ?? account.currency}</span>
-                                </div>
-                              </td>
-                              <td>{getAccountTypeLabel(account.account_type)}</td>
-                              <td className="right">
-                                {renderAccountBalanceCell(account, latestSnapshot)}
-                              </td>
-                              <td>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : '-'}</td>
-                              <td>
-                                <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
-                                  {account.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="table-action-group">
-                                  <button type="button" className="small-button" onClick={() => startAccountEdit(account)}>
-                                    Edit
-                                  </button>
-                                  <button type="button" className="small-button" onClick={() => toggleAccountActive(account)}>
-                                    {account.is_active ? 'Archive' : 'Restore'}
-                                  </button>
-                                  <button type="button" className="small-button danger-button" onClick={() => removeAccount(account)}>
-                                    Delete
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })
-                      : null}
-                  </Fragment>
-                )
-              })}
-
-
-              {accounts.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="wealth-empty-state">
-                      <strong>No wealth accounts yet.</strong>
-                      <p className="muted small">Create accounts first, then add monthly snapshots.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="content-card panel-card wealth-monthly-panel">
-        <div className="section-header">
-          <div>
-            <h2>Monthly totals</h2>
-            <p className="muted small">
-              Uses the latest snapshot per account inside each month.
-            </p>
-          </div>
-        </div>
-
+      <section className="content-card panel-card wealth-monthly-panel wealth-trend-panel">
         <WealthMonthlyChart monthlyTotals={monthlyTotals} />
       </section>
+
+      <WealthAccountsPanel
+        accountGroups={accountGroups}
+        latestByAccount={latestByAccount}
+        investmentPositions={investmentPositions}
+        showInactiveAccounts={showInactiveAccounts}
+        expandedAccountGroups={expandedAccountGroups}
+        onShowInactiveAccountsChange={setShowInactiveAccounts}
+        onToggleAccountGroup={toggleAccountGroup}
+        onStartAccountEdit={startAccountEdit}
+        onToggleAccountActive={toggleAccountActive}
+        onRemoveAccount={removeAccount}
+        renderAccountBalanceCell={renderAccountBalanceCell}
+      />
 
       <section className="content-card panel-card wealth-snapshots-panel">
         <div className="section-header">
