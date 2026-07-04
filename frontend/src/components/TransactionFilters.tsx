@@ -20,7 +20,7 @@ const sourceOptions = [
 ]
 
 const cashflowTypeOptions = [
-  { value: '', label: 'All cashflow types' },
+  { value: '', label: 'All types' },
   { value: 'income', label: 'Income' },
   { value: 'expense', label: 'Expense' },
   { value: 'internal_transfer', label: 'Internal transfer' },
@@ -53,21 +53,14 @@ export function TransactionFilters({
   ].filter(Boolean).length
 
   return (
-    <details className="filter-panel compact-filter-panel">
-      <summary>
-        <span>Filters</span>
-        {activeFilterCount > 0 && (
-          <span className="filter-count">{activeFilterCount} active</span>
-        )}
-      </summary>
-
-      <div className="form-row">
-        <label>
-          Search
+    <section className="transaction-filter-card" aria-label="Transaction filters">
+      <div className="transaction-filter-main">
+        <label className="transaction-search-field">
+          <span>Search</span>
           <input
             value={filters.search}
             onChange={(event) => onChange('search', event.target.value)}
-            placeholder="Search description"
+            placeholder="Search transactions..."
           />
         </label>
 
@@ -92,7 +85,7 @@ export function TransactionFilters({
         </label>
 
         <label>
-          Cashflow Type
+          Type
           <select
             value={filters.cashflowType}
             onChange={(event) => onChange('cashflowType', event.target.value)}
@@ -106,43 +99,56 @@ export function TransactionFilters({
         </label>
       </div>
 
-      <div className="form-row">
-        <label>
-          Month
-          <input
-            type="month"
-            value={filters.month}
-            onChange={(event) => onChange('month', event.target.value)}
-          />
-        </label>
+      <div className="transaction-filter-footer">
+        <details className="transaction-advanced-filters">
+          <summary>More filters</summary>
 
-        <label>
-          Date From
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(event) => onChange('dateFrom', event.target.value)}
-          />
-        </label>
+          <div className="transaction-filter-dates">
+            <label>
+              Month
+              <input
+                type="month"
+                value={filters.month}
+                onChange={(event) => onChange('month', event.target.value)}
+              />
+            </label>
 
-        <label>
-          Date To
-          <input
-            type="date"
-            value={filters.dateTo}
-            onChange={(event) => onChange('dateTo', event.target.value)}
-          />
-        </label>
+            <label>
+              Date from
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(event) => onChange('dateFrom', event.target.value)}
+              />
+            </label>
+
+            <label>
+              Date to
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(event) => onChange('dateTo', event.target.value)}
+              />
+            </label>
+          </div>
+        </details>
+
+        <div className="transaction-filter-actions">
+          {activeFilterCount > 0 && (
+            <span className="transaction-filter-count">
+              {activeFilterCount} active
+            </span>
+          )}
+
+          <button type="button" onClick={onApply}>
+            Apply
+          </button>
+
+          <button type="button" onClick={onClear}>
+            Clear
+          </button>
+        </div>
       </div>
-
-      <div className="action-group">
-        <button type="button" onClick={onApply}>
-          Apply Filters
-        </button>
-        <button type="button" onClick={onClear}>
-          Clear Filters
-        </button>
-      </div>
-    </details>
+    </section>
   )
 }

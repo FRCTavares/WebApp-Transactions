@@ -167,7 +167,7 @@ export function TransactionTable({
                     {onEdit && (
                       <button
                         type="button"
-                        className="transaction-mobile-action"
+                        className="transaction-mobile-action transaction-action-edit"
                         onClick={() => onEdit(transaction)}
                       >
                         Edit
@@ -176,7 +176,7 @@ export function TransactionTable({
                     {onMarkOwed && canCreateOwedShare(transaction) && (
                       <button
                         type="button"
-                        className="transaction-mobile-action"
+                        className="transaction-mobile-action transaction-action-edit"
                         onClick={() => onMarkOwed(transaction)}
                       >
                         {getOwedActionLabel(transaction)}
@@ -185,7 +185,7 @@ export function TransactionTable({
                     {onDelete && (
                       <button
                         type="button"
-                        className="transaction-mobile-action transaction-mobile-action-danger"
+                        className="transaction-mobile-action transaction-action-delete transaction-mobile-action-danger"
                         onClick={() => onDelete(transaction)}
                       >
                         Delete
@@ -292,20 +292,30 @@ export function TransactionTable({
                   <td>
                     <div className="action-group">
                       {!transaction.is_grouped && onEdit && (
-                        <button type="button" onClick={() => onEdit(transaction)}>
+                        <button
+                          type="button"
+                          className="transaction-row-action transaction-row-action-edit"
+                          onClick={() => onEdit(transaction)}
+                          aria-label={`Edit ${transaction.description}`}
+                        >
                           Edit
                         </button>
                       )}
                       {!transaction.is_grouped && onMarkOwed && canCreateOwedShare(transaction) && (
-                        <button type="button" onClick={() => onMarkOwed(transaction)}>
+                        <button
+                          type="button"
+                          className="transaction-row-action transaction-row-action-owed"
+                          onClick={() => onMarkOwed(transaction)}
+                        >
                           {getOwedActionLabel(transaction)}
                         </button>
                       )}
                       {!transaction.is_grouped && onDelete && (
                         <button
                           type="button"
-                          className="danger-button"
+                          className="transaction-row-action transaction-row-action-delete"
                           onClick={() => onDelete(transaction)}
+                          aria-label={`Delete ${transaction.description}`}
                         >
                           Delete
                         </button>

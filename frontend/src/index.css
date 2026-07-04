@@ -10,6 +10,7 @@
 @import './styles/owed.css';
 @import './styles/wealth.css';
 @import './styles/dashboard.css';
+@import './styles/transactions.css';
 @import './styles/typography.css';
 
 .global-topbar {

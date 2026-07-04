@@ -662,7 +662,7 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     .filter((subcategory): subcategory is string => Boolean(subcategory))
 
   return (
-    <section className="app-page transactions-page">
+    <section className={`app-page transactions-page transactions-page-${direction}`}>
       <div className="page-header transactions-page-header">
         <div className="page-title-block">
           <h1>{title}</h1>
