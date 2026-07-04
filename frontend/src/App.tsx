@@ -198,7 +198,7 @@ function App() {
         <aside className="sidebar">
           <div className="sidebar-header">
             <div className="account-summary">
-              <p className="account-greeting">Profile</p>
+              <p className="account-greeting">{displayName}</p>
               <p className="account-subtitle">
                 {isAuthEnabled ? 'Signed in' : 'Local mode'}
               </p>
