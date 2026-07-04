@@ -87,9 +87,14 @@ export function InvestmentSummaryCards({
       </div>
 
       <div className="portfolio-metrics investment-summary-grid">
-        <article>
-          <span>Positions</span>
-          <strong>{openPositionCount}</strong>
+        <article className="investment-summary-market-value">
+          <span>Market value</span>
+          <strong>{formatCurrencyTotals(marketValueTotals)}</strong>
+        </article>
+
+        <article className="investment-summary-gain">
+          <span>Unrealised gain</span>
+          <strong className={gainClassName}>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
         </article>
 
         <article>
@@ -102,13 +107,8 @@ export function InvestmentSummaryCards({
         </article>
 
         <article className="investment-summary-desktop-only">
-          <span>Market value</span>
-          <strong>{formatCurrencyTotals(marketValueTotals)}</strong>
-        </article>
-
-        <article className="investment-summary-desktop-only">
-          <span>Unrealised gain</span>
-          <strong className={gainClassName}>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
+          <span>Positions</span>
+          <strong>{openPositionCount}</strong>
         </article>
       </div>
     </section>

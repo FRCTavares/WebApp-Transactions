@@ -13,6 +13,7 @@ from app.schemas.investment_event import (
     InvestmentEventCreate,
     InvestmentEventRead,
     InvestmentMonthlyChangeRead,
+    InvestmentMonthlySeriesPointRead,
     InvestmentPositionRead,
     ManualFundingResolutionCreate,
     ManualFundingResolutionRead,
@@ -92,6 +93,18 @@ def get_investment_monthly_change(
     return service.get_monthly_change(
         year=year,
         month=month,
+        current_user=current_user,
+    )
+
+
+@router.get("/monthly-series", response_model=list[InvestmentMonthlySeriesPointRead])
+def get_investment_monthly_series(
+    months: int = Query(default=24, ge=1, le=60),
+    service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.get_monthly_series(
+        months=months,
         current_user=current_user,
     )
 

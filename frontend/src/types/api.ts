@@ -154,6 +154,13 @@ export type InvestmentMonthlyChange = {
   unrealised_monthly_change: string | null
 }
 
+export type InvestmentMonthlySeriesPoint = {
+  month: string
+  allocated_eur: string
+  market_value_eur: string | null
+  gain_eur: string | null
+}
+
 export type InvestmentEventFilters = {
   source?: string
   event_type?: string

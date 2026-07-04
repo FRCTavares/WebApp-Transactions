@@ -3,6 +3,7 @@ import type {
   InvestmentEvent,
   InvestmentEventFilters,
   InvestmentMonthlyChange,
+  InvestmentMonthlySeriesPoint,
   InvestmentPosition,
   ManualFundingResolutionPayload,
   ManualFundingResolutionResponse,
@@ -25,6 +26,12 @@ export function listInvestmentPositions(source?: string) {
 export function getInvestmentMonthlyChange(year: number, month: number) {
   return apiGet<InvestmentMonthlyChange>(
     `/api/investment-events/monthly-change${buildQuery({ year, month })}`,
+  )
+}
+
+export function listInvestmentMonthlySeries(months = 24) {
+  return apiGet<InvestmentMonthlySeriesPoint[]>(
+    `/api/investment-events/monthly-series${buildQuery({ months })}`,
   )
 }
 

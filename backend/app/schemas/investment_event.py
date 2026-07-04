@@ -112,6 +112,13 @@ class InvestmentMonthlyChangeRead(BaseModel):
     unrealised_monthly_change: Decimal | None
 
 
+class InvestmentMonthlySeriesPointRead(BaseModel):
+    month: str
+    allocated_eur: Decimal
+    market_value_eur: Decimal | None
+    gain_eur: Decimal | None
+
+
 class ManualFundingResolutionCreate(BaseModel):
     eur_amount: Decimal = Field(gt=0)
     date: DateType

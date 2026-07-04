@@ -346,3 +346,83 @@ def test_monthly_change_returns_null_when_holdings_cannot_be_priced(client, db_s
     assert data["end_value"] is None
     assert data["net_invested"] == "100.00"
     assert data["unrealised_monthly_change"] is None
+
+
+def test_monthly_series_uses_historical_cost_basis_for_allocated_money(client, db_session):
+    from app.models.investment_event import InvestmentEvent
+    from app.models.market_price_history import MarketPriceHistory
+
+    db_session.add_all(
+        [
+            InvestmentEvent(
+                date=date(2026, 5, 10),
+                source="trading212",
+                account="Invest",
+                event_type="market_buy",
+                description="Buy CSPX",
+                raw_description="Buy CSPX",
+                instrument_name="iShares Core S&P 500",
+                ticker="CSPX",
+                isin="IE00B5BMR087",
+                quantity=Decimal("2"),
+                price=Decimal("100"),
+                amount=Decimal("200"),
+                currency="USD",
+                fx_rate_to_eur=Decimal("0.90"),
+            ),
+            MarketPriceHistory(
+                ticker="CSPX",
+                isin="IE00B5BMR087",
+                price_date=date(2026, 5, 31),
+                close_price=Decimal("120"),
+                currency="USD",
+                source="manual",
+            ),
+        ]
+    )
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-series?months=3")
+
+    assert response.status_code == 200
+
+    data = response.json()
+    may_point = next(point for point in data if point["month"] == "2026-05")
+
+    assert may_point["allocated_eur"] == "180.00"
+    assert may_point["market_value_eur"] == "216.00"
+    assert may_point["gain_eur"] == "36.00"
+
+
+def test_monthly_series_uses_trade_price_when_market_history_is_missing(client, db_session):
+    db_session.add(
+        InvestmentEvent(
+            date=date(2026, 5, 10),
+            source="trading212",
+            account="Invest",
+            event_type="market_buy",
+            description="Buy VWCE",
+            raw_description="Buy VWCE",
+            instrument_name="Vanguard FTSE All-World",
+            ticker="VWCE",
+            isin="IE00BK5BQT80",
+            quantity=Decimal("2"),
+            price=Decimal("105"),
+            amount=Decimal("210"),
+            currency="EUR",
+            fx_rate_to_eur=Decimal("1"),
+        )
+    )
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-series?months=3")
+
+    assert response.status_code == 200
+
+    data = response.json()
+    may_point = next(point for point in data if point["month"] == "2026-05")
+
+    assert may_point["allocated_eur"] == "210.00"
+    assert may_point["market_value_eur"] == "210.00"
+    assert may_point["gain_eur"] == "0.00"
+

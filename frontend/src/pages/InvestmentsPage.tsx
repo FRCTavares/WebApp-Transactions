@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listInvestmentEvents, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
+import { listInvestmentEvents, listInvestmentMonthlySeries, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
 import { listInvestmentFundingMonths, upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
 import {
   createOrUpdateMarketPrice,
@@ -12,11 +12,13 @@ import { StatusMessage } from '../components/StatusMessage'
 import { InvestmentEventsTable } from '../components/investments/InvestmentEventsTable'
 import { InvestmentAllocationCharts } from '../components/investments/InvestmentAllocationCharts'
 import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
+import { InvestmentHoldingsOverview } from '../components/investments/InvestmentHoldingsOverview'
+import { InvestmentPortfolioTrendChart } from '../components/investments/InvestmentPortfolioTrendChart'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import type { InvestmentEvent, InvestmentFundingMonth, InvestmentPosition, MarketPrice } from '../types/api'
+import type { InvestmentEvent, InvestmentFundingMonth, InvestmentMonthlySeriesPoint, InvestmentPosition, MarketPrice } from '../types/api'
 import { formatMoney } from '../utils/format'
 
 export type ManualFundingFormState = {
@@ -256,6 +258,8 @@ function getSortedInvestmentEvents(
 export function InvestmentsPage() {
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
+  const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>([])
+  const [chartMonths, setChartMonths] = useState(24)
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
   const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
   const [eventType, setEventType] = useState('')
@@ -307,12 +311,14 @@ export function InvestmentsPage() {
         month: month || '2026-06',
         source: source || 'trading212',
       }),
+      listInvestmentMonthlySeries(chartMonths),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths, loadedMonthlySeries]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
         setFundingMonths(loadedFundingMonths)
+        setMonthlySeries(loadedMonthlySeries)
         setEventPage(1)
 
         if (loadedFundingMonths[0]) {
@@ -333,7 +339,7 @@ export function InvestmentsPage() {
 
   useEffect(() => {
     loadEvents()
-  }, [])
+  }, [chartMonths])
 
   function clearFilters() {
     setEventType('')
@@ -350,12 +356,14 @@ export function InvestmentsPage() {
         month: '2026-06',
         source: 'trading212',
       }),
+      listInvestmentMonthlySeries(chartMonths),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths, loadedMonthlySeries]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
         setFundingMonths(loadedFundingMonths)
+        setMonthlySeries(loadedMonthlySeries)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
@@ -660,13 +668,23 @@ export function InvestmentsPage() {
         </div>
 
         <div className="action-group">
-          <button type="button" onClick={loadEvents}>
-            Refresh
+          <button
+            type="button"
+            disabled={isFetchingMarketData}
+            onClick={refreshAllMarketData}
+          >
+            {isFetchingMarketData ? 'Refreshing…' : 'Refresh prices'}
           </button>
         </div>
       </div>
 
       <StatusMessage error={error} message={message} />
+
+      <InvestmentPortfolioTrendChart
+        months={chartMonths}
+        series={monthlySeries}
+        onMonthsChange={setChartMonths}
+      />
 
       <InvestmentSummaryCards
         eventCount={events.length}
@@ -679,9 +697,20 @@ export function InvestmentsPage() {
         unrealisedGainTotals={investmentTotals.unrealisedGainTotals}
       />
 
+      <InvestmentHoldingsOverview positions={positions} />
+
       <InvestmentAllocationCharts positions={positions} />
 
-      <InvestmentPositionsTable positions={positions} />
+      <details className="content-card panel-card investment-detailed-positions-card">
+        <summary>
+          <span>
+            <strong>Detailed positions</strong>
+            <small>Quantity, ISIN, cost basis, prices, and FX details.</small>
+          </span>
+        </summary>
+
+        <InvestmentPositionsTable positions={positions} />
+      </details>
 
       <div className="investment-tools-grid">
       <section className="content-card panel-card investment-funding-card">

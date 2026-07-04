@@ -271,32 +271,32 @@ export function InvestmentAllocationCharts({ positions }: InvestmentAllocationCh
 
   return (
     <section className="content-card panel-card investment-breakdown-card">
-      <div className="section-header">
-        <div>
-          <h2>Portfolio breakdown</h2>
-          <p className="muted small">
-            Allocation by current value, invested capital, and unrealised gain/loss. Non-EUR values are estimated in EUR using the cached FX rate.
-          </p>
+      <details className="investment-breakdown-details">
+        <summary>
+          <span>
+            <strong>Portfolio breakdown</strong>
+            <small>Allocation, cost basis, and gain/loss analysis.</small>
+          </span>
+        </summary>
+
+        <div className="investment-breakdown-grid">
+          <AllocationDonut
+            title="Current value allocation"
+            description="Where your portfolio value is concentrated today."
+            emptyMessage="No current market value data available."
+            items={marketValueItems}
+          />
+
+          <AllocationDonut
+            title="Invested capital allocation"
+            description="How your cost basis is split across holdings."
+            emptyMessage="No cost basis data available."
+            items={costBasisItems}
+          />
+
+          <GainLossRanking positions={positions} />
         </div>
-      </div>
-
-      <div className="investment-breakdown-grid">
-        <AllocationDonut
-          title="Current value allocation"
-          description="Where your portfolio value is concentrated today."
-          emptyMessage="No current market value data available."
-          items={marketValueItems}
-        />
-
-        <AllocationDonut
-          title="Invested capital allocation"
-          description="How your cost basis is split across holdings."
-          emptyMessage="No cost basis data available."
-          items={costBasisItems}
-        />
-
-        <GainLossRanking positions={positions} />
-      </div>
+      </details>
     </section>
   )
 }
