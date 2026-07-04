@@ -87,15 +87,14 @@ def initialise_database(database_engine: Engine = engine) -> None:
     """Initialise database objects needed by the application.
 
     SQLite uses SQLAlchemy table creation plus legacy startup migrations.
-    Hosted Postgres keeps implicit table creation disabled, but still runs
-    explicit idempotent startup migrations for tables that need backfilling.
+    Non-SQLite databases should use explicit migration tooling instead of
+    the local SQLite startup migration path.
     """
 
     from app.database_migrations import run_startup_migrations
     import app.models  # noqa: F401
 
     if not is_sqlite_database_url(str(database_engine.url)):
-        run_startup_migrations(database_engine)
         return
 
     Base.metadata.create_all(bind=database_engine)

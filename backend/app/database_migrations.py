@@ -14,11 +14,10 @@ def run_startup_migrations(engine: Engine) -> None:
     startup migrations.
     """
 
-    _run_investment_funding_month_migrations(engine=engine)
-
     if not is_sqlite_database_url(str(engine.url)):
         return
 
+    _run_investment_funding_month_migrations(engine=engine)
     _run_transaction_migrations(engine=engine)
     _run_import_batch_user_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
