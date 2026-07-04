@@ -395,3 +395,60 @@
     display: none;
   }
 }
+
+/* Zero-centred net summary bar. */
+.dashboard-summary-bar-track-net {
+  position: relative;
+}
+
+.dashboard-summary-bar-track-net::before {
+  content: "";
+  position: absolute;
+  top: 0.12rem;
+  bottom: 0.12rem;
+  left: 50%;
+  width: 1px;
+  background: #cbd5e1;
+}
+
+.dashboard-summary-bar-track-net .dashboard-summary-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+}
+
+.dashboard-summary-bar-net-negative {
+  background: var(--dashboard-red);
+}
+
+/* Stronger zero marker for net summary bar. */
+.dashboard-summary-bar-track-net {
+  overflow: visible;
+  background:
+    linear-gradient(
+      90deg,
+      #f1f5f9 0%,
+      #f1f5f9 calc(50% - 1.5px),
+      #64748b calc(50% - 1.5px),
+      #64748b calc(50% + 1.5px),
+      #f1f5f9 calc(50% + 1.5px),
+      #f1f5f9 100%
+    );
+}
+
+.dashboard-summary-bar-track-net::before {
+  top: -0.3rem;
+  bottom: -0.3rem;
+  width: 3px;
+  border-radius: 999px;
+  background: #475569;
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.95);
+  transform: translateX(-1.5px);
+  z-index: 1;
+}
+
+.dashboard-summary-bar-track-net .dashboard-summary-bar {
+  z-index: 2;
+}
+

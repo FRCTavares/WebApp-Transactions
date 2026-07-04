@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { listTransactions } from '../api/transactions'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
@@ -135,6 +135,31 @@ function getSummaryBarWidth(value: string | number, maxValue: number) {
   }
 
   return `${Math.max(4, Math.min(100, (Number(value) / maxValue) * 100))}%`
+}
+
+function getNetSummaryBarStyle(value: string | number, maxValue: number): CSSProperties {
+  const amount = Number(value)
+
+  if (maxValue <= 0 || amount === 0) {
+    return {
+      left: '50%',
+      width: '0%',
+    }
+  }
+
+  const width = Math.max(4, Math.min(50, (Math.abs(amount) / maxValue) * 50))
+
+  if (amount < 0) {
+    return {
+      right: '50%',
+      width: `${width}%`,
+    }
+  }
+
+  return {
+    left: '50%',
+    width: `${width}%`,
+  }
 }
 
 function getCategoryLabel(transaction: Transaction) {
@@ -374,10 +399,12 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                     <span>Net</span>
                   </div>
                   <strong>{formatMoney(netAmount)}</strong>
-                  <div className="dashboard-summary-bar-track">
+                  <div className="dashboard-summary-bar-track dashboard-summary-bar-track-net">
                     <span
-                      className="dashboard-summary-bar dashboard-summary-bar-net"
-                      style={{ width: getSummaryBarWidth(Math.abs(Number(netAmount)), summaryMaxValue) }}
+                      className={`dashboard-summary-bar dashboard-summary-bar-net ${
+                        Number(netAmount) < 0 ? 'dashboard-summary-bar-net-negative' : ''
+                      }`}
+                      style={getNetSummaryBarStyle(netAmount, summaryMaxValue)}
                     />
                   </div>
                 </div>
