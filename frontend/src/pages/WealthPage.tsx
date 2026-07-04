@@ -56,7 +56,6 @@ export function WealthPage(_props: WealthPageProps) {
   const [isSnapshotFormOpen, setIsSnapshotFormOpen] = useState(false)
   const [isSnapshotsTableOpen, setIsSnapshotsTableOpen] = useState(false)
   const [showInactiveAccounts, setShowInactiveAccounts] = useState(false)
-  const [expandedAccountGroups, setExpandedAccountGroups] = useState<Set<string>>(new Set())
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -373,19 +372,6 @@ export function WealthPage(_props: WealthPageProps) {
     )
   }
 
-  function toggleAccountGroup(groupKey: string) {
-    setExpandedAccountGroups((currentGroups) => {
-      const nextGroups = new Set(currentGroups)
-
-      if (nextGroups.has(groupKey)) {
-        nextGroups.delete(groupKey)
-      } else {
-        nextGroups.add(groupKey)
-      }
-
-      return nextGroups
-    })
-  }
 
   const latestByAccount = getLatestSnapshotByAccount(snapshots)
   const accountGroups = getAccountGroups(accounts)
@@ -637,9 +623,7 @@ export function WealthPage(_props: WealthPageProps) {
         latestByAccount={latestByAccount}
         investmentPositions={investmentPositions}
         showInactiveAccounts={showInactiveAccounts}
-        expandedAccountGroups={expandedAccountGroups}
         onShowInactiveAccountsChange={setShowInactiveAccounts}
-        onToggleAccountGroup={toggleAccountGroup}
         onStartAccountEdit={startAccountEdit}
         onToggleAccountActive={toggleAccountActive}
         onRemoveAccount={removeAccount}

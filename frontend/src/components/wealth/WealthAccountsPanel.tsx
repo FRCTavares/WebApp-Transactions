@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { InvestmentPosition, WealthAccount, WealthSnapshot } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import {
@@ -6,15 +6,14 @@ import {
   getDerivedInvestmentValue,
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
+import { WealthAccountDetailsModal } from './WealthAccountDetailsModal'
 
 type WealthAccountsPanelProps = {
   accountGroups: WealthAccountGroup[]
   latestByAccount: Map<number, WealthSnapshot>
   investmentPositions: InvestmentPosition[]
   showInactiveAccounts: boolean
-  expandedAccountGroups: Set<string>
   onShowInactiveAccountsChange: (showInactive: boolean) => void
-  onToggleAccountGroup: (groupKey: string) => void
   onStartAccountEdit: (account: WealthAccount) => void
   onToggleAccountActive: (account: WealthAccount) => void
   onRemoveAccount: (account: WealthAccount) => void
@@ -67,10 +66,6 @@ function getGroupLatestDate(
     .at(-1)
 }
 
-function getAccountDisplayName(account: WealthAccount, group: WealthAccountGroup) {
-  return account.name.replace(`${group.label} `, '')
-}
-
 function AccountActions({
   account,
   onStartAccountEdit,
@@ -106,14 +101,17 @@ export function WealthAccountsPanel({
   latestByAccount,
   investmentPositions,
   showInactiveAccounts,
-  expandedAccountGroups,
   onShowInactiveAccountsChange,
-  onToggleAccountGroup,
   onStartAccountEdit,
   onToggleAccountActive,
   onRemoveAccount,
   renderAccountBalanceCell,
 }: WealthAccountsPanelProps) {
+  const [selectedGroupKey, setSelectedGroupKey] = useState<string | null>(null)
+  const selectedGroup = selectedGroupKey
+    ? accountGroups.find((group) => group.key === selectedGroupKey) ?? null
+    : null
+
   return (
     <section className="content-card panel-card wealth-accounts-panel">
       <div className="section-header wealth-accounts-header">
@@ -143,7 +141,6 @@ export function WealthAccountsPanel({
         <div className="wealth-account-card-grid">
           {accountGroups.map((group) => {
             const hasSubAccounts = group.accounts.length > 1
-            const isExpanded = expandedAccountGroups.has(group.key)
             const groupLatestDate = getGroupLatestDate(group, latestByAccount)
 
             if (!hasSubAccounts) {
@@ -188,7 +185,7 @@ export function WealthAccountsPanel({
                 <button
                   type="button"
                   className="wealth-account-card-main wealth-account-group-button"
-                  onClick={() => onToggleAccountGroup(group.key)}
+                  onClick={() => setSelectedGroupKey(group.key)}
                 >
                   <div>
                     <span className="wealth-account-type">Group</span>
@@ -201,46 +198,28 @@ export function WealthAccountsPanel({
 
                   <div className="wealth-account-balance-block">
                     <strong>{formatMoney(getGroupTotal(group, latestByAccount, investmentPositions))}</strong>
-                    <span>{isExpanded ? 'Hide details' : 'Show details'}</span>
+                    <span>Show details</span>
                   </div>
                 </button>
 
-                {isExpanded && (
-                  <div className="wealth-subaccount-list">
-                    {group.accounts.map((account) => {
-                      const latestSnapshot = latestByAccount.get(account.id)
 
-                      return (
-                        <div key={account.id} className="wealth-subaccount-row">
-                          <div>
-                            <strong>{getAccountDisplayName(account, group)}</strong>
-                            <span>{account.institution ?? getAccountTypeLabel(account.account_type)}</span>
-                          </div>
-
-                          <div className="wealth-subaccount-balance">
-                            {renderAccountBalanceCell(account, latestSnapshot)}
-                            <span>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : 'No snapshot'}</span>
-                          </div>
-
-                          <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
-                            {account.is_active ? 'Active' : 'Inactive'}
-                          </span>
-
-                          <AccountActions
-                            account={account}
-                            onStartAccountEdit={onStartAccountEdit}
-                            onToggleAccountActive={onToggleAccountActive}
-                            onRemoveAccount={onRemoveAccount}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
               </article>
             )
           })}
         </div>
+      )}
+
+      {selectedGroup && (
+        <WealthAccountDetailsModal
+          group={selectedGroup}
+          latestByAccount={latestByAccount}
+          investmentPositions={investmentPositions}
+          onClose={() => setSelectedGroupKey(null)}
+          onStartAccountEdit={onStartAccountEdit}
+          onToggleAccountActive={onToggleAccountActive}
+          onRemoveAccount={onRemoveAccount}
+          renderAccountBalanceCell={renderAccountBalanceCell}
+        />
       )}
     </section>
   )

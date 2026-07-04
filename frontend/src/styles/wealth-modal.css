@@ -1,0 +1,171 @@
+/* Wealth account details modal. */
+
+.wealth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: rgb(15 23 42 / 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.wealth-modal-card {
+  display: grid;
+  gap: 1rem;
+  width: min(72rem, 100%);
+  max-height: min(82vh, 52rem);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid rgb(226 232 240 / 0.95);
+  border-radius: 1.35rem;
+  background: rgb(255 255 255 / 0.96);
+  box-shadow:
+    0 28px 80px rgb(15 23 42 / 0.22),
+    inset 0 0 0 1px rgb(255 255 255 / 0.85);
+}
+
+.wealth-modal-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 0.35rem 0.35rem 0.85rem;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.wealth-modal-header h2 {
+  margin: 0.1rem 0 0.2rem;
+  color: #111827;
+  font-size: 1.45rem;
+  letter-spacing: -0.045em;
+}
+
+.wealth-modal-header p:not(.eyebrow) {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.wealth-modal-total {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.wealth-modal-total span {
+  color: #6b7280;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wealth-modal-total strong {
+  color: #111827;
+  font-size: 1.25rem;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.wealth-modal-close {
+  min-height: 2.35rem;
+  border-radius: 0.85rem;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 800;
+}
+
+.wealth-modal-subaccount-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.wealth-modal-subaccount-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, auto) auto auto;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: #fbfbfd;
+}
+
+.wealth-modal-subaccount-main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.wealth-modal-subaccount-main span {
+  color: #6b7280;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wealth-modal-subaccount-main strong {
+  overflow: hidden;
+  color: #111827;
+  font-size: 0.98rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wealth-modal-subaccount-main p {
+  margin: 0;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wealth-modal-balance {
+  min-width: 12rem;
+}
+
+.wealth-modal-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .wealth-modal-backdrop {
+    align-items: end;
+    padding: 0.75rem;
+  }
+
+  .wealth-modal-card {
+    max-height: 88vh;
+    border-radius: 1.15rem;
+  }
+
+  .wealth-modal-header {
+    grid-template-columns: 1fr;
+  }
+
+  .wealth-modal-total {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .wealth-modal-subaccount-row {
+    grid-template-columns: 1fr;
+  }
+
+  .wealth-modal-balance {
+    justify-items: start;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .wealth-modal-actions {
+    justify-content: flex-start;
+  }
+}
