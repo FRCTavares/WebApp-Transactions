@@ -19,11 +19,6 @@ import { usePeriod } from '../context/PeriodContext'
 import type { CashflowType, Direction, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
-type TransactionsPageProps = {
-  direction: Direction
-  title: string
-}
-
 type OwedSplitRowState = {
   id: string
   person: string
@@ -248,8 +243,9 @@ function getOwedRowsTotal(rows: OwedSplitRowState[]) {
   }, 0)
 }
 
-export function TransactionsPage({ direction, title }: TransactionsPageProps) {
+export function TransactionsPage() {
   const { monthKey } = usePeriod()
+  const [direction, setDirection] = useState<Direction>('out')
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getInitialFilterState(direction),
@@ -665,7 +661,23 @@ export function TransactionsPage({ direction, title }: TransactionsPageProps) {
     <section className={`app-page transactions-page transactions-page-${direction}`}>
       <div className="page-header transactions-page-header">
         <div className="page-title-block">
-          <h1>{title}</h1>
+          <h1>{direction === 'in' ? 'Money In' : 'Money Out'}</h1>
+          <div className="transaction-direction-switch" aria-label="Transaction direction">
+            <button
+              type="button"
+              className={direction === 'out' ? 'active' : undefined}
+              onClick={() => setDirection('out')}
+            >
+              Money Out
+            </button>
+            <button
+              type="button"
+              className={direction === 'in' ? 'active' : undefined}
+              onClick={() => setDirection('in')}
+            >
+              Money In
+            </button>
+          </div>
         </div>
 
         <div className="action-group">

@@ -22,13 +22,10 @@ import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
 import type { User } from '@supabase/supabase-js'
-import type { Direction } from './types/api'
 
 type Page =
   | 'dashboard'
   | 'transactions'
-  | 'money-in'
-  | 'money-out'
   | 'wealth'
   | 'investments'
   | 'owed'
@@ -138,8 +135,6 @@ function getMobileButtonClass(currentPage: Page, itemId: Page) {
 
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
-  const [mobileTransactionDirection, setMobileTransactionDirection] =
-    useState<Direction>('out')
   const [authError, setAuthError] = useState<string | null>(null)
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
@@ -298,32 +293,7 @@ function App() {
           )}
 
           {page === 'dashboard' && <DashboardPage greeting={greeting} displayName={displayName} />}
-          {page === 'transactions' && (
-            <section>
-              <div className="mobile-segmented-control" aria-label="Transaction direction">
-                <button
-                  type="button"
-                  className={mobileTransactionDirection === 'in' ? 'active' : ''}
-                  onClick={() => setMobileTransactionDirection('in')}
-                >
-                  Money In
-                </button>
-                <button
-                  type="button"
-                  className={mobileTransactionDirection === 'out' ? 'active' : ''}
-                  onClick={() => setMobileTransactionDirection('out')}
-                >
-                  Money Out
-                </button>
-              </div>
-              <TransactionsPage
-                direction={mobileTransactionDirection}
-                title={mobileTransactionDirection === 'in' ? 'Money In' : 'Money Out'}
-              />
-            </section>
-          )}
-          {page === 'money-in' && <TransactionsPage direction="in" title="Money In" />}
-          {page === 'money-out' && <TransactionsPage direction="out" title="Money Out" />}
+          {page === 'transactions' && <TransactionsPage />}
           {page === 'wealth' && <WealthPage onOpenInvestments={() => setPage('investments')} />}
           {page === 'investments' && <InvestmentsPage />}
           {page === 'owed' && <OwedPage />}

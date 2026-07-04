@@ -356,3 +356,54 @@
     justify-content: flex-start;
   }
 }
+
+/* Transaction direction switch. */
+.transaction-direction-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.22rem;
+  border: 1px solid var(--transaction-border);
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.transaction-direction-switch button {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--transaction-muted);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.transaction-direction-switch button.active {
+  background: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
+}
+
+@media (max-width: 800px) {
+  .transaction-direction-switch {
+    order: 3;
+    width: 100%;
+  }
+
+  .transaction-direction-switch button {
+    flex: 1;
+  }
+}
+
+/* Transaction title switch placement. */
+.transactions-page .page-title-block {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: start;
+}
+
+.transactions-page .page-title-block .transaction-direction-switch {
+  margin-top: 0.1rem;
+}
+
