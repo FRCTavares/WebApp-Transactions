@@ -407,3 +407,38 @@
   margin-top: 0.1rem;
 }
 
+/* Transaction table alignment and truncation. */
+.transactions-page .transaction-desktop-table-wrap th,
+.transactions-page .transaction-desktop-table-wrap td {
+  vertical-align: middle;
+}
+
+.transactions-page .transaction-description-line {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  max-width: 34rem;
+}
+
+.transactions-page .transaction-description-line span,
+.transactions-page .transaction-description-line small,
+.transactions-page .transaction-description-line .muted {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transactions-page .transaction-description-line span:first-child {
+  line-height: 1.2;
+}
+
+.transactions-page td:not(.right):not(.actions-cell) {
+  line-height: 1.2;
+}
+
+.transactions-page .badge {
+  vertical-align: middle;
+}
+
