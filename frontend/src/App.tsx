@@ -1,4 +1,15 @@
 import { useEffect, useState } from 'react'
+import {
+  CalendarCheck,
+  HandCoins,
+  LayoutDashboard,
+  PiggyBank,
+  ReceiptText,
+  Settings,
+  TrendingUp,
+  Upload,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
@@ -8,38 +19,51 @@ import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
 import { CleanupPage } from './pages/CleanupPage'
 import { ExportPage } from './pages/ExportPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
 import type { User } from '@supabase/supabase-js'
 import type { Direction } from './types/api'
 
-type Page = 'dashboard' | 'transactions' | 'money-in' | 'money-out' | 'wealth' | 'investments' | 'owed' | 'more' | 'cleanup' | 'import' | 'categories' | 'export'
+type Page =
+  | 'dashboard'
+  | 'transactions'
+  | 'money-in'
+  | 'money-out'
+  | 'wealth'
+  | 'investments'
+  | 'owed'
+  | 'more'
+  | 'cleanup'
+  | 'import'
+  | 'categories'
+  | 'export'
+  | 'settings'
 
-const NAV_GROUPS: { title: string; items: { id: Page; label: string }[] }[] = [
+
+const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
   {
     title: 'Overview',
     items: [
-      { id: 'dashboard', label: 'Dashboard' },
-      { id: 'cleanup', label: 'Monthly Review' },
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { id: 'cleanup', label: 'Monthly Review', icon: CalendarCheck },
     ],
   },
   {
     title: 'Money',
     items: [
-      { id: 'money-in', label: 'Money In' },
-      { id: 'money-out', label: 'Money Out' },
-      { id: 'wealth', label: 'Wealth' },
-      { id: 'investments', label: 'Investments' },
-      { id: 'owed', label: 'Money Owed To Me' },
+      { id: 'transactions', label: 'Transactions', icon: ReceiptText },
+      { id: 'wealth', label: 'Wealth', icon: PiggyBank },
+      { id: 'investments', label: 'Investments', icon: TrendingUp },
+      { id: 'owed', label: 'Owed', icon: HandCoins },
     ],
   },
   {
     title: 'Tools',
     items: [
-      { id: 'import', label: 'Import CSV/XLSX' },
-      { id: 'categories', label: 'Categories / Rules' },
-      { id: 'export', label: 'Export / Backup' },
+      { id: 'import', label: 'Import', icon: Upload },
+      { id: 'settings', label: 'Settings', icon: Settings },
     ],
   },
 ]
@@ -94,6 +118,29 @@ const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
   { id: 'more', label: 'More' },
 ]
 
+const SETTINGS_RELATED_PAGES = new Set<Page>(['categories', 'export'])
+const MORE_RELATED_PAGES = new Set<Page>([
+  'more',
+  'cleanup',
+  'import',
+  'categories',
+  'export',
+  'settings',
+  'investments',
+])
+
+function getSidebarButtonClass(currentPage: Page, itemId: Page) {
+  const isSettingsActive = itemId === 'settings' && SETTINGS_RELATED_PAGES.has(currentPage)
+
+  return currentPage === itemId || isSettingsActive ? 'active' : ''
+}
+
+function getMobileButtonClass(currentPage: Page, itemId: Page) {
+  const isMoreActive = itemId === 'more' && MORE_RELATED_PAGES.has(currentPage)
+
+  return currentPage === itemId || isMoreActive ? 'active' : ''
+}
+
 function App() {
   const [page, setPage] = useState<Page>('dashboard')
   const [mobileTransactionDirection, setMobileTransactionDirection] =
@@ -109,7 +156,11 @@ function App() {
     signOut,
     user,
   } = useAuth()
-  const shouldShowGlobalPeriodSelector = page !== 'import' && page !== 'categories' && page !== 'export'
+  const shouldShowGlobalPeriodSelector =
+    page !== 'import' &&
+    page !== 'categories' &&
+    page !== 'export' &&
+    page !== 'settings'
   const displayName = getUserDisplayName(user)
   const greeting = getGreeting()
 
@@ -224,10 +275,11 @@ function App() {
                     <button
                       key={item.id}
                       type="button"
-                      className={page === item.id ? 'active' : ''}
+                      className={getSidebarButtonClass(page, item.id)}
                       onClick={() => setPage(item.id)}
                     >
-                      {item.label}
+                      <item.icon className="nav-icon" aria-hidden="true" />
+                      <span className="nav-label">{item.label}</span>
                     </button>
                   ))}
                 </div>
@@ -296,45 +348,22 @@ function App() {
                   <button type="button" onClick={() => setPage('cleanup')}>
                     Monthly Review
                   </button>
-                  <button type="button" onClick={() => setPage('categories')}>
-                    Categories / Rules
-                  </button>
                 </div>
               </section>
 
               <section className="mobile-more-section">
                 <div className="mobile-more-section-header">
-                  <h2>Data</h2>
-                  <p>Import, export, and back up records.</p>
+                  <h2>Tools</h2>
+                  <p>Import data and manage app configuration.</p>
                 </div>
                 <div className="mobile-more-actions">
                   <button type="button" onClick={() => setPage('import')}>
-                    Import CSV/XLSX
+                    Import
                   </button>
-                  <button type="button" onClick={() => setPage('export')}>
-                    Export / Backup
+                  <button type="button" onClick={() => setPage('settings')}>
+                    Settings
                   </button>
                 </div>
-              </section>
-
-              <section className="mobile-more-section">
-                <div className="mobile-more-section-header">
-                  <h2>Account</h2>
-                  <p>
-                    {isAuthEnabled ? `Signed in as ${displayName}.` : 'Local mode.'}
-                  </p>
-                </div>
-                {isAuthEnabled && (
-                  <div className="mobile-more-actions">
-                    <button
-                      type="button"
-                      className="mobile-more-danger"
-                      onClick={handleLogout}
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                )}
               </section>
             </section>
           )}
@@ -342,6 +371,17 @@ function App() {
           {page === 'import' && <ImportPage />}
           {page === 'categories' && <CategoryRulesPage />}
           {page === 'export' && <ExportPage />}
+          {page === 'settings' && (
+            <SettingsPage
+              isAuthEnabled={isAuthEnabled}
+              displayName={displayName}
+              onOpenImport={() => setPage('import')}
+              onOpenExport={() => setPage('export')}
+              onOpenCategories={() => setPage('categories')}
+              onOpenMonthlyReview={() => setPage('cleanup')}
+              onSignOut={handleLogout}
+            />
+          )}
         </main>
 
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
@@ -349,7 +389,7 @@ function App() {
             <button
               key={item.id}
               type="button"
-              className={page === item.id ? 'active' : ''}
+              className={getMobileButtonClass(page, item.id)}
               onClick={() => setPage(item.id)}
             >
               {item.label}
