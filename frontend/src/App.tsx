@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  CalendarCheck,
   HandCoins,
   LayoutDashboard,
   PiggyBank,
@@ -17,7 +16,6 @@ import { ImportPage } from './pages/ImportPage'
 import { CategoryRulesPage } from './pages/CategoryRulesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
-import { CleanupPage } from './pages/CleanupPage'
 import { ExportPage } from './pages/ExportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
@@ -35,7 +33,6 @@ type Page =
   | 'investments'
   | 'owed'
   | 'more'
-  | 'cleanup'
   | 'import'
   | 'categories'
   | 'export'
@@ -47,7 +44,6 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: Lucid
     title: 'Overview',
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { id: 'cleanup', label: 'Monthly Review', icon: CalendarCheck },
     ],
   },
   {
@@ -121,7 +117,6 @@ const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
 const SETTINGS_RELATED_PAGES = new Set<Page>(['categories', 'export'])
 const MORE_RELATED_PAGES = new Set<Page>([
   'more',
-  'cleanup',
   'import',
   'categories',
   'export',
@@ -345,9 +340,6 @@ function App() {
                   <button type="button" onClick={() => setPage('investments')}>
                     Investments
                   </button>
-                  <button type="button" onClick={() => setPage('cleanup')}>
-                    Monthly Review
-                  </button>
                 </div>
               </section>
 
@@ -367,7 +359,6 @@ function App() {
               </section>
             </section>
           )}
-          {page === 'cleanup' && <CleanupPage />}
           {page === 'import' && <ImportPage />}
           {page === 'categories' && <CategoryRulesPage />}
           {page === 'export' && <ExportPage />}
@@ -378,7 +369,6 @@ function App() {
               onOpenImport={() => setPage('import')}
               onOpenExport={() => setPage('export')}
               onOpenCategories={() => setPage('categories')}
-              onOpenMonthlyReview={() => setPage('cleanup')}
               onSignOut={handleLogout}
             />
           )}

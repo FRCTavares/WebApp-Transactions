@@ -4,7 +4,6 @@ type SettingsPageProps = {
   onOpenImport: () => void
   onOpenExport: () => void
   onOpenCategories: () => void
-  onOpenMonthlyReview: () => void
   onSignOut: () => void | Promise<void>
 }
 
@@ -38,7 +37,6 @@ export function SettingsPage({
   onOpenImport,
   onOpenExport,
   onOpenCategories,
-  onOpenMonthlyReview,
   onSignOut,
 }: SettingsPageProps) {
   return (
@@ -57,17 +55,11 @@ export function SettingsPage({
         <section className="settings-card">
           <div className="settings-card-header">
             <p className="eyebrow">Organisation</p>
-            <h2>Review and rules</h2>
-            <p>Clean the month and manage categorisation behaviour.</p>
+            <h2>Rules</h2>
+            <p>Manage categorisation behaviour.</p>
           </div>
 
           <div className="settings-action-list">
-            <SettingsAction
-              title="Monthly Review"
-              description="Find uncategorised or messy transactions."
-              actionLabel="Open"
-              onClick={onOpenMonthlyReview}
-            />
             <SettingsAction
               title="Categories / Rules"
               description="Manage category, description, and cashflow rules."
