@@ -10,6 +10,8 @@ import { ExportPage } from './pages/ExportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { AppSidebar } from './components/AppSidebar'
+import { AppMobileNav } from './components/AppMobileNav'
+import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
 import type { User } from '@supabase/supabase-js'
@@ -82,29 +84,6 @@ function getUserAvatarUrl(user: User | null) {
   }
 
   return null
-}
-
-const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
-  { id: 'dashboard', label: 'Home' },
-  { id: 'transactions', label: 'Transactions' },
-  { id: 'owed', label: 'Owed' },
-  { id: 'wealth', label: 'Wealth' },
-  { id: 'more', label: 'More' },
-]
-
-const MORE_RELATED_PAGES = new Set<Page>([
-  'more',
-  'import',
-  'categories',
-  'export',
-  'settings',
-  'investments',
-])
-
-function getMobileButtonClass(currentPage: Page, itemId: Page) {
-  const isMoreActive = itemId === 'more' && MORE_RELATED_PAGES.has(currentPage)
-
-  return currentPage === itemId || isMoreActive ? 'active' : ''
 }
 
 function App() {
@@ -241,36 +220,15 @@ function App() {
           {page === 'investments' && <InvestmentsPage />}
           {page === 'owed' && <OwedPage />}
           {page === 'more' && (
-            <section className="mobile-more-page">
-              <h1>More</h1>
-
-              <section className="mobile-more-section">
-                <div className="mobile-more-section-header">
-                  <h2>Finance</h2>
-                  <p>Review and organise your money.</p>
-                </div>
-                <div className="mobile-more-actions">
-                  <button type="button" onClick={() => setPage('investments')}>
-                    Investments
-                  </button>
-                </div>
-              </section>
-
-              <section className="mobile-more-section">
-                <div className="mobile-more-section-header">
-                  <h2>Tools</h2>
-                  <p>Import data and manage app configuration.</p>
-                </div>
-                <div className="mobile-more-actions">
-                  <button type="button" onClick={() => setPage('import')}>
-                    Import
-                  </button>
-                  <button type="button" onClick={() => setPage('settings')}>
-                    Settings
-                  </button>
-                </div>
-              </section>
-            </section>
+            <AppMobileMorePage
+              isAuthEnabled={isAuthEnabled}
+              onOpenCategories={() => setPage('categories')}
+              onOpenExport={() => setPage('export')}
+              onOpenImport={() => setPage('import')}
+              onOpenInvestments={() => setPage('investments')}
+              onOpenSettings={() => setPage('settings')}
+              onSignOut={handleLogout}
+            />
           )}
           {page === 'import' && <ImportPage />}
           {page === 'categories' && <CategoryRulesPage />}
@@ -287,18 +245,7 @@ function App() {
           )}
         </main>
 
-        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          {MOBILE_NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={getMobileButtonClass(page, item.id)}
-              onClick={() => setPage(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <AppMobileNav currentPage={page} onPageChange={setPage} />
       </div>
     </PeriodProvider>
   )

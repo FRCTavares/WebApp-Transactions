@@ -15,6 +15,7 @@
 @import './styles/typography.css';
 @import './styles/loading-states.css';
 @import './styles/investment-loading-states.css';
+@import './styles/mobile-shell.css';
 
 .global-topbar {
   position: absolute;
