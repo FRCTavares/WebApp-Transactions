@@ -271,6 +271,14 @@ export function ImportPage() {
   const visibleBatches = batches.filter(
     (batch) => !HIDDEN_BATCH_SOURCES.includes(batch.source),
   )
+  const importHistoryTotals = visibleBatches.reduce(
+    (totals, batch) => ({
+      rowsTotal: totals.rowsTotal + batch.rows_total,
+      rowsInserted: totals.rowsInserted + batch.rows_inserted,
+      rowsSkipped: totals.rowsSkipped + batch.rows_skipped,
+    }),
+    { rowsTotal: 0, rowsInserted: 0, rowsSkipped: 0 },
+  )
 
   function loadBatches() {
     listImportBatches().then(setBatches).catch(() => undefined)
@@ -394,7 +402,7 @@ export function ImportPage() {
         </div>
 
         <button type="button" onClick={loadBatches}>
-          Refresh Batches
+          Refresh history
         </button>
       </div>
 
@@ -573,71 +581,109 @@ export function ImportPage() {
         </section>
       )}
 
-      <h2>Import Batches</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Source</th>
-              <th>Filename</th>
-              <th>Imported</th>
-              <th>Total</th>
-              <th>Inserted</th>
-              <th>Skipped</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleBatches.length === 0 && (
-              <tr>
-                <td colSpan={9}>
-                </td>
-              </tr>
-            )}
+      <section className="panel-card import-history-panel">
+        <div className="section-header import-history-header">
+          <div>
+            <h2>Import history</h2>
+            <p className="muted small">
+              Review committed imports, inspect their transactions, or rollback a batch if needed.
+            </p>
+          </div>
+          <button type="button" onClick={loadBatches}>
+            Refresh history
+          </button>
+        </div>
 
-            {visibleBatches.map((batch) => (
-              <tr key={batch.id}>
-                <td>{batch.id}</td>
-                <td>
-                  <span className="badge badge-source">{batch.source}</span>
-                </td>
-                <td>{batch.filename}</td>
-                <td>{formatDate(batch.imported_at)}</td>
-                <td>{batch.rows_total}</td>
-                <td>{batch.rows_inserted}</td>
-                <td>{batch.rows_skipped}</td>
-                <td>
-                  <span className={getStatusBadgeClass(batch.status)}>
-                    {batch.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="action-group">
-                    <button type="button" onClick={() => handleSelectBatch(batch)}>
-                      {selectedBatch?.id === batch.id ? 'Refresh' : 'View'}
-                    </button>
-                    <button
-                      type="button"
-                      className="danger-button"
-                      onClick={() => handleDeleteBatch(batch)}
-                    >
-                      Rollback
-                    </button>
-                  </div>
-                </td>
+        <div className="summary-grid import-history-summary-grid">
+          <article className="summary-card">
+            <h2>Batches</h2>
+            <strong>{visibleBatches.length}</strong>
+          </article>
+          <article className="summary-card">
+            <h2>Total rows</h2>
+            <strong>{importHistoryTotals.rowsTotal}</strong>
+          </article>
+          <article className="summary-card import-summary-card-primary">
+            <h2>Inserted</h2>
+            <strong>{importHistoryTotals.rowsInserted}</strong>
+          </article>
+          <article className="summary-card">
+            <h2>Skipped</h2>
+            <strong>{importHistoryTotals.rowsSkipped}</strong>
+          </article>
+        </div>
+
+        <div className="table-wrap import-history-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Batch</th>
+                <th>Source</th>
+                <th>File</th>
+                <th>Imported</th>
+                <th>Total</th>
+                <th>Inserted</th>
+                <th>Skipped</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {visibleBatches.length === 0 && (
+                <tr>
+                  <td colSpan={9}>
+                    <div className="import-history-empty">
+                      <strong>No import history yet.</strong>
+                      <span>Preview and commit a CSV/XLSX file to create the first batch.</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+
+              {visibleBatches.map((batch) => (
+                <tr key={batch.id}>
+                  <td>#{batch.id}</td>
+                  <td>
+                    <span className="badge badge-source">{batch.source}</span>
+                  </td>
+                  <td>
+                    <span className="import-history-filename">{batch.filename}</span>
+                  </td>
+                  <td>{formatDate(batch.imported_at)}</td>
+                  <td>{batch.rows_total}</td>
+                  <td>{batch.rows_inserted}</td>
+                  <td>{batch.rows_skipped}</td>
+                  <td>
+                    <span className={getStatusBadgeClass(batch.status)}>
+                      {batch.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-group import-history-actions">
+                      <button type="button" onClick={() => handleSelectBatch(batch)}>
+                        {selectedBatch?.id === batch.id ? 'Refresh' : 'View rows'}
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-button import-history-rollback-button"
+                        onClick={() => handleDeleteBatch(batch)}
+                      >
+                        Rollback
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {selectedBatch && (
         <section className="review-section">
           <div className="section-header">
             <div>
-              <h2>Batch {selectedBatch.id} Transactions</h2>
+              <h2>Batch #{selectedBatch.id} transactions</h2>
               <p className="muted small">
                 {selectedBatch.filename} · {selectedBatch.source} · imported {formatDate(selectedBatch.imported_at)}
               </p>
