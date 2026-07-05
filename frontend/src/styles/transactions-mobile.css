@@ -206,3 +206,55 @@
     width: 100%;
   }
 }
+
+/* Real iPhone transaction spacing polish. */
+@media (max-width: 430px) {
+  .transactions-page .page-title-block h1 {
+    font-size: 1.62rem;
+  }
+
+  .transactions-page .transaction-direction-switch {
+    padding: 0.22rem;
+  }
+
+  .transactions-page .transaction-direction-switch button {
+    min-height: 2.4rem;
+    font-size: 0.86rem;
+  }
+
+  .transactions-page .action-group .primary-button {
+    min-height: 2.65rem;
+    font-size: 0.92rem;
+  }
+
+  .transaction-filter-card {
+    padding: 0.58rem;
+  }
+
+  .transaction-filter-mobile-header strong {
+    font-size: 0.9rem;
+  }
+
+  .transaction-filter-mobile-header button {
+    min-height: 2rem;
+    padding: 0 0.72rem;
+  }
+
+  .transactions-page .transaction-mobile-card {
+    padding: 0.8rem;
+  }
+
+  .transactions-page .transaction-mobile-card-main strong {
+    font-size: 0.92rem;
+  }
+
+  .transactions-page .transaction-mobile-actions {
+    gap: 0.42rem;
+  }
+
+  .transactions-page .transaction-mobile-action {
+    min-height: 2.15rem;
+    padding: 0 0.68rem;
+    font-size: 0.78rem;
+  }
+}

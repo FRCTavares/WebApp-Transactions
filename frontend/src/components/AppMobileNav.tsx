@@ -10,7 +10,7 @@ import type { Page } from '../App'
 
 const MOBILE_NAV_ITEMS: { id: Page; label: string; icon: LucideIcon }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { id: 'transactions', label: 'Transactions', icon: ReceiptText },
+  { id: 'transactions', label: 'Activity', icon: ReceiptText },
   { id: 'owed', label: 'Owed', icon: HandCoins },
   { id: 'wealth', label: 'Wealth', icon: PiggyBank },
   { id: 'more', label: 'More', icon: MoreHorizontal },
