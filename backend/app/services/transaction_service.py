@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from fastapi import HTTPException, status
 
@@ -167,21 +168,56 @@ class TransactionService:
     def _build_transaction_read(
         self,
         transaction: Transaction,
-        owed_item: OwedItem | None,
+        owed_items: list[OwedItem] | None,
     ) -> TransactionRead:
         data = TransactionRead.model_validate(transaction)
 
-        if owed_item is None:
+        active_owed_items = [
+            owed_item
+            for owed_item in owed_items or []
+            if owed_item.status != "cancelled"
+        ]
+
+        if not active_owed_items:
             return data
+
+        owed_amount_total = sum(
+            (owed_item.amount_total for owed_item in active_owed_items),
+            Decimal("0"),
+        )
+        owed_amount_paid = sum(
+            (owed_item.amount_paid for owed_item in active_owed_items),
+            Decimal("0"),
+        )
+        owed_amount_remaining = sum(
+            (owed_item.amount_remaining for owed_item in active_owed_items),
+            Decimal("0"),
+        )
+        owed_people = sorted(
+            {
+                owed_item.person.strip()
+                for owed_item in active_owed_items
+                if owed_item.person.strip()
+            }
+        )
+
+        if owed_amount_remaining == 0:
+            owed_status = "paid"
+        elif owed_amount_paid > 0:
+            owed_status = "partially_paid"
+        else:
+            owed_status = "open"
+
+        owed_person = owed_people[0] if len(owed_people) == 1 else f"{len(owed_people)} people"
 
         return data.model_copy(
             update={
                 "is_owed": True,
-                "owed_item_id": owed_item.id,
-                "owed_status": owed_item.status,
-                "owed_person": owed_item.person,
-                "owed_amount_total": owed_item.amount_total,
-                "owed_amount_paid": owed_item.amount_paid,
-                "owed_amount_remaining": owed_item.amount_remaining,
+                "owed_item_id": active_owed_items[0].id if len(active_owed_items) == 1 else None,
+                "owed_status": owed_status,
+                "owed_person": owed_person,
+                "owed_amount_total": owed_amount_total,
+                "owed_amount_paid": owed_amount_paid,
+                "owed_amount_remaining": owed_amount_remaining,
             }
         )

@@ -144,7 +144,7 @@ class TransactionRepository:
         self,
         transaction_ids: list[int],
         user_id: str,
-    ) -> dict[int, OwedItem]:
+    ) -> dict[int, list[OwedItem]]:
         if not transaction_ids:
             return {}
 
@@ -155,12 +155,18 @@ class TransactionRepository:
         )
 
         owed_items = list(self.db.scalars(statement).all())
+        owed_items_by_transaction_id: dict[int, list[OwedItem]] = {}
 
-        return {
-            owed_item.linked_transaction_id: owed_item
-            for owed_item in owed_items
-            if owed_item.linked_transaction_id is not None
-        }
+        for owed_item in owed_items:
+            if owed_item.linked_transaction_id is None:
+                continue
+
+            owed_items_by_transaction_id.setdefault(
+                owed_item.linked_transaction_id,
+                [],
+            ).append(owed_item)
+
+        return owed_items_by_transaction_id
 
     def update(
         self,

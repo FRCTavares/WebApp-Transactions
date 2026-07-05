@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { CategorySelect } from './CategorySelect'
 import type { CashflowType, Direction } from '../types/api'
 
@@ -17,6 +17,7 @@ type TransactionFormProps = {
   submitLabel: string
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onChange: (field: keyof TransactionFormState, value: string) => void
+  children?: ReactNode
   direction?: Direction
   editingTransactionId?: number
   onCancel?: () => void
@@ -28,6 +29,7 @@ export function TransactionForm({
   submitLabel,
   onSubmit,
   onChange,
+  children,
   direction,
   editingTransactionId,
   onCancel,
@@ -124,6 +126,8 @@ export function TransactionForm({
           </label>
         </div>
       </div>
+
+      {children}
 
       <div className="action-group">
         <button type="submit">

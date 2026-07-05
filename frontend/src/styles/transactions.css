@@ -441,3 +441,195 @@
 .transactions-page .badge {
   vertical-align: middle;
 }
+
+/* Owed transaction coverage states. These rows stay visible because the bank movement exists. */
+.transactions-page .badge-owed-fully {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.transactions-page .badge-owed-partial {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.transactions-page tbody tr.transaction-row-fully-owed td {
+  background: #f8fbff;
+}
+
+.transactions-page tbody tr.transaction-row-partly-owed td {
+  background: #fff8f9;
+}
+
+.transactions-page tbody tr.transaction-row-fully-owed td:first-child {
+  border-left: 4px solid #60a5fa;
+}
+
+.transactions-page tbody tr.transaction-row-partly-owed td:first-child {
+  border-left: 4px solid #fb7185;
+}
+
+.transactions-page .transaction-mobile-card-fully-owed {
+  border-color: rgb(96 165 250 / 0.42);
+  background: rgb(96 165 250 / 0.08);
+}
+
+.transactions-page .transaction-mobile-card-partly-owed {
+  border-color: rgb(251 113 133 / 0.42);
+  background: rgb(251 113 133 / 0.08);
+}
+
+:root[data-theme='dark'] .transactions-page .badge-owed-fully {
+  border-color: rgb(138 180 248 / 0.42);
+  background: rgb(138 180 248 / 0.14);
+  color: #bfdbfe;
+}
+
+:root[data-theme='dark'] .transactions-page .badge-owed-partial {
+  border-color: rgb(251 113 133 / 0.42);
+  background: rgb(251 113 133 / 0.14);
+  color: #fecdd3;
+}
+
+:root[data-theme='dark'] .transactions-page tbody tr.transaction-row.transaction-row-fully-owed td {
+  background: rgb(59 130 246 / 0.12) !important;
+}
+
+:root[data-theme='dark'] .transactions-page tbody tr.transaction-row.transaction-row-partly-owed td {
+  background: rgb(244 63 94 / 0.10) !important;
+}
+
+:root[data-theme='dark'] .transactions-page .transaction-mobile-card-fully-owed {
+  border-color: rgb(138 180 248 / 0.42);
+  background: rgb(59 130 246 / 0.12) !important;
+}
+
+:root[data-theme='dark'] .transactions-page .transaction-mobile-card-partly-owed {
+  border-color: rgb(251 113 133 / 0.42);
+  background: rgb(244 63 94 / 0.10) !important;
+}
+
+/* Transaction delete dialog. */
+.transaction-delete-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    calc(7rem + env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: rgb(0 0 0 / 0.42);
+}
+
+.transaction-delete-dialog {
+  display: grid;
+  gap: 1rem;
+  width: min(28rem, 100%);
+  padding: 1rem;
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: 1.25rem;
+  background: var(--theme-surface, #ffffff);
+  box-shadow: 0 28px 80px rgb(0 0 0 / 0.34);
+}
+
+.transaction-delete-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.transaction-delete-dialog-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(248 113 113 / 0.14);
+  color: #ef4444;
+  font-size: 1.25rem;
+  font-weight: 950;
+}
+
+.transaction-delete-dialog h2 {
+  margin: 0;
+  color: var(--theme-text, #111827);
+  font-size: 1.25rem;
+  letter-spacing: -0.035em;
+}
+
+.transaction-delete-dialog p {
+  margin: 0.25rem 0 0;
+  color: var(--theme-muted, #6b7280);
+  font-weight: 700;
+}
+
+.transaction-delete-dialog-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--theme-border, #e5e7eb);
+  border-radius: 1rem;
+  background: var(--theme-surface-muted, #f8fafc);
+}
+
+.transaction-delete-dialog-summary strong,
+.transaction-delete-dialog-summary span {
+  color: var(--theme-text, #111827);
+  font-weight: 850;
+}
+
+.transaction-delete-dialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.transaction-delete-dialog-actions button {
+  min-height: 2.75rem;
+  border-radius: 0.95rem;
+  font-weight: 900;
+}
+
+.transaction-delete-confirm-button {
+  border-color: rgb(248 113 113 / 0.5);
+  background: rgb(220 38 38 / 0.92);
+  color: #ffffff;
+}
+
+.transaction-delete-confirm-button:hover {
+  border-color: rgb(248 113 113 / 0.7);
+  background: #b91c1c;
+}
+
+:root[data-theme='dark'] .transaction-delete-dialog {
+  border-color: rgb(255 255 255 / 0.12);
+  background: #1c1d21;
+}
+
+:root[data-theme='dark'] .transaction-delete-dialog-summary {
+  border-color: rgb(255 255 255 / 0.095);
+  background: #232429;
+}
+
+@media (max-width: 430px) {
+  .transaction-delete-dialog-backdrop {
+    align-items: center;
+    padding:
+      max(1rem, env(safe-area-inset-top))
+      max(1rem, env(safe-area-inset-right))
+      calc(7.25rem + env(safe-area-inset-bottom))
+      max(1rem, env(safe-area-inset-left));
+  }
+
+  .transaction-delete-dialog {
+    padding: 0.9rem;
+    border-radius: 1.15rem;
+  }
+}

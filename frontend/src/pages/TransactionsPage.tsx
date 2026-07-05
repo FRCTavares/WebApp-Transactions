@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOwedItem, createOwedPayment } from '../api/owed'
+import { createOwedItem, createOwedPayment, listOwedItems } from '../api/owed'
 import {
   createTransaction,
   deleteTransaction,
@@ -19,6 +19,7 @@ import {
   TransactionOwedSplitDialog,
   type OwedSplitRowState,
 } from '../components/transactions/TransactionOwedSplitDialog'
+import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
 import type { CashflowType, Direction, Transaction } from '../types/api'
@@ -190,13 +191,15 @@ function getExportFilename(direction: Direction) {
 function createOwedSplitRow({
   amount = '',
   notes = '',
+  person = 'Mother',
 }: {
   amount?: string
   notes?: string
+  person?: string
 } = {}): OwedSplitRowState {
   return {
     id: `${Date.now()}-${Math.random()}`,
-    person: 'Mother',
+    person,
     amount,
     linkedPaymentTransactionId: '',
     unallocatedCategory: '',
@@ -207,6 +210,11 @@ function createOwedSplitRow({
 
 function parseMoneyInput(value: string) {
   return Math.abs(Number(value.replace(',', '.')))
+}
+
+type ParsedCreateOwedRow = {
+  person: string
+  amount: number
 }
 
 function getRemainingOwedAmount(transaction: TransactionTableRow) {
@@ -234,6 +242,9 @@ export function TransactionsPage() {
   const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
   const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
   const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
+  const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
+  const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
+  const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
   const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
 
@@ -293,6 +304,8 @@ export function TransactionsPage() {
     setFilters(initialFilters)
     setEditingTransaction(null)
     setIsCreateFormOpen(false)
+    setIsCreateOwedEnabled(false)
+    setCreateOwedRows([])
     loadTransactions(initialFilters)
   }, [direction])
 
@@ -301,6 +314,116 @@ export function TransactionsPage() {
       ...currentForm,
       [field]: value,
     }))
+  }
+
+  function resetCreateFormState() {
+    setForm(getInitialFormState(direction))
+    setIsCreateOwedEnabled(false)
+    setCreateOwedRows([])
+  }
+
+  function loadOwedPersonOptions() {
+    listOwedItems({ limit: 500 })
+      .then((items) => {
+        const people = Array.from(
+          new Set(items.map((item) => item.person.trim()).filter(Boolean)),
+        ).sort((first, second) => first.localeCompare(second))
+
+        setOwedPersonOptions(people)
+      })
+      .catch(() => {
+        setOwedPersonOptions([])
+      })
+  }
+
+  function toggleCreateOwedEnabled(isEnabled: boolean) {
+    setIsCreateOwedEnabled(isEnabled)
+
+    if (!isEnabled) {
+      setCreateOwedRows([])
+      return
+    }
+
+    loadOwedPersonOptions()
+    setCreateOwedRows((currentRows) =>
+      currentRows.length > 0
+        ? currentRows
+        : [
+            createOwedSplitRow({
+              person: '',
+              amount: form.amount,
+            }),
+          ],
+    )
+  }
+
+  function updateCreateOwedRow<K extends keyof OwedSplitRowState>(
+    rowId: string,
+    field: K,
+    value: OwedSplitRowState[K],
+  ) {
+    setCreateOwedRows((currentRows) =>
+      currentRows.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: value,
+            }
+          : row,
+      ),
+    )
+  }
+
+  function addCreateOwedRow() {
+    setCreateOwedRows((currentRows) => [
+      ...currentRows,
+      createOwedSplitRow({
+        person: '',
+      }),
+    ])
+  }
+
+  function removeCreateOwedRow(rowId: string) {
+    setCreateOwedRows((currentRows) => currentRows.filter((row) => row.id !== rowId))
+  }
+
+  function getParsedCreateOwedRows(transactionAmount: number): ParsedCreateOwedRow[] | null {
+    if (!isCreateOwedEnabled || direction !== 'out') {
+      return []
+    }
+
+    if (createOwedRows.length === 0) {
+      setError('Add at least one owed person.')
+      return null
+    }
+
+    const parsedRows = createOwedRows.map((row) => ({
+      person: row.person.trim(),
+      amount: parseMoneyInput(row.amount),
+    }))
+
+    const invalidRow = parsedRows.find(
+      (row) => !row.person || !row.amount || Number.isNaN(row.amount),
+    )
+
+    if (invalidRow) {
+      setError('Each owed person needs a name and a positive owed amount.')
+      return null
+    }
+
+    const totalOwedAmount = parsedRows.reduce((total, row) => total + row.amount, 0)
+
+    if (totalOwedAmount > transactionAmount + 0.0001) {
+      setError(
+        `Total owed amount cannot exceed the transaction amount of ${formatMoney(
+          transactionAmount.toFixed(2),
+          'EUR',
+        )}.`,
+      )
+      return null
+    }
+
+    return parsedRows
   }
 
   function updateFilters(field: keyof TransactionFilterState, value: string) {
@@ -334,8 +457,14 @@ export function TransactionsPage() {
       return
     }
 
+    const parsedCreateOwedRows = getParsedCreateOwedRows(amount)
+
+    if (parsedCreateOwedRows === null) {
+      return
+    }
+
     try {
-      await createTransaction({
+      const createdTransaction = await createTransaction({
         date: form.date,
         description: form.description,
         raw_description: form.description,
@@ -350,12 +479,29 @@ export function TransactionsPage() {
         notes: form.notes || null,
       })
 
-      setForm(getInitialFormState(direction))
+      for (const row of parsedCreateOwedRows) {
+        await createOwedItem({
+          person: row.person,
+          amount_total: row.amount.toFixed(2),
+          amount_paid: '0.00',
+          reason: form.description,
+          status: 'open',
+          due_date: null,
+          linked_transaction_id: createdTransaction.id,
+          notes: null,
+        })
+      }
+
+      resetCreateFormState()
       setIsCreateFormOpen(false)
-      setMessage('Transaction created.')
+      setMessage(
+        parsedCreateOwedRows.length > 0
+          ? `Transaction created with ${parsedCreateOwedRows.length} owed split${parsedCreateOwedRows.length === 1 ? '' : 's'}.`
+          : 'Transaction created.',
+      )
       loadTransactions()
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create transaction')
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create transaction or owed split')
     }
   }
 
@@ -577,7 +723,7 @@ export function TransactionsPage() {
           status: 'open',
           due_date: null,
           linked_transaction_id: owedDraftTransaction.id,
-          notes: row.notes || null,
+          notes: null,
         })
 
         createdCount += 1
@@ -593,7 +739,7 @@ export function TransactionsPage() {
             payment_date: row.linkedPaymentTransaction.date,
             method: 'bank_transfer',
             currency: row.linkedPaymentTransaction.currency || 'EUR',
-            notes: row.notes || null,
+            notes: null,
             linked_transaction_id: row.linkedPaymentTransaction.id,
             unallocated_category: leftoverAmount > 0 ? row.unallocatedCategory || null : null,
             unallocated_notes: leftoverAmount > 0 ? row.unallocatedNotes || null : null,
@@ -661,7 +807,15 @@ export function TransactionsPage() {
           <button
             type="button"
             className="primary-button"
-            onClick={() => setIsCreateFormOpen((isOpen) => !isOpen)}
+            onClick={() => {
+              if (isCreateFormOpen) {
+                resetCreateFormState()
+                setIsCreateFormOpen(false)
+                return
+              }
+
+              setIsCreateFormOpen(true)
+            }}
           >
             {isCreateFormOpen ? 'Close' : '+ Add'}
           </button>
@@ -686,10 +840,24 @@ export function TransactionsPage() {
           onSubmit={handleCreateTransactionSubmit}
           onChange={updateForm}
           onCancel={() => {
-            setForm(getInitialFormState(direction))
+            resetCreateFormState()
             setIsCreateFormOpen(false)
           }}
-        />
+        >
+          {direction === 'out' ? (
+            <TransactionCreateOwedSection
+              isEnabled={isCreateOwedEnabled}
+              rows={createOwedRows}
+              transactionAmount={form.amount}
+              personOptions={owedPersonOptions}
+              currency="EUR"
+              onToggle={toggleCreateOwedEnabled}
+              onAddRow={addCreateOwedRow}
+              onRemoveRow={removeCreateOwedRow}
+              onUpdateRow={updateCreateOwedRow}
+            />
+          ) : null}
+        </TransactionForm>
       ) : null}
 
       <TransactionTable

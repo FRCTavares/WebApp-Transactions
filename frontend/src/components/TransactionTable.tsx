@@ -27,27 +27,79 @@ function getCashflowBadgeClass(cashflowType: string) {
   return `badge badge-${cashflowType.replaceAll('_', '-')}`
 }
 
+type OwedCoverage = 'none' | 'partly' | 'fully'
+
+function getOwedAmountTotal(transaction: TransactionTableRow) {
+  return Number(transaction.owed_amount_total ?? '0')
+}
+
+function getOwedCoverage(transaction: TransactionTableRow): OwedCoverage {
+  const transactionAmount = Number(transaction.amount)
+  const owedAmountTotal = getOwedAmountTotal(transaction)
+
+  if (!transaction.is_owed || owedAmountTotal <= 0 || transactionAmount <= 0) {
+    return 'none'
+  }
+
+  if (owedAmountTotal >= transactionAmount - 0.0001) {
+    return 'fully'
+  }
+
+  return 'partly'
+}
+
 function getOwedLabel(transaction: TransactionTableRow) {
+  const coverage = getOwedCoverage(transaction)
   const personText = transaction.owed_person ? ` by ${transaction.owed_person}` : ''
 
-  if (transaction.owed_status === 'paid') {
-    return `Paid${personText}`
+  if (coverage === 'fully') {
+    return `Fully owed${personText}`
   }
 
-  if (transaction.owed_status === 'partially_paid') {
-    return `Part paid${personText}`
-  }
-
-  if (transaction.owed_status === 'open') {
-    return `Owed${personText}`
+  if (coverage === 'partly') {
+    return `Partly owed${personText}`
   }
 
   return null
 }
 
+function getOwedBadgeClassName(transaction: TransactionTableRow) {
+  return getOwedCoverage(transaction) === 'fully'
+    ? 'badge badge-owed-fully'
+    : 'badge badge-owed-partial'
+}
+
+function getMobileCardClassName(transaction: TransactionTableRow) {
+  const coverage = getOwedCoverage(transaction)
+
+  if (coverage === 'fully') {
+    return 'transaction-mobile-card transaction-mobile-card-fully-owed'
+  }
+
+  if (coverage === 'partly') {
+    return 'transaction-mobile-card transaction-mobile-card-partly-owed'
+  }
+
+  return 'transaction-mobile-card'
+}
+
+function getDesktopRowClassName(transaction: TransactionTableRow) {
+  const coverage = getOwedCoverage(transaction)
+
+  if (coverage === 'fully') {
+    return 'transaction-row transaction-row-fully-owed'
+  }
+
+  if (coverage === 'partly') {
+    return 'transaction-row transaction-row-partly-owed'
+  }
+
+  return 'transaction-row'
+}
+
 function getRemainingOwedCapacity(transaction: TransactionTableRow) {
   const transactionAmount = Number(transaction.amount)
-  const linkedOwedAmount = Number(transaction.owed_amount_total ?? '0')
+  const linkedOwedAmount = getOwedAmountTotal(transaction)
 
   return Math.max(transactionAmount - linkedOwedAmount, 0)
 }
@@ -125,7 +177,7 @@ export function TransactionTable({
             sortedTransactions.map((transaction) => (
               <article
                 key={transaction.is_grouped ? `mobile-grouped-${transaction.dedupe_hash}` : `mobile-${transaction.id}`}
-                className="transaction-mobile-card"
+                className={getMobileCardClassName(transaction)}
               >
                 <div className="transaction-mobile-card-main">
                   <div>
@@ -143,11 +195,7 @@ export function TransactionTable({
                     {formatCashflowType(transaction.cashflow_type)}
                   </span>
                   {getOwedLabel(transaction) && (
-                    <span className={`badge ${
-                      transaction.owed_status === 'paid'
-                        ? 'badge-owed-paid'
-                        : 'badge-owed-open'
-                    }`}>
+                    <span className={getOwedBadgeClassName(transaction)}>
                       {getOwedLabel(transaction)}
                     </span>
                   )}
@@ -249,7 +297,7 @@ export function TransactionTable({
             return (
               <tr
                 key={transaction.is_grouped ? `grouped-${transaction.dedupe_hash}` : transaction.id}
-                className="transaction-row"
+                className={getDesktopRowClassName(transaction)}
               >
                 <td>{formatDate(transaction.date)}</td>
                 <td>
