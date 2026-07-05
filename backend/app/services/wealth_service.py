@@ -368,22 +368,21 @@ class WealthService:
         balance_eur = update_data.get("balance_eur", None)
         fx_rate_to_eur = update_data.get("fx_rate_to_eur", None)
 
-        if balance_eur is None and (
-            "balance" in update_data
-            or "currency" in update_data
-            or "fx_rate_to_eur" in update_data
-        ):
-            balance_eur = self._get_balance_eur(
-                balance=balance,
-                currency=currency,
-                balance_eur=None,
-                fx_rate_to_eur=fx_rate_to_eur or existing_snapshot.fx_rate_to_eur,
-            )
-
         if fx_rate_to_eur is None and "currency" in update_data:
             fx_rate_to_eur = self._get_fx_rate_to_eur(
                 currency=currency,
                 fx_rate_to_eur=None,
+            )
+
+        if any(
+            field in update_data
+            for field in ("balance", "currency", "balance_eur", "fx_rate_to_eur")
+        ):
+            balance_eur = self._get_balance_eur(
+                balance=balance,
+                currency=currency,
+                balance_eur=balance_eur,
+                fx_rate_to_eur=fx_rate_to_eur or existing_snapshot.fx_rate_to_eur,
             )
 
         update_data["currency"] = currency
@@ -403,19 +402,25 @@ class WealthService:
         balance_eur: Decimal | None,
         fx_rate_to_eur: Decimal | None,
     ) -> Decimal:
+        fx_rate = self._get_fx_rate_to_eur(
+            currency=currency,
+            fx_rate_to_eur=fx_rate_to_eur,
+        )
+        calculated_balance_eur = balance * fx_rate
+
+        if (
+            balance_eur is not None
+            and abs(balance_eur - calculated_balance_eur) > Decimal("0.01")
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="balance_eur must match balance multiplied by fx_rate_to_eur",
+            )
+
         if balance_eur is not None:
             return balance_eur
 
-        if currency == "EUR":
-            return balance
-
-        if fx_rate_to_eur is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="fx_rate_to_eur is required for non-EUR snapshots",
-            )
-
-        return balance * fx_rate_to_eur
+        return calculated_balance_eur
 
     def _get_fx_rate_to_eur(
         self,

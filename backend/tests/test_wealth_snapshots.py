@@ -428,3 +428,50 @@ def test_reject_wealth_snapshot_update_that_would_duplicate_account_date(client)
         "Wealth snapshot already exists for this account and date"
     )
 
+def test_reject_wealth_snapshot_create_with_inconsistent_balance_eur(client):
+    account = create_account(client, name="USD Cash", account_type="cash")
+
+    response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-08-31",
+            "account_id": account["id"],
+            "balance": "100.00",
+            "currency": "USD",
+            "fx_rate_to_eur": "0.90",
+            "balance_eur": "50.00",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "balance_eur must match balance multiplied by fx_rate_to_eur"
+    )
+
+
+def test_reject_wealth_snapshot_update_with_inconsistent_balance_eur(client):
+    account = create_account(client)
+
+    create_response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-08-31",
+            "account_id": account["id"],
+            "balance": "100.00",
+            "currency": "EUR",
+        },
+    )
+    assert create_response.status_code == 201
+
+    update_response = client.patch(
+        f"/api/wealth/snapshots/{create_response.json()['id']}",
+        json={
+            "balance_eur": "50.00",
+        },
+    )
+
+    assert update_response.status_code == 400
+    assert update_response.json()["detail"] == (
+        "balance_eur must match balance multiplied by fx_rate_to_eur"
+    )
+
