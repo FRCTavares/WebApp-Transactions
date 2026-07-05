@@ -7,6 +7,7 @@ import {
   Settings,
   TrendingUp,
   Upload,
+  UserRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { DashboardPage } from './pages/DashboardPage'
@@ -103,6 +104,21 @@ function getUserDisplayName(user: User | null) {
   return fallbackName || 'there'
 }
 
+function getUserAvatarUrl(user: User | null) {
+  const avatarUrl = user?.user_metadata?.avatar_url
+  const picture = user?.user_metadata?.picture
+
+  if (typeof avatarUrl === 'string' && avatarUrl.trim()) {
+    return avatarUrl.trim()
+  }
+
+  if (typeof picture === 'string' && picture.trim()) {
+    return picture.trim()
+  }
+
+  return null
+}
+
 const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
   { id: 'dashboard', label: 'Home' },
   { id: 'transactions', label: 'Transactions' },
@@ -152,6 +168,7 @@ function App() {
     page !== 'export' &&
     page !== 'settings'
   const displayName = getUserDisplayName(user)
+  const profileAvatarUrl = getUserAvatarUrl(user)
   const greeting = getGreeting()
 
   useEffect(() => {
@@ -247,20 +264,8 @@ function App() {
               />
               <div className="account-summary">
                 <p className="account-greeting">Finance</p>
-                <p className="account-subtitle">
-                  {isAuthEnabled ? 'Signed in' : 'Local mode'}
-                </p>
               </div>
             </div>
-            {isAuthEnabled && (
-              <button
-                type="button"
-                className="lock-button"
-                onClick={handleLogout}
-              >
-                Sign out
-              </button>
-            )}
             {authError && <p className="error-text">{authError}</p>}
           </div>
 
@@ -284,6 +289,40 @@ function App() {
               </section>
             ))}
           </nav>
+
+          <div className="sidebar-profile">
+            <div className="sidebar-profile-main">
+              {profileAvatarUrl ? (
+                <img
+                  src={profileAvatarUrl}
+                  alt=""
+                  aria-hidden="true"
+                  referrerPolicy="no-referrer"
+                  className="sidebar-profile-avatar"
+                />
+              ) : (
+                <div className="sidebar-profile-avatar sidebar-profile-avatar-fallback" aria-hidden="true">
+                  <UserRound className="sidebar-profile-avatar-icon" />
+                </div>
+              )}
+              <div className="account-summary">
+                <p className="account-greeting">{displayName}</p>
+                <p className="account-subtitle">
+                  {isAuthEnabled ? 'Signed in' : 'Local mode'}
+                </p>
+              </div>
+            </div>
+
+            {isAuthEnabled && (
+              <button
+                type="button"
+                className="sidebar-signout-button"
+                onClick={handleLogout}
+              >
+                Sign out
+              </button>
+            )}
+          </div>
         </aside>
 
         <main>
