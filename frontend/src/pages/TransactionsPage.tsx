@@ -15,28 +15,15 @@ import { TransactionForm, type TransactionFormState } from '../components/Transa
 import { CategorySelect } from '../components/CategorySelect'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
+import {
+  TransactionOwedSplitDialog,
+  type OwedSplitRowState,
+} from '../components/transactions/TransactionOwedSplitDialog'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
 import type { CashflowType, Direction, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
-type OwedSplitRowState = {
-  id: string
-  person: string
-  amount: string
-  linkedPaymentTransactionId: string
-  unallocatedCategory: string
-  unallocatedNotes: string
-  notes: string
-}
-
-const UNALLOCATED_CATEGORY_OPTIONS = [
-  { value: '', label: 'Not income / leave unclassified' },
-  { value: 'Allowance', label: 'Allowance' },
-  { value: 'Gift', label: 'Gift' },
-  { value: 'Income', label: 'Income' },
-  { value: 'Other', label: 'Other / not counted as income' },
-]
 
 function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
@@ -229,17 +216,6 @@ function getRemainingOwedAmount(transaction: TransactionTableRow) {
   return Math.max(transactionAmount - linkedOwedAmount, 0)
 }
 
-function getOwedRowsTotal(rows: OwedSplitRowState[]) {
-  return rows.reduce((total, row) => {
-    const amount = parseMoneyInput(row.amount)
-
-    if (!amount || Number.isNaN(amount)) {
-      return total
-    }
-
-    return total + amount
-  }, 0)
-}
 
 export function TransactionsPage() {
   const { monthKey } = usePeriod()
@@ -815,183 +791,19 @@ export function TransactionsPage() {
       )}
 
       {owedDraftTransaction && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <div className="modal-card">
-            <div className="modal-header">
-              <div>
-                <h2>Split owed expense</h2>
-                <p className="muted small">
-                  Add who owes part of this expense. Optionally link matching Money In repayments now.
-                </p>
-              </div>
-              <button type="button" onClick={closeOwedDialog}>
-                Close
-              </button>
-            </div>
-
-            <div className="modal-transaction-summary">
-              <strong>{owedDraftTransaction.description}</strong>
-              <span>{formatMoney(owedDraftTransaction.amount, owedDraftTransaction.currency)}</span>
-            </div>
-
-            <p className="muted small">
-              Already linked: {formatMoney(
-                owedDraftTransaction.owed_amount_total ?? '0.00',
-                owedDraftTransaction.currency,
-              )}. Remaining available: {formatMoney(
-                getRemainingOwedAmount(owedDraftTransaction).toFixed(2),
-                owedDraftTransaction.currency,
-              )}. Current split total: {formatMoney(
-                getOwedRowsTotal(owedRows).toFixed(2),
-                owedDraftTransaction.currency,
-              )}.
-            </p>
-
-            {owedRows.map((row, index) => {
-              const linkedPaymentTransaction = getSelectedOwedPaymentTransaction(row)
-              const rowAmount = parseMoneyInput(row.amount)
-              const paymentAmount = linkedPaymentTransaction
-                ? Number(linkedPaymentTransaction.amount)
-                : 0
-              const allocationAmount = linkedPaymentTransaction
-                ? Math.min(paymentAmount, rowAmount || 0)
-                : 0
-              const leftoverAmount = linkedPaymentTransaction
-                ? Math.max(paymentAmount - allocationAmount, 0)
-                : 0
-
-              return (
-                <div key={row.id} className="modal-transaction-summary">
-                  <div>
-                    <strong>Person {index + 1}</strong>
-                    <p className="muted small">
-                      Owed allocation for this expense.
-                    </p>
-                  </div>
-
-                  <div className="form-row">
-                    <label>
-                      Person
-                      <input
-                        value={row.person}
-                        onChange={(event) => updateOwedRow(row.id, 'person', event.target.value)}
-                        placeholder="Mother"
-                      />
-                    </label>
-
-                    <label>
-                      Amount owed
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={row.amount}
-                        onChange={(event) => updateOwedRow(row.id, 'amount', event.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  <div className="form-row">
-                    <label>
-                      Matching Money In
-                      <select
-                        value={row.linkedPaymentTransactionId}
-                        onChange={(event) =>
-                          updateOwedRow(row.id, 'linkedPaymentTransactionId', event.target.value)
-                        }
-                      >
-                        <option value="">No repayment selected</option>
-                        {owedPaymentTransactions.map((transaction) => (
-                          <option key={transaction.id} value={transaction.id}>
-                            #{transaction.id} | {transaction.date} | {transaction.description} | {formatMoney(
-                              transaction.amount,
-                              transaction.currency,
-                            )}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label>
-                      Leftover category
-                      <select
-                        value={row.unallocatedCategory}
-                        onChange={(event) =>
-                          updateOwedRow(row.id, 'unallocatedCategory', event.target.value)
-                        }
-                        disabled={!linkedPaymentTransaction || leftoverAmount <= 0}
-                      >
-                        {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
-                          <option key={option.value || 'empty'} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="muted small">
-                        Use Allowance, Gift, or Income if extra money should count as Money In.
-                      </span>
-                    </label>
-                  </div>
-
-                  {linkedPaymentTransaction && (
-                    <p className="muted small">
-                      Payment {formatMoney(paymentAmount.toFixed(2), linkedPaymentTransaction.currency)}
-                      {' '}→ allocated {formatMoney(allocationAmount.toFixed(2), linkedPaymentTransaction.currency)}
-                      {' '}→ leftover {formatMoney(leftoverAmount.toFixed(2), linkedPaymentTransaction.currency)}
-                    </p>
-                  )}
-
-                  <div className="form-row">
-                    <label>
-                      Notes
-                      <textarea
-                        value={row.notes}
-                        onChange={(event) => updateOwedRow(row.id, 'notes', event.target.value)}
-                        rows={3}
-                      />
-                    </label>
-
-                    <label>
-                      Leftover notes
-                      <textarea
-                        value={row.unallocatedNotes}
-                        onChange={(event) =>
-                          updateOwedRow(row.id, 'unallocatedNotes', event.target.value)
-                        }
-                        rows={3}
-                        disabled={!linkedPaymentTransaction || leftoverAmount <= 0}
-                        placeholder="Extra was a gift"
-                      />
-                    </label>
-                  </div>
-
-                  {owedRows.length > 1 && (
-                    <button type="button" className="danger-button" onClick={() => removeOwedRow(row.id)}>
-                      Remove person
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-
-            <div className="modal-actions">
-              <button type="button" onClick={addOwedRow}>
-                + Add person
-              </button>
-              <button type="button" onClick={closeOwedDialog}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={createOwedItemsFromDialog}
-                disabled={isCreatingOwedItem}
-              >
-                {isCreatingOwedItem ? 'Creating...' : 'Create owed split'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <TransactionOwedSplitDialog
+          transaction={owedDraftTransaction}
+          rows={owedRows}
+          paymentTransactions={owedPaymentTransactions}
+          isCreating={isCreatingOwedItem}
+          onClose={closeOwedDialog}
+          onAddRow={addOwedRow}
+          onRemoveRow={removeOwedRow}
+          onUpdateRow={updateOwedRow}
+          onCreate={createOwedItemsFromDialog}
+          getRemainingOwedAmount={getRemainingOwedAmount}
+          getSelectedPaymentTransaction={getSelectedOwedPaymentTransaction}
+        />
       )}
     </section>
   )
