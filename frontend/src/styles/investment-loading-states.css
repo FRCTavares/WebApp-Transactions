@@ -1,0 +1,84 @@
+/* Investment trend loading and empty states. */
+
+.investment-trend-card-state {
+  min-height: 16.5rem;
+}
+
+.investment-trend-skeleton,
+.investment-trend-empty {
+  display: grid;
+  min-height: 11rem;
+  place-items: center;
+  padding: 1.25rem;
+  border: 1px dashed rgb(203 213 225 / 0.72);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgb(248 250 252 / 0.58), rgb(255 255 255 / 0.9));
+  text-align: center;
+}
+
+.investment-trend-skeleton {
+  align-content: center;
+  gap: 0.8rem;
+}
+
+.investment-trend-skeleton-header,
+.investment-trend-skeleton-chart {
+  display: none;
+}
+
+.investment-trend-skeleton::before {
+  content: "";
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgb(148 163 184 / 0.2);
+  border-top-color: #8ab4f8;
+  border-radius: 999px;
+  animation: investment-trend-loading-spin 0.8s linear infinite;
+}
+
+.investment-trend-skeleton p,
+.investment-trend-empty p {
+  max-width: 24rem;
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.investment-trend-empty {
+  gap: 0.35rem;
+}
+
+.investment-trend-empty strong {
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+@keyframes investment-trend-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+:root[data-theme='dark'] .investment-trend-skeleton,
+:root[data-theme='dark'] .investment-trend-empty {
+  border-color: rgb(255 255 255 / 0.1);
+  background: #1c1d21;
+}
+
+:root[data-theme='dark'] .investment-trend-skeleton::before {
+  border-color: rgb(138 180 248 / 0.18);
+  border-top-color: #8ab4f8;
+}
+
+:root[data-theme='dark'] .investment-trend-skeleton p,
+:root[data-theme='dark'] .investment-trend-empty p {
+  color: var(--theme-muted);
+}
+
+:root[data-theme='dark'] .investment-trend-empty strong {
+  color: var(--theme-text);
+}

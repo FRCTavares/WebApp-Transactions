@@ -258,6 +258,7 @@ export function InvestmentsPage() {
     eventType,
     events,
     fundingMonths,
+    isMonthlySeriesLoading,
     loadEvents,
     marketPrices,
     month,
@@ -596,6 +597,7 @@ export function InvestmentsPage() {
       <InvestmentPortfolioTrendChart
         months={chartMonths}
         series={monthlySeries}
+        isLoading={isMonthlySeriesLoading}
         onMonthsChange={setChartMonths}
       />
 

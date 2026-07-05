@@ -14,6 +14,7 @@
 @import './styles/transactions.css';
 @import './styles/typography.css';
 @import './styles/loading-states.css';
+@import './styles/investment-loading-states.css';
 
 .global-topbar {
   position: absolute;

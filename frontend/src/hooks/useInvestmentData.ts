@@ -77,6 +77,7 @@ export function useInvestmentData({
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
   const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>([])
+  const [isMonthlySeriesLoading, setIsMonthlySeriesLoading] = useState(false)
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
   const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
   const [eventType, setEventType] = useState('')
@@ -86,10 +87,15 @@ export function useInvestmentData({
   const [dateTo, setDateTo] = useState('')
 
   function loadMonthlySeries() {
+    setIsMonthlySeriesLoading(true)
+
     listInvestmentMonthlySeries(chartMonths)
       .then(setMonthlySeries)
       .catch(() => {
         setMonthlySeries([])
+      })
+      .finally(() => {
+        setIsMonthlySeriesLoading(false)
       })
   }
 
@@ -171,6 +177,7 @@ export function useInvestmentData({
     eventType,
     events,
     fundingMonths,
+    isMonthlySeriesLoading,
     loadEvents,
     marketPrices,
     month,

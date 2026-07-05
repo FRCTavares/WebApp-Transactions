@@ -5,6 +5,7 @@ import { formatMoney } from '../../utils/format'
 type InvestmentPortfolioTrendChartProps = {
   months: number
   series: InvestmentMonthlySeriesPoint[]
+  isLoading?: boolean
   onMonthsChange: (months: number) => void
 }
 
@@ -144,12 +145,96 @@ function getTooltipY(y: number) {
   return Math.max(8, Math.min(preferredY, maxY))
 }
 
-export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }: InvestmentPortfolioTrendChartProps) {
+function ChartWindowSelector({
+  months,
+  onMonthsChange,
+}: {
+  months: number
+  onMonthsChange: (months: number) => void
+}) {
+  return (
+    <div className="investment-trend-window-selector" aria-label="Portfolio trend time window">
+      {chartWindowOptions.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={option.value === months ? 'active' : undefined}
+          onClick={() => onMonthsChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function InvestmentPortfolioTrendPlaceholder({
+  isLoading,
+  months,
+  onMonthsChange,
+}: {
+  isLoading: boolean
+  months: number
+  onMonthsChange: (months: number) => void
+}) {
+  return (
+    <section className="content-card panel-card investment-trend-card investment-trend-card-state">
+      <div className="investment-trend-header">
+        <div>
+          <h2>Portfolio trend</h2>
+          <p className="muted small">
+            Full available series from Trading 212 events and valuation prices.
+          </p>
+        </div>
+
+        <ChartWindowSelector months={months} onMonthsChange={onMonthsChange} />
+      </div>
+
+      <div className={isLoading ? 'investment-trend-skeleton' : 'investment-trend-empty'}>
+        {isLoading ? (
+          <>
+            <div className="investment-trend-skeleton-header">
+              <span />
+              <strong />
+            </div>
+            <div className="investment-trend-skeleton-chart" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <p>Loading portfolio trend…</p>
+          </>
+        ) : (
+          <>
+            <strong>No portfolio trend yet</strong>
+            <p>
+              Add investment events and valuation prices to show the portfolio trend.
+            </p>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+export function InvestmentPortfolioTrendChart({
+  months,
+  series,
+  isLoading = false,
+  onMonthsChange,
+}: InvestmentPortfolioTrendChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null)
   const points = buildPoints(series)
 
   if (points.length === 0) {
-    return null
+    return (
+      <InvestmentPortfolioTrendPlaceholder
+        isLoading={isLoading}
+        months={months}
+        onMonthsChange={onMonthsChange}
+      />
+    )
   }
 
   const allValues = points.flatMap((point) => [
@@ -189,7 +274,7 @@ export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }
         </div>
 
         <div className="investment-trend-current">
-          <span>Latest portfolio value</span>
+          <span>{isLoading ? 'Updating trend…' : 'Latest portfolio value'}</span>
           <strong>
             {latestMarketValue === null ? '-' : formatMoney(latestMarketValue.toFixed(2))}
           </strong>
@@ -311,18 +396,7 @@ export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }
           </span>
         </div>
 
-        <div className="investment-trend-window-selector" aria-label="Portfolio trend time window">
-          {chartWindowOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={option.value === months ? 'active' : undefined}
-              onClick={() => onMonthsChange(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <ChartWindowSelector months={months} onMonthsChange={onMonthsChange} />
       </div>
     </section>
   )
