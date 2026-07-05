@@ -311,14 +311,12 @@ export function InvestmentsPage() {
         month: month || '2026-06',
         source: source || 'trading212',
       }),
-      listInvestmentMonthlySeries(chartMonths),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths, loadedMonthlySeries]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
         setFundingMonths(loadedFundingMonths)
-        setMonthlySeries(loadedMonthlySeries)
         setEventPage(1)
 
         if (loadedFundingMonths[0]) {
@@ -334,6 +332,12 @@ export function InvestmentsPage() {
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
+      })
+
+    listInvestmentMonthlySeries(chartMonths)
+      .then(setMonthlySeries)
+      .catch(() => {
+        setMonthlySeries([])
       })
   }
 
@@ -356,17 +360,21 @@ export function InvestmentsPage() {
         month: '2026-06',
         source: 'trading212',
       }),
-      listInvestmentMonthlySeries(chartMonths),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths, loadedMonthlySeries]) => {
+      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
         setEvents(loadedEvents)
         setPositions(loadedPositions)
         setMarketPrices(loadedMarketPrices)
         setFundingMonths(loadedFundingMonths)
-        setMonthlySeries(loadedMonthlySeries)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
+      })
+
+    listInvestmentMonthlySeries(chartMonths)
+      .then(setMonthlySeries)
+      .catch(() => {
+        setMonthlySeries([])
       })
   }
 
