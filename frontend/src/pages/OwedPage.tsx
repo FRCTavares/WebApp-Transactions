@@ -402,7 +402,7 @@ export function OwedPage() {
     }
 
     if (!form.person || !form.reason || !amountTotal) {
-      setError('Person, reason, and a positive total amount are required.')
+      setError('Person, description, and a positive total amount are required.')
       return
     }
 
@@ -460,7 +460,7 @@ export function OwedPage() {
     }
 
     if (!editForm.person || !editForm.reason || !amountTotal) {
-      setError('Person, reason, and a positive total amount are required.')
+      setError('Person, description, and a positive total amount are required.')
       return
     }
 
@@ -561,7 +561,7 @@ export function OwedPage() {
     <section className="app-page owed-page owed-page-polished">
       <div className="page-header owed-page-header">
         <div className="page-title-block">
-          <h1>Money Owed To Me</h1>
+          <h1>Owed To Me</h1>
         </div>
 
         <div className="action-group">

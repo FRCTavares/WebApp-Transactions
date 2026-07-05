@@ -105,7 +105,7 @@ export function OwedItemsTable({
               </p>
             </div>
           ) : (
-            personGroups.map((group) => (
+            personGroups.map((group, groupIndex) => (
               <article key={group.person} className="owed-person-card">
                 <div className="owed-person-card-header">
                   <div>
@@ -117,47 +117,64 @@ export function OwedItemsTable({
                   <strong>{formatMoney(group.totalRemaining.toFixed(2))}</strong>
                 </div>
 
+                {(personGroups.length > 1 || group.items.length > 5) && (
+                  <div className="owed-person-card-hint">
+                    {personGroups.length > 1 && (
+                      <span>{groupIndex + 1} of {personGroups.length} · swipe sideways</span>
+                    )}
+                    {group.items.length > 5 && (
+                      <span>{group.items.length} items · scroll list</span>
+                    )}
+                  </div>
+                )}
+
                 <div className="owed-person-items">
                   {group.items.map((item) => (
-                    <article key={item.id} className="owed-person-item">
-                      <div className="owed-person-item-main">
-                        <div>
-                          <strong>{item.reason}</strong>
-                          {item.notes && <p className="muted small">{item.notes}</p>}
-                        </div>
-                        <span>{formatMoney(item.amount_remaining)}</span>
-                      </div>
+                    <details key={item.id} className="owed-person-item">
+                      <summary className="owed-person-item-summary">
+                        <span className="owed-person-item-title">{item.reason}</span>
+                        <span className="owed-person-item-amount">
+                          {formatMoney(item.amount_remaining)}
+                        </span>
+                        <span className="owed-person-item-more" aria-hidden="true">⋯</span>
+                      </summary>
 
-                      <div className="owed-person-item-meta">
-                        <span className="badge badge-neutral">{getStatusLabel(item)}</span>
-                        {item.due_date && (
-                          <span className="muted small">Due {formatDate(item.due_date)}</span>
-                        )}
-                        {item.amount_paid !== '0.00' && (
-                          <span className="muted small">
-                            Paid {formatMoney(item.amount_paid)}
+                      <div className="owed-person-item-details">
+                        <div className="owed-person-item-status-row">
+                          <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
+                            {getStatusLabel(item)}
                           </span>
-                        )}
-                      </div>
+                          {item.due_date && (
+                            <span className="muted small">Due {formatDate(item.due_date)}</span>
+                          )}
+                          {item.amount_paid !== '0.00' && (
+                            <span className="muted small">
+                              Paid {formatMoney(item.amount_paid)}
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="owed-person-item-actions">
-                        <button type="button" onClick={() => onStartEdit(item)}>
-                          Edit
-                        </button>
-                        {item.status !== 'paid' && item.status !== 'cancelled' && (
-                          <button type="button" onClick={() => onMarkPaid(item)}>
-                            Paid
+                        {item.notes && <p className="muted small">{item.notes}</p>}
+
+                        <div className="owed-person-item-actions">
+                          <button type="button" onClick={() => onStartEdit(item)}>
+                            Edit
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          className="danger-button"
-                          onClick={() => onDelete(item)}
-                        >
-                          Delete
-                        </button>
+                          {item.status !== 'paid' && item.status !== 'cancelled' && (
+                            <button type="button" onClick={() => onMarkPaid(item)}>
+                              Paid
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="danger-button"
+                            onClick={() => onDelete(item)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    </article>
+                    </details>
                   ))}
                 </div>
               </article>
@@ -171,7 +188,7 @@ export function OwedItemsTable({
         <thead>
           <tr>
             <th>Person</th>
-            <th>Reason</th>
+            <th>Description</th>
             <th>Status</th>
             <th>Due</th>
             <th>Linked Tx</th>
@@ -197,7 +214,7 @@ export function OwedItemsTable({
                   className="table-input"
                   value={form.reason}
                   onChange={(event) => onFormChange('reason', event.target.value)}
-                  placeholder="Reason"
+                  placeholder="Description"
                 />
                 <input
                   className="table-input table-input-secondary"
@@ -302,7 +319,7 @@ export function OwedItemsTable({
                       className="table-input"
                       value={editForm.reason}
                       onChange={(event) => onEditFormChange('reason', event.target.value)}
-                      placeholder="Reason"
+                      placeholder="Description"
                     />
                     <input
                       className="table-input table-input-secondary"
