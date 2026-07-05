@@ -442,3 +442,176 @@
   vertical-align: middle;
 }
 
+
+
+/* Mobile transaction daily-entry pass 1. */
+.transaction-filter-mobile-header {
+  display: none;
+}
+
+.transaction-filter-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (max-width: 800px) {
+  .transactions-page .page-header {
+    align-items: stretch;
+    padding: 0;
+    background: transparent;
+  }
+
+  .transactions-page .page-title-block h1 {
+    font-size: 1.75rem;
+  }
+
+  .transactions-page .action-group {
+    width: 100%;
+  }
+
+  .transactions-page .action-group .primary-button {
+    flex: 1;
+    min-height: 2.85rem;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .transaction-filter-card {
+    gap: 0;
+    padding: 0.65rem;
+  }
+
+  .transaction-filter-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .transaction-filter-mobile-header > div {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .transaction-filter-mobile-header strong {
+    color: var(--transaction-text);
+    font-size: 0.95rem;
+    letter-spacing: -0.02em;
+  }
+
+  .transaction-filter-mobile-header span {
+    color: var(--transaction-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .transaction-filter-mobile-header button {
+    min-height: 2.15rem;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    background: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  .transaction-filter-body {
+    display: none;
+    gap: 0.65rem;
+    padding-top: 0.75rem;
+  }
+
+  .transaction-filter-card-open .transaction-filter-body {
+    display: grid;
+  }
+
+  .transaction-filter-card-open {
+    padding-bottom: 0.75rem;
+  }
+
+  .transactions-page .manual-form {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+  }
+
+  .transactions-page .manual-form h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: -0.03em;
+  }
+
+  .transactions-page .manual-form .form-row {
+    gap: 0.65rem;
+  }
+
+  .transactions-page .manual-form input,
+  .transactions-page .manual-form select {
+    min-height: 2.7rem;
+    border-radius: 0.9rem;
+    font-size: 1rem;
+  }
+
+  .transactions-page .manual-form .action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+  }
+
+  .transactions-page .manual-form .action-group button {
+    min-height: 2.75rem;
+    border-radius: 0.95rem;
+  }
+}
+
+
+/* Mobile dark-shell correction for transaction controls. */
+@media (max-width: 800px) {
+  .transactions-page .page-title-block {
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  .transactions-page .page-title-block h1 {
+    color: #f9fafb;
+  }
+
+  .transactions-page .transaction-direction-switch {
+    border-color: rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .transactions-page .transaction-direction-switch button {
+    color: #aeb4c1;
+  }
+
+  .transactions-page .transaction-direction-switch button.active {
+    background: #263041;
+    color: #eef6ff;
+    box-shadow: none;
+  }
+
+  .transactions-page .action-group .primary-button {
+    box-shadow: 0 12px 26px rgb(22 163 74 / 0.22);
+  }
+
+  .transaction-filter-card {
+    border-color: rgb(255 255 255 / 0.12);
+    background: #181a20;
+    box-shadow: none;
+  }
+
+  .transaction-filter-mobile-header strong {
+    color: #f9fafb;
+  }
+
+  .transaction-filter-mobile-header span {
+    color: #858b98;
+  }
+
+  .transaction-filter-mobile-header button {
+    border-color: rgb(255 255 255 / 0.14);
+    background: rgb(255 255 255 / 0.04);
+    color: #f9fafb;
+  }
+}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CashflowType } from '../types/api'
 import { CategorySelect } from './CategorySelect'
 
@@ -42,6 +43,7 @@ export function TransactionFilters({
   onApply,
   onClear,
 }: TransactionFiltersProps) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const activeFilterCount = [
     filters.search,
     filters.category,
@@ -53,8 +55,27 @@ export function TransactionFilters({
   ].filter(Boolean).length
 
   return (
-    <section className="transaction-filter-card" aria-label="Transaction filters">
-      <div className="transaction-filter-main">
+    <section
+      className={`transaction-filter-card ${isMobileOpen ? 'transaction-filter-card-open' : ''}`}
+      aria-label="Transaction filters"
+    >
+      <div className="transaction-filter-mobile-header">
+        <div>
+          <strong>Filters</strong>
+          <span>
+            {activeFilterCount > 0 ? `${activeFilterCount} active` : 'Current month'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen((isOpen) => !isOpen)}
+        >
+          {isMobileOpen ? 'Hide' : 'Show'}
+        </button>
+      </div>
+
+      <div className="transaction-filter-body">
+        <div className="transaction-filter-main">
         <label className="transaction-search-field">
           <span>Search</span>
           <input
@@ -148,6 +169,7 @@ export function TransactionFilters({
             Clear
           </button>
         </div>
+      </div>
       </div>
     </section>
   )
