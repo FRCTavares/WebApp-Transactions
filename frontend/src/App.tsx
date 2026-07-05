@@ -238,11 +238,19 @@ function App() {
       <div className="app-shell">
         <aside className="sidebar">
           <div className="sidebar-header">
-            <div className="account-summary">
-              <p className="account-greeting">{displayName}</p>
-              <p className="account-subtitle">
-                {isAuthEnabled ? 'Signed in' : 'Local mode'}
-              </p>
+            <div className="sidebar-brand">
+              <img
+                src="/app-icon.png"
+                alt=""
+                aria-hidden="true"
+                className="sidebar-brand-icon"
+              />
+              <div className="account-summary">
+                <p className="account-greeting">Finance</p>
+                <p className="account-subtitle">
+                  {isAuthEnabled ? 'Signed in' : 'Local mode'}
+                </p>
+              </div>
             </div>
             {isAuthEnabled && (
               <button
