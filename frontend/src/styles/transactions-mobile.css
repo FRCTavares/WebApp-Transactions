@@ -117,3 +117,92 @@
     border-radius: 0.95rem;
   }
 }
+
+/* Mobile fast transaction entry. */
+.transaction-form-more-toggle {
+  display: none;
+}
+
+@media (min-width: 801px) {
+  .transaction-form-secondary-fields {
+    display: grid;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .transactions-page .transaction-form {
+    gap: 0.7rem;
+  }
+
+  .transactions-page .transaction-form-primary-fields {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .transactions-page .transaction-form-amount-field input {
+    min-height: 3.2rem;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .transactions-page .transaction-form-more-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 2.15rem;
+    padding: 0 0.8rem;
+    border-color: rgb(255 255 255 / 0.14);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.04);
+    color: #d7dce5;
+    font-size: 0.8rem;
+    font-weight: 850;
+  }
+
+  .transactions-page .transaction-form-secondary-fields {
+    display: none;
+    gap: 0.65rem;
+  }
+
+  .transactions-page .transaction-form-more-open .transaction-form-secondary-fields {
+    display: grid;
+  }
+
+  .transactions-page .transaction-form .action-group {
+    margin-top: 0.1rem;
+  }
+
+  .transactions-page .transaction-form .action-group button[type="submit"] {
+    background: #16a34a;
+    color: #ffffff;
+    font-weight: 900;
+  }
+}
+
+/* Mobile add form bottom sheet positioning. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-form {
+    position: fixed;
+    right: max(0.85rem, env(safe-area-inset-right));
+    bottom: calc(6.25rem + env(safe-area-inset-bottom));
+    left: max(0.85rem, env(safe-area-inset-left));
+    z-index: 40;
+    max-height: min(72vh, 35rem);
+    overflow-y: auto;
+    border-color: rgb(255 255 255 / 0.14);
+    background: #181a20;
+    box-shadow: 0 24px 70px rgb(0 0 0 / 0.48);
+  }
+
+  .transactions-page .page-header > .action-group .primary-button {
+    min-height: 2.7rem;
+  }
+
+  .transactions-page .page-header > .action-group .primary-button:not(:only-child) {
+    width: 100%;
+  }
+}

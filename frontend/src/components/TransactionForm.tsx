@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { CategorySelect } from './CategorySelect'
 import type { CashflowType, Direction } from '../types/api'
 
@@ -32,8 +32,15 @@ export function TransactionForm({
   editingTransactionId,
   onCancel,
 }: TransactionFormProps) {
+  const [isMoreDetailsOpen, setIsMoreDetailsOpen] = useState(
+    editingTransactionId !== undefined,
+  )
+
   return (
-    <form className="manual-form" onSubmit={onSubmit}>
+    <form
+      className={`manual-form transaction-form ${isMoreDetailsOpen ? 'transaction-form-more-open' : ''}`}
+      onSubmit={onSubmit}
+    >
       <h2>{title}</h2>
 
       {editingTransactionId !== undefined && (
@@ -42,13 +49,16 @@ export function TransactionForm({
         </p>
       )}
 
-      <div className="form-row">
-        <label>
-          Date
+      <div className="form-row transaction-form-primary-fields">
+        <label className="transaction-form-amount-field">
+          Amount
           <input
-            type="date"
-            value={form.date}
-            onChange={(event) => onChange('date', event.target.value)}
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.amount}
+            onChange={(event) => onChange('amount', event.target.value)}
+            placeholder="0.00"
           />
         </label>
 
@@ -61,35 +71,6 @@ export function TransactionForm({
           />
         </label>
 
-        <label>
-          Amount
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.amount}
-            onChange={(event) => onChange('amount', event.target.value)}
-            placeholder="0.00"
-          />
-        </label>
-      </div>
-
-      <div className="form-row">
-        <label>
-          Cashflow Type
-          <select
-            value={form.cashflow_type}
-            onChange={(event) => onChange('cashflow_type', event.target.value)}
-          >
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-            <option value="internal_transfer">Internal Transfer</option>
-            <option value="investment">Investment</option>
-            <option value="reimbursement">Reimbursement</option>
-            <option value="reimbursed_expense">Reimbursed Expense</option>
-          </select>
-        </label>
-
         <CategorySelect
           label="Category"
           value={form.category}
@@ -97,15 +78,51 @@ export function TransactionForm({
         />
       </div>
 
-      <div className="form-row">
-        <label>
-          Notes
-          <input
-            value={form.notes}
-            onChange={(event) => onChange('notes', event.target.value)}
-            placeholder="Optional"
-          />
-        </label>
+      <button
+        type="button"
+        className="transaction-form-more-toggle"
+        onClick={() => setIsMoreDetailsOpen((isOpen) => !isOpen)}
+      >
+        {isMoreDetailsOpen ? 'Hide details' : 'More details'}
+      </button>
+
+      <div className="transaction-form-secondary-fields">
+        <div className="form-row">
+          <label>
+            Date
+            <input
+              type="date"
+              value={form.date}
+              onChange={(event) => onChange('date', event.target.value)}
+            />
+          </label>
+
+          <label>
+            Cashflow Type
+            <select
+              value={form.cashflow_type}
+              onChange={(event) => onChange('cashflow_type', event.target.value)}
+            >
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+              <option value="internal_transfer">Internal Transfer</option>
+              <option value="investment">Investment</option>
+              <option value="reimbursement">Reimbursement</option>
+              <option value="reimbursed_expense">Reimbursed Expense</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Notes
+            <input
+              value={form.notes}
+              onChange={(event) => onChange('notes', event.target.value)}
+              placeholder="Optional"
+            />
+          </label>
+        </div>
       </div>
 
       <div className="action-group">
