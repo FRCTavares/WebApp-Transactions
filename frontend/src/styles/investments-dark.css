@@ -1,0 +1,72 @@
+/* Dark-mode readability fixes for investment holdings. */
+
+:root[data-theme='dark'] .investment-holding-card {
+  border-color: rgb(255 255 255 / 0.105);
+  background: #202126;
+}
+
+:root[data-theme='dark'] .investment-holding-card strong,
+:root[data-theme='dark'] .investment-holding-name,
+:root[data-theme='dark'] .investment-holding-value,
+:root[data-theme='dark'] .investment-holding-price,
+:root[data-theme='dark'] .investment-holding-cost,
+:root[data-theme='dark'] .investment-holding-quantity {
+  color: var(--theme-text) !important;
+}
+
+:root[data-theme='dark'] .investment-holding-ticker,
+:root[data-theme='dark'] .investment-holding-meta,
+:root[data-theme='dark'] .investment-holding-label,
+:root[data-theme='dark'] .investment-holding-detail-label,
+:root[data-theme='dark'] .investment-holding-card span,
+:root[data-theme='dark'] .investment-holding-card small {
+  color: #aeb3bd !important;
+}
+
+:root[data-theme='dark'] .investment-holding-card .positive,
+:root[data-theme='dark'] .investment-holding-gain.positive,
+:root[data-theme='dark'] .investment-holding-return-positive {
+  color: #22c55e !important;
+}
+
+:root[data-theme='dark'] .investment-holding-card .negative,
+:root[data-theme='dark'] .investment-holding-gain.negative,
+:root[data-theme='dark'] .investment-holding-return-negative {
+  color: #f87171 !important;
+}
+
+:root[data-theme='dark'] .investment-holding-card dl,
+:root[data-theme='dark'] .investment-holding-card .investment-holding-details,
+:root[data-theme='dark'] .investment-holding-card .investment-holding-metrics {
+  color: var(--theme-text);
+}
+
+:root[data-theme='dark'] .investment-holding-card dt,
+:root[data-theme='dark'] .investment-holding-card .metric-label {
+  color: #8f95a1 !important;
+}
+
+:root[data-theme='dark'] .investment-holding-card dd,
+:root[data-theme='dark'] .investment-holding-card .metric-value {
+  color: #e8e9ed !important;
+}
+
+:root[data-theme='dark'] .investment-holding-track {
+  background: #2b2d34;
+}
+
+:root[data-theme='dark'] .investment-holding-fill {
+  background: #3f78f6;
+}
+
+/* Fallback for existing holding detail grids that use generic div/span markup. */
+:root[data-theme='dark'] .investment-holding-card [class*='quantity'],
+:root[data-theme='dark'] .investment-holding-card [class*='price'],
+:root[data-theme='dark'] .investment-holding-card [class*='cost'] {
+  color: #e8e9ed !important;
+}
+
+:root[data-theme='dark'] .investment-holding-card [class*='label'],
+:root[data-theme='dark'] .investment-holding-card [class*='meta'] {
+  color: #8f95a1 !important;
+}

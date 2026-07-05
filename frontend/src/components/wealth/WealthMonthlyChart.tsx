@@ -22,10 +22,10 @@ const chartWindowOptions = [
 
 const chartWidth = 900
 const chartHeight = 190
-const paddingLeft = 18
-const paddingRight = 18
-const paddingTop = 24
+const paddingTop = 22
+const paddingRight = 28
 const paddingBottom = 34
+const paddingLeft = 28
 
 const tooltipWidth = 154
 const tooltipHeight = 52
@@ -149,7 +149,6 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
   ].filter((point, index, array) => {
     return array.findIndex((item) => item.month === point.month) === index
   })
-
   return (
     <div className="wealth-chart-card">
       <div className="wealth-chart-header">
@@ -202,7 +201,7 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
           <circle
             cx={lastPoint.x}
             cy={lastPoint.y}
-            r="5.75"
+            r="4.5"
             className="wealth-chart-current-point"
           >
             <title>{`${latestMonth}: ${formatMoney(lastPoint.value.toFixed(2))}`}</title>
@@ -271,7 +270,7 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
             <text
               key={point.month}
               x={point.x}
-              y={chartHeight - 12}
+              y={chartHeight - 8}
               textAnchor={point.month === firstPoint.month ? 'start' : point.month === lastPoint.month ? 'end' : 'middle'}
               className="wealth-chart-label"
             >

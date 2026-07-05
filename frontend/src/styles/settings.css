@@ -1,0 +1,238 @@
+/* Settings page. Balanced grouped-list layout, separate from dashboard cards. */
+
+.settings-page-redesigned {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 88rem;
+}
+
+.settings-hero {
+  display: grid;
+  gap: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.settings-hero h1 {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(2rem, 3vw, 2.55rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.settings-hero .page-subtitle {
+  margin: 0;
+  max-width: 42rem;
+}
+
+.settings-balanced-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(24rem, 0.92fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.settings-group {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.15rem;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 0.045);
+}
+
+.settings-group-appearance {
+  min-height: 9.8rem;
+}
+
+.settings-group-access {
+  min-height: 9.8rem;
+}
+
+.settings-group-header {
+  padding: 0.85rem 1rem 0.45rem;
+}
+
+.settings-group-header h2 {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.settings-list-row,
+.settings-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.1rem;
+  min-height: 4.35rem;
+  padding: 0.95rem 1rem;
+  border-top: 1px solid #eef2f7;
+  background: transparent;
+}
+
+.settings-list-row > span,
+.settings-theme-row > div:first-child {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.settings-list-row strong,
+.settings-theme-row strong {
+  color: #111827;
+  font-size: 0.98rem;
+  letter-spacing: -0.015em;
+}
+
+.settings-list-row small,
+.settings-theme-row small {
+  color: #6b7280;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.settings-list-button {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #eef2f7;
+  border-radius: 0;
+  text-align: left;
+  box-shadow: none;
+}
+
+.settings-list-button:hover {
+  background: #f8fafc;
+}
+
+.settings-list-button em,
+.settings-account-row > em {
+  flex: 0 0 auto;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.settings-segmented-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4.5rem, 1fr));
+  gap: 0.25rem;
+  width: min(20rem, 100%);
+  flex: 0 0 min(20rem, 48%);
+  padding: 0.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.settings-segmented-control button {
+  min-height: 2.25rem;
+  padding: 0 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.84rem;
+  font-weight: 850;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.settings-segmented-control button.active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow:
+    0 1px 5px rgb(15 23 42 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.settings-account-row .danger-button {
+  flex: 0 0 auto;
+}
+
+/* Dark settings layout. */
+:root[data-theme='dark'] .settings-hero h1,
+:root[data-theme='dark'] .settings-list-row strong,
+:root[data-theme='dark'] .settings-theme-row strong {
+  color: var(--theme-text);
+}
+
+:root[data-theme='dark'] .settings-group {
+  border-color: rgb(255 255 255 / 0.105);
+  background: #1c1d21;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.035) inset,
+    0 18px 42px rgb(0 0 0 / 0.16);
+}
+
+:root[data-theme='dark'] .settings-group-header h2 {
+  color: #8f95a1;
+}
+
+:root[data-theme='dark'] .settings-list-row,
+:root[data-theme='dark'] .settings-theme-row,
+:root[data-theme='dark'] .settings-list-button {
+  border-top-color: rgb(255 255 255 / 0.075);
+}
+
+:root[data-theme='dark'] .settings-list-row small,
+:root[data-theme='dark'] .settings-theme-row small {
+  color: #aeb3bd;
+}
+
+:root[data-theme='dark'] .settings-list-button:hover {
+  background: #232429;
+}
+
+:root[data-theme='dark'] .settings-segmented-control {
+  border-color: rgb(255 255 255 / 0.095);
+  background: #232429;
+}
+
+:root[data-theme='dark'] .settings-segmented-control button {
+  color: #aeb3bd;
+}
+
+:root[data-theme='dark'] .settings-segmented-control button.active {
+  background: rgb(138 180 248 / 0.14);
+  color: #dbeafe;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .settings-list-button em,
+:root[data-theme='dark'] .settings-account-row > em {
+  color: #8ab4f8;
+}
+
+@media (max-width: 1100px) {
+  .settings-balanced-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-group-appearance,
+  .settings-group-access {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 800px) {
+  .settings-page-redesigned {
+    gap: 1rem;
+  }
+
+  .settings-list-row,
+  .settings-theme-row {
+    align-items: stretch;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .settings-segmented-control {
+    width: 100%;
+    flex-basis: auto;
+  }
+}

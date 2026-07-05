@@ -1,0 +1,305 @@
+/* Shared trend chart system for Wealth and Investments.
+   Wealth has an outer page card plus an inner chart div; Investments uses one card.
+   This file normalises both into one visual chart card. */
+
+/* One visual root card for both pages. */
+.investments-page-polished .investment-trend-card,
+.wealth-trend-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+}
+
+/* Wealth inner wrapper must not look like a second card. */
+.wealth-trend-panel .wealth-chart-card {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.investment-trend-header,
+.wealth-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.investment-trend-header h2,
+.wealth-chart-header h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.08rem;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.investment-trend-header p,
+.wealth-chart-header p {
+  margin: 0;
+}
+
+.investment-trend-current,
+.wealth-chart-stat {
+  display: grid;
+  justify-items: end;
+  gap: 0.12rem;
+  min-width: 12rem;
+  text-align: right;
+}
+
+.investment-trend-current span,
+.wealth-chart-stat span {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.investment-trend-current strong,
+.wealth-chart-stat strong {
+  font-size: clamp(1.42rem, 2vw, 1.8rem);
+  line-height: 1;
+  letter-spacing: -0.052em;
+}
+
+.investment-trend-current small,
+.wealth-chart-stat small {
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+/* No inner plot box. The SVG sits directly in the root chart card. */
+.investment-trend-visual,
+.wealth-chart-wrap {
+  overflow: visible;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.investment-trend-visual svg,
+.wealth-chart-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible;
+}
+
+.trend-chart-grid-line {
+  display: none;
+}
+
+.investment-trend-baseline,
+.wealth-chart-baseline {
+  stroke: rgb(100 116 139 / 0.52);
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
+}
+
+.investment-trend-value-line,
+.investment-trend-allocated-line,
+.wealth-chart-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.investment-trend-value-line,
+.wealth-chart-line {
+  stroke: #3f78f6;
+  stroke-width: 2.1;
+}
+
+.investment-trend-allocated-line {
+  stroke: rgb(148 163 184 / 0.72);
+  stroke-width: 1.55;
+  stroke-dasharray: 6 8;
+}
+
+.investment-trend-current-point,
+.wealth-chart-current-point {
+  fill: #ffffff;
+  stroke: #3f78f6;
+  stroke-width: 1.9;
+  filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.wealth-chart-area,
+.wealth-chart-edge-point,
+.wealth-chart-value-label {
+  display: none;
+}
+
+.investment-trend-label,
+.wealth-chart-label {
+  fill: #64748b;
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: -0.01em;
+}
+
+.investment-trend-footer,
+.wealth-chart-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -0.15rem 0 0;
+  padding: 0;
+}
+
+.investment-trend-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  min-width: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 760;
+}
+
+.investment-trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.investment-trend-legend i {
+  display: inline-block;
+  width: 1.15rem;
+  height: 0.11rem;
+  border-radius: 999px;
+}
+
+.investment-trend-legend-value {
+  background: #3f78f6;
+}
+
+.investment-trend-legend-allocated {
+  background: rgb(148 163 184 / 0.86);
+}
+
+.investment-trend-window-selector {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.22rem;
+  padding: 0.2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.investment-trend-window-selector button {
+  min-height: 1.8rem;
+  padding: 0.25rem 0.68rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.investment-trend-window-selector button.active {
+  background: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
+}
+
+/* Dark chart system. */
+:root[data-theme='dark'] .wealth-trend-panel .wealth-chart-card {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='dark'] .investment-trend-visual,
+:root[data-theme='dark'] .wealth-chart-wrap {
+  background: transparent !important;
+}
+
+:root[data-theme='dark'] .investment-trend-baseline,
+:root[data-theme='dark'] .wealth-chart-baseline {
+  stroke: rgb(174 179 189 / 0.42);
+}
+
+:root[data-theme='dark'] .investment-trend-value-line,
+:root[data-theme='dark'] .wealth-chart-line {
+  stroke: #6f98f7;
+}
+
+:root[data-theme='dark'] .investment-trend-allocated-line {
+  stroke: rgb(174 179 189 / 0.64);
+}
+
+:root[data-theme='dark'] .investment-trend-current-point,
+:root[data-theme='dark'] .wealth-chart-current-point {
+  fill: #f5f5f7;
+  stroke: #6f98f7;
+}
+
+:root[data-theme='dark'] .investment-trend-label,
+:root[data-theme='dark'] .wealth-chart-label {
+  fill: #8f95a1;
+}
+
+:root[data-theme='dark'] .investment-trend-legend {
+  color: #aeb3bd;
+}
+
+:root[data-theme='dark'] .investment-trend-legend-value {
+  background: #6f98f7;
+}
+
+:root[data-theme='dark'] .investment-trend-window-selector {
+  border-color: rgb(255 255 255 / 0.095);
+  background: #232429;
+}
+
+:root[data-theme='dark'] .investment-trend-window-selector button {
+  color: #aeb3bd;
+}
+
+:root[data-theme='dark'] .investment-trend-window-selector button.active {
+  background: rgb(138 180 248 / 0.14);
+  color: #dbeafe;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .investment-trend-header,
+  .wealth-chart-header {
+    display: grid;
+  }
+
+  .investment-trend-current,
+  .wealth-chart-stat {
+    min-width: 0;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .investment-trend-footer,
+  .wealth-chart-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .investment-trend-window-selector {
+    width: 100%;
+  }
+}

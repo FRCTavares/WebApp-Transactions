@@ -30,11 +30,11 @@ type TrendCoordinate = {
 }
 
 const chartWidth = 900
-const chartHeight = 180
-const paddingTop = 20
-const paddingRight = 24
-const paddingBottom = 32
-const paddingLeft = 24
+const chartHeight = 190
+const paddingTop = 22
+const paddingRight = 28
+const paddingBottom = 34
+const paddingLeft = 28
 
 const tooltipWidth = 190
 const tooltipHeight = 72
@@ -178,7 +178,6 @@ export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }
   ].filter((point, index, array) => {
     return array.findIndex((item) => item.month === point.month) === index
   })
-
   return (
     <section className="content-card panel-card investment-trend-card">
       <div className="investment-trend-header">
@@ -225,7 +224,7 @@ export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }
             <circle
               cx={marketValueCoordinates[marketValueCoordinates.length - 1].x}
               cy={marketValueCoordinates[marketValueCoordinates.length - 1].y}
-              r="5"
+              r="4.5"
               className="investment-trend-current-point"
             />
           )}
@@ -290,7 +289,7 @@ export function InvestmentPortfolioTrendChart({ months, series, onMonthsChange }
             <text
               key={point.month}
               x={getPointX(points.indexOf(point), points.length)}
-              y={chartHeight - 10}
+              y={chartHeight - 8}
               textAnchor={point.month === points[0].month ? 'start' : point.month === points[points.length - 1].month ? 'end' : 'middle'}
               className="investment-trend-label"
             >
