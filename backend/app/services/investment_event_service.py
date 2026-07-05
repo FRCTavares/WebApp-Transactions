@@ -9,6 +9,12 @@ from app.repositories.investment_event_repository import InvestmentEventReposito
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.services.investment_market_validation import (
+    build_create_event_candidate,
+    build_update_event_candidate,
+    validate_market_event_candidate,
+    validate_market_sell_timeline,
+)
 from app.schemas.investment_event import (
     InvestmentEventCreate,
     InvestmentEventUpdate,
@@ -35,7 +41,16 @@ class InvestmentEventService:
         event_data: InvestmentEventCreate,
         current_user: CurrentUser | None = None,
     ) -> InvestmentEvent:
-        return self.repository.create(event_data, self._get_user_id(current_user))
+        user_id = self._get_user_id(current_user)
+        candidate = build_create_event_candidate(event_data)
+
+        validate_market_event_candidate(candidate)
+        validate_market_sell_timeline(
+            candidate=candidate,
+            existing_events=self.repository.list_all(user_id=user_id),
+        )
+
+        return self.repository.create(event_data, user_id)
 
     def list_events(
         self,
@@ -706,7 +721,17 @@ class InvestmentEventService:
         event_data: InvestmentEventUpdate,
         current_user: CurrentUser | None = None,
     ) -> InvestmentEvent:
+        user_id = self._get_user_id(current_user)
         event = self.get_event(event_id, current_user)
+        candidate = build_update_event_candidate(event, event_data)
+
+        validate_market_event_candidate(candidate)
+        validate_market_sell_timeline(
+            candidate=candidate,
+            existing_events=self.repository.list_all(user_id=user_id),
+            existing_event=event,
+        )
+
         return self.repository.update(event, event_data)
 
     def delete_event(

@@ -1,8 +1,14 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+from fastapi import HTTPException
+
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
+from app.repositories.investment_event_repository import InvestmentEventRepository
+from app.schemas.investment_event import InvestmentEventUpdate
+from app.services.investment_event_service import InvestmentEventService
 
 
 def create_market_event(
@@ -14,6 +20,7 @@ def create_market_event(
     instrument_name,
     quantity,
     amount,
+    price="100.00",
     currency="USD",
     user_id=LOCAL_DEFAULT_USER_ID,
 ):
@@ -29,6 +36,7 @@ def create_market_event(
         ticker=ticker,
         isin=isin,
         quantity=Decimal(quantity),
+        price=Decimal(price) if price is not None else None,
         amount=Decimal(amount),
         currency=currency,
         original_amount=Decimal(amount),
@@ -208,6 +216,108 @@ def test_list_positions_applies_market_sells_to_matching_cost_bucket(client, db_
             "average_price": "600.00000000",
         }
     ]
+
+
+
+
+def test_create_market_event_rejects_missing_required_market_fields(client):
+    response = client.post(
+        "/api/investment-events",
+        json={
+            "date": "2024-09-09",
+            "source": "trading212",
+            "account": "Trading 212",
+            "event_type": "market_buy",
+            "description": "Market buy missing fields",
+            "raw_description": "Market buy missing fields",
+            "amount": "100.00",
+            "currency": "EUR",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Investment buy/sell events require a positive quantity"
+    )
+
+
+def test_create_market_sell_rejects_more_than_available_holdings(client, db_session):
+    create_market_event(
+        db_session,
+        event_type="market_buy",
+        ticker="CSPX",
+        isin="IE00B5BMR087",
+        instrument_name="iShares Core S&P 500 UCITS ETF",
+        quantity="1.00",
+        price="600.00",
+        amount="600.00",
+    )
+
+    response = client.post(
+        "/api/investment-events",
+        json={
+            "date": "2024-09-09",
+            "source": "trading212",
+            "account": "Trading 212",
+            "event_type": "market_sell",
+            "description": "Market sell CSPX",
+            "raw_description": "Market sell CSPX",
+            "instrument_name": "iShares Core S&P 500 UCITS ETF",
+            "ticker": "CSPX",
+            "isin": "IE00B5BMR087",
+            "quantity": "2.00",
+            "price": "600.00",
+            "amount": "1200.00",
+            "currency": "USD",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Investment sell quantity cannot exceed available holdings"
+    )
+
+
+def test_update_market_buy_rejects_change_that_would_oversell_future_holding(
+    client,
+    db_session,
+):
+    buy = create_market_event(
+        db_session,
+        event_type="market_buy",
+        ticker="CSPX",
+        isin="IE00B5BMR087",
+        instrument_name="iShares Core S&P 500 UCITS ETF",
+        quantity="1.00",
+        price="600.00",
+        amount="600.00",
+    )
+    create_market_event(
+        db_session,
+        event_type="market_sell",
+        ticker="CSPX",
+        isin="IE00B5BMR087",
+        instrument_name="iShares Core S&P 500 UCITS ETF",
+        quantity="0.75",
+        price="600.00",
+        amount="450.00",
+    )
+
+    service = InvestmentEventService(InvestmentEventRepository(db_session))
+
+    with pytest.raises(HTTPException) as error:
+        service.update_event(
+            buy.id,
+            InvestmentEventUpdate(quantity=Decimal("0.50")),
+        )
+
+    assert error.value.status_code == 400
+    assert error.value.detail == (
+        "Investment sell quantity cannot exceed available holdings"
+    )
+
+    db_session.refresh(buy)
+    assert buy.quantity == Decimal("1.00")
 
 
 def test_monthly_change_uses_price_movement_not_buys(client, db_session):
