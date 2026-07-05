@@ -13,6 +13,7 @@
 @import './styles/dashboard.css';
 @import './styles/transactions.css';
 @import './styles/typography.css';
+@import './styles/loading-states.css';
 
 .global-topbar {
   position: absolute;
