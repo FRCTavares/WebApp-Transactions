@@ -174,27 +174,21 @@ class OwedService:
             user_id=user_id,
         )
 
+        requested_allocations = self._validate_requested_allocations(
+            payment_data=payment_data,
+            current_user=current_user,
+        )
+
         payment = self.repository.create_payment(payment, user_id)
 
         remaining_to_allocate = payment_data.amount
 
-        if payment_data.allocations:
-            for allocation_data in payment_data.allocations:
-                owed_item = self.get_owed_item(
-                    allocation_data.owed_item_id,
-                    current_user,
-                )
-
-                if owed_item.person != payment_data.person:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Allocation person must match payment person",
-                    )
-
+        if requested_allocations:
+            for owed_item, amount in requested_allocations:
                 remaining_to_allocate = self._allocate_to_owed_item(
                     payment_id=payment.id,
                     owed_item=owed_item,
-                    amount=allocation_data.amount,
+                    amount=amount,
                     remaining_to_allocate=remaining_to_allocate,
                 )
         else:
@@ -253,6 +247,52 @@ class OwedService:
             )
 
         return self._build_payment_read(payment, user_id)
+
+    def _validate_requested_allocations(
+        self,
+        payment_data: OwedPaymentCreate,
+        current_user: CurrentUser | None,
+    ) -> list[tuple[OwedItem, Decimal]]:
+        if not payment_data.allocations:
+            return []
+
+        total_allocated = Decimal("0")
+        allocated_by_owed_item: dict[int, Decimal] = {}
+        validated_allocations: list[tuple[OwedItem, Decimal]] = []
+
+        for allocation_data in payment_data.allocations:
+            owed_item = self.get_owed_item(
+                allocation_data.owed_item_id,
+                current_user,
+            )
+
+            if owed_item.person != payment_data.person:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Allocation person must match payment person",
+                )
+
+            total_allocated += allocation_data.amount
+            if total_allocated > payment_data.amount:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Allocated amount cannot exceed payment amount",
+                )
+
+            item_allocated = (
+                allocated_by_owed_item.get(owed_item.id, Decimal("0"))
+                + allocation_data.amount
+            )
+            if item_allocated > owed_item.amount_remaining:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Allocated amount cannot exceed owed item remaining amount",
+                )
+
+            allocated_by_owed_item[owed_item.id] = item_allocated
+            validated_allocations.append((owed_item, allocation_data.amount))
+
+        return validated_allocations
 
     def _allocate_to_owed_item(
         self,

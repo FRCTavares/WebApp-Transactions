@@ -638,6 +638,64 @@ def test_record_payment_rejects_over_allocation_to_owed_item(client):
     assert response.json()["detail"] == "Allocated amount cannot exceed owed item remaining amount"
 
 
+
+
+def test_record_payment_rejects_split_allocations_exceeding_payment_amount(client):
+    first_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="8.00",
+    )
+    second_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Pharmacy",
+        amount_total="8.00",
+    )
+
+    first_id = first_response.json()["id"]
+    second_id = second_response.json()["id"]
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "10.00",
+            "method": "cash",
+            "allocations": [
+                {
+                    "owed_item_id": first_id,
+                    "amount": "8.00",
+                },
+                {
+                    "owed_item_id": second_id,
+                    "amount": "8.00",
+                },
+            ],
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Allocated amount cannot exceed payment amount"
+
+    first_owed = client.get(f"/api/owed/{first_id}").json()
+    second_owed = client.get(f"/api/owed/{second_id}").json()
+
+    assert first_owed["amount_paid"] == "0.00"
+    assert first_owed["amount_remaining"] == "8.00"
+    assert first_owed["status"] == "open"
+
+    assert second_owed["amount_paid"] == "0.00"
+    assert second_owed["amount_remaining"] == "8.00"
+    assert second_owed["status"] == "open"
+
+    payments_response = client.get("/api/owed/payments?person=Mother")
+    assert payments_response.status_code == 200
+    assert payments_response.json() == []
+
+
 def test_list_and_get_owed_payments(client):
     create_response = create_owed_item(
         client,
