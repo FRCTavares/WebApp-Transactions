@@ -38,7 +38,6 @@ class TransactionBase(BaseModel):
     source: str = "manual"
     account: str | None = None
     category: str | None = None
-    subcategory: str | None = None
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     merchant: str | None = None
     notes: str | None = None
@@ -69,7 +68,6 @@ class TransactionUpdate(BaseModel):
     source: str | None = None
     account: str | None = None
     category: str | None = None
-    subcategory: str | None = None
     currency: str | None = Field(default=None, min_length=3, max_length=3)
     merchant: str | None = None
     notes: str | None = None

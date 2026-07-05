@@ -8,7 +8,6 @@ export type TransactionFormState = {
   amount: string
   cashflow_type: CashflowType
   category: string
-  subcategory: string
   notes: string
 }
 
@@ -95,13 +94,6 @@ export function TransactionForm({
           label="Category"
           value={form.category}
           onChange={(value) => onChange('category', value)}
-        />
-
-        <CategorySelect
-          label="Subcategory"
-          value={form.subcategory}
-          onChange={(value) => onChange('subcategory', value)}
-          placeholder="Optional, type to search or create"
         />
       </div>
 

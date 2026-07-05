@@ -568,7 +568,7 @@ class ImportService:
             )
             or dedupe_hash in seen_hashes
         )
-        category, _subcategory = self._guess_category(transaction, current_user)
+        category = self._guess_category(transaction, current_user)
 
         return ImportPreviewTransaction(
             row_number=row_number,
@@ -652,9 +652,9 @@ class ImportService:
         self,
         transaction: NormalisedTransaction,
         current_user: CurrentUser | None = None,
-    ) -> tuple[str | None, str | None]:
+    ) -> str | None:
         if self.category_rule_service is None:
-            return None, None
+            return None
 
         return self.category_rule_service.guess_category(transaction, current_user)
 

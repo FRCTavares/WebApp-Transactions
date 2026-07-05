@@ -61,7 +61,6 @@ function getInitialFormState(direction: Direction): TransactionFormState {
     amount: '',
     cashflow_type: getDefaultCashflowType(direction),
     category: '',
-    subcategory: '',
     notes: '',
   }
 }
@@ -85,7 +84,6 @@ function getFormStateFromTransaction(transaction: Transaction): TransactionFormS
     amount: transaction.amount,
     cashflow_type: transaction.cashflow_type,
     category: transaction.category ?? '',
-    subcategory: transaction.subcategory ?? '',
     notes: transaction.notes ?? '',
   }
 }
@@ -369,7 +367,6 @@ export function TransactionsPage() {
         source: 'manual',
         account: null,
         category: form.category || null,
-        subcategory: form.subcategory || null,
         currency: 'EUR',
         merchant: null,
         notes: form.notes || null,
@@ -420,7 +417,6 @@ export function TransactionsPage() {
         amount: amount.toFixed(2),
         cashflow_type: editForm.cashflow_type,
         category: editForm.category || null,
-        subcategory: editForm.subcategory || null,
         notes: editForm.notes || null,
       })
 
@@ -653,9 +649,6 @@ export function TransactionsPage() {
   const categoryOptions = transactions
     .map((transaction) => transaction.category)
     .filter((category): category is string => Boolean(category))
-  const subcategoryOptions = transactions
-    .map((transaction) => transaction.subcategory)
-    .filter((subcategory): subcategory is string => Boolean(subcategory))
 
   return (
     <section className={`app-page transactions-page transactions-page-${direction}`}>
@@ -765,13 +758,6 @@ export function TransactionsPage() {
                   onChange={(value) => updateEditForm('category', value)}
                   options={categoryOptions}
                   placeholder="Category"
-                />
-                <CategorySelect
-                  value={editForm.subcategory}
-                  onChange={(value) => updateEditForm('subcategory', value)}
-                  options={subcategoryOptions}
-                  placeholder="Subcategory"
-                  className="table-input-secondary"
                 />
               </td>
               <td>{transaction.source}</td>

@@ -128,14 +128,13 @@ class SummaryService:
         items = [
             CategorySummaryItem(
                 category=category,
-                subcategory=subcategory,
                 total=personal_total,
                 gross_total=gross_total,
                 owed_total=owed_total,
                 personal_total=personal_total,
                 count=count,
             )
-            for category, subcategory, gross_total, owed_total, personal_total, count in rows
+            for category, _subcategory, gross_total, owed_total, personal_total, count in rows
         ]
 
         return CategorySummaryResponse(

@@ -25,7 +25,6 @@ class MonthlySummary(BaseModel):
 
 class CategorySummaryItem(BaseModel):
     category: str
-    subcategory: str | None = None
     total: Decimal
     gross_total: Decimal
     owed_total: Decimal

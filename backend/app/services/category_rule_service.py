@@ -115,7 +115,7 @@ class CategoryRuleService:
         self,
         transaction: NormalisedTransaction,
         current_user: CurrentUser | None = None,
-    ) -> tuple[str | None, str | None]:
+    ) -> str | None:
         rules = self.category_rule_repository.list(
             user_id=self._get_user_id(current_user),
             active_only=True,
@@ -123,9 +123,9 @@ class CategoryRuleService:
 
         for rule in rules:
             if self._matches_rule(transaction, rule):
-                return rule.category, rule.subcategory
+                return rule.category
 
-        return None, None
+        return None
 
     def apply_rules_to_existing_transactions(
         self,
@@ -146,7 +146,7 @@ class CategoryRuleService:
 
         for transaction in transactions:
             normalised_transaction = self._normalise_existing_transaction(transaction)
-            category, subcategory = self.guess_category(
+            category = self.guess_category(
                 normalised_transaction,
                 current_user,
             )
@@ -157,7 +157,6 @@ class CategoryRuleService:
             self.transaction_repository.update_category(
                 transaction=transaction,
                 category=category,
-                subcategory=subcategory,
             )
             updated_count += 1
 
@@ -178,7 +177,6 @@ class CategoryRuleService:
             direction=rule_data.direction,
             source=rule_data.source,
             category=rule_data.category,
-            subcategory=rule_data.subcategory,
         )
 
         for existing_rule in self.category_rule_repository.list_all(user_id):
@@ -191,8 +189,7 @@ class CategoryRuleService:
                 direction=existing_rule.direction,
                 source=existing_rule.source,
                 category=existing_rule.category,
-                subcategory=existing_rule.subcategory,
-            )
+                )
 
             if existing_fingerprint == new_fingerprint:
                 raise HTTPException(
@@ -211,7 +208,6 @@ class CategoryRuleService:
         candidate_rule_data = CategoryRuleCreate(
             name=update_data.get("name", rule.name),
             category=update_data.get("category", rule.category),
-            subcategory=update_data.get("subcategory", rule.subcategory),
             match_text=update_data.get("match_text", rule.match_text),
             match_field=update_data.get("match_field", rule.match_field),
             direction=update_data.get("direction", rule.direction),
@@ -239,15 +235,13 @@ class CategoryRuleService:
         direction: str | None,
         source: str | None,
         category: str,
-        subcategory: str | None,
-    ) -> tuple[str, str, str | None, str | None, str, str | None]:
+    ) -> tuple[str, str, str | None, str | None, str]:
         return (
             self._normalise_rule_value(match_text) or "",
             self._normalise_rule_value(match_field) or "",
             self._normalise_rule_value(direction),
             self._normalise_rule_value(source),
             self._normalise_rule_value(category) or "",
-            self._normalise_rule_value(subcategory),
         )
 
     def _normalise_rule_value(self, value: str | None) -> str | None:

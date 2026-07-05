@@ -7,7 +7,6 @@ export type MatchField = 'description' | 'raw_description' | 'merchant'
 export type RuleFormState = {
   name: string
   category: string
-  subcategory: string
   match_text: string
   match_field: MatchField
   direction: Direction | ''
@@ -65,15 +64,6 @@ export function CategoryRuleForm({
           value={form.category}
           onChange={(category) => onChange('category', category)}
         />
-
-        <label>
-          Subcategory
-          <input
-            value={form.subcategory}
-            onChange={(event) => onChange('subcategory', event.target.value)}
-            placeholder="Optional"
-          />
-        </label>
 
         <label>
           Match text

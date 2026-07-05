@@ -26,7 +26,6 @@ TRANSACTION_EXPORT_COLUMNS = [
     "source",
     "account",
     "category",
-    "subcategory",
     "currency",
     "merchant",
     "notes",

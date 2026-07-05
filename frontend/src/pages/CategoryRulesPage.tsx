@@ -42,7 +42,6 @@ import type {
 const INITIAL_RULE_FORM: RuleFormState = {
   name: '',
   category: '',
-  subcategory: '',
   match_text: '',
   match_field: 'description',
   direction: '',
@@ -72,7 +71,6 @@ function getRuleFormFromRule(rule: CategoryRule): RuleFormState {
   return {
     name: rule.name,
     category: rule.category,
-    subcategory: rule.subcategory ?? '',
     match_text: rule.match_text,
     match_field: rule.match_field,
     direction: rule.direction ?? '',
@@ -180,7 +178,6 @@ export function CategoryRulesPage() {
       await createCategoryRule({
         name,
         category,
-        subcategory: ruleForm.subcategory.trim() || null,
         match_text: matchText,
         match_field: ruleForm.match_field,
         direction: ruleForm.direction || null,
@@ -231,7 +228,6 @@ export function CategoryRulesPage() {
       await updateCategoryRule(editingRule.id, {
         name,
         category,
-        subcategory: editRuleForm.subcategory.trim() || null,
         match_text: matchText,
         match_field: editRuleForm.match_field,
         direction: editRuleForm.direction || null,
@@ -574,7 +570,7 @@ export function CategoryRulesPage() {
           <div>
             <h2>Category Rules</h2>
             <p className="muted small">
-              Existing rules that assign categories and subcategories.
+              Existing rules that assign categories.
             </p>
           </div>
         </div>

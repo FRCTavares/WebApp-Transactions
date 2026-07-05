@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-
 def test_transaction_create_defaults_cashflow_type_from_direction(client):
     income_response = client.post(
         "/api/transactions",
@@ -32,7 +31,6 @@ def test_transaction_create_defaults_cashflow_type_from_direction(client):
     assert income_response.json()["cashflow_type"] == "income"
     assert expense_response.json()["cashflow_type"] == "expense"
 
-
 def test_transaction_can_be_marked_as_internal_transfer(client):
     create_response = client.post(
         "/api/transactions",
@@ -50,7 +48,6 @@ def test_transaction_can_be_marked_as_internal_transfer(client):
 
     assert create_response.status_code == 201
     assert create_response.json()["cashflow_type"] == "internal_transfer"
-
 
 def test_transactions_can_be_filtered_by_cashflow_type(client):
     client.post(
@@ -88,7 +85,6 @@ def test_transactions_can_be_filtered_by_cashflow_type(client):
     assert rows[0]["description"] == "ActivoBank to Revolut"
     assert Decimal(rows[0]["amount"]) == Decimal("100.00")
 
-
 def test_transaction_can_be_marked_as_reimbursement(client):
     response = client.post(
         "/api/transactions",
@@ -107,7 +103,6 @@ def test_transaction_can_be_marked_as_reimbursement(client):
     assert response.status_code == 201
     assert response.json()["cashflow_type"] == "reimbursement"
 
-
 def test_transaction_can_be_marked_as_reimbursed_expense(client):
     response = client.post(
         "/api/transactions",
@@ -121,13 +116,11 @@ def test_transaction_can_be_marked_as_reimbursed_expense(client):
             "source": "activobank",
             "currency": "EUR",
             "category": "Health",
-            "subcategory": "Psychology",
         },
     )
 
     assert response.status_code == 201
     assert response.json()["cashflow_type"] == "reimbursed_expense"
-
 
 def test_transactions_can_be_filtered_by_reimbursed_expense(client):
     client.post(

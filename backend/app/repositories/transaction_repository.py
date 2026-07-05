@@ -181,10 +181,8 @@ class TransactionRepository:
         self,
         transaction: Transaction,
         category: str,
-        subcategory: str | None,
     ) -> Transaction:
         transaction.category = category
-        transaction.subcategory = subcategory
 
         self.db.add(transaction)
         self.db.commit()

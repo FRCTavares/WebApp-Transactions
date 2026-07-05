@@ -7,7 +7,6 @@ from app.schemas.category_rule import CategoryRuleCreate
 from app.schemas.transaction import TransactionCreate
 from app.services.category_rule_service import CategoryRuleService
 
-
 def test_apply_rules_to_existing_transactions_updates_uncategorised_rows(db_session):
     transaction_repository = TransactionRepository(db_session)
     category_rule_repository = CategoryRuleRepository(db_session)
@@ -34,7 +33,6 @@ def test_apply_rules_to_existing_transactions_updates_uncategorised_rows(db_sess
         CategoryRuleCreate(
             name="Auchan groceries",
             category="Groceries",
-            subcategory="Supermarket",
             match_text="AUCHAN",
             match_field="description",
             direction="out",
@@ -53,4 +51,3 @@ def test_apply_rules_to_existing_transactions_updates_uncategorised_rows(db_sess
     }
     assert updated_transaction is not None
     assert updated_transaction.category == "Groceries"
-    assert updated_transaction.subcategory == "Supermarket"

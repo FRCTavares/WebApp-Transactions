@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from app.models.transaction import Transaction
 
-
 def test_category_rule_suggestions_group_uncategorised_transactions(client, db_session):
     transactions = [
         Transaction(
@@ -15,7 +14,6 @@ def test_category_rule_suggestions_group_uncategorised_transactions(client, db_s
             source="trading212",
             account=None,
             category=None,
-            subcategory=None,
             currency="EUR",
         ),
         Transaction(
@@ -27,7 +25,6 @@ def test_category_rule_suggestions_group_uncategorised_transactions(client, db_s
             source="trading212",
             account=None,
             category=None,
-            subcategory=None,
             currency="EUR",
         ),
         Transaction(
@@ -39,7 +36,6 @@ def test_category_rule_suggestions_group_uncategorised_transactions(client, db_s
             source="trading212",
             account=None,
             category="Groceries",
-            subcategory="Supermarket",
             currency="EUR",
         ),
         Transaction(
@@ -51,7 +47,6 @@ def test_category_rule_suggestions_group_uncategorised_transactions(client, db_s
             source="manual",
             account=None,
             category=None,
-            subcategory=None,
             currency="EUR",
         ),
     ]

@@ -4,7 +4,6 @@ import type { CategoryRule, CategoryRuleSuggestion, Direction } from '../types/a
 export type CategoryRuleCreatePayload = {
   name: string
   category: string
-  subcategory?: string | null
   match_text: string
   match_field: 'description' | 'raw_description' | 'merchant'
   direction?: Direction | null
@@ -15,7 +14,6 @@ export type CategoryRuleCreatePayload = {
 export type CategoryRuleUpdatePayload = {
   name?: string
   category?: string
-  subcategory?: string | null
   match_text?: string
   match_field?: 'description' | 'raw_description' | 'merchant'
   direction?: Direction | null

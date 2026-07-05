@@ -18,7 +18,6 @@ export type Transaction = {
   source: string
   account: string | null
   category: string | null
-  subcategory: string | null
   currency: string
   merchant: string | null
   notes: string | null
@@ -58,7 +57,6 @@ export type TransactionCreatePayload = {
   source: string
   account?: string | null
   category?: string | null
-  subcategory?: string | null
   currency: string
   merchant?: string | null
   notes?: string | null
@@ -74,7 +72,6 @@ export type TransactionUpdatePayload = {
   source?: string
   account?: string | null
   category?: string | null
-  subcategory?: string | null
   currency?: string
   merchant?: string | null
   notes?: string | null
@@ -399,7 +396,6 @@ export type MonthlySummary = {
 
 export type CategorySummaryItem = {
   category: string
-  subcategory: string | null
   total: string
   gross_total: string
   owed_total: string
@@ -498,7 +494,6 @@ export type CategoryRule = {
   id: number
   name: string
   category: string
-  subcategory: string | null
   match_text: string
   match_field: 'description' | 'raw_description' | 'merchant'
   direction: Direction | null
