@@ -205,3 +205,87 @@
     height: 1rem;
   }
 }
+
+/* Final mobile transaction destructive action override. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-mobile-card .transaction-mobile-actions .transaction-mobile-action.transaction-action-delete,
+  .transactions-page .transaction-mobile-card .transaction-mobile-actions .transaction-mobile-action.transaction-mobile-action-danger {
+    border-color: rgb(248 113 113 / 0.75);
+    background: #7f1d1d;
+    color: #fee2e2;
+    font-weight: 850;
+  }
+
+  .transactions-page .transaction-mobile-card .transaction-mobile-actions .transaction-mobile-action.transaction-action-delete:hover,
+  .transactions-page .transaction-mobile-card .transaction-mobile-actions .transaction-mobile-action.transaction-mobile-action-danger:hover {
+    border-color: #fca5a5;
+    background: #991b1b;
+    color: #ffffff;
+  }
+}
+
+/* Final destructive transaction button override. */
+.transactions-page button.transaction-row-action-delete,
+.transactions-page button.transaction-mobile-action.transaction-action-delete,
+.transactions-page button.transaction-mobile-action.transaction-mobile-action-danger,
+.transactions-page button.transaction-delete-confirm-button {
+  border-color: rgb(248 113 113 / 0.75) !important;
+  background: #7f1d1d !important;
+  color: #fee2e2 !important;
+  font-weight: 850 !important;
+}
+
+.transactions-page button.transaction-row-action-delete:hover,
+.transactions-page button.transaction-mobile-action.transaction-action-delete:hover,
+.transactions-page button.transaction-mobile-action.transaction-mobile-action-danger:hover,
+.transactions-page button.transaction-delete-confirm-button:hover {
+  border-color: #fca5a5 !important;
+  background: #991b1b !important;
+  color: #ffffff !important;
+}
+
+/* Final mobile transaction card dark override. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-mobile-list .transaction-mobile-card {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    background: #181a20 !important;
+    color: #f9fafb !important;
+    box-shadow: none !important;
+  }
+
+  .transactions-page .transaction-mobile-card .transaction-mobile-card-main strong {
+    color: #f9fafb !important;
+  }
+
+  .transactions-page .transaction-mobile-card .transaction-mobile-card-main p {
+    color: #aeb4c1 !important;
+  }
+
+  .transactions-page .transaction-mobile-card .transaction-mobile-card-main > span {
+    color: #f9fafb !important;
+  }
+
+  .transactions-page .transaction-mobile-card .transaction-mobile-raw {
+    color: #858b98 !important;
+  }
+
+  .transactions-page .transaction-mobile-card .badge-source {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background: rgb(255 255 255 / 0.07) !important;
+    color: #cbd5e1 !important;
+  }
+
+  .transactions-page .transaction-mobile-card .badge-expense,
+  .transactions-page .transaction-mobile-card .badge-reimbursed-expense {
+    border-color: rgb(249 115 22 / 0.38) !important;
+    background: rgb(124 45 18 / 0.32) !important;
+    color: #fed7aa !important;
+  }
+
+  .transactions-page .transaction-mobile-card .badge-income,
+  .transactions-page .transaction-mobile-card .badge-reimbursement {
+    border-color: rgb(34 197 94 / 0.34) !important;
+    background: rgb(20 83 45 / 0.32) !important;
+    color: #bbf7d0 !important;
+  }
+}

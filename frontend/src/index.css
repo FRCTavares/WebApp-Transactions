@@ -12,6 +12,7 @@
 @import './styles/wealth-modal.css';
 @import './styles/dashboard.css';
 @import './styles/transactions.css';
+@import './styles/transactions-mobile.css';
 @import './styles/typography.css';
 @import './styles/loading-states.css';
 @import './styles/investment-loading-states.css';

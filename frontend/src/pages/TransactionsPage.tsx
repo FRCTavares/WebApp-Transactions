@@ -14,6 +14,7 @@ import {
 import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
 import { CategorySelect } from '../components/CategorySelect'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
+import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
 import type { CashflowType, Direction, Transaction } from '../types/api'
@@ -87,7 +88,6 @@ function getFormStateFromTransaction(transaction: Transaction): TransactionFormS
     notes: transaction.notes ?? '',
   }
 }
-
 
 function isTrading212Cashback(transaction: Transaction) {
   return (
@@ -258,6 +258,8 @@ export function TransactionsPage() {
   const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
   const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
   const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
+  const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
+  const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -381,7 +383,6 @@ export function TransactionsPage() {
     }
   }
 
-
   function handleCreateTransactionSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     void createTransactionFromForm()
@@ -429,29 +430,33 @@ export function TransactionsPage() {
     }
   }
 
-  async function handleDeleteTransaction(transaction: Transaction) {
-    const confirmed = window.confirm(
-      `Delete transaction "${transaction.description}" for ${transaction.amount} ${transaction.currency}?`,
-    )
+  function handleDeleteTransaction(transaction: Transaction) {
+    setDeleteDraftTransaction(transaction)
+  }
 
-    if (!confirmed) {
+  async function confirmDeleteTransaction() {
+    if (!deleteDraftTransaction || isDeletingTransaction) {
       return
     }
 
     setError(null)
     setMessage(null)
+    setIsDeletingTransaction(true)
 
     try {
-      await deleteTransaction(transaction.id)
+      await deleteTransaction(deleteDraftTransaction.id)
       setMessage('Transaction deleted.')
 
-      if (editingTransaction?.id === transaction.id) {
+      if (editingTransaction?.id === deleteDraftTransaction.id) {
         setEditingTransaction(null)
       }
 
+      setDeleteDraftTransaction(null)
       loadTransactions()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete transaction')
+    } finally {
+      setIsDeletingTransaction(false)
     }
   }
 
@@ -800,6 +805,15 @@ export function TransactionsPage() {
         onMarkOwed={direction === 'out' ? openOwedDialog : undefined}
       />
 
+      {deleteDraftTransaction && (
+        <TransactionDeleteDialog
+          transaction={deleteDraftTransaction}
+          isDeleting={isDeletingTransaction}
+          onCancel={() => setDeleteDraftTransaction(null)}
+          onConfirm={confirmDeleteTransaction}
+        />
+      )}
+
       {owedDraftTransaction && (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">
@@ -979,7 +993,6 @@ export function TransactionsPage() {
           </div>
         </div>
       )}
-
     </section>
   )
 }
