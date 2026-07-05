@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
-import { listInvestmentEvents, listInvestmentMonthlySeries, listInvestmentPositions, resolveManualFunding } from '../api/investmentEvents'
-import { listInvestmentFundingMonths, upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
+import { useState } from 'react'
+import { resolveManualFunding } from '../api/investmentEvents'
+import { upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
 import {
   createOrUpdateMarketPrice,
   deleteMarketPrice,
   fetchLatestMarketPrice,
-  listMarketPrices,
   updateMarketPrice,
 } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
@@ -18,7 +17,8 @@ import { InvestmentPositionsTable } from '../components/investments/InvestmentPo
 import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import type { InvestmentEvent, InvestmentFundingMonth, InvestmentMonthlySeriesPoint, InvestmentPosition, MarketPrice } from '../types/api'
+import type { InvestmentEvent, InvestmentFundingMonth, InvestmentPosition, MarketPrice } from '../types/api'
+import { useInvestmentData } from '../hooks/useInvestmentData'
 import { formatMoney } from '../utils/format'
 
 export type ManualFundingFormState = {
@@ -44,7 +44,6 @@ type InvestmentEventSort =
   | 'amount_asc'
   | 'event_type'
 
-const INVESTMENT_EVENTS_FETCH_LIMIT = 500
 const INVESTMENT_EVENTS_PAGE_SIZE = 15
 
 function addCurrencyTotal(
@@ -118,24 +117,6 @@ function getInvestmentTotals(positions: InvestmentPosition[]) {
   }
 }
 
-function getMonthDateRange(month: string) {
-  if (!month) {
-    return {
-      dateFrom: '',
-      dateTo: '',
-    }
-  }
-
-  const [year, monthNumber] = month.split('-').map(Number)
-  const monthText = String(monthNumber).padStart(2, '0')
-  const lastDay = new Date(year, monthNumber, 0).getDate()
-
-  return {
-    dateFrom: `${year}-${monthText}-01`,
-    dateTo: `${year}-${monthText}-${String(lastDay).padStart(2, '0')}`,
-  }
-}
-
 function getActiveFilterCount(values: string[]) {
   return values.filter(Boolean).length
 }
@@ -168,31 +149,6 @@ function getPositionCurrency(position: InvestmentPosition) {
 
 function getMarketDataLabel(position: InvestmentPosition) {
   return position.ticker ?? position.isin ?? position.instrument_name ?? 'holding'
-}
-
-async function listAllInvestmentEvents(
-  filters: Parameters<typeof listInvestmentEvents>[0] = {},
-) {
-  const allEvents: InvestmentEvent[] = []
-  let offset = 0
-
-  while (true) {
-    const batch = await listInvestmentEvents({
-      ...filters,
-      limit: INVESTMENT_EVENTS_FETCH_LIMIT,
-      offset,
-    })
-
-    allEvents.push(...batch)
-
-    if (batch.length < INVESTMENT_EVENTS_FETCH_LIMIT) {
-      break
-    }
-
-    offset += INVESTMENT_EVENTS_FETCH_LIMIT
-  }
-
-  return allEvents
 }
 
 function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormState {
@@ -256,17 +212,7 @@ function getSortedInvestmentEvents(
 }
 
 export function InvestmentsPage() {
-  const [events, setEvents] = useState<InvestmentEvent[]>([])
-  const [positions, setPositions] = useState<InvestmentPosition[]>([])
-  const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>([])
   const [chartMonths, setChartMonths] = useState(24)
-  const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
-  const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
-  const [eventType, setEventType] = useState('')
-  const [source, setSource] = useState('')
-  const [month, setMonth] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
   const [resolvingEventId, setResolvingEventId] = useState<number | null>(null)
   const [fundingForm, setFundingForm] = useState<ManualFundingFormState>({
     eurAmount: '',
@@ -292,91 +238,50 @@ export function InvestmentsPage() {
   const [eventSort, setEventSort] = useState<InvestmentEventSort>('date_desc')
   const [eventPage, setEventPage] = useState(1)
 
-  function loadEvents() {
-    setError(null)
-    setMessage(null)
-
-    const monthDateRange = getMonthDateRange(month)
-
-    Promise.all([
-      listAllInvestmentEvents({
-        source: source || undefined,
-        event_type: eventType || undefined,
-        date_from: dateFrom || monthDateRange.dateFrom || undefined,
-        date_to: dateTo || monthDateRange.dateTo || undefined,
-      }),
-      listInvestmentPositions(source || undefined),
-      listMarketPrices(),
-      listInvestmentFundingMonths({
-        month: month || '2026-06',
-        source: source || 'trading212',
-      }),
-    ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
-        setEvents(loadedEvents)
-        setPositions(loadedPositions)
-        setMarketPrices(loadedMarketPrices)
-        setFundingMonths(loadedFundingMonths)
-        setEventPage(1)
-
-        if (loadedFundingMonths[0]) {
-          setMonthlyFundingForm({
-            month: loadedFundingMonths[0].month,
-            source: loadedFundingMonths[0].source,
-            manualAmount: loadedFundingMonths[0].manual_amount,
-            cashbackRoundingAmount: loadedFundingMonths[0].cashback_rounding_amount,
-            currency: loadedFundingMonths[0].currency,
-            notes: loadedFundingMonths[0].notes ?? '',
-          })
-        }
+  function handleFundingMonthsLoaded(loadedFundingMonths: InvestmentFundingMonth[]) {
+    if (loadedFundingMonths[0]) {
+      setMonthlyFundingForm({
+        month: loadedFundingMonths[0].month,
+        source: loadedFundingMonths[0].source,
+        manualAmount: loadedFundingMonths[0].manual_amount,
+        cashbackRoundingAmount: loadedFundingMonths[0].cashback_rounding_amount,
+        currency: loadedFundingMonths[0].currency,
+        notes: loadedFundingMonths[0].notes ?? '',
       })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
-      })
-
-    listInvestmentMonthlySeries(chartMonths)
-      .then(setMonthlySeries)
-      .catch(() => {
-        setMonthlySeries([])
-      })
+    }
   }
 
-  useEffect(() => {
-    loadEvents()
-  }, [chartMonths])
-
-  function clearFilters() {
-    setEventType('')
-    setSource('')
-    setMonth('')
-    setDateFrom('')
-    setDateTo('')
-
-    Promise.all([
-      listAllInvestmentEvents(),
-      listInvestmentPositions(),
-      listMarketPrices(),
-      listInvestmentFundingMonths({
-        month: '2026-06',
-        source: 'trading212',
-      }),
-    ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
-        setEvents(loadedEvents)
-        setPositions(loadedPositions)
-        setMarketPrices(loadedMarketPrices)
-        setFundingMonths(loadedFundingMonths)
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
-      })
-
-    listInvestmentMonthlySeries(chartMonths)
-      .then(setMonthlySeries)
-      .catch(() => {
-        setMonthlySeries([])
-      })
-  }
+  const {
+    clearFilters,
+    dateFrom,
+    dateTo,
+    eventType,
+    events,
+    fundingMonths,
+    loadEvents,
+    marketPrices,
+    month,
+    monthlySeries,
+    positions,
+    setDateFrom,
+    setDateTo,
+    setEventType,
+    setFundingMonths,
+    setMonth,
+    setSource,
+    source,
+  } = useInvestmentData({
+    chartMonths,
+    onBeforeLoad: () => {
+      setError(null)
+      setMessage(null)
+    },
+    onError: setError,
+    onEventsReloaded: () => {
+      setEventPage(1)
+    },
+    onFundingMonthsLoaded: handleFundingMonthsLoaded,
+  })
 
   function startManualResolution(event: InvestmentEvent) {
     setResolvingEventId(event.id)
