@@ -364,3 +364,226 @@
     font-size: 0.78rem;
   }
 }
+
+/* Activity mobile rhythm pass. */
+@media (max-width: 800px) {
+  .transactions-page {
+    gap: 0.7rem !important;
+    padding-bottom: calc(7.25rem + env(safe-area-inset-bottom));
+  }
+
+  .transactions-page .transactions-page-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem !important;
+    min-height: 0;
+  }
+
+  .transactions-page .transactions-page-header .page-title-block {
+    display: contents;
+  }
+
+  .transactions-page .transactions-page-header .page-title-block h1 {
+    grid-column: 1;
+    grid-row: 1;
+    max-width: 100%;
+    font-size: clamp(1.9rem, 8vw, 2.25rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.065em;
+  }
+
+  .transactions-page .transactions-page-header > .action-group {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto !important;
+  }
+
+  .transactions-page .transactions-page-header > .action-group .primary-button {
+    min-width: 6.8rem;
+    min-height: 2.55rem !important;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+  }
+
+  .transactions-page .transaction-direction-switch {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin-top: 0 !important;
+    padding: 0.22rem;
+    border-radius: 999px;
+  }
+
+  .transactions-page .transaction-direction-switch button {
+    flex: 1;
+    min-height: 2.45rem;
+    font-size: 0.94rem;
+  }
+
+  .transaction-filter-card {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .transaction-filter-mobile-header {
+    min-height: 2.75rem;
+    padding: 0 0.85rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.055);
+  }
+
+  .transaction-filter-mobile-header strong {
+    font-size: 0.95rem;
+  }
+
+  .transaction-filter-mobile-header span {
+    font-size: 0.76rem;
+  }
+
+  .transaction-filter-mobile-header button {
+    min-height: 2.05rem;
+    padding: 0 0.8rem;
+    border-color: rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.055);
+  }
+
+  .transaction-filter-card-open .transaction-filter-body {
+    margin-top: 0.65rem;
+    padding: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 0.035);
+  }
+
+  .transaction-filter-card-open {
+    padding-bottom: 0 !important;
+  }
+
+  .transaction-filter-actions {
+    gap: 0.45rem;
+  }
+
+  .transaction-filter-actions button {
+    min-height: 2.3rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+  }
+
+  .transaction-mobile-list {
+    display: grid;
+    gap: 0.55rem;
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+
+  .transactions-page .transaction-mobile-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+  }
+
+  .transactions-page .transaction-mobile-card-main {
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .transactions-page .transaction-mobile-card-main strong {
+    font-size: 0.94rem;
+    line-height: 1.15;
+  }
+
+  .transactions-page .transaction-mobile-card-main p {
+    margin-top: 0.22rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .transactions-page .transaction-mobile-card-main > span {
+    font-size: 1rem;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .transactions-page .transaction-mobile-card-meta {
+    gap: 0.35rem;
+  }
+
+  .transactions-page .transaction-mobile-raw {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.3;
+  }
+
+  .transactions-page .transaction-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .transactions-page .transaction-mobile-action {
+    width: 100%;
+    min-height: 2rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 850;
+  }
+}
+
+@media (max-width: 430px) {
+  .transactions-page {
+    gap: 0.62rem !important;
+  }
+
+  .transactions-page .transactions-page-header .page-title-block h1 {
+    font-size: clamp(1.82rem, 8vw, 2.15rem) !important;
+  }
+
+  .transactions-page .transaction-direction-switch button {
+    min-height: 2.35rem;
+  }
+
+  .transactions-page .transaction-mobile-card {
+    padding: 0.72rem;
+  }
+}
+
+/* Hard remove Activity mobile filter outer card. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-filter-card,
+  .transactions-page .filter-panel.transaction-filter-card,
+  .transactions-page .content-card.transaction-filter-card,
+  .transactions-page .panel-card.transaction-filter-card {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-filter-card,
+  :root[data-theme='dark'] .transactions-page .filter-panel.transaction-filter-card,
+  :root[data-theme='dark'] .transactions-page .content-card.transaction-filter-card,
+  :root[data-theme='dark'] .transactions-page .panel-card.transaction-filter-card {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .transactions-page .transaction-filter-mobile-header {
+    border: 1px solid rgb(255 255 255 / 0.14) !important;
+    background: rgb(255 255 255 / 0.055) !important;
+    box-shadow: none !important;
+  }
+
+  .transactions-page .transaction-filter-card-open .transaction-filter-body {
+    border: 1px solid rgb(255 255 255 / 0.12) !important;
+    background: rgb(255 255 255 / 0.035) !important;
+    box-shadow: none !important;
+  }
+}
