@@ -9,8 +9,8 @@
   --dashboard-text: #111827;
   --dashboard-green: #16a34a;
   --dashboard-green-soft: #ecfdf3;
-  --dashboard-orange: #f97316;
-  --dashboard-orange-soft: #fff7ed;
+  --dashboard-orange: #e11d48;
+  --dashboard-orange-soft: #fff1f2;
   --dashboard-blue: #2563eb;
   --dashboard-blue-soft: #eff6ff;
   --dashboard-red: #ef4444;
@@ -120,7 +120,7 @@
 }
 
 .dashboard-metric-spent strong {
-  color: #ea580c;
+  color: #be123c;
 }
 
 .dashboard-metric-negative strong {

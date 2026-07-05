@@ -564,7 +564,29 @@
 :root[data-theme='dark'] .dashboard-metric-positive .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-spent .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-negative .dashboard-metric-icon {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  border: 1px solid rgb(255 255 255 / 0.09);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+:root[data-theme='dark'] .dashboard-metric-income .dashboard-metric-icon {
+  background: rgb(34 197 94 / 0.14);
+  color: #4ade80;
+}
+
+:root[data-theme='dark'] .dashboard-metric-spent .dashboard-metric-icon,
+:root[data-theme='dark'] .dashboard-metric-negative .dashboard-metric-icon {
+  background: rgb(244 63 94 / 0.14);
+  color: #fb7185;
+}
+
+:root[data-theme='dark'] .dashboard-metric-positive .dashboard-metric-icon {
+  background: rgb(138 180 248 / 0.14);
+  color: #8ab4f8;
+}
+
+:root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon {
+  background: rgb(148 163 184 / 0.14);
+  color: #cbd5e1;
 }
 
 @media (max-width: 800px) {
@@ -732,6 +754,12 @@
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.035) inset,
     0 14px 30px rgb(0 0 0 / 0.18);
+}
+
+:root[data-theme='dark'] .global-period-selector strong {
+  border-color: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.055);
+  color: var(--theme-text);
 }
 
 /* Dashboard bars and chart tracks. */
