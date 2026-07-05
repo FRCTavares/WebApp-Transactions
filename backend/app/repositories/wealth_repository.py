@@ -80,14 +80,19 @@ class WealthRepository:
         account_id: int,
         snapshot_date: date,
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        exclude_snapshot_id: int | None = None,
     ) -> bool:
         statement = (
             select(WealthSnapshot.id)
             .where(WealthSnapshot.user_id == user_id)
             .where(WealthSnapshot.account_id == account_id)
             .where(WealthSnapshot.snapshot_date == snapshot_date)
-            .limit(1)
         )
+
+        if exclude_snapshot_id is not None:
+            statement = statement.where(WealthSnapshot.id != exclude_snapshot_id)
+
+        statement = statement.limit(1)
         return self.db.scalar(statement) is not None
 
     def exists_snapshot_by_dedupe_hash(

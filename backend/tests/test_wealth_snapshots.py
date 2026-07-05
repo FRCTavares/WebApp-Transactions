@@ -360,3 +360,71 @@ def test_create_wealth_snapshot_allows_zero_eur_balance(client, db_session):
     assert data["balance"] == "0.00"
     assert data["balance_eur"] == "0.00"
     assert data["fx_rate_to_eur"] == "1.00000000"
+
+def test_reject_duplicate_wealth_snapshot_for_same_account_and_date(client):
+    account = create_account(client)
+
+    first_response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-30",
+            "account_id": account["id"],
+            "balance": "100.00",
+            "currency": "EUR",
+        },
+    )
+    assert first_response.status_code == 201
+
+    duplicate_response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-30",
+            "account_id": account["id"],
+            "balance": "200.00",
+            "currency": "EUR",
+        },
+    )
+
+    assert duplicate_response.status_code == 409
+    assert duplicate_response.json()["detail"] == (
+        "Wealth snapshot already exists for this account and date"
+    )
+
+
+def test_reject_wealth_snapshot_update_that_would_duplicate_account_date(client):
+    account = create_account(client)
+
+    first_response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-30",
+            "account_id": account["id"],
+            "balance": "100.00",
+            "currency": "EUR",
+        },
+    )
+    assert first_response.status_code == 201
+
+    second_response = client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-07-31",
+            "account_id": account["id"],
+            "balance": "200.00",
+            "currency": "EUR",
+        },
+    )
+    assert second_response.status_code == 201
+
+    update_response = client.patch(
+        f"/api/wealth/snapshots/{second_response.json()['id']}",
+        json={
+            "snapshot_date": "2026-06-30",
+        },
+    )
+
+    assert update_response.status_code == 409
+    assert update_response.json()["detail"] == (
+        "Wealth snapshot already exists for this account and date"
+    )
+

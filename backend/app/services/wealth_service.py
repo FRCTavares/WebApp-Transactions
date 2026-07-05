@@ -103,9 +103,17 @@ class WealthService:
         snapshot_data: WealthSnapshotCreate,
         current_user: CurrentUser | None = None,
     ) -> WealthSnapshot:
+        user_id = self._get_user_id(current_user)
+
         self.get_account(snapshot_data.account_id, current_user)
+        self._raise_if_duplicate_snapshot(
+            account_id=snapshot_data.account_id,
+            snapshot_date=snapshot_data.snapshot_date,
+            user_id=user_id,
+        )
+
         snapshot_data = self._normalise_snapshot_create(snapshot_data)
-        return self.repository.create_snapshot(snapshot_data, self._get_user_id(current_user))
+        return self.repository.create_snapshot(snapshot_data, user_id)
 
     def list_snapshots(
         self,
@@ -149,6 +157,7 @@ class WealthService:
         snapshot_data: WealthSnapshotUpdate,
         current_user: CurrentUser | None = None,
     ) -> WealthSnapshot:
+        user_id = self._get_user_id(current_user)
         snapshot = self.get_snapshot(snapshot_id, current_user)
 
         account_id = snapshot_data.account_id
@@ -158,6 +167,15 @@ class WealthService:
         normalised_data = self._normalise_snapshot_update(
             existing_snapshot=snapshot,
             snapshot_data=snapshot_data,
+        )
+        effective_account_id = normalised_data.account_id or snapshot.account_id
+        effective_snapshot_date = normalised_data.snapshot_date or snapshot.snapshot_date
+
+        self._raise_if_duplicate_snapshot(
+            account_id=effective_account_id,
+            snapshot_date=effective_snapshot_date,
+            user_id=user_id,
+            exclude_snapshot_id=snapshot.id,
         )
 
         return self.repository.update_snapshot(snapshot, normalised_data)
@@ -242,6 +260,24 @@ class WealthService:
             )
 
         return rows
+
+    def _raise_if_duplicate_snapshot(
+        self,
+        account_id: int,
+        snapshot_date: date,
+        user_id: str,
+        exclude_snapshot_id: int | None = None,
+    ) -> None:
+        if self.repository.exists_snapshot_for_account_date(
+            account_id=account_id,
+            snapshot_date=snapshot_date,
+            user_id=user_id,
+            exclude_snapshot_id=exclude_snapshot_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Wealth snapshot already exists for this account and date",
+            )
 
     def _get_money_owed_to_me(self, user_id: str) -> Decimal:
         if self.owed_repository is None:
