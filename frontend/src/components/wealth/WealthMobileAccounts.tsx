@@ -1,4 +1,4 @@
-import type { InvestmentPosition, WealthAccount, WealthSnapshot } from '../../types/api'
+import type { InvestmentPosition, OwedItem, WealthAccount, WealthSnapshot } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import {
   getAccountTypeLabel,
@@ -11,10 +11,17 @@ type WealthAccountGroup = {
   accounts: WealthAccount[]
 }
 
+type OwedReceivableGroup = {
+  person: string
+  amount: number
+  count: number
+}
+
 type WealthMobileAccountsProps = {
   accountGroups: WealthAccountGroup[]
   latestByAccount: Map<number, WealthSnapshot>
   investmentPositions: InvestmentPosition[]
+  owedItems?: OwedItem[]
 }
 
 function getAccountBalance(
@@ -68,12 +75,38 @@ function getGroupTotal(
     .toFixed(2)
 }
 
+function getOwedReceivableTotal(owedItems: OwedItem[]) {
+  return owedItems.reduce((total, item) => total + Number(item.amount_remaining), 0)
+}
+
+function getOwedReceivableGroups(owedItems: OwedItem[]): OwedReceivableGroup[] {
+  const groups = new Map<string, OwedReceivableGroup>()
+
+  for (const item of owedItems) {
+    const person = item.person.trim() || 'Unknown'
+    const currentGroup = groups.get(person) ?? {
+      person,
+      amount: 0,
+      count: 0,
+    }
+
+    currentGroup.amount += Number(item.amount_remaining)
+    currentGroup.count += 1
+    groups.set(person, currentGroup)
+  }
+
+  return [...groups.values()].sort((first, second) => second.amount - first.amount)
+}
+
 export function WealthMobileAccounts({
   accountGroups,
   latestByAccount,
   investmentPositions,
+  owedItems = [],
 }: WealthMobileAccountsProps) {
-  if (accountGroups.length === 0) {
+  const owedReceivableTotal = getOwedReceivableTotal(owedItems)
+  const owedReceivableGroups = getOwedReceivableGroups(owedItems)
+  if (accountGroups.length === 0 && owedReceivableTotal <= 0) {
     return (
       <section className="wealth-mobile-accounts">
         <div className="wealth-mobile-empty">
@@ -87,6 +120,32 @@ export function WealthMobileAccounts({
   return (
     <section className="wealth-mobile-accounts">
       <h2>Accounts</h2>
+
+      {owedReceivableTotal > 0 ? (
+        <details className="wealth-mobile-account-group wealth-mobile-account-group-receivable">
+          <summary className="wealth-mobile-account-group-header">
+            <div>
+              <strong>Owed to me</strong>
+              <span>
+                {owedItems.length} active item{owedItems.length === 1 ? '' : 's'}
+              </span>
+            </div>
+            <strong>{formatMoney(owedReceivableTotal.toFixed(2))}</strong>
+          </summary>
+
+          <div className="wealth-mobile-account-list">
+            {owedReceivableGroups.map((group) => (
+              <div key={group.person} className="wealth-mobile-account-item">
+                <div>
+                  <strong>{group.person}</strong>
+                  <span>{group.count} item{group.count === 1 ? '' : 's'}</span>
+                </div>
+                <div>{formatMoney(group.amount.toFixed(2))}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
 
       {accountGroups.map((group) => (
         <details key={group.key} className="wealth-mobile-account-group">

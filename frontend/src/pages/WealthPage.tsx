@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listInvestmentPositions } from '../api/investmentEvents'
+import { listOwedItems } from '../api/owed'
 import {
   createWealthAccount,
   createWealthSnapshot,
@@ -31,6 +32,7 @@ import {
 } from '../utils/wealthPageUtils'
 import type {
   InvestmentPosition,
+  OwedItem,
   WealthAccount,
   WealthAccountType,
   WealthMonthlyTotal,
@@ -47,6 +49,7 @@ export function WealthPage(_props: WealthPageProps) {
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
   const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
   const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
+  const [owedItems, setOwedItems] = useState<OwedItem[]>([])
   const [quickSnapshotBalances, setQuickSnapshotBalances] = useState<Record<number, string>>({})
   const [accountForm, setAccountForm] = useState<AccountFormState>(getInitialAccountForm)
   const [snapshotForm, setSnapshotForm] = useState<SnapshotFormState>(getInitialSnapshotForm)
@@ -67,17 +70,20 @@ export function WealthPage(_props: WealthPageProps) {
       listWealthSnapshots({ limit: 500 }),
       listWealthMonthlyTotals(),
       listInvestmentPositions(),
+      listOwedItems({ status: 'active', limit: 500 }),
     ])
       .then(([
         loadedAccounts,
         loadedSnapshots,
         loadedMonthlyTotals,
         loadedInvestmentPositions,
+        loadedOwedItems,
       ]) => {
         setAccounts(loadedAccounts)
         setSnapshots(loadedSnapshots)
         setMonthlyTotals(loadedMonthlyTotals)
         setInvestmentPositions(loadedInvestmentPositions)
+        setOwedItems(loadedOwedItems)
       })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load wealth data')
@@ -420,6 +426,7 @@ export function WealthPage(_props: WealthPageProps) {
         accountGroups={accountGroups}
         latestByAccount={latestByAccount}
         investmentPositions={investmentPositions}
+        owedItems={owedItems}
       />
 
       {isAccountFormOpen ? (

@@ -20,11 +20,14 @@ const chartWindowOptions = [
   { label: '5Y', value: 60 },
 ]
 
+const isMobileChartViewport =
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 800px)').matches
+
 const chartWidth = 900
-const chartHeight = 190
-const paddingTop = 22
+const chartHeight = isMobileChartViewport ? 320 : 190
+const paddingTop = isMobileChartViewport ? 12 : 22
 const paddingRight = 28
-const paddingBottom = 34
+const paddingBottom = isMobileChartViewport ? 46 : 34
 const paddingLeft = 28
 
 const tooltipWidth = 154

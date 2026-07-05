@@ -1,0 +1,290 @@
+/* Wealth mobile-only refinements. Keep desktop chart untouched. */
+
+@media (max-width: 800px) {
+  .wealth-page {
+    gap: 0.58rem !important;
+  }
+
+  .wealth-page .wealth-monthly-panel.wealth-trend-panel {
+    display: block !important;
+  }
+
+  .wealth-page .wealth-trend-panel {
+    margin-bottom: 0 !important;
+    padding: 0.82rem !important;
+    border-radius: 1rem !important;
+  }
+
+  .wealth-page .wealth-trend-panel .wealth-chart-card {
+    gap: 0.5rem !important;
+  }
+
+  .wealth-page .wealth-chart-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start !important;
+    gap: 0.7rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .wealth-page .wealth-chart-header > div:first-child {
+    min-width: 0;
+  }
+
+  .wealth-page .wealth-chart-header h3 {
+    margin: 0 0 0.18rem !important;
+    font-size: 1.05rem !important;
+    line-height: 1.08;
+  }
+
+  .wealth-page .wealth-chart-header p {
+    margin: 0 !important;
+    max-width: 10.5rem;
+    font-size: 0.78rem !important;
+    line-height: 1.2;
+  }
+
+  .wealth-page .wealth-chart-stat {
+    justify-items: end !important;
+    min-width: 0 !important;
+    text-align: right !important;
+  }
+
+  .wealth-page .wealth-chart-stat span {
+    margin-bottom: 0.14rem;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .wealth-page .wealth-chart-stat strong {
+    font-size: 1.12rem !important;
+    line-height: 1 !important;
+    letter-spacing: -0.05em;
+  }
+
+  .wealth-page .wealth-chart-stat small {
+    max-width: 7.8rem;
+    font-size: 0.66rem !important;
+    line-height: 1.1;
+  }
+
+  .wealth-page .wealth-chart-wrap {
+    margin-top: 0.25rem !important;
+    background: transparent !important;
+  }
+
+  .wealth-page .wealth-chart-wrap svg {
+    min-height: 12.8rem !important;
+  }
+
+  .wealth-page .wealth-chart-label {
+    fill: var(--theme-muted, #aeb5c2) !important;
+    font-size: 15px !important;
+    font-weight: 900 !important;
+  }
+
+  .wealth-page .wealth-chart-footer,
+  .wealth-page .investment-trend-footer {
+    margin-top: 0.12rem !important;
+  }
+
+  .wealth-page .investment-trend-window-selector {
+    width: 100%;
+    min-height: 2.5rem !important;
+    padding: 0.18rem !important;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.045);
+    box-shadow: none;
+  }
+
+  .wealth-page .investment-trend-window-selector button {
+    flex: 1;
+    min-height: 2.05rem !important;
+    padding: 0 0.65rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--theme-muted, #aeb5c2);
+    font-size: 0.84rem !important;
+    font-weight: 900;
+  }
+
+  .wealth-page .investment-trend-window-selector button.active {
+    background: rgb(96 165 250 / 0.16);
+    color: var(--theme-text, #f8fafc);
+    box-shadow: none;
+  }
+
+  .wealth-mobile-accounts {
+    margin-top: -0.04rem !important;
+  }
+
+  .wealth-mobile-accounts h2 {
+    margin-top: 0.34rem !important;
+    margin-bottom: 0.3rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wealth-page .wealth-chart-header {
+    gap: 0.55rem !important;
+  }
+
+  .wealth-page .wealth-chart-header p {
+    max-width: 9rem;
+  }
+
+  .wealth-page .wealth-chart-stat strong {
+    font-size: 1.04rem !important;
+  }
+
+  .wealth-page .wealth-chart-stat small {
+    max-width: 6.7rem;
+    font-size: 0.62rem !important;
+  }
+
+  .wealth-page .wealth-chart-wrap svg {
+    min-height: 12.3rem !important;
+  }
+}
+
+
+/* Wealth mobile chart card polish v2. */
+@media (max-width: 800px) {
+  .wealth-page .wealth-trend-panel {
+    padding: 0.78rem !important;
+  }
+
+  .wealth-page .wealth-chart-card {
+    min-height: 0 !important;
+  }
+
+  .wealth-page .wealth-chart-header {
+    margin-bottom: 0 !important;
+  }
+
+  .wealth-page .wealth-chart-wrap {
+    margin-top: 0.05rem !important;
+    border-radius: 0.9rem !important;
+  }
+
+  .wealth-page .wealth-chart-wrap svg {
+    height: 13.6rem !important;
+    min-height: 13.6rem !important;
+  }
+
+  .wealth-page .wealth-chart-line {
+    stroke-width: 2.7 !important;
+  }
+
+  .wealth-page .wealth-chart-current-point {
+    r: 5px;
+    stroke-width: 2.5 !important;
+  }
+
+  .wealth-page .wealth-chart-label {
+    fill: var(--theme-muted, #aeb5c2) !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+  }
+
+  .wealth-page .wealth-chart-footer {
+    gap: 0.62rem !important;
+  }
+
+  .wealth-page .investment-trend-legend span {
+    font-size: 0.92rem !important;
+  }
+
+  .wealth-page .investment-trend-window-selector {
+    min-height: 2.38rem !important;
+  }
+
+  .wealth-page .investment-trend-window-selector button {
+    min-height: 1.96rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wealth-page .wealth-chart-wrap svg {
+    height: 13.2rem !important;
+    min-height: 13.2rem !important;
+  }
+
+  .wealth-page .wealth-chart-label {
+    font-size: 17px !important;
+  }
+}
+
+
+/* Wealth mobile real plot geometry fix. */
+@media (max-width: 800px) {
+  .wealth-page .wealth-chart-wrap {
+    margin-top: 0.05rem !important;
+  }
+
+  .wealth-page .wealth-chart-wrap svg {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .wealth-page .wealth-chart-line {
+    stroke-width: 3.25 !important;
+  }
+
+  .wealth-page .wealth-chart-current-point {
+    stroke-width: 2.6 !important;
+  }
+
+  .wealth-page .wealth-chart-label {
+    fill: var(--theme-muted, #aeb5c2) !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+  }
+
+  .wealth-page .wealth-chart-footer {
+    margin-top: 0.2rem !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wealth-page .wealth-chart-label {
+    font-size: 19px !important;
+  }
+}
+
+/* Wealth mobile title-to-card spacing. */
+@media (max-width: 800px) {
+  .wealth-page {
+    gap: 0.72rem !important;
+  }
+
+  .wealth-page .wealth-page-header {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .wealth-page .page-title-block {
+    gap: 0 !important;
+  }
+
+  .wealth-page .page-title-block h1 {
+    margin-bottom: 0 !important;
+  }
+
+  .wealth-page .wealth-monthly-panel.wealth-trend-panel {
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wealth-page {
+    gap: 0.68rem !important;
+  }
+
+  .wealth-page .wealth-monthly-panel.wealth-trend-panel {
+    margin-top: 0 !important;
+  }
+}

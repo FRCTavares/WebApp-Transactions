@@ -711,3 +711,205 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Wealth mobile receivable/account card pass. */
+@media (max-width: 800px) {
+  .wealth-page {
+    gap: 0.7rem !important;
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+
+  .wealth-page .page-header {
+    margin-bottom: 0 !important;
+  }
+
+  .wealth-page .page-title-block h1 {
+    font-size: clamp(1.9rem, 8vw, 2.25rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.065em;
+  }
+
+  .wealth-page .wealth-monthly-panel.wealth-trend-panel {
+    display: block !important;
+  }
+
+  .wealth-mobile-accounts {
+    display: grid !important;
+    gap: 0.58rem !important;
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+  }
+
+  .wealth-mobile-accounts h2 {
+    margin: 0.65rem 0 0.34rem !important;
+    color: var(--theme-text, #f8fafc) !important;
+    font-size: 1.45rem !important;
+    line-height: 1.05;
+    letter-spacing: -0.06em;
+  }
+
+  .wealth-mobile-account-group,
+  .wealth-mobile-empty {
+    overflow: hidden;
+    padding: 0.85rem 0.9rem !important;
+    border: 1px solid rgb(255 255 255 / 0.12) !important;
+    border-radius: 1rem !important;
+    background: rgb(255 255 255 / 0.045) !important;
+    color: var(--theme-text, #f8fafc) !important;
+    box-shadow: none !important;
+  }
+
+  .wealth-mobile-account-group-receivable {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    background: rgb(255 255 255 / 0.045) !important;
+  }
+
+  .wealth-mobile-account-group-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center !important;
+    gap: 0.65rem !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .wealth-mobile-account-group-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .wealth-mobile-account-group-header > div {
+    min-width: 0;
+  }
+
+  .wealth-mobile-account-group-header strong,
+  .wealth-mobile-account-item strong {
+    color: var(--theme-text, #f8fafc) !important;
+  }
+
+  .wealth-mobile-account-group-header > div strong {
+    display: block;
+    overflow: hidden;
+    max-width: 10.5rem;
+    font-size: 1rem;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wealth-mobile-account-group-header span,
+  .wealth-mobile-account-group span,
+  .wealth-mobile-account-item span,
+  .wealth-mobile-empty,
+  .wealth-mobile-empty p {
+    color: var(--theme-muted, #aeb5c2) !important;
+  }
+
+  .wealth-mobile-account-group-header > strong {
+    color: var(--theme-text, #f8fafc) !important;
+    font-size: 1.08rem;
+    font-weight: 950;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+
+  .wealth-mobile-account-group-header::after {
+    content: "Show";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.8rem;
+    min-height: 2rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.065);
+    color: var(--theme-text, #f8fafc);
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  .wealth-mobile-account-group[open] .wealth-mobile-account-group-header {
+    padding-bottom: 0.6rem !important;
+    border-bottom: 1px solid rgb(255 255 255 / 0.09) !important;
+  }
+
+  .wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
+    content: "Hide";
+  }
+
+  .wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
+    display: none !important;
+  }
+
+  .wealth-mobile-account-group[open] .wealth-mobile-account-list {
+    display: grid !important;
+    gap: 0.42rem !important;
+    margin-top: 0.55rem !important;
+  }
+
+  .wealth-mobile-account-item {
+    align-items: center;
+    min-height: 2.5rem !important;
+    padding: 0.45rem 0 !important;
+    border-bottom: 1px solid rgb(255 255 255 / 0.075) !important;
+  }
+
+  .wealth-mobile-account-item:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .wealth-mobile-account-item > div:first-child {
+    min-width: 0;
+  }
+
+  .wealth-mobile-account-item > div:last-child {
+    color: var(--theme-text, #f8fafc) !important;
+    font-weight: 900;
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 430px) {
+  .wealth-mobile-account-group-header {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.5rem !important;
+  }
+
+  .wealth-mobile-account-group-header > div strong {
+    max-width: 8.4rem;
+  }
+
+  .wealth-mobile-account-group-header > strong {
+    font-size: 1rem;
+  }
+
+  .wealth-mobile-account-group-header::after {
+    min-width: 3.4rem;
+    padding: 0 0.6rem;
+  }
+}
+
+/* Wealth mobile section spacing refinement. */
+@media (max-width: 800px) {
+  .wealth-page {
+    gap: 0.52rem !important;
+  }
+
+  .wealth-mobile-accounts {
+    gap: 0.54rem !important;
+    margin-top: -0.08rem !important;
+  }
+
+  .wealth-mobile-accounts h2 {
+    margin-top: 0.28rem !important;
+    margin-bottom: 0.28rem !important;
+  }
+
+  .wealth-mobile-account-group,
+  .wealth-mobile-empty {
+    min-height: 4.65rem !important;
+  }
+}
