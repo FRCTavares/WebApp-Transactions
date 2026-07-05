@@ -404,3 +404,23 @@
   display: grid;
   gap: 18px;
 }
+
+/* Dark-mode import section readability. */
+:root[data-theme='dark'] .import-preview-section-header {
+  border-bottom-color: rgb(255 255 255 / 0.105);
+  background: #232429;
+  color: var(--theme-text);
+}
+
+:root[data-theme='dark'] .import-preview-section-header h2 {
+  color: var(--theme-text);
+}
+
+:root[data-theme='dark'] .import-preview-section-header span {
+  color: var(--theme-muted);
+}
+
+:root[data-theme='dark'] .import-invalid-section .import-preview-section-header {
+  border-bottom-color: rgb(248 113 113 / 0.24);
+  background: rgb(220 38 38 / 0.12);
+}
