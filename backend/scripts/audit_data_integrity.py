@@ -143,6 +143,59 @@ CHECKS = [
         """,
     ),
     IntegrityCheck(
+        name="owed_allocations_payment_not_over_allocated",
+        description="Owed payment allocation totals cannot exceed the payment amount.",
+        sql="""
+            SELECT COUNT(*)
+            FROM owed_payments payment
+            JOIN (
+                SELECT
+                    user_id,
+                    owed_payment_id,
+                    SUM(amount) AS allocated_amount
+                FROM owed_payment_allocations
+                GROUP BY user_id, owed_payment_id
+            ) allocation_total
+              ON allocation_total.owed_payment_id = payment.id
+             AND allocation_total.user_id = payment.user_id
+            WHERE allocation_total.allocated_amount > payment.amount + 0.01
+        """,
+    ),
+    IntegrityCheck(
+        name="owed_allocations_item_not_over_allocated",
+        description="Owed payment allocation totals cannot exceed the owed item total.",
+        sql="""
+            SELECT COUNT(*)
+            FROM owed_items item
+            JOIN (
+                SELECT
+                    user_id,
+                    owed_item_id,
+                    SUM(amount) AS allocated_amount
+                FROM owed_payment_allocations
+                GROUP BY user_id, owed_item_id
+            ) allocation_total
+              ON allocation_total.owed_item_id = item.id
+             AND allocation_total.user_id = item.user_id
+            WHERE allocation_total.allocated_amount > item.amount_total + 0.01
+        """,
+    ),
+    IntegrityCheck(
+        name="owed_allocations_person_matches_payment",
+        description="Owed payment allocations should connect payments and owed items for the same person.",
+        sql="""
+            SELECT COUNT(*)
+            FROM owed_payment_allocations allocation
+            JOIN owed_payments payment
+              ON payment.id = allocation.owed_payment_id
+             AND payment.user_id = allocation.user_id
+            JOIN owed_items item
+              ON item.id = allocation.owed_item_id
+             AND item.user_id = allocation.user_id
+            WHERE lower(trim(payment.person)) != lower(trim(item.person))
+        """,
+    ),
+    IntegrityCheck(
         name="investment_events_amount_positive",
         description="Investment events must store positive amounts.",
         sql="""
@@ -157,6 +210,59 @@ CHECKS = [
             SELECT COUNT(*) FROM investment_events
             WHERE length(currency) != 3
                OR (original_currency IS NOT NULL AND length(original_currency) != 3)
+        """,
+    ),
+    IntegrityCheck(
+        name="investment_market_events_required_fields",
+        description="Investment buy/sell events need quantity, price, and ticker or ISIN.",
+        sql="""
+            SELECT COUNT(*)
+            FROM investment_events
+            WHERE event_type IN ('market_buy', 'market_sell')
+              AND (
+                    quantity IS NULL
+                 OR quantity <= 0
+                 OR price IS NULL
+                 OR price <= 0
+                 OR (
+                        (ticker IS NULL OR trim(ticker) = '')
+                    AND (isin IS NULL OR trim(isin) = '')
+                    )
+              )
+        """,
+    ),
+    IntegrityCheck(
+        name="investment_market_sells_not_oversold",
+        description="Investment sell events cannot sell more quantity than prior holdings.",
+        sql="""
+            SELECT COUNT(*)
+            FROM investment_events sell
+            WHERE sell.event_type = 'market_sell'
+              AND sell.quantity IS NOT NULL
+              AND sell.quantity > (
+                    SELECT COALESCE(
+                        SUM(
+                            CASE
+                                WHEN prior.event_type = 'market_buy' THEN prior.quantity
+                                WHEN prior.event_type = 'market_sell' THEN -prior.quantity
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    )
+                    FROM investment_events prior
+                    WHERE prior.user_id = sell.user_id
+                      AND prior.source = sell.source
+                      AND COALESCE(prior.account, '') = COALESCE(sell.account, '')
+                      AND COALESCE(prior.ticker, '') = COALESCE(sell.ticker, '')
+                      AND COALESCE(prior.isin, '') = COALESCE(sell.isin, '')
+                      AND prior.event_type IN ('market_buy', 'market_sell')
+                      AND prior.quantity IS NOT NULL
+                      AND (
+                            prior.date < sell.date
+                         OR (prior.date = sell.date AND prior.id < sell.id)
+                      )
+              )
         """,
     ),
     IntegrityCheck(
@@ -182,6 +288,28 @@ CHECKS = [
                 WHERE account.id = snapshot.account_id
                   AND account.user_id = snapshot.user_id
             )
+        """,
+    ),
+    IntegrityCheck(
+        name="wealth_snapshots_account_date_unique",
+        description="There should be at most one wealth snapshot per user, account, and date.",
+        sql="""
+            SELECT COUNT(*)
+            FROM (
+                SELECT user_id, account_id, snapshot_date
+                FROM wealth_snapshots
+                GROUP BY user_id, account_id, snapshot_date
+                HAVING COUNT(*) > 1
+            ) duplicate_snapshots
+        """,
+    ),
+    IntegrityCheck(
+        name="wealth_snapshots_balance_eur_consistent",
+        description="Wealth snapshot EUR balance should match balance multiplied by FX rate.",
+        sql="""
+            SELECT COUNT(*)
+            FROM wealth_snapshots
+            WHERE abs(balance_eur - (balance * fx_rate_to_eur)) > 0.01
         """,
     ),
     IntegrityCheck(

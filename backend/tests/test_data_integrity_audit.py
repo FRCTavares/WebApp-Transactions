@@ -347,3 +347,339 @@ def test_data_integrity_audit_allows_zero_wealth_balance(tmp_path):
     results = run_audit(engine)
 
     assert get_result(results, "wealth_snapshots_amounts_valid")["violations"] == 0
+
+def test_data_integrity_audit_detects_owed_allocation_consistency_issues(tmp_path):
+    engine, _ = create_test_engine(tmp_path)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO owed_items (
+                    user_id,
+                    person,
+                    amount_total,
+                    amount_paid,
+                    amount_remaining,
+                    reason,
+                    status,
+                    source,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    'Mother',
+                    10,
+                    0,
+                    10,
+                    'Shared meal',
+                    'open',
+                    'manual',
+                    '2026-06-01 00:00:00',
+                    '2026-06-01 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO owed_payments (
+                    user_id,
+                    person,
+                    payment_date,
+                    amount,
+                    currency,
+                    method,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    'Father',
+                    '2026-06-02',
+                    5,
+                    'EUR',
+                    'cash',
+                    '2026-06-02 00:00:00',
+                    '2026-06-02 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO owed_payments (
+                    user_id,
+                    person,
+                    payment_date,
+                    amount,
+                    currency,
+                    method,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    'Mother',
+                    '2026-06-03',
+                    20,
+                    'EUR',
+                    'cash',
+                    '2026-06-03 00:00:00',
+                    '2026-06-03 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO owed_payment_allocations (
+                    user_id,
+                    owed_payment_id,
+                    owed_item_id,
+                    amount,
+                    created_at
+                )
+                VALUES
+                    ('local-default-user', 1, 1, 6, '2026-06-02 00:00:00'),
+                    ('local-default-user', 2, 1, 11, '2026-06-03 00:00:00')
+                """
+            )
+        )
+
+    results = run_audit(engine)
+
+    assert get_result(
+        results,
+        "owed_allocations_payment_not_over_allocated",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "owed_allocations_item_not_over_allocated",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "owed_allocations_person_matches_payment",
+    )["violations"] == 1
+
+
+def test_data_integrity_audit_detects_invalid_investment_market_events(tmp_path):
+    engine, _ = create_test_engine(tmp_path)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO investment_events (
+                    user_id,
+                    date,
+                    source,
+                    account,
+                    event_type,
+                    description,
+                    raw_description,
+                    amount,
+                    currency,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    '2026-06-01',
+                    'trading212',
+                    'main',
+                    'market_buy',
+                    'Bad buy',
+                    'Bad buy',
+                    10,
+                    'EUR',
+                    '2026-06-01 00:00:00',
+                    '2026-06-01 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO investment_events (
+                    user_id,
+                    date,
+                    source,
+                    account,
+                    event_type,
+                    description,
+                    raw_description,
+                    instrument_name,
+                    ticker,
+                    isin,
+                    quantity,
+                    price,
+                    amount,
+                    currency,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    '2026-06-02',
+                    'trading212',
+                    'main',
+                    'market_buy',
+                    'Valid buy',
+                    'Valid buy',
+                    'ETF',
+                    'VWCE',
+                    'IE00BK5BQT80',
+                    1,
+                    100,
+                    100,
+                    'EUR',
+                    '2026-06-02 00:00:00',
+                    '2026-06-02 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO investment_events (
+                    user_id,
+                    date,
+                    source,
+                    account,
+                    event_type,
+                    description,
+                    raw_description,
+                    instrument_name,
+                    ticker,
+                    isin,
+                    quantity,
+                    price,
+                    amount,
+                    currency,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    '2026-06-03',
+                    'trading212',
+                    'main',
+                    'market_sell',
+                    'Oversold sell',
+                    'Oversold sell',
+                    'ETF',
+                    'VWCE',
+                    'IE00BK5BQT80',
+                    2,
+                    100,
+                    200,
+                    'EUR',
+                    '2026-06-03 00:00:00',
+                    '2026-06-03 00:00:00'
+                )
+                """
+            )
+        )
+
+    results = run_audit(engine)
+
+    assert get_result(
+        results,
+        "investment_market_events_required_fields",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "investment_market_sells_not_oversold",
+    )["violations"] == 1
+
+
+def test_data_integrity_audit_detects_wealth_snapshot_consistency_issues(tmp_path):
+    engine, _ = create_test_engine(tmp_path)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO wealth_accounts (
+                    user_id,
+                    name,
+                    account_type,
+                    currency,
+                    is_active,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    'Brokerage',
+                    'investment',
+                    'USD',
+                    1,
+                    '2026-06-01 00:00:00',
+                    '2026-06-01 00:00:00'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO wealth_snapshots (
+                    user_id,
+                    snapshot_date,
+                    account_id,
+                    balance,
+                    currency,
+                    balance_eur,
+                    fx_rate_to_eur,
+                    source,
+                    created_at,
+                    updated_at
+                )
+                VALUES
+                    (
+                        'local-default-user',
+                        '2026-06-01',
+                        1,
+                        100,
+                        'USD',
+                        100,
+                        1.5,
+                        'manual',
+                        '2026-06-01 00:00:00',
+                        '2026-06-01 00:00:00'
+                    ),
+                    (
+                        'local-default-user',
+                        '2026-06-01',
+                        1,
+                        100,
+                        'USD',
+                        150,
+                        1.5,
+                        'manual',
+                        '2026-06-01 00:00:00',
+                        '2026-06-01 00:00:00'
+                    )
+                """
+            )
+        )
+
+    results = run_audit(engine)
+
+    assert get_result(
+        results,
+        "wealth_snapshots_account_date_unique",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "wealth_snapshots_balance_eur_consistent",
+    )["violations"] == 1
+
