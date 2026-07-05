@@ -398,3 +398,9 @@
     flex-direction: column;
   }
 }
+
+/* Import batch detail. */
+.import-batch-detail-grid {
+  display: grid;
+  gap: 18px;
+}

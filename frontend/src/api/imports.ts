@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPostForm } from './client'
 import type {
   ImportBatch,
   ImportPreviewResponse,
+  InvestmentEvent,
   LegacyExcelWealthCommitResponse,
   LegacyExcelWealthPreviewResponse,
   Transaction,
@@ -34,6 +35,12 @@ export function listImportBatches() {
 
 export function listImportBatchTransactions(batchId: number) {
   return apiGet<Transaction[]>(`/api/import/batches/${batchId}/transactions`)
+}
+
+export function listImportBatchInvestmentEvents(batchId: number) {
+  return apiGet<InvestmentEvent[]>(
+    `/api/import/batches/${batchId}/investment-events`,
+  )
 }
 
 export function deleteImportBatch(batchId: number) {

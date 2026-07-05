@@ -475,3 +475,122 @@ def test_delete_import_batch_preserves_manual_and_other_batch_records(
     assert db_session.get(Transaction, manual_transaction_id) is not None
     assert db_session.get(ImportBatch, other_batch_id) is not None
 
+
+
+def create_investment_event(
+    db_session,
+    *,
+    import_batch_id,
+    event_date=date(2026, 5, 1),
+    description="Imported investment event",
+    user_id=LOCAL_DEFAULT_USER_ID,
+):
+    investment_event = InvestmentEvent(
+        user_id=user_id,
+        date=event_date,
+        source="trading212",
+        event_type="buy",
+        description=description,
+        raw_description=description,
+        amount=Decimal("20.00"),
+        currency="EUR",
+        import_batch_id=import_batch_id,
+        dedupe_hash=f"{user_id}-{import_batch_id}-{description}",
+    )
+
+    db_session.add(investment_event)
+    db_session.commit()
+    db_session.refresh(investment_event)
+
+    return investment_event
+
+
+def test_list_import_batch_investment_events(client, db_session):
+    import_batch = create_import_batch(
+        db_session,
+        source="trading212",
+        filename="trading212.csv",
+    )
+    other_batch = create_import_batch(
+        db_session,
+        source="trading212",
+        filename="other.csv",
+    )
+
+    newer_event = create_investment_event(
+        db_session,
+        import_batch_id=import_batch.id,
+        event_date=date(2026, 5, 2),
+        description="Newer investment event",
+    )
+    older_event = create_investment_event(
+        db_session,
+        import_batch_id=import_batch.id,
+        event_date=date(2026, 5, 1),
+        description="Older investment event",
+    )
+    create_investment_event(
+        db_session,
+        import_batch_id=other_batch.id,
+        event_date=date(2026, 5, 3),
+        description="Other batch event",
+    )
+
+    response = client.get(f"/api/import/batches/{import_batch.id}/investment-events")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["id"] == newer_event.id
+    assert data[0]["description"] == "Newer investment event"
+    assert data[1]["id"] == older_event.id
+    assert data[1]["description"] == "Older investment event"
+
+
+def test_list_import_batch_investment_events_returns_404_when_batch_missing(client):
+    response = client.get("/api/import/batches/999/investment-events")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Import batch not found"
+
+
+def test_list_import_batch_investment_events_are_isolated_by_current_user(
+    client,
+    db_session,
+):
+    first_batch = create_import_batch(
+        db_session,
+        filename="first-user.csv",
+        user_id="local-default-user",
+    )
+    second_batch = create_import_batch(
+        db_session,
+        filename="second-user.csv",
+        user_id="other-user",
+    )
+
+    first_event = create_investment_event(
+        db_session,
+        import_batch_id=first_batch.id,
+        description="First user event",
+        user_id="local-default-user",
+    )
+    create_investment_event(
+        db_session,
+        import_batch_id=second_batch.id,
+        description="Second user event",
+        user_id="other-user",
+    )
+
+    response = client.get(f"/api/import/batches/{first_batch.id}/investment-events")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [event["id"] for event in data] == [first_event.id]
+
+    missing_response = client.get(
+        f"/api/import/batches/{second_batch.id}/investment-events"
+    )
+    assert missing_response.status_code == 404

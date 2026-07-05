@@ -12,6 +12,7 @@ from app.repositories.wealth_repository import WealthRepository
 from app.schemas.fx_match import FxMatchPreviewResponse
 from app.schemas.import_batch import ImportBatchDeleteResponse, ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
+from app.schemas.investment_event import InvestmentEventRead
 from app.schemas.transaction import TransactionRead
 from app.services.category_rule_service import CategoryRuleService
 from app.services.fx_match_service import FxMatchService
@@ -101,6 +102,25 @@ def list_import_batch_transactions(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_import_batch_transactions(
+        import_batch_id=batch_id,
+        limit=limit,
+        offset=offset,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/batches/{batch_id}/investment-events",
+    response_model=list[InvestmentEventRead],
+)
+def list_import_batch_investment_events(
+    batch_id: int,
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    service: ImportService = Depends(get_import_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.list_import_batch_investment_events(
         import_batch_id=batch_id,
         limit=limit,
         offset=offset,

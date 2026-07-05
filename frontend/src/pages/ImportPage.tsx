@@ -3,6 +3,7 @@ import {
   commitImport,
   deleteImportBatch,
   listImportBatches,
+  listImportBatchInvestmentEvents,
   listImportBatchTransactions,
   previewImport,
 } from '../api/imports'
@@ -14,6 +15,7 @@ import type {
   ImportPreviewInvestmentEvent,
   ImportPreviewResponse,
   ImportPreviewTransaction,
+  InvestmentEvent,
   Transaction,
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
@@ -231,6 +233,75 @@ function InvalidRowsTable({ rows }: { rows: ImportInvalidRow[] }) {
   )
 }
 
+
+function BatchInvestmentEventsTable({ events }: { events: InvestmentEvent[] }) {
+  if (events.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="import-preview-section">
+      <div className="import-preview-section-header">
+        <h2>Investment events</h2>
+        <span>{events.length} rows</span>
+      </div>
+
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+              <th>Description</th>
+              <th>Instrument</th>
+              <th>Funding</th>
+              <th className="right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event) => (
+              <tr key={event.id}>
+                <td>{formatDate(event.date)}</td>
+                <td>
+                  <span className="badge badge-neutral">{event.event_type}</span>
+                </td>
+                <td>
+                  <div>{event.description}</div>
+                  <div className="muted small">{event.raw_description}</div>
+                </td>
+                <td>
+                  {event.instrument_name || event.ticker || event.isin ? (
+                    <div>
+                      <div>{event.instrument_name || event.ticker || event.isin}</div>
+                      <div className="muted small">
+                        {[event.ticker, event.isin].filter(Boolean).join(' · ') || '-'}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
+                <td>
+                  {event.funding_match_status ? (
+                    <span className="badge badge-neutral">
+                      {event.funding_source ?? 'funding'} · {event.funding_match_status}
+                    </span>
+                  ) : (
+                    <span className="muted">-</span>
+                  )}
+                </td>
+                <td className="right">
+                  {formatMoney(event.amount, event.currency)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
 export function ImportPage() {
   const [source, setSource] = useState(SOURCES[0])
   const [file, setFile] = useState<File | null>(null)
@@ -238,7 +309,8 @@ export function ImportPage() {
   const [batches, setBatches] = useState<ImportBatch[]>([])
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch | null>(null)
   const [batchTransactions, setBatchTransactions] = useState<Transaction[]>([])
-  const [isLoadingBatchTransactions, setIsLoadingBatchTransactions] = useState(false)
+  const [batchInvestmentEvents, setBatchInvestmentEvents] = useState<InvestmentEvent[]>([])
+  const [isLoadingBatchRows, setIsLoadingBatchRows] = useState(false)
   const [isCommitting, setIsCommitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -339,6 +411,7 @@ export function ImportPage() {
       setPreview(null)
       setSelectedBatch(null)
       setBatchTransactions([])
+      setBatchInvestmentEvents([])
       loadBatches()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to commit import')
@@ -353,14 +426,21 @@ export function ImportPage() {
     setMessage(null)
     setSelectedBatch(batch)
     setBatchTransactions([])
-    setIsLoadingBatchTransactions(true)
+    setBatchInvestmentEvents([])
+    setIsLoadingBatchRows(true)
 
     try {
-      setBatchTransactions(await listImportBatchTransactions(batch.id))
+      const [transactions, investmentEvents] = await Promise.all([
+        listImportBatchTransactions(batch.id),
+        listImportBatchInvestmentEvents(batch.id),
+      ])
+
+      setBatchTransactions(transactions)
+      setBatchInvestmentEvents(investmentEvents)
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to load batch transactions')
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to load batch rows')
     } finally {
-      setIsLoadingBatchTransactions(false)
+      setIsLoadingBatchRows(false)
     }
   }
 
@@ -383,6 +463,7 @@ export function ImportPage() {
       if (selectedBatch?.id === batch.id) {
         setSelectedBatch(null)
         setBatchTransactions([])
+        setBatchInvestmentEvents([])
       }
 
       loadBatches()
@@ -683,17 +764,29 @@ export function ImportPage() {
         <section className="review-section">
           <div className="section-header">
             <div>
-              <h2>Batch #{selectedBatch.id} transactions</h2>
+              <h2>Batch #{selectedBatch.id} rows</h2>
               <p className="muted small">
                 {selectedBatch.filename} · {selectedBatch.source} · imported {formatDate(selectedBatch.imported_at)}
               </p>
             </div>
           </div>
 
-          {isLoadingBatchTransactions ? (
-            <p className="muted">Loading batch transactions...</p>
+          {isLoadingBatchRows ? (
+            <p className="muted">Loading batch rows...</p>
           ) : (
-            <TransactionTable transactions={batchTransactions} />
+            <div className="import-batch-detail-grid">
+              <section>
+                <div className="section-header">
+                  <div>
+                    <h2>Transactions</h2>
+                    <p className="muted small">{batchTransactions.length} rows</p>
+                  </div>
+                </div>
+                <TransactionTable transactions={batchTransactions} />
+              </section>
+
+              <BatchInvestmentEventsTable events={batchInvestmentEvents} />
+            </div>
           )}
         </section>
       )}

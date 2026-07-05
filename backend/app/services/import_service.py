@@ -94,6 +94,25 @@ class ImportService:
             user_id=self._get_user_id(current_user),
         )
 
+    def list_import_batch_investment_events(
+        self,
+        import_batch_id: int,
+        limit: int = 100,
+        offset: int = 0,
+        current_user: CurrentUser | None = None,
+    ) -> list[InvestmentEvent]:
+        self.get_import_batch(import_batch_id, current_user)
+
+        if self.investment_event_repository is None:
+            return []
+
+        return self.investment_event_repository.list_by_import_batch(
+            import_batch_id=import_batch_id,
+            limit=limit,
+            offset=offset,
+            user_id=self._get_user_id(current_user),
+        )
+
     def delete_import_batch(
         self,
         import_batch_id: int,
