@@ -1,15 +1,4 @@
 import { useEffect, useState } from 'react'
-import {
-  HandCoins,
-  LayoutDashboard,
-  PiggyBank,
-  ReceiptText,
-  Settings,
-  TrendingUp,
-  Upload,
-  UserRound,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
@@ -20,11 +9,12 @@ import { WealthPage } from './pages/WealthPage'
 import { ExportPage } from './pages/ExportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
+import { AppSidebar } from './components/AppSidebar'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './auth/AuthProvider'
 import type { User } from '@supabase/supabase-js'
 
-type Page =
+export type Page =
   | 'dashboard'
   | 'transactions'
   | 'wealth'
@@ -36,31 +26,6 @@ type Page =
   | 'export'
   | 'settings'
 
-
-const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
-  {
-    title: 'Overview',
-    items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: 'Money',
-    items: [
-      { id: 'transactions', label: 'Transactions', icon: ReceiptText },
-      { id: 'wealth', label: 'Wealth', icon: PiggyBank },
-      { id: 'investments', label: 'Investments', icon: TrendingUp },
-      { id: 'owed', label: 'Owed', icon: HandCoins },
-    ],
-  },
-  {
-    title: 'Tools',
-    items: [
-      { id: 'import', label: 'Import', icon: Upload },
-      { id: 'settings', label: 'Settings', icon: Settings },
-    ],
-  },
-]
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -127,7 +92,6 @@ const MOBILE_NAV_ITEMS: { id: Page; label: string }[] = [
   { id: 'more', label: 'More' },
 ]
 
-const SETTINGS_RELATED_PAGES = new Set<Page>(['categories', 'export'])
 const MORE_RELATED_PAGES = new Set<Page>([
   'more',
   'import',
@@ -136,12 +100,6 @@ const MORE_RELATED_PAGES = new Set<Page>([
   'settings',
   'investments',
 ])
-
-function getSidebarButtonClass(currentPage: Page, itemId: Page) {
-  const isSettingsActive = itemId === 'settings' && SETTINGS_RELATED_PAGES.has(currentPage)
-
-  return currentPage === itemId || isSettingsActive ? 'active' : ''
-}
 
 function getMobileButtonClass(currentPage: Page, itemId: Page) {
   const isMoreActive = itemId === 'more' && MORE_RELATED_PAGES.has(currentPage)
@@ -253,77 +211,15 @@ function App() {
   return (
     <PeriodProvider>
       <div className="app-shell">
-        <aside className="sidebar">
-          <div className="sidebar-header">
-            <div className="sidebar-brand">
-              <img
-                src="/app-icon.png"
-                alt=""
-                aria-hidden="true"
-                className="sidebar-brand-icon"
-              />
-              <div className="account-summary">
-                <p className="account-greeting">Finance</p>
-              </div>
-            </div>
-            {authError && <p className="error-text">{authError}</p>}
-          </div>
-
-          <nav className="sidebar-nav">
-            {NAV_GROUPS.map((group) => (
-              <section key={group.title} className="nav-group">
-                <h3>{group.title}</h3>
-                <div className="nav-items">
-                  {group.items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={getSidebarButtonClass(page, item.id)}
-                      onClick={() => setPage(item.id)}
-                    >
-                      <item.icon className="nav-icon" aria-hidden="true" />
-                      <span className="nav-label">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </nav>
-
-          <div className="sidebar-profile">
-            <div className="sidebar-profile-main">
-              {profileAvatarUrl ? (
-                <img
-                  src={profileAvatarUrl}
-                  alt=""
-                  aria-hidden="true"
-                  referrerPolicy="no-referrer"
-                  className="sidebar-profile-avatar"
-                />
-              ) : (
-                <div className="sidebar-profile-avatar sidebar-profile-avatar-fallback" aria-hidden="true">
-                  <UserRound className="sidebar-profile-avatar-icon" />
-                </div>
-              )}
-              <div className="account-summary">
-                <p className="account-greeting">{displayName}</p>
-                <p className="account-subtitle">
-                  {isAuthEnabled ? 'Signed in' : 'Local mode'}
-                </p>
-              </div>
-            </div>
-
-            {isAuthEnabled && (
-              <button
-                type="button"
-                className="sidebar-signout-button"
-                onClick={handleLogout}
-              >
-                Sign out
-              </button>
-            )}
-          </div>
-        </aside>
+        <AppSidebar
+          authError={authError}
+          currentPage={page}
+          displayName={displayName}
+          isAuthEnabled={isAuthEnabled}
+          profileAvatarUrl={profileAvatarUrl}
+          onPageChange={setPage}
+          onSignOut={handleLogout}
+        />
 
         <main>
           {isBackendWakeNoticeVisible && page !== 'dashboard' && (
