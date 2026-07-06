@@ -472,3 +472,89 @@
     color: var(--theme-muted, #aeb3bd) !important;
   }
 }
+
+/* Mobile owed inline form usability pass. */
+@media (max-width: 800px) {
+  .owed-desktop-table-wrap.owed-table-has-inline-form {
+    display: block;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form .owed-table {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    background: transparent;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form thead {
+    display: none;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr {
+    display: none;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-create-row,
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-edit-row {
+    display: grid;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.85rem;
+    border: 1px solid var(--theme-border, #e5e7eb);
+    border-radius: 1rem;
+    background: var(--theme-surface, #ffffff);
+    box-shadow: 0 8px 20px rgb(15 23 42 / 0.035);
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-create-row td,
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-edit-row td {
+    display: block;
+    width: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    text-align: left;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-create-row td:nth-child(3),
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-create-row td:nth-child(8),
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-edit-row td:nth-child(3),
+  .owed-desktop-table-wrap.owed-table-has-inline-form tr.inline-edit-row td:nth-child(8) {
+    display: none;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form input,
+  .owed-desktop-table-wrap.owed-table-has-inline-form select,
+  .owed-desktop-table-wrap.owed-table-has-inline-form textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form select {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form .actions-cell .table-action-group,
+  .owed-desktop-table-wrap.owed-table-has-inline-form .table-action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+  }
+
+  .owed-desktop-table-wrap.owed-table-has-inline-form .table-action-group button {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+}

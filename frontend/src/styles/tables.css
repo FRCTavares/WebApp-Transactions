@@ -438,3 +438,86 @@ td[colspan] {
     display: block;
   }
 }
+
+/* Mobile modal usability pass. */
+@media (max-width: 800px) {
+  .modal-backdrop {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding:
+      max(0.75rem, env(safe-area-inset-top))
+      max(0.75rem, env(safe-area-inset-right))
+      calc(5.75rem + env(safe-area-inset-bottom))
+      max(0.75rem, env(safe-area-inset-left));
+    overflow: hidden;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 7.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 1.15rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-card .form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .modal-card label,
+  .modal-card .category-combobox,
+  .modal-card .modal-transaction-summary {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .modal-card input,
+  .modal-card select,
+  .modal-card textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .modal-card select {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .modal-header {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .modal-header button {
+    flex: 0 0 auto;
+  }
+
+  .modal-transaction-summary {
+    overflow-wrap: anywhere;
+  }
+
+  .modal-actions {
+    position: sticky;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    margin: 0.75rem -0.1rem -0.1rem;
+    padding-top: 0.75rem;
+    background: inherit;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+}

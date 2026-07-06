@@ -645,3 +645,45 @@
     background: #181a20 !important;
   }
 }
+
+/* Mobile transaction form overflow safety pass. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-form {
+    width: auto;
+    max-width: calc(100dvw - max(0.85rem, env(safe-area-inset-left)) - max(0.85rem, env(safe-area-inset-right)));
+    max-height: calc(100dvh - 8rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-bottom: calc(0.85rem + env(safe-area-inset-bottom));
+  }
+
+  .transactions-page .transaction-form label,
+  .transactions-page .transaction-form .category-combobox,
+  .transactions-page .transaction-create-owed-section {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .transactions-page .transaction-form input,
+  .transactions-page .transaction-form select,
+  .transactions-page .transaction-form textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .transactions-page .transaction-form select {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .transactions-page .transaction-create-owed-section {
+    overflow: hidden;
+  }
+
+  .transactions-page .transaction-create-owed-summary {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+}
