@@ -200,7 +200,7 @@ function App() {
           onSignOut={handleLogout}
         />
 
-        <main>
+        <main className={`app-main app-main-${page}`}>
           {isBackendWakeNoticeVisible && page !== 'dashboard' && (
             <div className="backend-wake-notice" role="status">
               <strong>Loading data...</strong>

@@ -405,3 +405,29 @@
     gap: 0.62rem !important;
   }
 }
+
+
+/* Owed mobile theme safety pass. */
+@media (max-width: 800px) {
+  .owed-page-polished .owed-toolbar select,
+  .owed-page-polished .owed-table-filter-card .segmented-control {
+    border-color: rgb(209 213 219 / 0.9) !important;
+    background: rgb(255 255 255 / 0.92) !important;
+    color: #111827 !important;
+  }
+
+  .owed-page-polished .owed-person-item {
+    background: rgb(255 255 255 / 0.92) !important;
+  }
+
+  :root[data-theme='dark'] .owed-page-polished .owed-toolbar select,
+  :root[data-theme='dark'] .owed-page-polished .owed-table-filter-card .segmented-control {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background: rgb(255 255 255 / 0.055) !important;
+    color: var(--theme-text, #f8fafc) !important;
+  }
+
+  :root[data-theme='dark'] .owed-page-polished .owed-person-item {
+    background: rgb(255 255 255 / 0.035) !important;
+  }
+}

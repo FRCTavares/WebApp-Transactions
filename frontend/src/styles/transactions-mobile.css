@@ -587,3 +587,61 @@
     box-shadow: none !important;
   }
 }
+
+
+/* Activity mobile theme safety pass. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-filter-mobile-header {
+    border-color: rgb(209 213 219 / 0.9) !important;
+    background: rgb(255 255 255 / 0.92) !important;
+  }
+
+  .transactions-page .transaction-filter-mobile-header button {
+    border-color: rgb(209 213 219 / 0.9) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  .transactions-page .transaction-filter-card-open .transaction-filter-body {
+    border-color: rgb(226 232 240 / 0.95) !important;
+    background: rgb(255 255 255 / 0.92) !important;
+  }
+
+  .transactions-page .transaction-form-more-toggle {
+    border-color: rgb(209 213 219 / 0.9) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  .transactions-page .transaction-form {
+    border-color: rgb(209 213 219 / 0.9) !important;
+    background: #ffffff !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-filter-mobile-header {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background: rgb(255 255 255 / 0.055) !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-filter-mobile-header button {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    background: rgb(255 255 255 / 0.055) !important;
+    color: var(--theme-text, #f8fafc) !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-filter-card-open .transaction-filter-body {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    background: rgb(255 255 255 / 0.035) !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-form-more-toggle {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background: rgb(255 255 255 / 0.04) !important;
+    color: #d7dce5 !important;
+  }
+
+  :root[data-theme='dark'] .transactions-page .transaction-form {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background: #181a20 !important;
+  }
+}

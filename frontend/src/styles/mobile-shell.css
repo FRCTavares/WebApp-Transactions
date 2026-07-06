@@ -246,44 +246,44 @@
 
 /* Final mobile transaction card dark override. */
 @media (max-width: 800px) {
-  .transactions-page .transaction-mobile-list .transaction-mobile-card {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-list .transaction-mobile-card {
     border-color: rgb(255 255 255 / 0.12) !important;
     background: #181a20 !important;
     color: #f9fafb !important;
     box-shadow: none !important;
   }
 
-  .transactions-page .transaction-mobile-card .transaction-mobile-card-main strong {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .transaction-mobile-card-main strong {
     color: #f9fafb !important;
   }
 
-  .transactions-page .transaction-mobile-card .transaction-mobile-card-main p {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .transaction-mobile-card-main p {
     color: #aeb4c1 !important;
   }
 
-  .transactions-page .transaction-mobile-card .transaction-mobile-card-main > span {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .transaction-mobile-card-main > span {
     color: #f9fafb !important;
   }
 
-  .transactions-page .transaction-mobile-card .transaction-mobile-raw {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .transaction-mobile-raw {
     color: #858b98 !important;
   }
 
-  .transactions-page .transaction-mobile-card .badge-source {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-source {
     border-color: rgb(255 255 255 / 0.14) !important;
     background: rgb(255 255 255 / 0.07) !important;
     color: #cbd5e1 !important;
   }
 
-  .transactions-page .transaction-mobile-card .badge-expense,
-  .transactions-page .transaction-mobile-card .badge-reimbursed-expense {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-expense,
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-reimbursed-expense {
     border-color: rgb(249 115 22 / 0.38) !important;
     background: rgb(124 45 18 / 0.32) !important;
     color: #fed7aa !important;
   }
 
-  .transactions-page .transaction-mobile-card .badge-income,
-  .transactions-page .transaction-mobile-card .badge-reimbursement {
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-income,
+  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-reimbursement {
     border-color: rgb(34 197 94 / 0.34) !important;
     background: rgb(20 83 45 / 0.32) !important;
     color: #bbf7d0 !important;
@@ -328,5 +328,196 @@
   .mobile-bottom-nav-icon {
     width: 1.02rem;
     height: 1.02rem;
+  }
+}
+
+/* More page structure polish: mobile only. */
+@media (max-width: 800px) {
+  .app-main-wealth .global-topbar,
+  .app-main-more .global-topbar {
+    display: none !important;
+  }
+
+  .app-main-more {
+    padding-top: 1.05rem;
+  }
+
+  .mobile-more-page {
+    --mobile-more-text: #111827;
+    --mobile-more-muted: #64748b;
+    --mobile-more-row-bg: rgb(255 255 255 / 0.92);
+    --mobile-more-row-hover-bg: #f8fbff;
+    --mobile-more-list-bg: rgb(255 255 255 / 0.9);
+    --mobile-more-border: rgb(209 213 219 / 0.9);
+    --mobile-more-divider: rgb(226 232 240 / 0.95);
+    --mobile-more-icon-bg: #eff6ff;
+    --mobile-more-icon-color: #2563eb;
+
+    gap: 0.78rem !important;
+    padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
+  }
+
+  :root[data-theme='dark'] .mobile-more-page {
+    --mobile-more-text: #f8fafc;
+    --mobile-more-muted: #aeb5c2;
+    --mobile-more-row-bg: transparent;
+    --mobile-more-row-hover-bg: rgb(255 255 255 / 0.055);
+    --mobile-more-list-bg: rgb(255 255 255 / 0.045);
+    --mobile-more-border: rgb(255 255 255 / 0.12);
+    --mobile-more-divider: rgb(255 255 255 / 0.08);
+    --mobile-more-icon-bg: rgb(239 246 255 / 0.95);
+    --mobile-more-icon-color: #2563eb;
+  }
+
+  .mobile-more-hero {
+    gap: 0.28rem !important;
+    padding: 0.05rem 0.05rem 0.1rem !important;
+  }
+
+  .mobile-more-hero .eyebrow {
+    display: none;
+  }
+
+  .mobile-more-hero h1 {
+    color: var(--mobile-more-text) !important;
+    font-size: clamp(2rem, 8.5vw, 2.45rem) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.065em !important;
+  }
+
+  .mobile-more-hero p:not(.eyebrow) {
+    max-width: 19rem;
+    color: var(--mobile-more-muted) !important;
+    font-size: 0.94rem !important;
+    font-weight: 760 !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-more-section {
+    gap: 0.42rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-more-section-header {
+    padding: 0 0.2rem;
+  }
+
+  .mobile-more-section-header h2 {
+    margin: 0;
+    color: var(--mobile-more-text) !important;
+    font-size: 1.05rem !important;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+  }
+
+  .mobile-more-section-header p {
+    margin: 0.1rem 0 0;
+    color: var(--mobile-more-muted) !important;
+    font-size: 0.82rem !important;
+    font-weight: 730 !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-more-actions {
+    display: grid;
+    overflow: hidden;
+    gap: 0 !important;
+    border: 1px solid var(--mobile-more-border);
+    border-radius: 1.05rem;
+    background: var(--mobile-more-list-bg);
+  }
+
+  .mobile-more-actions button {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem !important;
+    min-height: 4.15rem !important;
+    padding: 0.78rem 0.85rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--mobile-more-divider) !important;
+    border-radius: 0 !important;
+    background: var(--mobile-more-row-bg) !important;
+    color: var(--mobile-more-text) !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-more-actions button:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .mobile-more-actions button::after {
+    content: "›";
+    color: var(--mobile-more-muted);
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-more-actions button:hover {
+    background: var(--mobile-more-row-hover-bg) !important;
+  }
+
+  .mobile-more-action-icon {
+    width: 2.22rem !important;
+    height: 2.22rem !important;
+    border-radius: 0.82rem !important;
+    background: var(--mobile-more-icon-bg) !important;
+    color: var(--mobile-more-icon-color) !important;
+  }
+
+  .mobile-more-actions button > span:last-child {
+    gap: 0.12rem !important;
+  }
+
+  .mobile-more-actions strong {
+    color: var(--mobile-more-text) !important;
+    font-size: 1rem !important;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+  }
+
+  .mobile-more-actions small {
+    color: var(--mobile-more-muted) !important;
+    font-size: 0.82rem !important;
+    font-weight: 720 !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-more-danger {
+    --mobile-more-row-bg: #fff7f7;
+    --mobile-more-text: #991b1b;
+    --mobile-more-muted: #b91c1c;
+  }
+
+  :root[data-theme='dark'] .mobile-more-danger {
+    --mobile-more-row-bg: rgb(127 29 29 / 0.22);
+    --mobile-more-text: #fee2e2;
+    --mobile-more-muted: #fecaca;
+  }
+
+  .mobile-more-danger .mobile-more-action-icon {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-main-more {
+    padding-top: 0.9rem;
+  }
+
+  .mobile-more-page {
+    gap: 0.72rem !important;
+    padding-bottom: calc(7.45rem + env(safe-area-inset-bottom));
+  }
+
+  .mobile-more-actions button {
+    min-height: 4rem !important;
+    padding: 0.72rem 0.78rem !important;
   }
 }
