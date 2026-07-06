@@ -687,3 +687,31 @@
     flex-wrap: wrap;
   }
 }
+
+/* Mobile transaction form simplified fields. */
+@media (max-width: 800px) {
+  .transactions-page .transaction-form-secondary-fields {
+    display: grid !important;
+  }
+
+  .transactions-page .transaction-form-more-toggle {
+    display: none !important;
+  }
+
+  .transactions-page .transaction-form input[type="date"] {
+    min-height: 2.75rem;
+    height: 2.75rem;
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1.2;
+    text-align: left;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .transactions-page .transaction-form input[type="date"]::-webkit-date-and-time-value {
+    min-height: 2.75rem;
+    line-height: 2.75rem;
+    text-align: left;
+  }
+}

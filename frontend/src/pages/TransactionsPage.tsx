@@ -20,210 +20,25 @@ import {
   type OwedSplitRowState,
 } from '../components/transactions/TransactionOwedSplitDialog'
 import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
+import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
-import type { CashflowType, Direction, Transaction } from '../types/api'
+import type { Direction, OwedItem, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
-
-
-function getTodayDate() {
-  return new Date().toISOString().slice(0, 10)
-}
-function getMonthLabel(month: string) {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const date = new Date(year, monthNumber - 1, 1)
-
-  return date.toLocaleDateString('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-function getDefaultCashflowType(direction: Direction): CashflowType {
-  return direction === 'in' ? 'income' : 'expense'
-}
-
-function getInitialFormState(direction: Direction): TransactionFormState {
-  return {
-    date: getTodayDate(),
-    description: '',
-    amount: '',
-    cashflow_type: getDefaultCashflowType(direction),
-    category: '',
-    notes: '',
-  }
-}
-
-function getInitialFilterState(direction: Direction): TransactionFilterState {
-  return {
-    search: '',
-    category: '',
-    source: '',
-    cashflowType: getDefaultCashflowType(direction),
-    month: '',
-    dateFrom: '',
-    dateTo: '',
-  }
-}
-
-function getFormStateFromTransaction(transaction: Transaction): TransactionFormState {
-  return {
-    date: transaction.date,
-    description: transaction.description,
-    amount: transaction.amount,
-    cashflow_type: transaction.cashflow_type,
-    category: transaction.category ?? '',
-    notes: transaction.notes ?? '',
-  }
-}
-
-function isTrading212Cashback(transaction: Transaction) {
-  return (
-    transaction.direction === 'in' &&
-    transaction.source === 'trading212' &&
-    transaction.description.toLowerCase() === 'spending cashback'
-  )
-}
-
-function getMonthEndDate(month: string) {
-  const [year, monthNumber] = month.split('-').map(Number)
-  return new Date(year, monthNumber, 0).toISOString().slice(0, 10)
-}
-
-function getOwedSortRank(transaction: TransactionTableRow) {
-  if (!transaction.is_owed || transaction.owed_status === 'cancelled') {
-    return 0
-  }
-
-  if (transaction.owed_status === 'open' || transaction.owed_status === 'partially_paid') {
-    return 1
-  }
-
-  if (transaction.owed_status === 'paid') {
-    return 2
-  }
-
-  return 3
-}
-
-function sortTransactionsForDisplay(transactions: TransactionTableRow[]) {
-  return [...transactions].sort((first, second) => {
-    const owedRankDifference = getOwedSortRank(first) - getOwedSortRank(second)
-
-    if (owedRankDifference !== 0) {
-      return owedRankDifference
-    }
-
-    return second.date.localeCompare(first.date)
-  })
-}
-
-function getTransactionsForDisplay(
-  transactions: Transaction[],
-  selectedMonth: string,
-): TransactionTableRow[] {
-  const cashbackRows = transactions.filter(isTrading212Cashback)
-
-  if (cashbackRows.length <= 1) {
-    return sortTransactionsForDisplay(transactions)
-  }
-
-  const cashbackTotal = cashbackRows.reduce(
-    (total, transaction) => total + Number(transaction.amount),
-    0,
-  )
-
-  const cashbackRow: TransactionTableRow = {
-    ...cashbackRows[0],
-    id: -1,
-    date: getMonthEndDate(selectedMonth),
-    description: `Trading 212 cashback - ${getMonthLabel(selectedMonth)}`,
-    raw_description: 'Monthly grouped cashback',
-    amount: cashbackTotal.toFixed(2),
-    category: cashbackRows[0].category ?? 'Cashback',
-    notes: `${cashbackRows.length} cashback rows grouped for display`,
-    is_grouped: true,
-    grouped_count: cashbackRows.length,
-    dedupe_hash: `grouped-trading212-cashback-${selectedMonth}`,
-  }
-
-  return sortTransactionsForDisplay([
-    ...transactions.filter((transaction) => !isTrading212Cashback(transaction)),
-    cashbackRow,
-  ])
-}
-
-function getMonthDateRange(month: string) {
-  if (!month) {
-    return {
-      dateFrom: '',
-      dateTo: '',
-    }
-  }
-
-  const [year, monthNumber] = month.split('-').map(Number)
-  const monthText = String(monthNumber).padStart(2, '0')
-  const lastDay = new Date(year, monthNumber, 0).getDate()
-  const startDate = `${year}-${monthText}-01`
-  const endDate = `${year}-${monthText}-${String(lastDay).padStart(2, '0')}`
-
-  return {
-    dateFrom: startDate,
-    dateTo: endDate,
-  }
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const objectUrl = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-
-  link.href = objectUrl
-  link.download = filename
-  link.click()
-
-  URL.revokeObjectURL(objectUrl)
-}
-
-function getExportFilename(direction: Direction) {
-  return direction === 'in' ? 'money-in-transactions.csv' : 'money-out-transactions.csv'
-}
-
-function createOwedSplitRow({
-  amount = '',
-  notes = '',
-  person = 'Mother',
-}: {
-  amount?: string
-  notes?: string
-  person?: string
-} = {}): OwedSplitRowState {
-  return {
-    id: `${Date.now()}-${Math.random()}`,
-    person,
-    amount,
-    linkedPaymentTransactionId: '',
-    unallocatedCategory: '',
-    unallocatedNotes: '',
-    notes,
-  }
-}
-
-function parseMoneyInput(value: string) {
-  return Math.abs(Number(value.replace(',', '.')))
-}
-
-type ParsedCreateOwedRow = {
-  person: string
-  amount: number
-}
-
-function getRemainingOwedAmount(transaction: TransactionTableRow) {
-  const transactionAmount = Number(transaction.amount)
-  const linkedOwedAmount = Number(transaction.owed_amount_total ?? '0')
-
-  return Math.max(transactionAmount - linkedOwedAmount, 0)
-}
-
+import {
+  createOwedSplitRow,
+  downloadBlob,
+  getExportFilename,
+  getFormStateFromTransaction,
+  getInitialFilterState,
+  getInitialFormState,
+  getMonthDateRange,
+  getRemainingOwedAmount,
+  getTransactionsForDisplay,
+  parseMoneyInput,
+  type ParsedCreateOwedRow,
+  type ParsedRepaymentAllocation,
+} from '../utils/transactionPageHelpers'
 
 export function TransactionsPage() {
   const { monthKey } = usePeriod()
@@ -232,8 +47,8 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getInitialFilterState(direction),
   )
-  const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
-  const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction))
+  const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction, monthKey))
+  const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction, monthKey))
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -245,6 +60,12 @@ export function TransactionsPage() {
   const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
   const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
   const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
+  const [isCreateRepaymentEnabled, setIsCreateRepaymentEnabled] = useState(false)
+  const [repaymentPerson, setRepaymentPerson] = useState('')
+  const [repaymentPersonOptions, setRepaymentPersonOptions] = useState<string[]>([])
+  const [repaymentItems, setRepaymentItems] = useState<OwedItem[]>([])
+  const [repaymentAllocations, setRepaymentAllocations] = useState<Record<number, string>>({})
+  const [repaymentUnallocatedCategory, setRepaymentUnallocatedCategory] = useState('')
   const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
 
@@ -299,15 +120,16 @@ export function TransactionsPage() {
   useEffect(() => {
     const initialFilters = getInitialFilterState(direction)
 
-    setForm(getInitialFormState(direction))
-    setEditForm(getInitialFormState(direction))
+    setForm(getInitialFormState(direction, monthKey))
+    setEditForm(getInitialFormState(direction, monthKey))
     setFilters(initialFilters)
     setEditingTransaction(null)
     setIsCreateFormOpen(false)
     setIsCreateOwedEnabled(false)
     setCreateOwedRows([])
+    resetCreateRepaymentState()
     loadTransactions(initialFilters)
-  }, [direction])
+  }, [direction, monthKey])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
     setForm((currentForm) => ({
@@ -316,10 +138,20 @@ export function TransactionsPage() {
     }))
   }
 
+  function resetCreateRepaymentState() {
+    setIsCreateRepaymentEnabled(false)
+    setRepaymentPerson('')
+    setRepaymentPersonOptions([])
+    setRepaymentItems([])
+    setRepaymentAllocations({})
+    setRepaymentUnallocatedCategory('')
+  }
+
   function resetCreateFormState() {
-    setForm(getInitialFormState(direction))
+    setForm(getInitialFormState(direction, monthKey))
     setIsCreateOwedEnabled(false)
     setCreateOwedRows([])
+    resetCreateRepaymentState()
   }
 
   function loadOwedPersonOptions() {
@@ -385,6 +217,108 @@ export function TransactionsPage() {
 
   function removeCreateOwedRow(rowId: string) {
     setCreateOwedRows((currentRows) => currentRows.filter((row) => row.id !== rowId))
+  }
+
+  function loadRepaymentPersonOptions() {
+    listOwedItems({ status: 'active', limit: 500 })
+      .then((items) => {
+        const people = Array.from(
+          new Set(items.map((item) => item.person.trim()).filter(Boolean)),
+        ).sort((first, second) => first.localeCompare(second))
+
+        setRepaymentPersonOptions(people)
+      })
+      .catch(() => {
+        setRepaymentPersonOptions([])
+      })
+  }
+
+  function loadRepaymentItemsForPerson(person: string) {
+    if (!person.trim()) {
+      setRepaymentItems([])
+      return
+    }
+
+    listOwedItems({ status: 'active', person: person.trim(), limit: 500 })
+      .then(setRepaymentItems)
+      .catch((caughtError: unknown) => {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load owed items for payer')
+      })
+  }
+
+  function toggleCreateRepaymentEnabled(isEnabled: boolean) {
+    setIsCreateRepaymentEnabled(isEnabled)
+
+    if (!isEnabled) {
+      setRepaymentPerson('')
+      setRepaymentItems([])
+      setRepaymentAllocations({})
+      setRepaymentUnallocatedCategory('')
+      return
+    }
+
+    loadRepaymentPersonOptions()
+  }
+
+  function updateRepaymentPerson(person: string) {
+    setRepaymentPerson(person)
+    setRepaymentAllocations({})
+    loadRepaymentItemsForPerson(person)
+  }
+
+  function updateRepaymentAllocation(owedItemId: number, amount: string) {
+    setRepaymentAllocations((currentAllocations) => ({
+      ...currentAllocations,
+      [owedItemId]: amount,
+    }))
+  }
+
+  function getParsedCreateRepaymentAllocations(
+    transactionAmount: number,
+  ): ParsedRepaymentAllocation[] | null {
+    if (!isCreateRepaymentEnabled || direction !== 'in') {
+      return []
+    }
+
+    if (!repaymentPerson.trim()) {
+      setError('Choose who paid you.')
+      return null
+    }
+
+    const parsedAllocations = Object.entries(repaymentAllocations)
+      .map(([owedItemId, amount]) => ({
+        owed_item_id: Number(owedItemId),
+        amount: parseMoneyInput(amount),
+      }))
+      .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
+
+    if (parsedAllocations.length === 0) {
+      setError('Allocate this Money In to at least one owed item.')
+      return null
+    }
+
+    const allocationTotal = parsedAllocations.reduce(
+      (total, allocation) => total + allocation.amount,
+      0,
+    )
+
+    if (allocationTotal > transactionAmount + 0.0001) {
+      setError('Allocated repayment amount cannot exceed the Money In amount.')
+      return null
+    }
+
+    const invalidAllocation = parsedAllocations.find((allocation) => {
+      const item = repaymentItems.find((candidate) => candidate.id === allocation.owed_item_id)
+
+      return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
+    })
+
+    if (invalidAllocation) {
+      setError('Allocated amount cannot exceed the selected owed item remaining amount.')
+      return null
+    }
+
+    return parsedAllocations
   }
 
   function getParsedCreateOwedRows(transactionAmount: number): ParsedCreateOwedRow[] | null {
@@ -463,6 +397,12 @@ export function TransactionsPage() {
       return
     }
 
+    const parsedRepaymentAllocations = getParsedCreateRepaymentAllocations(amount)
+
+    if (parsedRepaymentAllocations === null) {
+      return
+    }
+
     try {
       const createdTransaction = await createTransaction({
         date: form.date,
@@ -492,12 +432,38 @@ export function TransactionsPage() {
         })
       }
 
+      if (direction === 'in' && isCreateRepaymentEnabled) {
+        const allocatedAmount = parsedRepaymentAllocations.reduce(
+          (total, allocation) => total + allocation.amount,
+          0,
+        )
+        const leftoverAmount = Math.max(amount - allocatedAmount, 0)
+
+        await createOwedPayment({
+          person: repaymentPerson.trim(),
+          amount: amount.toFixed(2),
+          payment_date: form.date,
+          method: 'bank_transfer',
+          currency: 'EUR',
+          notes: form.notes || null,
+          linked_transaction_id: createdTransaction.id,
+          unallocated_category: leftoverAmount > 0 ? repaymentUnallocatedCategory || null : null,
+          unallocated_notes: null,
+          allocations: parsedRepaymentAllocations.map((allocation) => ({
+            owed_item_id: allocation.owed_item_id,
+            amount: allocation.amount.toFixed(2),
+          })),
+        })
+      }
+
       resetCreateFormState()
       setIsCreateFormOpen(false)
       setMessage(
-        parsedCreateOwedRows.length > 0
-          ? `Transaction created with ${parsedCreateOwedRows.length} owed split${parsedCreateOwedRows.length === 1 ? '' : 's'}.`
-          : 'Transaction created.',
+        direction === 'in' && isCreateRepaymentEnabled
+          ? 'Transaction created and owed payment recorded.'
+          : parsedCreateOwedRows.length > 0
+            ? `Transaction created with ${parsedCreateOwedRows.length} owed split${parsedCreateOwedRows.length === 1 ? '' : 's'}.`
+            : 'Transaction created.',
       )
       loadTransactions()
     } catch (caughtError: unknown) {
@@ -516,6 +482,10 @@ export function TransactionsPage() {
     setIsCreateFormOpen(false)
     setError(null)
     setMessage(null)
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
   }
 
   async function saveEditFromForm() {
@@ -544,7 +514,7 @@ export function TransactionsPage() {
       })
 
       setEditingTransaction(null)
-      setEditForm(getInitialFormState(direction))
+      setEditForm(getInitialFormState(direction, monthKey))
       setMessage('Transaction updated.')
       loadTransactions()
     } catch (caughtError: unknown) {
@@ -856,8 +826,42 @@ export function TransactionsPage() {
               onRemoveRow={removeCreateOwedRow}
               onUpdateRow={updateCreateOwedRow}
             />
-          ) : null}
+          ) : (
+            <TransactionCreateRepaymentSection
+              isEnabled={isCreateRepaymentEnabled}
+              person={repaymentPerson}
+              personOptions={repaymentPersonOptions}
+              items={repaymentItems}
+              allocations={repaymentAllocations}
+              transactionAmount={form.amount}
+              unallocatedCategory={repaymentUnallocatedCategory}
+              currency="EUR"
+              onToggle={toggleCreateRepaymentEnabled}
+              onPersonChange={updateRepaymentPerson}
+              onAllocationChange={updateRepaymentAllocation}
+              onUnallocatedCategoryChange={setRepaymentUnallocatedCategory}
+            />
+          )}
         </TransactionForm>
+      ) : null}
+
+      {editingTransaction ? (
+        <TransactionForm
+          title={`Edit ${direction === 'in' ? 'Money In' : 'Money Out'}`}
+          form={editForm}
+          submitLabel="Save"
+          direction={direction}
+          editingTransactionId={editingTransaction.id}
+          onSubmit={(event) => {
+            event.preventDefault()
+            void saveEditFromForm()
+          }}
+          onChange={updateEditForm}
+          onCancel={() => {
+            setEditingTransaction(null)
+            setEditForm(getInitialFormState(direction, monthKey))
+          }}
+        />
       ) : null}
 
       <TransactionTable
@@ -931,7 +935,7 @@ export function TransactionsPage() {
                     type="button"
                     onClick={() => {
                       setEditingTransaction(null)
-                      setEditForm(getInitialFormState(direction))
+                      setEditForm(getInitialFormState(direction, monthKey))
                     }}
                   >
                     Cancel

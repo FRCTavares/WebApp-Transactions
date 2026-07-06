@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { type FormEvent, type ReactNode } from 'react'
 import { CategorySelect } from './CategorySelect'
 import type { CashflowType, Direction } from '../types/api'
 
@@ -61,13 +61,9 @@ export function TransactionForm({
   editingTransactionId,
   onCancel,
 }: TransactionFormProps) {
-  const [isMoreDetailsOpen, setIsMoreDetailsOpen] = useState(
-    editingTransactionId !== undefined,
-  )
-
   return (
     <form
-      className={`manual-form transaction-form ${isMoreDetailsOpen ? 'transaction-form-more-open' : ''}`}
+      className="manual-form transaction-form transaction-form-more-open"
       onSubmit={onSubmit}
     >
       <h2>{title}</h2>
@@ -100,20 +96,14 @@ export function TransactionForm({
           />
         </label>
 
-        <CategorySelect
-          label="Category"
-          value={form.category}
-          onChange={(value) => onChange('category', value)}
-        />
+        {direction !== 'in' && (
+          <CategorySelect
+            label="Category"
+            value={form.category}
+            onChange={(value) => onChange('category', value)}
+          />
+        )}
       </div>
-
-      <button
-        type="button"
-        className="transaction-form-more-toggle"
-        onClick={() => setIsMoreDetailsOpen((isOpen) => !isOpen)}
-      >
-        {isMoreDetailsOpen ? 'Hide details' : 'More details'}
-      </button>
 
       <div className="transaction-form-secondary-fields">
         <div className="form-row">
@@ -138,17 +128,6 @@ export function TransactionForm({
                 </option>
               ))}
             </select>
-          </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Notes
-            <input
-              value={form.notes}
-              onChange={(event) => onChange('notes', event.target.value)}
-              placeholder="Optional"
-            />
           </label>
         </div>
       </div>
