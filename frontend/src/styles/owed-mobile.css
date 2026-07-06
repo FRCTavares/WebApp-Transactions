@@ -431,3 +431,44 @@
     background: rgb(255 255 255 / 0.035) !important;
   }
 }
+
+/* Owed mobile empty-state theme repair. */
+@media (max-width: 800px) {
+  .owed-page-polished .owed-empty-state,
+  .owed-page-polished .owed-mobile-empty {
+    border: 1px solid rgb(226 232 240 / 0.95) !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: 0 10px 30px rgb(15 23 42 / 0.06) !important;
+  }
+
+  .owed-page-polished .owed-empty-state strong,
+  .owed-page-polished .owed-mobile-empty strong {
+    color: #111827 !important;
+  }
+
+  .owed-page-polished .owed-empty-state p,
+  .owed-page-polished .owed-mobile-empty p {
+    color: #64748b !important;
+  }
+
+  :root[data-theme='dark'] .owed-page-polished .owed-empty-state,
+  :root[data-theme='dark'] .owed-page-polished .owed-mobile-empty {
+    border-color: rgb(255 255 255 / 0.105) !important;
+    background: #1c1d21 !important;
+    color: var(--theme-text, #f5f5f7) !important;
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.035) inset,
+      0 18px 42px rgb(0 0 0 / 0.18) !important;
+  }
+
+  :root[data-theme='dark'] .owed-page-polished .owed-empty-state strong,
+  :root[data-theme='dark'] .owed-page-polished .owed-mobile-empty strong {
+    color: var(--theme-text, #f5f5f7) !important;
+  }
+
+  :root[data-theme='dark'] .owed-page-polished .owed-empty-state p,
+  :root[data-theme='dark'] .owed-page-polished .owed-mobile-empty p {
+    color: var(--theme-muted, #aeb3bd) !important;
+  }
+}
