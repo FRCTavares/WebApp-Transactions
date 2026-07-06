@@ -32,7 +32,7 @@ export function CashflowRuleForm({
           <input
             value={form.name}
             onChange={(event) => onChange('name', event.target.value)}
-            placeholder="Trading 212 investment"
+            placeholder="Trading 212 transfer"
           />
         </label>
 
@@ -44,10 +44,7 @@ export function CashflowRuleForm({
           >
             <option value="income">Income</option>
             <option value="expense">Expense</option>
-            <option value="internal_transfer">Internal Transfer</option>
-            <option value="investment">Investment</option>
-            <option value="reimbursement">Reimbursement</option>
-            <option value="reimbursed_expense">Reimbursed Expense</option>
+            <option value="transfer">Transfer</option>
           </select>
         </label>
 

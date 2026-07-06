@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+
 def test_transaction_create_defaults_cashflow_type_from_direction(client):
     income_response = client.post(
         "/api/transactions",
@@ -31,7 +32,8 @@ def test_transaction_create_defaults_cashflow_type_from_direction(client):
     assert income_response.json()["cashflow_type"] == "income"
     assert expense_response.json()["cashflow_type"] == "expense"
 
-def test_transaction_can_be_marked_as_internal_transfer(client):
+
+def test_transaction_can_be_marked_as_transfer(client):
     create_response = client.post(
         "/api/transactions",
         json={
@@ -40,14 +42,15 @@ def test_transaction_can_be_marked_as_internal_transfer(client):
             "raw_description": "TRF P/ REVOLUT",
             "amount": "100.00",
             "direction": "out",
-            "cashflow_type": "internal_transfer",
+            "cashflow_type": "transfer",
             "source": "activobank",
             "currency": "EUR",
         },
     )
 
     assert create_response.status_code == 201
-    assert create_response.json()["cashflow_type"] == "internal_transfer"
+    assert create_response.json()["cashflow_type"] == "transfer"
+
 
 def test_transactions_can_be_filtered_by_cashflow_type(client):
     client.post(
@@ -58,7 +61,7 @@ def test_transactions_can_be_filtered_by_cashflow_type(client):
             "raw_description": "TRF P/ REVOLUT",
             "amount": "100.00",
             "direction": "out",
-            "cashflow_type": "internal_transfer",
+            "cashflow_type": "transfer",
             "source": "activobank",
             "currency": "EUR",
         },
@@ -77,7 +80,7 @@ def test_transactions_can_be_filtered_by_cashflow_type(client):
         },
     )
 
-    response = client.get("/api/transactions?cashflow_type=internal_transfer")
+    response = client.get("/api/transactions?cashflow_type=transfer")
 
     assert response.status_code == 200
     rows = response.json()
@@ -85,61 +88,26 @@ def test_transactions_can_be_filtered_by_cashflow_type(client):
     assert rows[0]["description"] == "ActivoBank to Revolut"
     assert Decimal(rows[0]["amount"]) == Decimal("100.00")
 
-def test_transaction_can_be_marked_as_reimbursement(client):
-    response = client.post(
-        "/api/transactions",
-        json={
-            "date": "2026-06-01",
-            "description": "Mother reimbursement",
-            "raw_description": "TRF MOTHER",
-            "amount": "65.00",
-            "direction": "in",
-            "cashflow_type": "reimbursement",
-            "source": "activobank",
-            "currency": "EUR",
-        },
-    )
 
-    assert response.status_code == 201
-    assert response.json()["cashflow_type"] == "reimbursement"
+def test_old_cashflow_type_values_are_rejected(client):
+    for legacy_cashflow_type in [
+        "internal_transfer",
+        "investment",
+        "reimbursement",
+        "reimbursed_expense",
+    ]:
+        response = client.post(
+            "/api/transactions",
+            json={
+                "date": "2026-06-01",
+                "description": "Legacy type",
+                "raw_description": "Legacy type",
+                "amount": "10.00",
+                "direction": "out",
+                "cashflow_type": legacy_cashflow_type,
+                "source": "manual",
+                "currency": "EUR",
+            },
+        )
 
-def test_transaction_can_be_marked_as_reimbursed_expense(client):
-    response = client.post(
-        "/api/transactions",
-        json={
-            "date": "2026-06-01",
-            "description": "Psychologist appointment",
-            "raw_description": "SOFIA PAYMENT",
-            "amount": "65.00",
-            "direction": "out",
-            "cashflow_type": "reimbursed_expense",
-            "source": "activobank",
-            "currency": "EUR",
-            "category": "Health",
-        },
-    )
-
-    assert response.status_code == 201
-    assert response.json()["cashflow_type"] == "reimbursed_expense"
-
-def test_transactions_can_be_filtered_by_reimbursed_expense(client):
-    client.post(
-        "/api/transactions",
-        json={
-            "date": "2026-06-01",
-            "description": "Psychologist appointment",
-            "raw_description": "SOFIA PAYMENT",
-            "amount": "65.00",
-            "direction": "out",
-            "cashflow_type": "reimbursed_expense",
-            "source": "activobank",
-            "currency": "EUR",
-        },
-    )
-
-    response = client.get("/api/transactions?cashflow_type=reimbursed_expense")
-
-    assert response.status_code == 200
-    rows = response.json()
-    assert len(rows) == 1
-    assert rows[0]["cashflow_type"] == "reimbursed_expense"
+        assert response.status_code == 422

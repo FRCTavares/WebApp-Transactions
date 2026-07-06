@@ -641,12 +641,22 @@ class ImportService:
 
     def _get_cashflow_type(self, transaction: NormalisedTransaction) -> str:
         if transaction.cashflow_type is not None:
-            return transaction.cashflow_type
+            return self._normalise_cashflow_type(transaction.cashflow_type)
 
         if transaction.direction == "in":
             return "income"
 
         return "expense"
+
+    def _normalise_cashflow_type(self, cashflow_type: str) -> str:
+        legacy_mapping = {
+            "internal_transfer": "transfer",
+            "investment": "transfer",
+            "reimbursement": "income",
+            "reimbursed_expense": "expense",
+        }
+
+        return legacy_mapping.get(cashflow_type, cashflow_type)
 
     def _guess_category(
         self,

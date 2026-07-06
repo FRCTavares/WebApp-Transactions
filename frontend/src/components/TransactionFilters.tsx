@@ -24,10 +24,7 @@ const cashflowTypeOptions = [
   { value: '', label: 'All types' },
   { value: 'income', label: 'Income' },
   { value: 'expense', label: 'Expense' },
-  { value: 'internal_transfer', label: 'Internal transfer' },
-  { value: 'investment', label: 'Investment' },
-  { value: 'reimbursement', label: 'Reimbursement' },
-  { value: 'reimbursed_expense', label: 'Reimbursed expense' },
+  { value: 'transfer', label: 'Transfer' },
 ]
 
 type TransactionFiltersProps = {

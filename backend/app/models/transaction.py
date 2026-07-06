@@ -22,10 +22,7 @@ class Transaction(Base):
             "cashflow_type IN ("
             "'income', "
             "'expense', "
-            "'internal_transfer', "
-            "'investment', "
-            "'reimbursement', "
-            "'reimbursed_expense'"
+            "'transfer'"
             ")",
             name="ck_transactions_cashflow_type_known",
         ),

@@ -17,7 +17,7 @@ def test_cashflow_rule_crud(db_session):
     rule = service.create_rule(
         CashflowRuleCreate(
             name="Trading 212 investment",
-            cashflow_type="investment",
+            cashflow_type="transfer",
             match_text="Trading 212",
             match_field="raw_description",
             direction="out",
@@ -26,18 +26,18 @@ def test_cashflow_rule_crud(db_session):
     )
 
     assert rule.id is not None
-    assert rule.cashflow_type == "investment"
+    assert rule.cashflow_type == "transfer"
 
     updated = service.update_rule(
         rule.id,
         CashflowRuleUpdate(
             name="Trading 212 movement",
-            cashflow_type="internal_transfer",
+            cashflow_type="transfer",
         ),
     )
 
     assert updated.name == "Trading 212 movement"
-    assert updated.cashflow_type == "internal_transfer"
+    assert updated.cashflow_type == "transfer"
 
     service.delete_rule(rule.id)
 
@@ -50,7 +50,7 @@ def test_duplicate_cashflow_rule_is_rejected(db_session):
 
     payload = CashflowRuleCreate(
         name="Trading 212 investment",
-        cashflow_type="investment",
+        cashflow_type="transfer",
         match_text="Trading 212",
         match_field="raw_description",
         direction="out",
@@ -102,7 +102,7 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
     service.create_rule(
         CashflowRuleCreate(
             name="Trading 212 investment",
-            cashflow_type="investment",
+            cashflow_type="transfer",
             match_text="Trading 212",
             match_field="raw_description",
             direction="out",
@@ -117,7 +117,7 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
 
     assert result["checked"] == 2
     assert result["updated"] == 1
-    assert matching_transaction.cashflow_type == "investment"
+    assert matching_transaction.cashflow_type == "transfer"
     assert non_matching_transaction.cashflow_type == "expense"
 
 
@@ -141,7 +141,7 @@ def test_cashflow_rules_endpoint_create_and_apply(client):
         "/api/cashflow-rules",
         json={
             "name": "Trading 212 investment",
-            "cashflow_type": "investment",
+            "cashflow_type": "transfer",
             "match_text": "Trading 212",
             "match_field": "raw_description",
             "direction": "out",
@@ -157,22 +157,22 @@ def test_cashflow_rules_endpoint_create_and_apply(client):
     assert apply_response.status_code == 200
     assert apply_response.json()["updated"] == 1
 
-    transactions_response = client.get("/api/transactions?cashflow_type=investment")
+    transactions_response = client.get("/api/transactions?cashflow_type=transfer")
 
     assert transactions_response.status_code == 200
     transactions = transactions_response.json()
     assert len(transactions) == 1
-    assert transactions[0]["cashflow_type"] == "investment"
+    assert transactions[0]["cashflow_type"] == "transfer"
 
 
-def test_cashflow_rule_can_set_reimbursement_type(db_session):
+def test_cashflow_rule_can_set_income_type(db_session):
     repository = CashflowRuleRepository(db_session)
     service = CashflowRuleService(repository)
 
     rule = service.create_rule(
         CashflowRuleCreate(
-            name="Mother reimbursement",
-            cashflow_type="reimbursement",
+            name="Mother income",
+            cashflow_type="income",
             match_text="MOTHER",
             match_field="raw_description",
             direction="in",
@@ -180,17 +180,17 @@ def test_cashflow_rule_can_set_reimbursement_type(db_session):
         )
     )
 
-    assert rule.cashflow_type == "reimbursement"
+    assert rule.cashflow_type == "income"
 
 
-def test_cashflow_rule_can_set_reimbursed_expense_type(db_session):
+def test_cashflow_rule_can_set_expense_type(db_session):
     repository = CashflowRuleRepository(db_session)
     service = CashflowRuleService(repository)
 
     rule = service.create_rule(
         CashflowRuleCreate(
             name="Reimbursed health expense",
-            cashflow_type="reimbursed_expense",
+            cashflow_type="expense",
             match_text="SOFIA",
             match_field="raw_description",
             direction="out",
@@ -198,7 +198,7 @@ def test_cashflow_rule_can_set_reimbursed_expense_type(db_session):
         )
     )
 
-    assert rule.cashflow_type == "reimbursed_expense"
+    assert rule.cashflow_type == "expense"
 
 
 def test_cashflow_rules_are_isolated_by_user(db_session):
@@ -215,7 +215,7 @@ def test_cashflow_rules_are_isolated_by_user(db_session):
 
     payload = CashflowRuleCreate(
         name="Trading 212 investment",
-        cashflow_type="investment",
+        cashflow_type="transfer",
         match_text="Trading 212",
         match_field="raw_description",
         direction="out",

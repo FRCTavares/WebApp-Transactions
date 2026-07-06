@@ -147,7 +147,7 @@ def test_legacy_excel_importer_parses_transactions_and_owed_items():
     assert expense.date.isoformat() == "2025-06-04"
     assert expense.amount == Decimal("3.98")
     assert expense.direction == "out"
-    assert expense.cashflow_type == "reimbursed_expense"
+    assert expense.cashflow_type == "expense"
     assert expense.category == "Super"
     assert expense.source == "legacy_excel"
     assert expense.account == "manual_history"

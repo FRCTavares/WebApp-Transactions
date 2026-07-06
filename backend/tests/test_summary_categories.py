@@ -99,19 +99,19 @@ def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
             account=None,
             category="Investment",
             currency="EUR",
-            cashflow_type="internal_transfer",
+            cashflow_type="transfer",
         ),
         Transaction(
             date=date(2026, 5, 3),
-            description="Reimbursed school",
-            raw_description="Reimbursed school",
+            description="Own-account transfer",
+            raw_description="Own-account transfer",
             amount=Decimal("1450.00"),
             direction="out",
             source="manual",
             account=None,
-            category="Education",
+            category="Transfers",
             currency="EUR",
-            cashflow_type="reimbursed_expense",
+            cashflow_type="transfer",
         ),
     ]
 
@@ -157,7 +157,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
             account=None,
             category="Refund",
             currency="EUR",
-            cashflow_type="reimbursed_expense",
+            cashflow_type="expense",
         ),
         Transaction(
             date=date(2026, 5, 3),
@@ -169,7 +169,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
             account=None,
             category="Transfer",
             currency="EUR",
-            cashflow_type="internal_transfer",
+            cashflow_type="transfer",
         ),
     ]
 
@@ -215,7 +215,7 @@ def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db
             account=None,
             category="Investment",
             currency="EUR",
-            cashflow_type="internal_transfer",
+            cashflow_type="transfer",
         ),
     ]
 
@@ -231,7 +231,7 @@ def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db
         year=2026,
         month=5,
         direction="out",
-        cashflow_type="internal_transfer",
+        cashflow_type="transfer",
     )
 
     assert len(response.items) == 1

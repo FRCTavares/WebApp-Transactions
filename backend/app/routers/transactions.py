@@ -84,7 +84,7 @@ def list_transactions(
     source: str | None = Query(default=None),
     cashflow_type: str | None = Query(
         default=None,
-        pattern="^(income|expense|internal_transfer|investment|reimbursement|reimbursed_expense)$",
+        pattern="^(income|expense|transfer)$",
     ),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
@@ -115,7 +115,7 @@ def export_transactions(
     source: str | None = Query(default=None),
     cashflow_type: str | None = Query(
         default=None,
-        pattern="^(income|expense|internal_transfer|investment|reimbursement|reimbursed_expense)$",
+        pattern="^(income|expense|transfer)$",
     ),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),

@@ -895,10 +895,7 @@ export function TransactionsPage() {
                 >
                   <option value="income">Income</option>
                   <option value="expense">Expense</option>
-                  <option value="internal_transfer">Internal Transfer</option>
-                  <option value="investment">Investment</option>
-                  <option value="reimbursement">Reimbursement</option>
-                  <option value="reimbursed_expense">Reimbursed Expense</option>
+                  <option value="transfer">Transfer</option>
                 </select>
               </td>
               <td>

@@ -9,10 +9,7 @@ DirectionFilter = Literal["in", "out"]
 CashflowType = Literal[
     "income",
     "expense",
-    "internal_transfer",
-    "investment",
-    "reimbursement",
-    "reimbursed_expense",
+    "transfer",
 ]
 
 

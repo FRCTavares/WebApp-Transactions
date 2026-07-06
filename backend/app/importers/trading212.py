@@ -283,7 +283,7 @@ class Trading212Importer:
             or "levantamento" in description_text
             or description_text.startswith("transaction id:")
         ):
-            return "investment"
+            return "transfer"
 
         if (
             "spending cashback" in action_text

@@ -49,7 +49,7 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             raw_description="TRF P/ REVOLUT",
             amount=Decimal("200.00"),
             direction="out",
-            cashflow_type="internal_transfer",
+            cashflow_type="transfer",
             source="activobank",
             currency="EUR",
             category="Transfers",
@@ -58,27 +58,27 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
     transaction_repository.create(
         TransactionCreate(
             date=date(2026, 5, 4),
-            description="Mother reimbursement",
-            raw_description="TRF MOTHER",
+            description="Own-account transfer in",
+            raw_description="TRF OWN ACCOUNT",
             amount=Decimal("65.00"),
             direction="in",
-            cashflow_type="reimbursement",
+            cashflow_type="transfer",
             source="activobank",
             currency="EUR",
-            category="Refund",
+            category="Transfers",
         )
     )
     transaction_repository.create(
         TransactionCreate(
             date=date(2026, 5, 5),
-            description="Psychologist appointment",
+            description="Own-account transfer",
             raw_description="SOFIA PAYMENT",
             amount=Decimal("65.00"),
             direction="out",
-            cashflow_type="reimbursed_expense",
+            cashflow_type="transfer",
             source="activobank",
             currency="EUR",
-            category="Health",
+            category="Transfers",
         )
     )
 
@@ -241,7 +241,7 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
             raw_description="Grandma MBWay",
             amount=Decimal("50.00"),
             direction="in",
-            cashflow_type="reimbursement",
+            cashflow_type="income",
             source="manual",
             currency="EUR",
             category="Family",

@@ -468,7 +468,7 @@ class LegacyExcelImporter:
                     self._get_cell_value(worksheet, row_number, layout.columns.get("owed_by"))
                 )
 
-                cashflow_type = "reimbursed_expense" if owed_by else "expense"
+                cashflow_type = "expense"
 
                 transactions.append(
                     LegacyExcelTransaction(

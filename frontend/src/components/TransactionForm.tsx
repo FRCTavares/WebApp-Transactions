@@ -11,6 +11,33 @@ export type TransactionFormState = {
   notes: string
 }
 
+type CashflowTypeOption = {
+  value: CashflowType
+  label: string
+}
+
+function getCashflowTypeOptions(direction?: Direction): CashflowTypeOption[] {
+  if (direction === 'in') {
+    return [
+      { value: 'income', label: 'Income' },
+      { value: 'transfer', label: 'Transfer' },
+    ]
+  }
+
+  if (direction === 'out') {
+    return [
+      { value: 'expense', label: 'Expense' },
+      { value: 'transfer', label: 'Transfer' },
+    ]
+  }
+
+  return [
+    { value: 'income', label: 'Income' },
+    { value: 'expense', label: 'Expense' },
+    { value: 'transfer', label: 'Transfer' },
+  ]
+}
+
 type TransactionFormProps = {
   title: string
   form: TransactionFormState
@@ -100,17 +127,16 @@ export function TransactionForm({
           </label>
 
           <label>
-            Cashflow Type
+            Cashflow
             <select
               value={form.cashflow_type}
               onChange={(event) => onChange('cashflow_type', event.target.value)}
             >
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-              <option value="internal_transfer">Internal Transfer</option>
-              <option value="investment">Investment</option>
-              <option value="reimbursement">Reimbursement</option>
-              <option value="reimbursed_expense">Reimbursed Expense</option>
+              {getCashflowTypeOptions(direction).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
         </div>

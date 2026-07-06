@@ -25,12 +25,252 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_owed_payment_migrations(engine=engine)
     _run_owed_user_migrations(engine=engine)
     _run_rule_user_migrations(engine=engine)
+    _run_cashflow_type_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
     _run_wealth_user_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
 
 
 
+
+
+
+def _run_cashflow_type_migrations(engine: Engine) -> None:
+    if _table_exists(engine=engine, table_name="transactions") and _column_exists(
+        engine=engine,
+        table_name="transactions",
+        column_name="cashflow_type",
+    ):
+        if _transactions_table_requires_cashflow_rebuild(engine):
+            _rebuild_transactions_for_simplified_cashflow(engine)
+        else:
+            _normalise_transaction_cashflow_values(engine)
+
+    if _table_exists(engine=engine, table_name="cashflow_rules"):
+        _normalise_cashflow_rule_values(engine)
+
+
+def _transactions_table_requires_cashflow_rebuild(engine: Engine) -> bool:
+    if engine.dialect.name != "sqlite":
+        return False
+
+    with engine.connect() as connection:
+        table_sql = connection.execute(
+            text(
+                "SELECT sql FROM sqlite_master "
+                "WHERE type = 'table' AND name = 'transactions'"
+            )
+        ).scalar()
+
+    if table_sql is None:
+        return False
+
+    normalised_sql = str(table_sql).lower()
+
+    return (
+        "internal_transfer" in normalised_sql
+        or "reimbursed_expense" in normalised_sql
+        or "'transfer'" not in normalised_sql
+    )
+
+
+def _normalise_transaction_cashflow_values(engine: Engine) -> None:
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE transactions "
+                "SET cashflow_type = CASE cashflow_type "
+                "WHEN 'internal_transfer' THEN 'transfer' "
+                "WHEN 'investment' THEN 'transfer' "
+                "WHEN 'reimbursement' THEN 'income' "
+                "WHEN 'reimbursed_expense' THEN 'expense' "
+                "WHEN 'transfer' THEN 'transfer' "
+                "WHEN 'income' THEN 'income' "
+                "ELSE 'expense' "
+                "END"
+            )
+        )
+
+
+def _normalise_cashflow_rule_values(engine: Engine) -> None:
+    if not _column_exists(
+        engine=engine,
+        table_name="cashflow_rules",
+        column_name="cashflow_type",
+    ):
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE cashflow_rules "
+                "SET cashflow_type = CASE cashflow_type "
+                "WHEN 'internal_transfer' THEN 'transfer' "
+                "WHEN 'investment' THEN 'transfer' "
+                "WHEN 'reimbursement' THEN 'income' "
+                "WHEN 'reimbursed_expense' THEN 'expense' "
+                "WHEN 'transfer' THEN 'transfer' "
+                "WHEN 'income' THEN 'income' "
+                "ELSE 'expense' "
+                "END"
+            )
+        )
+
+
+def _rebuild_transactions_for_simplified_cashflow(engine: Engine) -> None:
+    target_columns = [
+        "id",
+        "user_id",
+        "date",
+        "description",
+        "raw_description",
+        "amount",
+        "original_amount",
+        "original_currency",
+        "fx_rate_to_eur",
+        "fx_rate_source",
+        "direction",
+        "cashflow_type",
+        "source",
+        "account",
+        "category",
+        "subcategory",
+        "currency",
+        "merchant",
+        "notes",
+        "import_batch_id",
+        "external_id",
+        "dedupe_hash",
+        "created_at",
+        "updated_at",
+    ]
+
+    inspector = inspect(engine)
+    existing_columns = {
+        column["name"]
+        for column in inspector.get_columns("transactions")
+    }
+
+    select_parts = []
+    for column in target_columns:
+        if column == "cashflow_type":
+            select_parts.append(
+                "CASE cashflow_type "
+                "WHEN 'internal_transfer' THEN 'transfer' "
+                "WHEN 'investment' THEN 'transfer' "
+                "WHEN 'reimbursement' THEN 'income' "
+                "WHEN 'reimbursed_expense' THEN 'expense' "
+                "WHEN 'transfer' THEN 'transfer' "
+                "WHEN 'income' THEN 'income' "
+                "ELSE 'expense' "
+                "END AS cashflow_type"
+            )
+        elif column in existing_columns:
+            select_parts.append(column)
+        elif column == "user_id":
+            select_parts.append("'local-default-user' AS user_id")
+        elif column == "source":
+            select_parts.append("'manual' AS source")
+        elif column == "currency":
+            select_parts.append("'EUR' AS currency")
+        elif column in {"created_at", "updated_at"}:
+            select_parts.append("CURRENT_TIMESTAMP AS " + column)
+        else:
+            select_parts.append("NULL AS " + column)
+
+    insert_sql = (
+        "INSERT INTO transactions_cashflow_migration ("
+        + ", ".join(target_columns)
+        + ") SELECT "
+        + ", ".join(select_parts)
+        + " FROM transactions"
+    )
+
+    create_sql = """
+        CREATE TABLE transactions_cashflow_migration (
+            id INTEGER NOT NULL,
+            user_id VARCHAR(100),
+            date DATE NOT NULL,
+            description VARCHAR(255) NOT NULL,
+            raw_description TEXT NOT NULL,
+            amount NUMERIC(12, 2) NOT NULL,
+            original_amount NUMERIC(12, 2),
+            original_currency VARCHAR(3),
+            fx_rate_to_eur NUMERIC(18, 8),
+            fx_rate_source VARCHAR(30),
+            direction VARCHAR(10) NOT NULL,
+            cashflow_type VARCHAR(30) NOT NULL,
+            source VARCHAR(50),
+            account VARCHAR(100),
+            category VARCHAR(100),
+            subcategory VARCHAR(100),
+            currency VARCHAR(3),
+            merchant VARCHAR(100),
+            notes TEXT,
+            import_batch_id INTEGER,
+            external_id VARCHAR(255),
+            dedupe_hash VARCHAR(64),
+            created_at DATETIME,
+            updated_at DATETIME,
+            PRIMARY KEY (id),
+            CONSTRAINT ck_transactions_amount_positive CHECK (amount > 0),
+            CONSTRAINT ck_transactions_direction_known CHECK (direction IN ('in', 'out')),
+            CONSTRAINT ck_transactions_cashflow_type_known CHECK (cashflow_type IN ('income', 'expense', 'transfer')),
+            CONSTRAINT ck_transactions_currency_length CHECK (length(currency) = 3),
+            CONSTRAINT ck_transactions_original_currency_length CHECK (original_currency IS NULL OR length(original_currency) = 3)
+        )
+    """
+
+    with engine.connect() as connection:
+        connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+        connection.commit()
+
+        with connection.begin():
+            connection.execute(text("DROP TABLE IF EXISTS transactions_cashflow_migration"))
+            connection.execute(text(create_sql))
+            connection.execute(text(insert_sql))
+            connection.execute(text("DROP TABLE transactions"))
+            connection.execute(
+                text("ALTER TABLE transactions_cashflow_migration RENAME TO transactions")
+            )
+            connection.execute(
+                text(
+                    "CREATE UNIQUE INDEX ix_transactions_user_dedupe_hash "
+                    "ON transactions (user_id, dedupe_hash)"
+                )
+            )
+            connection.execute(
+                text("CREATE INDEX ix_transactions_user_date ON transactions (user_id, date)")
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_transactions_user_direction_date "
+                    "ON transactions (user_id, direction, date)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_transactions_user_cashflow_type_date "
+                    "ON transactions (user_id, cashflow_type, date)"
+                )
+            )
+            connection.execute(
+                text("CREATE INDEX ix_transactions_category ON transactions (category)")
+            )
+            connection.execute(
+                text("CREATE INDEX ix_transactions_source ON transactions (source)")
+            )
+            connection.execute(
+                text("CREATE INDEX ix_transactions_direction ON transactions (direction)")
+            )
+            connection.execute(
+                text("CREATE INDEX ix_transactions_date ON transactions (date)")
+            )
+
+        connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+        connection.commit()
+
+    _normalise_cashflow_rule_values(engine)
 
 
 def _run_user_scoped_dedupe_index_migrations(engine: Engine) -> None:

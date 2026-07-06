@@ -803,7 +803,7 @@ class InvestmentEventService:
                 fx_rate_to_eur=resolution_data.eur_amount / event.amount,
                 fx_rate_source="manual",
                 direction="out",
-                cashflow_type="investment",
+                cashflow_type="transfer",
                 source="manual",
                 account="ActivoBank",
                 currency="EUR",

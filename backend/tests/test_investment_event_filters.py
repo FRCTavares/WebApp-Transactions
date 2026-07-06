@@ -56,7 +56,7 @@ def create_transaction(
         raw_description="Manual funding transaction",
         amount=Decimal(amount),
         direction="out",
-        cashflow_type="investment",
+        cashflow_type="transfer",
         source="manual",
         account="ActivoBank",
         currency="EUR",
@@ -224,7 +224,7 @@ def test_resolve_manual_funding_creates_transaction_and_updates_event(client, db
 
     assert transaction is not None
     assert transaction.direction == "out"
-    assert transaction.cashflow_type == "investment"
+    assert transaction.cashflow_type == "transfer"
     assert transaction.amount == Decimal("34.10")
     assert transaction.currency == "EUR"
     assert transaction.original_amount == Decimal("37.00")

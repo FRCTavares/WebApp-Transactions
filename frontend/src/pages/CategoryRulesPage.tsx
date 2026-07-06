@@ -51,7 +51,7 @@ const INITIAL_RULE_FORM: RuleFormState = {
 
 const INITIAL_CASHFLOW_RULE_FORM: CashflowRuleFormState = {
   name: '',
-  cashflow_type: 'internal_transfer',
+  cashflow_type: 'transfer',
   match_text: '',
   match_field: 'raw_description',
   direction: '',
@@ -471,7 +471,7 @@ export function CategoryRulesPage() {
           <div>
             <h2>New Cashflow Rule</h2>
             <p className="muted small">
-              Mark matching transactions as income, expense, transfer, investment, or reimbursement.
+              Mark matching transactions as income, expense, or transfer.
             </p>
           </div>
         </div>
