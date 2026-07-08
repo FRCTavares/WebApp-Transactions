@@ -13,6 +13,8 @@ from app.schemas.owed_item import (
     OwedItemUpdate,
     OwedPaymentCreate,
     OwedPaymentRead,
+    OwedPersonRename,
+    OwedPersonRenameRead,
 )
 
 
@@ -231,6 +233,40 @@ class OwedService:
                 offset=offset,
             )
         ]
+
+    def rename_person(
+        self,
+        rename_data: OwedPersonRename,
+        current_user: CurrentUser | None = None,
+    ) -> OwedPersonRenameRead:
+        user_id = self._get_user_id(current_user)
+        from_person = rename_data.from_person.strip()
+        to_person = rename_data.to_person.strip()
+
+        if from_person == to_person:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="From person and to person must be different",
+            )
+
+        owed_items_updated = self.repository.rename_owed_items_person(
+            from_person=from_person,
+            to_person=to_person,
+            user_id=user_id,
+        )
+        payments_updated = self.repository.rename_payments_person(
+            from_person=from_person,
+            to_person=to_person,
+            user_id=user_id,
+        )
+        self.repository.commit()
+
+        return OwedPersonRenameRead(
+            from_person=from_person,
+            to_person=to_person,
+            owed_items_updated=owed_items_updated,
+            payments_updated=payments_updated,
+        )
 
     def get_payment(
         self,

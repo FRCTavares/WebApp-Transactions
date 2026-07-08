@@ -83,6 +83,18 @@ class OwedPaymentCreate(BaseModel):
     allocations: list[OwedPaymentAllocationCreate] = Field(default_factory=list)
 
 
+class OwedPersonRename(BaseModel):
+    from_person: str = Field(min_length=1, max_length=100)
+    to_person: str = Field(min_length=1, max_length=100)
+
+
+class OwedPersonRenameRead(BaseModel):
+    from_person: str
+    to_person: str
+    owed_items_updated: int
+    payments_updated: int
+
+
 class OwedPaymentRead(BaseModel):
     id: int
     person: str

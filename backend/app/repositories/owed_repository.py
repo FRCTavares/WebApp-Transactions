@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import delete as sqlalchemy_delete, func, select
+from sqlalchemy import delete as sqlalchemy_delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.models.owed_item import OwedItem
@@ -242,6 +242,36 @@ class OwedRepository:
         )
 
         return Decimal(str(self.db.scalar(statement)))
+
+    def rename_owed_items_person(
+        self,
+        from_person: str,
+        to_person: str,
+        user_id: str,
+    ) -> int:
+        statement = (
+            update(OwedItem)
+            .where(OwedItem.user_id == user_id)
+            .where(OwedItem.person == from_person)
+            .values(person=to_person)
+        )
+        result = self.db.execute(statement)
+        return result.rowcount or 0
+
+    def rename_payments_person(
+        self,
+        from_person: str,
+        to_person: str,
+        user_id: str,
+    ) -> int:
+        statement = (
+            update(OwedPayment)
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.person == from_person)
+            .values(person=to_person)
+        )
+        result = self.db.execute(statement)
+        return result.rowcount or 0
 
     def get_allocated_total_for_payment(
         self,

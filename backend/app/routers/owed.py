@@ -14,6 +14,8 @@ from app.schemas.owed_item import (
     OwedItemUpdate,
     OwedPaymentCreate,
     OwedPaymentRead,
+    OwedPersonRename,
+    OwedPersonRenameRead,
 )
 from app.services.owed_service import OwedService
 
@@ -152,6 +154,15 @@ def list_owed_payments(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("/people/rename", response_model=OwedPersonRenameRead)
+def rename_owed_person(
+    rename_data: OwedPersonRename,
+    service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.rename_person(rename_data, current_user)
 
 
 @router.get("/payments/{payment_id}", response_model=OwedPaymentRead)
