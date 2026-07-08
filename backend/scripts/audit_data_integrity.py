@@ -45,14 +45,7 @@ CHECKS = [
         description="Transactions cashflow_type must use a known value.",
         sql="""
             SELECT COUNT(*) FROM transactions
-            WHERE cashflow_type NOT IN (
-                'income',
-                'expense',
-                'internal_transfer',
-                'investment',
-                'reimbursement',
-                'reimbursed_expense'
-            )
+            WHERE cashflow_type NOT IN ('income', 'expense', 'transfer')
         """,
     ),
     IntegrityCheck(
