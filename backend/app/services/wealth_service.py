@@ -9,6 +9,7 @@ from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.wealth_repository import WealthRepository
+from app.services.investment_event_service import InvestmentEventService
 from app.schemas.wealth import (
     WealthAccountCreate,
     WealthAccountUpdate,
@@ -24,9 +25,11 @@ class WealthService:
         self,
         repository: WealthRepository,
         owed_repository: OwedRepository | None = None,
+        investment_event_service: InvestmentEventService | None = None,
     ) -> None:
         self.repository = repository
         self.owed_repository = owed_repository
+        self.investment_event_service = investment_event_service
 
     def create_account(
         self,
@@ -195,24 +198,26 @@ class WealthService:
         user_id = self._get_user_id(current_user)
         snapshots = self.repository.list_all_snapshots_ascending(user_id)
         latest_by_account = self._get_latest_snapshot_by_account(snapshots)
-        owed_like_account_ids = self._get_owed_like_account_ids(user_id)
+        derived_account_ids = self._get_derived_account_ids(user_id)
 
         snapshot_total = sum(
             (
                 snapshot.balance_eur
                 for snapshot in latest_by_account.values()
-                if snapshot.account_id not in owed_like_account_ids
+                if snapshot.account_id not in derived_account_ids
             ),
             Decimal("0"),
         )
         money_owed_to_me = self._get_money_owed_to_me(user_id)
+        investment_value = self._get_current_investment_value(current_user)
 
         return WealthSummaryRead(
-            current_total_wealth_eur=snapshot_total + money_owed_to_me,
-            account_count=self._count_active_non_owed_accounts(user_id),
+            current_total_wealth_eur=snapshot_total + money_owed_to_me + investment_value,
+            account_count=self._count_active_manual_accounts(user_id),
             latest_snapshot_date=self.repository.get_latest_snapshot_date(user_id),
             total_interest_earned=self.repository.sum_interest_earned(user_id),
             money_owed_to_me_eur=money_owed_to_me,
+            investment_value_eur=investment_value,
         )
 
     def get_monthly_totals(
@@ -221,7 +226,8 @@ class WealthService:
     ) -> list[WealthMonthlyRead]:
         user_id = self._get_user_id(current_user)
         snapshots = self.repository.list_all_snapshots_ascending(user_id)
-        owed_like_account_ids = self._get_owed_like_account_ids(user_id)
+        derived_account_ids = self._get_derived_account_ids(user_id)
+        investment_values_by_month = self._get_monthly_investment_values(current_user)
         snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
@@ -239,15 +245,18 @@ class WealthService:
                 (
                     snapshot.balance_eur
                     for snapshot in latest_by_account.values()
-                    if snapshot.account_id not in owed_like_account_ids
+                    if snapshot.account_id not in derived_account_ids
                 ),
                 Decimal("0"),
             )
 
+            investment_value = investment_values_by_month.get(month, Decimal("0"))
+
             rows.append(
                 WealthMonthlyRead(
                     month=month,
-                    total_wealth_eur=total,
+                    total_wealth_eur=total + investment_value,
+                    investment_value_eur=investment_value,
                 )
             )
 
@@ -257,6 +266,7 @@ class WealthService:
                 month=latest_row.month,
                 total_wealth_eur=latest_row.total_wealth_eur
                 + self._get_money_owed_to_me(user_id),
+                investment_value_eur=latest_row.investment_value_eur,
             )
 
         return rows
@@ -285,7 +295,50 @@ class WealthService:
 
         return self.owed_repository.get_active_remaining_total(user_id)
 
-    def _get_owed_like_account_ids(self, user_id: str) -> set[int]:
+    def _get_current_investment_value(
+        self,
+        current_user: CurrentUser | None = None,
+    ) -> Decimal:
+        if self.investment_event_service is None:
+            return Decimal("0")
+
+        total = Decimal("0")
+
+        for position in self.investment_event_service.list_positions(
+            current_user=current_user,
+        ):
+            market_value = position.get("market_value")
+
+            if market_value is None:
+                continue
+
+            total += Decimal(str(market_value))
+
+        return total.quantize(Decimal("0.01"))
+
+    def _get_monthly_investment_values(
+        self,
+        current_user: CurrentUser | None = None,
+    ) -> dict[str, Decimal]:
+        if self.investment_event_service is None:
+            return {}
+
+        values: dict[str, Decimal] = {}
+
+        for row in self.investment_event_service.get_monthly_series(
+            months=60,
+            current_user=current_user,
+        ):
+            market_value = row.get("market_value_eur")
+            values[str(row["month"])] = (
+                Decimal("0")
+                if market_value is None
+                else Decimal(str(market_value)).quantize(Decimal("0.01"))
+            )
+
+        return values
+
+    def _get_derived_account_ids(self, user_id: str) -> set[int]:
         accounts = self.repository.list_accounts(
             active_only=False,
             limit=10000,
@@ -296,10 +349,10 @@ class WealthService:
         return {
             account.id
             for account in accounts
-            if self._is_money_owed_account(account)
+            if self._is_money_owed_account(account) or self._is_derived_investment_account(account)
         }
 
-    def _count_active_non_owed_accounts(self, user_id: str) -> int:
+    def _count_active_manual_accounts(self, user_id: str) -> int:
         accounts = self.repository.list_accounts(
             active_only=False,
             limit=10000,
@@ -310,7 +363,11 @@ class WealthService:
         return sum(
             1
             for account in accounts
-            if account.is_active and not self._is_money_owed_account(account)
+            if (
+                account.is_active
+                and not self._is_money_owed_account(account)
+                and not self._is_derived_investment_account(account)
+            )
         )
 
     def _is_money_owed_account(self, account: WealthAccount) -> bool:
@@ -326,6 +383,22 @@ class WealthService:
             or "owed to me" in text
             or "dívidas" in text
             or "dividas" in text
+        )
+
+    def _is_derived_investment_account(self, account: WealthAccount) -> bool:
+        values = [
+            account.name,
+            account.institution,
+            account.notes,
+        ]
+        text = " ".join(value or "" for value in values).lower()
+
+        return (
+            "derived investment" in text
+            or "cspx" in text
+            or "vwce" in text
+            or "btc" in text
+            or "bitcoin" in text
         )
 
     def _get_user_id(self, current_user: CurrentUser | None) -> str:

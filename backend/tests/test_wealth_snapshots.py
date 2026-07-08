@@ -2,6 +2,8 @@ from datetime import date
 from decimal import Decimal
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
+from app.models.investment_event import InvestmentEvent
+from app.models.market_price_history import MarketPriceHistory
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 
@@ -197,10 +199,12 @@ def test_monthly_endpoint_groups_latest_snapshot_per_account_per_month(client):
         {
             "month": "2026-01",
             "total_wealth_eur": "5150.00",
+            "investment_value_eur": "0.00",
         },
         {
             "month": "2026-02",
             "total_wealth_eur": "5200.00",
+            "investment_value_eur": "0.00",
         },
     ]
 
@@ -267,8 +271,89 @@ def test_wealth_monthly_totals_carry_forward_latest_account_balances(client):
 
     assert response.status_code == 200
     assert response.json() == [
-        {"month": "2026-04", "total_wealth_eur": "150.00"},
-        {"month": "2026-05", "total_wealth_eur": "170.00"},
+        {
+            "month": "2026-04",
+            "total_wealth_eur": "150.00",
+            "investment_value_eur": "0.00",
+        },
+        {
+            "month": "2026-05",
+            "total_wealth_eur": "170.00",
+            "investment_value_eur": "0.00",
+        },
+    ]
+
+
+
+def test_wealth_monthly_totals_use_derived_investment_value_not_brokerage_snapshots(
+    client,
+    db_session,
+):
+    savings = create_account(client, name="Savings")
+    brokerage = create_account(
+        client,
+        name="Trading 212 CSPX",
+        account_type="brokerage",
+    )
+
+    client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-30",
+            "account_id": savings["id"],
+            "balance": "1000.00",
+            "currency": "EUR",
+        },
+    )
+    client.post(
+        "/api/wealth/snapshots",
+        json={
+            "snapshot_date": "2026-06-30",
+            "account_id": brokerage["id"],
+            "balance": "9999.00",
+            "currency": "EUR",
+        },
+    )
+
+    db_session.add_all(
+        [
+            InvestmentEvent(
+                date=date(2026, 6, 1),
+                source="trading212",
+                account="Trading 212",
+                event_type="market_buy",
+                description="Buy CSPX",
+                raw_description="Buy CSPX",
+                instrument_name="iShares Core S&P 500",
+                ticker="CSPX",
+                isin="IE00B5BMR087",
+                quantity=Decimal("2"),
+                price=Decimal("100"),
+                amount=Decimal("200"),
+                currency="EUR",
+                fx_rate_to_eur=Decimal("1"),
+            ),
+            MarketPriceHistory(
+                ticker="CSPX",
+                isin="IE00B5BMR087",
+                price_date=date(2026, 6, 30),
+                close_price=Decimal("120"),
+                currency="EUR",
+                source="manual",
+            ),
+        ]
+    )
+    db_session.commit()
+
+    response = client.get("/api/wealth/monthly")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "month": "2026-06",
+            "total_wealth_eur": "1240.00",
+            "investment_value_eur": "240.00",
+        },
     ]
 
 

@@ -116,8 +116,10 @@ class WealthSummaryRead(BaseModel):
     latest_snapshot_date: DateType | None = None
     total_interest_earned: Decimal
     money_owed_to_me_eur: Decimal = Decimal("0")
+    investment_value_eur: Decimal = Decimal("0")
 
 
 class WealthMonthlyRead(BaseModel):
     month: str
     total_wealth_eur: Decimal
+    investment_value_eur: Decimal = Decimal("0")

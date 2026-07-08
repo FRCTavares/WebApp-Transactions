@@ -635,11 +635,13 @@ export type WealthSummary = {
   latest_snapshot_date: string | null
   total_interest_earned: string
   money_owed_to_me_eur: string
+  investment_value_eur: string
 }
 
 export type WealthMonthlyTotal = {
   month: string
   total_wealth_eur: string
+  investment_value_eur: string
 }
 
 
