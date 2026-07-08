@@ -201,6 +201,7 @@ export function createOwedSplitRow({
     person,
     amount,
     linkedPaymentTransactionId: '',
+    leftoverAllocations: {},
     unallocatedCategory: '',
     unallocatedNotes: '',
     notes,

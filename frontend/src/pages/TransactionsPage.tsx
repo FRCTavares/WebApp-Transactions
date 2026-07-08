@@ -7,12 +7,8 @@ import {
   listTransactions,
   updateTransaction,
 } from '../api/transactions'
-import {
-  TransactionFilters,
-  type TransactionFilterState,
-} from '../components/TransactionFilters'
+import { TransactionFilters, type TransactionFilterState } from '../components/TransactionFilters'
 import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
-import { CategorySelect } from '../components/CategorySelect'
 import { CATEGORY_OPTIONS } from '../constants/categories'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
@@ -22,6 +18,7 @@ import {
 } from '../components/transactions/TransactionOwedSplitDialog'
 import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
 import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
+import { TransactionInlineEditRow } from '../components/transactions/TransactionInlineEditRow'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
 import type { Direction, OwedItem, Transaction } from '../types/api'
@@ -60,6 +57,7 @@ export function TransactionsPage() {
   const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
   const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
   const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
+  const [owedLeftoverItemsByPerson, setOwedLeftoverItemsByPerson] = useState<Record<string, OwedItem[]>>({})
   const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
   const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
   const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
@@ -600,6 +598,28 @@ export function TransactionsPage() {
     setOwedDraftTransaction(null)
     setOwedRows([])
     setOwedPaymentTransactions([])
+    setOwedLeftoverItemsByPerson({})
+  }
+
+  function loadOwedLeftoverItemsForPerson(person: string) {
+    const trimmedPerson = person.trim()
+
+    if (!trimmedPerson) {
+      return
+    }
+
+    const personKey = trimmedPerson.toLowerCase()
+
+    listOwedItems({ status: 'active', person: trimmedPerson, limit: 500 })
+      .then((items) => {
+        setOwedLeftoverItemsByPerson((currentItems) => ({
+          ...currentItems,
+          [personKey]: items.filter((item) => item.linked_transaction_id !== owedDraftTransaction?.id),
+        }))
+      })
+      .catch((caughtError: unknown) => {
+        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load other owed items for this person')
+      })
   }
 
   function updateOwedRow<K extends keyof OwedSplitRowState>(
@@ -613,6 +633,26 @@ export function TransactionsPage() {
           ? {
               ...row,
               [field]: value,
+            }
+          : row,
+      ),
+    )
+
+    if (field === 'person') {
+      loadOwedLeftoverItemsForPerson(String(value))
+    }
+  }
+
+  function updateOwedLeftoverAllocation(rowId: string, owedItemId: number, amount: string) {
+    setOwedRows((currentRows) =>
+      currentRows.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              leftoverAllocations: {
+                ...row.leftoverAllocations,
+                [owedItemId]: amount,
+              },
             }
           : row,
       ),
@@ -689,6 +729,38 @@ export function TransactionsPage() {
       return
     }
 
+    for (const row of parsedRows) {
+      if (!row.linkedPaymentTransaction) {
+        continue
+      }
+
+      const paymentAmount = Number(row.linkedPaymentTransaction.amount)
+      const currentAllocationAmount = Math.min(paymentAmount, row.amount)
+      const availableLeftoverAmount = Math.max(paymentAmount - currentAllocationAmount, 0)
+      const personKey = row.person.toLowerCase()
+      const availableItems = owedLeftoverItemsByPerson[personKey] ?? []
+      const leftoverAllocations = Object.entries(row.leftoverAllocations)
+        .map(([owedItemId, amount]) => ({ owed_item_id: Number(owedItemId), amount: parseMoneyInput(amount) }))
+        .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
+      const leftoverAllocationTotal = leftoverAllocations.reduce((total, allocation) => total + allocation.amount, 0)
+
+      if (leftoverAllocationTotal > availableLeftoverAmount + 0.0001) {
+        setError('Leftover allocations cannot exceed the selected Money In leftover amount.')
+        return
+      }
+
+      const invalidAllocation = leftoverAllocations.find((allocation) => {
+        const item = availableItems.find((candidate) => candidate.id === allocation.owed_item_id)
+
+        return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
+      })
+
+      if (invalidAllocation) {
+        setError('Leftover allocation cannot exceed the selected owed item remaining amount.')
+        return
+      }
+    }
+
     setError(null)
     setMessage(null)
     setIsCreatingOwedItem(true)
@@ -727,7 +799,18 @@ export function TransactionsPage() {
 
           const paymentAmount = Number(row.linkedPaymentTransaction.amount)
           const allocationAmount = Math.min(paymentAmount, row.amount, remainingPersonAmount)
-          const leftoverAmount = Math.max(paymentAmount - allocationAmount, 0)
+          const extraAllocations = Object.entries(row.leftoverAllocations)
+            .map(([owedItemId, amount]) => ({ owed_item_id: Number(owedItemId), amount: parseMoneyInput(amount) }))
+            .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
+          const extraAllocationAmount = extraAllocations.reduce((total, allocation) => total + allocation.amount, 0)
+          const leftoverAmount = Math.max(paymentAmount - allocationAmount - extraAllocationAmount, 0)
+          const allocations = [
+            ...(allocationAmount > 0 ? [{ owed_item_id: owedItem.id, amount: allocationAmount.toFixed(2) }] : []),
+            ...extraAllocations.map((allocation) => ({
+              owed_item_id: allocation.owed_item_id,
+              amount: allocation.amount.toFixed(2),
+            })),
+          ]
 
           await createOwedPayment({
             person,
@@ -739,14 +822,7 @@ export function TransactionsPage() {
             linked_transaction_id: row.linkedPaymentTransaction.id,
             unallocated_category: leftoverAmount > 0 ? row.unallocatedCategory || null : null,
             unallocated_notes: leftoverAmount > 0 ? row.unallocatedNotes || null : null,
-            allocations: allocationAmount > 0
-              ? [
-                  {
-                    owed_item_id: owedItem.id,
-                    amount: allocationAmount.toFixed(2),
-                  },
-                ]
-              : undefined,
+            allocations: allocations.length > 0 ? allocations : undefined,
           })
 
           remainingPersonAmount -= allocationAmount
@@ -869,105 +945,22 @@ export function TransactionsPage() {
         </TransactionForm>
       ) : null}
 
-      {editingTransaction ? (
-        <TransactionForm
-          title={`Edit ${direction === 'in' ? 'Money In' : 'Money Out'}`}
-          form={editForm}
-          submitLabel="Save"
-          direction={direction}
-          editingTransactionId={editingTransaction.id}
-          onSubmit={(event) => {
-            event.preventDefault()
-            void saveEditFromForm()
-          }}
-          onChange={updateEditForm}
-          categoryOptions={categoryOptions}
-          onCancel={() => {
-            setEditingTransaction(null)
-            setEditForm(getInitialFormState(direction, monthKey))
-          }}
-        />
-      ) : null}
-
       <TransactionTable
         transactions={displayTransactions}
         editRow={(transaction) =>
           editingTransaction?.id === transaction.id ? (
-            <tr key={transaction.id} className="inline-edit-row">
-              <td>
-                <input
-                  className="table-input"
-                  type="date"
-                  value={editForm.date}
-                  onChange={(event) => updateEditForm('date', event.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  className="table-input"
-                  value={editForm.description}
-                  onChange={(event) => updateEditForm('description', event.target.value)}
-                  placeholder="Description"
-                />
-                <input
-                  className="table-input table-input-secondary"
-                  value={editForm.notes}
-                  onChange={(event) => updateEditForm('notes', event.target.value)}
-                  placeholder="Notes"
-                />
-              </td>
-              <td>
-                <select
-                  className="table-input"
-                  value={editForm.cashflow_type}
-                  onChange={(event) => updateEditForm('cashflow_type', event.target.value)}
-                >
-                  <option value="income">Income</option>
-                  <option value="expense">Expense</option>
-                  <option value="transfer">Transfer</option>
-                </select>
-              </td>
-              <td>
-                <CategorySelect
-                  value={editForm.category}
-                  onChange={(value) => updateEditForm('category', value)}
-                  options={categoryOptions}
-                  placeholder="Category"
-                />
-              </td>
-              <td>{transaction.source}</td>
-              <td className="right">
-                <input
-                  className="table-input right"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={editForm.amount}
-                  onChange={(event) => updateEditForm('amount', event.target.value)}
-                  placeholder="0.00"
-                />
-              </td>
-              <td className="actions-cell">
-                <div className="table-action-group">
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={saveEditFromForm}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingTransaction(null)
-                      setEditForm(getInitialFormState(direction, monthKey))
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </td>
-            </tr>
+            <TransactionInlineEditRow
+              key={transaction.id}
+              transaction={transaction}
+              form={editForm}
+              categoryOptions={categoryOptions}
+              onChange={updateEditForm}
+              onSave={saveEditFromForm}
+              onCancel={() => {
+                setEditingTransaction(null)
+                setEditForm(getInitialFormState(direction, monthKey))
+              }}
+            />
           ) : null
         }
         onEdit={handleStartEdit}
@@ -994,6 +987,8 @@ export function TransactionsPage() {
           onAddRow={addOwedRow}
           onRemoveRow={removeOwedRow}
           onUpdateRow={updateOwedRow}
+          onLeftoverAllocationChange={updateOwedLeftoverAllocation}
+          leftoverItemsByPerson={owedLeftoverItemsByPerson}
           onCreate={createOwedItemsFromDialog}
           getRemainingOwedAmount={getRemainingOwedAmount}
           getSelectedPaymentTransaction={getSelectedOwedPaymentTransaction}

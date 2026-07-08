@@ -1,4 +1,4 @@
-import type { Transaction } from '../../types/api'
+import type { OwedItem, Transaction } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import type { TransactionTableRow } from '../TransactionTable'
 
@@ -7,6 +7,7 @@ export type OwedSplitRowState = {
   person: string
   amount: string
   linkedPaymentTransactionId: string
+  leftoverAllocations: Record<number, string>
   unallocatedCategory: string
   unallocatedNotes: string
   notes: string
@@ -33,6 +34,8 @@ type TransactionOwedSplitDialogProps = {
     field: K,
     value: OwedSplitRowState[K],
   ) => void
+  onLeftoverAllocationChange: (rowId: string, owedItemId: number, amount: string) => void
+  leftoverItemsByPerson: Record<string, OwedItem[]>
   onCreate: () => void
   getRemainingOwedAmount: (transaction: TransactionTableRow) => number
   getSelectedPaymentTransaction: (row: OwedSplitRowState) => Transaction | null
@@ -63,6 +66,8 @@ export function TransactionOwedSplitDialog({
   onAddRow,
   onRemoveRow,
   onUpdateRow,
+  onLeftoverAllocationChange,
+  leftoverItemsByPerson,
   onCreate,
   getRemainingOwedAmount,
   getSelectedPaymentTransaction,
@@ -112,6 +117,21 @@ export function TransactionOwedSplitDialog({
           const leftoverAmount = linkedPaymentTransaction
             ? Math.max(paymentAmount - allocationAmount, 0)
             : 0
+          const personKey = row.person.trim().toLowerCase()
+          const leftoverItems = leftoverItemsByPerson[personKey] ?? []
+          const leftoverAllocatedAmount = Object.values(row.leftoverAllocations).reduce(
+            (total, value) => {
+              const amount = parseMoneyInput(value)
+
+              if (!amount || Number.isNaN(amount)) {
+                return total
+              }
+
+              return total + amount
+            },
+            0,
+          )
+          const finalLeftoverAmount = Math.max(leftoverAmount - leftoverAllocatedAmount, 0)
 
           return (
             <div key={row.id} className="modal-transaction-summary">
@@ -181,7 +201,7 @@ export function TransactionOwedSplitDialog({
                     ))}
                   </select>
                   <span className="muted small">
-                    Use Allowance, Gift, or Income if extra money should count as Money In.
+                    Only use this if money remains after paying other owed items.
                   </span>
                 </label>
               </div>
@@ -189,9 +209,45 @@ export function TransactionOwedSplitDialog({
               {linkedPaymentTransaction && (
                 <p className="muted small">
                   Payment {formatMoney(paymentAmount.toFixed(2), linkedPaymentTransaction.currency)}
-                  {' '}→ allocated {formatMoney(allocationAmount.toFixed(2), linkedPaymentTransaction.currency)}
-                  {' '}→ leftover {formatMoney(leftoverAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                  {' '}→ this expense {formatMoney(allocationAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                  {' '}→ other owed items {formatMoney(leftoverAllocatedAmount.toFixed(2), linkedPaymentTransaction.currency)}
+                  {' '}→ leftover {formatMoney(finalLeftoverAmount.toFixed(2), linkedPaymentTransaction.currency)}
                 </p>
+              )}
+
+              {linkedPaymentTransaction && leftoverAmount > 0 && (
+                <div className="transaction-repayment-expenses">
+                  <p className="transaction-repayment-section-label">
+                    Use leftover for other owed items
+                  </p>
+
+                  {leftoverItems.length === 0 ? (
+                    <p className="muted small">
+                      No other active owed items found for this person.
+                    </p>
+                  ) : (
+                    leftoverItems.map((item) => (
+                      <div key={item.id} className="transaction-repayment-expense-row">
+                        <div className="transaction-repayment-expense-copy">
+                          <strong>{item.reason}</strong>
+                          <span>Remaining {formatMoney(item.amount_remaining, transaction.currency)}</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          max={item.amount_remaining}
+                          value={row.leftoverAllocations[item.id] ?? ''}
+                          onChange={(event) =>
+                            onLeftoverAllocationChange(row.id, item.id, event.target.value)
+                          }
+                          placeholder="0.00"
+                          aria-label={`Leftover amount for ${item.reason}`}
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
 
               <div className="form-row">
