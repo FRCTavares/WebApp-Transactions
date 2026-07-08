@@ -248,6 +248,47 @@ class OwedService:
 
         return self._build_payment_read(payment, user_id)
 
+    def delete_payment(
+        self,
+        payment_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> None:
+        user_id = self._get_user_id(current_user)
+        payment = self.repository.get_payment_by_id(payment_id, user_id)
+
+        if payment is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Owed payment not found",
+            )
+
+        allocations = self.repository.list_allocations_for_payment(payment.id, user_id)
+
+        for allocation in allocations:
+            owed_item = self.repository.get_by_id(allocation.owed_item_id, user_id)
+
+            if owed_item is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot delete payment with missing owed item allocation",
+                )
+
+            owed_item.amount_paid -= allocation.amount
+            owed_item.amount_remaining = self._calculate_amount_remaining(
+                amount_total=owed_item.amount_total,
+                amount_paid=owed_item.amount_paid,
+            )
+            owed_item.status = self._calculate_status(
+                amount_paid=owed_item.amount_paid,
+                amount_remaining=owed_item.amount_remaining,
+            )
+
+            self.repository.save_owed_item(owed_item)
+            self.repository.delete_allocation(allocation)
+
+        self.repository.delete_payment(payment)
+        self.repository.commit()
+
     def _validate_requested_allocations(
         self,
         payment_data: OwedPaymentCreate,

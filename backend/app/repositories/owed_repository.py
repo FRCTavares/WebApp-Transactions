@@ -223,6 +223,14 @@ class OwedRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def delete_allocation(self, allocation: OwedPaymentAllocation) -> None:
+        self.db.delete(allocation)
+        self.db.flush()
+
+    def delete_payment(self, payment: OwedPayment) -> None:
+        self.db.delete(payment)
+        self.db.flush()
+
     def get_active_remaining_total(
         self,
         user_id: str,

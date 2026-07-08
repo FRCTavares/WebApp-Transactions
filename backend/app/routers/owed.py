@@ -163,6 +163,16 @@ def get_owed_payment(
     return service.get_payment(payment_id, current_user)
 
 
+@router.delete("/payments/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_owed_payment(
+    payment_id: int,
+    service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    service.delete_payment(payment_id, current_user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get("/{owed_item_id}", response_model=OwedItemRead)
 def get_owed_item(
     owed_item_id: int,
