@@ -2,7 +2,7 @@ import type { TransactionFilterState } from '../components/TransactionFilters'
 import type { TransactionFormState } from '../components/TransactionForm'
 import type { TransactionTableRow } from '../components/TransactionTable'
 import type { OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
-import type { CashflowType, Direction, OwedItem, Transaction } from '../types/api'
+import type { CashflowType, Direction, OwedItem, OwedPayment, Transaction } from '../types/api'
 
 export function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
@@ -309,3 +309,41 @@ export function getRemainingOwedAmount(transaction: TransactionTableRow) {
 
   return Math.max(transactionAmount - linkedOwedAmount, 0)
 }
+
+export function getAvailablePaymentTransactions(
+  transactions: Transaction[],
+  payments: OwedPayment[],
+) {
+  const usedAmountByTransactionId = new Map<number, number>()
+
+  for (const payment of payments) {
+    if (payment.linked_transaction_id === null) {
+      continue
+    }
+
+    usedAmountByTransactionId.set(
+      payment.linked_transaction_id,
+      (usedAmountByTransactionId.get(payment.linked_transaction_id) ?? 0) + Number(payment.amount),
+    )
+  }
+
+  const availableAmountsById: Record<number, string> = {}
+
+  const availableTransactions = transactions.filter((transaction) => {
+    const usedAmount = usedAmountByTransactionId.get(transaction.id) ?? 0
+    const availableAmount = Math.max(Number(transaction.amount) - usedAmount, 0)
+
+    if (availableAmount <= 0.0001) {
+      return false
+    }
+
+    availableAmountsById[transaction.id] = availableAmount.toFixed(2)
+    return true
+  })
+
+  return {
+    availableTransactions,
+    availableAmountsById,
+  }
+}
+

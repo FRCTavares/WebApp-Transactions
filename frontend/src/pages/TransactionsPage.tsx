@@ -1,21 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOwedItem, createOwedPayment, listOwedItems } from '../api/owed'
-import {
-  createTransaction,
-  deleteTransaction,
-  exportTransactionsCsv,
-  listTransactions,
-  updateTransaction,
-} from '../api/transactions'
+import { createOwedItem, createOwedPayment, listOwedItems, listOwedPayments } from '../api/owed'
+import { createTransaction, deleteTransaction, exportTransactionsCsv, listTransactions, updateTransaction } from '../api/transactions'
 import { TransactionFilters, type TransactionFilterState } from '../components/TransactionFilters'
 import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
 import { CATEGORY_OPTIONS } from '../constants/categories'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
-import {
-  TransactionOwedSplitDialog,
-  type OwedSplitRowState,
-} from '../components/transactions/TransactionOwedSplitDialog'
+import { TransactionOwedSplitDialog, type OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
 import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
 import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
 import { TransactionInlineEditRow } from '../components/transactions/TransactionInlineEditRow'
@@ -26,6 +17,7 @@ import { formatMoney } from '../utils/format'
 import {
   createOwedSplitRow,
   downloadBlob,
+  getAvailablePaymentTransactions,
   getExportFilename,
   getFormStateFromTransaction,
   getInitialFilterState,
@@ -55,6 +47,7 @@ export function TransactionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
   const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
+  const [owedPaymentAvailableAmounts, setOwedPaymentAvailableAmounts] = useState<Record<number, string>>({})
   const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
   const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
   const [owedLeftoverItemsByPerson, setOwedLeftoverItemsByPerson] = useState<Record<string, OwedItem[]>>({})
@@ -567,13 +560,21 @@ export function TransactionsPage() {
     const selectedMonthForDialog = filters.month || monthKey
     const monthDateRange = getMonthDateRange(selectedMonthForDialog)
 
-    listTransactions({
-      direction: 'in',
-      date_from: filters.dateFrom || monthDateRange.dateFrom || undefined,
-      date_to: filters.dateTo || monthDateRange.dateTo || undefined,
-      limit: 500,
-    })
-      .then(setOwedPaymentTransactions)
+    Promise.all([
+      listTransactions({
+        direction: 'in',
+        date_from: filters.dateFrom || monthDateRange.dateFrom || undefined,
+        date_to: filters.dateTo || monthDateRange.dateTo || undefined,
+        limit: 500,
+      }),
+      listOwedPayments({ limit: 500 }),
+    ])
+      .then(([moneyInRows, owedPayments]) => {
+        const { availableTransactions, availableAmountsById } = getAvailablePaymentTransactions(moneyInRows, owedPayments)
+
+        setOwedPaymentTransactions(availableTransactions)
+        setOwedPaymentAvailableAmounts(availableAmountsById)
+      })
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load money in options')
       })
@@ -585,12 +586,10 @@ export function TransactionsPage() {
     setError(null)
     setMessage(null)
     setOwedDraftTransaction(transaction)
-    setOwedRows([
-      createOwedSplitRow({
-        amount: remainingOwedAmount.toFixed(2),
-        notes: transaction.raw_description || transaction.description,
-      }),
-    ])
+    setOwedRows([createOwedSplitRow({
+      amount: remainingOwedAmount.toFixed(2),
+      notes: transaction.raw_description || transaction.description,
+    })])
     loadOwedPaymentTransactionsForDialog()
   }
 
@@ -598,6 +597,7 @@ export function TransactionsPage() {
     setOwedDraftTransaction(null)
     setOwedRows([])
     setOwedPaymentTransactions([])
+    setOwedPaymentAvailableAmounts({})
     setOwedLeftoverItemsByPerson({})
   }
 
@@ -734,7 +734,7 @@ export function TransactionsPage() {
         continue
       }
 
-      const paymentAmount = Number(row.linkedPaymentTransaction.amount)
+      const paymentAmount = Number(owedPaymentAvailableAmounts[row.linkedPaymentTransaction.id] ?? row.linkedPaymentTransaction.amount)
       const currentAllocationAmount = Math.min(paymentAmount, row.amount)
       const availableLeftoverAmount = Math.max(paymentAmount - currentAllocationAmount, 0)
       const personKey = row.person.toLowerCase()
@@ -751,7 +751,6 @@ export function TransactionsPage() {
 
       const invalidAllocation = leftoverAllocations.find((allocation) => {
         const item = availableItems.find((candidate) => candidate.id === allocation.owed_item_id)
-
         return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
       })
 
@@ -797,7 +796,7 @@ export function TransactionsPage() {
             continue
           }
 
-          const paymentAmount = Number(row.linkedPaymentTransaction.amount)
+          const paymentAmount = Number(owedPaymentAvailableAmounts[row.linkedPaymentTransaction.id] ?? row.linkedPaymentTransaction.amount)
           const allocationAmount = Math.min(paymentAmount, row.amount, remainingPersonAmount)
           const extraAllocations = Object.entries(row.leftoverAllocations)
             .map(([owedItemId, amount]) => ({ owed_item_id: Number(owedItemId), amount: parseMoneyInput(amount) }))
@@ -982,6 +981,7 @@ export function TransactionsPage() {
           transaction={owedDraftTransaction}
           rows={owedRows}
           paymentTransactions={owedPaymentTransactions}
+          paymentAvailableAmounts={owedPaymentAvailableAmounts}
           isCreating={isCreatingOwedItem}
           onClose={closeOwedDialog}
           onAddRow={addOwedRow}

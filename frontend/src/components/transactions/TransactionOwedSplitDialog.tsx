@@ -25,6 +25,7 @@ type TransactionOwedSplitDialogProps = {
   transaction: TransactionTableRow
   rows: OwedSplitRowState[]
   paymentTransactions: Transaction[]
+  paymentAvailableAmounts: Record<number, string>
   isCreating: boolean
   onClose: () => void
   onAddRow: () => void
@@ -61,6 +62,7 @@ export function TransactionOwedSplitDialog({
   transaction,
   rows,
   paymentTransactions,
+  paymentAvailableAmounts,
   isCreating,
   onClose,
   onAddRow,
@@ -109,7 +111,7 @@ export function TransactionOwedSplitDialog({
           const linkedPaymentTransaction = getSelectedPaymentTransaction(row)
           const rowAmount = parseMoneyInput(row.amount)
           const paymentAmount = linkedPaymentTransaction
-            ? Number(linkedPaymentTransaction.amount)
+            ? Number(paymentAvailableAmounts[linkedPaymentTransaction.id] ?? linkedPaymentTransaction.amount)
             : 0
           const allocationAmount = linkedPaymentTransaction
             ? Math.min(paymentAmount, rowAmount || 0)
@@ -177,9 +179,9 @@ export function TransactionOwedSplitDialog({
                     {paymentTransactions.map((paymentTransaction) => (
                       <option key={paymentTransaction.id} value={paymentTransaction.id}>
                         #{paymentTransaction.id} | {paymentTransaction.date} | {paymentTransaction.description} | {formatMoney(
-                          paymentTransaction.amount,
+                          paymentAvailableAmounts[paymentTransaction.id] ?? paymentTransaction.amount,
                           paymentTransaction.currency,
-                        )}
+                        )} available
                       </option>
                     ))}
                   </select>
