@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 
 import pytest
 from fastapi import HTTPException
@@ -213,3 +213,51 @@ def test_transactions_are_isolated_by_current_user(db_session):
         )
 
     assert caught_error.value.status_code == 404
+
+
+def test_transaction_read_normalises_legacy_cashflow_type(db_session):
+    transaction = Transaction(
+        id=999001,
+        created_at=datetime(2026, 5, 28, tzinfo=UTC),
+        updated_at=datetime(2026, 5, 28, tzinfo=UTC),
+        date=date(2026, 5, 28),
+        description="Trading 212 deposit",
+        raw_description="TRADING 212 DEPOSIT",
+        amount=Decimal("100.00"),
+        direction="out",
+        cashflow_type="investment",
+        source="manual",
+        account=None,
+        category="Investments",
+        currency="EUR",
+    )
+
+    service = TransactionService(TransactionRepository(db_session))
+
+    result = service._build_transaction_read(transaction, None)
+
+    assert result.cashflow_type == "transfer"
+
+
+def test_transaction_read_falls_back_for_unknown_cashflow_type(db_session):
+    transaction = Transaction(
+        id=999002,
+        created_at=datetime(2026, 5, 28, tzinfo=UTC),
+        updated_at=datetime(2026, 5, 28, tzinfo=UTC),
+        date=date(2026, 5, 28),
+        description="Legacy income",
+        raw_description="LEGACY INCOME",
+        amount=Decimal("100.00"),
+        direction="in",
+        cashflow_type="legacy_unknown",
+        source="manual",
+        account=None,
+        category=None,
+        currency="EUR",
+    )
+
+    service = TransactionService(TransactionRepository(db_session))
+
+    result = service._build_transaction_read(transaction, None)
+
+    assert result.cashflow_type == "income"

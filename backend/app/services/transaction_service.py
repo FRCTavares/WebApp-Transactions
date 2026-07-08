@@ -165,12 +165,66 @@ class TransactionService:
 
         return current_user.id
 
+    def _get_transaction_read_payload(self, transaction: Transaction) -> dict:
+        return {
+            "id": transaction.id,
+            "date": transaction.date,
+            "description": transaction.description,
+            "raw_description": transaction.raw_description,
+            "amount": transaction.amount,
+            "original_amount": transaction.original_amount,
+            "original_currency": transaction.original_currency,
+            "fx_rate_to_eur": transaction.fx_rate_to_eur,
+            "fx_rate_source": transaction.fx_rate_source,
+            "direction": transaction.direction,
+            "cashflow_type": self._normalise_cashflow_type_for_read(
+                transaction.cashflow_type,
+                transaction.direction,
+            ),
+            "source": transaction.source,
+            "account": transaction.account,
+            "category": transaction.category,
+            "currency": transaction.currency,
+            "merchant": transaction.merchant,
+            "notes": transaction.notes,
+            "import_batch_id": transaction.import_batch_id,
+            "external_id": transaction.external_id,
+            "dedupe_hash": transaction.dedupe_hash,
+            "created_at": transaction.created_at,
+            "updated_at": transaction.updated_at,
+        }
+
+    def _normalise_cashflow_type_for_read(
+        self,
+        cashflow_type: str | None,
+        direction: str,
+    ) -> str:
+        if cashflow_type in {"income", "expense", "transfer"}:
+            return cashflow_type
+
+        legacy_mapping = {
+            "internal_transfer": "transfer",
+            "investment": "transfer",
+            "reimbursement": "income",
+            "reimbursed_expense": "expense",
+        }
+
+        if cashflow_type in legacy_mapping:
+            return legacy_mapping[cashflow_type]
+
+        if direction == "in":
+            return "income"
+
+        return "expense"
+
     def _build_transaction_read(
         self,
         transaction: Transaction,
         owed_items: list[OwedItem] | None,
     ) -> TransactionRead:
-        data = TransactionRead.model_validate(transaction)
+        data = TransactionRead.model_validate(
+            self._get_transaction_read_payload(transaction),
+        )
 
         active_owed_items = [
             owed_item
