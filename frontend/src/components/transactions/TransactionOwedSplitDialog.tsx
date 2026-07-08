@@ -69,7 +69,7 @@ export function TransactionOwedSplitDialog({
 }: TransactionOwedSplitDialogProps) {
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card">
+      <div className="modal-card transaction-owed-split-dialog">
         <div className="modal-header">
           <div>
             <h2>Split owed expense</h2>
