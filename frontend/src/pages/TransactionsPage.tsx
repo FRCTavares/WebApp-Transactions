@@ -697,10 +697,17 @@ export function TransactionsPage() {
       let createdCount = 0
       let paymentCount = 0
 
+      const rowsByPerson = new Map<string, typeof parsedRows>()
+
       for (const row of parsedRows) {
+        rowsByPerson.set(row.person, [...(rowsByPerson.get(row.person) ?? []), row])
+      }
+
+      for (const [person, personRows] of rowsByPerson.entries()) {
+        const personAmount = personRows.reduce((total, row) => total + row.amount, 0)
         const owedItem = await createOwedItem({
-          person: row.person,
-          amount_total: row.amount.toFixed(2),
+          person,
+          amount_total: personAmount.toFixed(2),
           amount_paid: '0.00',
           reason: owedDraftTransaction.description,
           status: 'open',
@@ -711,13 +718,19 @@ export function TransactionsPage() {
 
         createdCount += 1
 
-        if (row.linkedPaymentTransaction) {
+        let remainingPersonAmount = personAmount
+
+        for (const row of personRows) {
+          if (!row.linkedPaymentTransaction || remainingPersonAmount <= 0) {
+            continue
+          }
+
           const paymentAmount = Number(row.linkedPaymentTransaction.amount)
-          const allocationAmount = Math.min(paymentAmount, row.amount)
+          const allocationAmount = Math.min(paymentAmount, row.amount, remainingPersonAmount)
           const leftoverAmount = Math.max(paymentAmount - allocationAmount, 0)
 
           await createOwedPayment({
-            person: row.person,
+            person,
             amount: paymentAmount.toFixed(2),
             payment_date: row.linkedPaymentTransaction.date,
             method: 'bank_transfer',
@@ -736,6 +749,7 @@ export function TransactionsPage() {
               : undefined,
           })
 
+          remainingPersonAmount -= allocationAmount
           paymentCount += 1
         }
       }
