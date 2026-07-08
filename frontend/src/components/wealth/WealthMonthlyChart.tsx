@@ -158,7 +158,7 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
         <div>
           <h3>Wealth trend</h3>
           <p className="muted small">
-            Latest monthly net worth.
+            Manual balances plus derived owed money and investment values.
           </p>
         </div>
 
@@ -287,7 +287,7 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
         <div className="investment-trend-legend">
           <span>
             <i className="investment-trend-legend-value" />
-            Net worth
+            Net worth: manual + derived
           </span>
         </div>
 

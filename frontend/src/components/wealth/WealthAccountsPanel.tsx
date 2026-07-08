@@ -118,7 +118,7 @@ export function WealthAccountsPanel({
         <div>
           <h2>Accounts</h2>
           <p className="muted small">
-            Grouped balances with the latest snapshot per account.
+            Manual account snapshots. Investment and owed totals are derived automatically.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export function WealthAccountsPanel({
       {accountGroups.length === 0 ? (
         <div className="wealth-empty-state">
           <strong>No wealth accounts yet.</strong>
-          <p className="muted small">Create accounts first, then add monthly snapshots.</p>
+          <p className="muted small">Create manual accounts first, then add monthly balance snapshots.</p>
         </div>
       ) : (
         <div className="wealth-account-card-grid">

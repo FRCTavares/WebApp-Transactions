@@ -127,7 +127,7 @@ export function WealthMobileAccounts({
             <div>
               <strong>Owed to me</strong>
               <span>
-                {owedItems.length} active item{owedItems.length === 1 ? '' : 's'}
+                Derived · {owedItems.length} active item{owedItems.length === 1 ? '' : 's'}
               </span>
             </div>
             <strong>{formatMoney(owedReceivableTotal.toFixed(2))}</strong>

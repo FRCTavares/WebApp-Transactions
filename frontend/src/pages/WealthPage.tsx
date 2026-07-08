@@ -390,6 +390,9 @@ export function WealthPage(_props: WealthPageProps) {
       <div className="page-header wealth-page-header">
         <div className="page-title-block">
           <h1>Wealth</h1>
+          <p className="muted small">
+            Bank, cash, savings, and other balances are manual snapshots. Owed money and investments are derived automatically.
+          </p>
         </div>
 
         <div className="action-group">
@@ -435,7 +438,7 @@ export function WealthPage(_props: WealthPageProps) {
             <div>
               <h2>{editingAccountId === null ? 'Add wealth account' : 'Edit wealth account'}</h2>
               <p className="muted small">
-                Create one record per account whose balance you want to track monthly.
+                Create manual balance accounts for banks, cash, savings, and other non-investment balances.
               </p>
             </div>
           </div>
@@ -511,7 +514,7 @@ export function WealthPage(_props: WealthPageProps) {
             <div>
               <h2>{editingSnapshotId === null ? 'Add wealth snapshot' : 'Edit wealth snapshot'}</h2>
               <p className="muted small">
-                Enter the balance shown by the account for a specific month-end or checkpoint date.
+                Enter the manual balance shown by the account at the start or end of a month.
               </p>
             </div>
           </div>
@@ -642,7 +645,7 @@ export function WealthPage(_props: WealthPageProps) {
           <div>
             <h2>Snapshots</h2>
             <p className="muted small">
-              Manual account balances, newest first. Hidden by default.
+              Manual bank, cash, savings, and other account balances, newest first. Derived owed and investment values are not entered here.
             </p>
           </div>
 
@@ -702,7 +705,7 @@ export function WealthPage(_props: WealthPageProps) {
                   <td colSpan={9}>
                     <div className="wealth-empty-state">
                       <strong>No snapshots yet.</strong>
-                      <p className="muted small">Add your first month-end balance snapshot.</p>
+                      <p className="muted small">Add your first manual month-start or month-end balance snapshot.</p>
                     </div>
                   </td>
                 </tr>
