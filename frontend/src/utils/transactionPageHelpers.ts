@@ -2,7 +2,7 @@ import type { TransactionFilterState } from '../components/TransactionFilters'
 import type { TransactionFormState } from '../components/TransactionForm'
 import type { TransactionTableRow } from '../components/TransactionTable'
 import type { OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
-import type { CashflowType, Direction, Transaction } from '../types/api'
+import type { CashflowType, Direction, OwedItem, Transaction } from '../types/api'
 
 export function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
@@ -219,6 +219,87 @@ export type ParsedCreateOwedRow = {
 export type ParsedRepaymentAllocation = {
   owed_item_id: number
   amount: number
+}
+
+export function getRankedTransactionCategories(
+  transactions: Transaction[],
+  fallbackCategories: string[] = [],
+) {
+  const countsByCategory = new Map<string, { category: string; count: number }>()
+
+  for (const category of fallbackCategories) {
+    const trimmedCategory = category.trim()
+
+    if (!trimmedCategory) {
+      continue
+    }
+
+    countsByCategory.set(trimmedCategory.toLowerCase(), {
+      category: trimmedCategory,
+      count: 0,
+    })
+  }
+
+  for (const transaction of transactions) {
+    const category = transaction.category?.trim()
+
+    if (!category) {
+      continue
+    }
+
+    const key = category.toLowerCase()
+    const current = countsByCategory.get(key)
+
+    countsByCategory.set(key, {
+      category: current?.category ?? category,
+      count: (current?.count ?? 0) + 1,
+    })
+  }
+
+  return Array.from(countsByCategory.values())
+    .sort((first, second) => {
+      const countDifference = second.count - first.count
+
+      if (countDifference !== 0) {
+        return countDifference
+      }
+
+      return first.category.localeCompare(second.category)
+    })
+    .map((entry) => entry.category)
+}
+
+export function getRankedOwedPeople(items: OwedItem[]) {
+  const totalsByPerson = new Map<string, { person: string; total: number }>()
+
+  for (const item of items) {
+    const person = item.person.trim()
+
+    if (!person) {
+      continue
+    }
+
+    const key = person.toLowerCase()
+    const current = totalsByPerson.get(key)
+    const amount = Number(item.amount_total)
+
+    totalsByPerson.set(key, {
+      person: current?.person ?? person,
+      total: (current?.total ?? 0) + (Number.isNaN(amount) ? 0 : amount),
+    })
+  }
+
+  return Array.from(totalsByPerson.values())
+    .sort((first, second) => {
+      const amountDifference = second.total - first.total
+
+      if (amountDifference !== 0) {
+        return amountDifference
+      }
+
+      return first.person.localeCompare(second.person)
+    })
+    .map((entry) => entry.person)
 }
 
 export function getRemainingOwedAmount(transaction: TransactionTableRow) {

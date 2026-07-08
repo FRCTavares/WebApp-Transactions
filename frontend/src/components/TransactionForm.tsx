@@ -48,6 +48,7 @@ type TransactionFormProps = {
   direction?: Direction
   editingTransactionId?: number
   onCancel?: () => void
+  categoryOptions?: string[]
 }
 
 export function TransactionForm({
@@ -60,6 +61,7 @@ export function TransactionForm({
   direction,
   editingTransactionId,
   onCancel,
+  categoryOptions,
 }: TransactionFormProps) {
   return (
     <form
@@ -101,6 +103,8 @@ export function TransactionForm({
             label="Category"
             value={form.category}
             onChange={(value) => onChange('category', value)}
+            options={categoryOptions}
+            placeholder="Category"
           />
         )}
       </div>

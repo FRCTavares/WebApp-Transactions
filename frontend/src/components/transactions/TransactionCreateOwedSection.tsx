@@ -69,49 +69,70 @@ export function TransactionCreateOwedSection({
             <span>Left: {formatMoney(remainingAmount.toFixed(2), currency)}</span>
           </div>
 
-          <datalist id="owed-person-options">
-            {personOptions.map((person) => (
-              <option key={person} value={person} />
-            ))}
-          </datalist>
-
           <div className="transaction-create-owed-rows">
-            {rows.map((row) => (
-              <div key={row.id} className="transaction-create-owed-row">
-                <label>
-                  Person
-                  <input
-                    list="owed-person-options"
-                    value={row.person}
-                    onChange={(event) => onUpdateRow(row.id, 'person', event.target.value)}
-                    placeholder="Name"
-                  />
-                </label>
+            {rows.map((row) => {
+              const normalisedPerson = row.person.trim().toLowerCase()
+              const filteredPersonOptions = personOptions
+                .filter((personOption) =>
+                  normalisedPerson
+                    ? personOption.toLowerCase().includes(normalisedPerson)
+                    : true,
+                )
+                .filter((personOption) => personOption !== row.person)
+                .slice(0, 6)
 
-                <label>
-                  Amount
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={row.amount}
-                    onChange={(event) => onUpdateRow(row.id, 'amount', event.target.value)}
-                    placeholder="0.00"
-                  />
-                </label>
+              return (
+                <div key={row.id} className="transaction-create-owed-row-wrap">
+                  <div className="transaction-create-owed-row">
+                    <label>
+                      Person
+                      <input
+                        value={row.person}
+                        onChange={(event) => onUpdateRow(row.id, 'person', event.target.value)}
+                        placeholder="Name"
+                      />
+                    </label>
 
-                {rows.length > 1 && (
-                  <button
-                    type="button"
-                    className="transaction-create-owed-remove"
-                    onClick={() => onRemoveRow(row.id)}
-                    aria-label="Remove owed person"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            ))}
+                    <label>
+                      Amount
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.amount}
+                        onChange={(event) => onUpdateRow(row.id, 'amount', event.target.value)}
+                        placeholder="0.00"
+                      />
+                    </label>
+
+                    {rows.length > 1 && (
+                      <button
+                        type="button"
+                        className="transaction-create-owed-remove"
+                        onClick={() => onRemoveRow(row.id)}
+                        aria-label="Remove owed person"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+
+                  {filteredPersonOptions.length > 0 && (
+                    <div className="transaction-create-owed-person-options">
+                      {filteredPersonOptions.map((personOption) => (
+                        <button
+                          key={personOption}
+                          type="button"
+                          onClick={() => onUpdateRow(row.id, 'person', personOption)}
+                        >
+                          {personOption}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
           <button type="button" className="transaction-create-owed-add" onClick={onAddRow}>

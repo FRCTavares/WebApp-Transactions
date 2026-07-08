@@ -35,7 +35,7 @@ function getUniqueOptions(options: string[]) {
     uniqueOptions.push(trimmedOption)
   }
 
-  return uniqueOptions.sort((first, second) => first.localeCompare(second))
+  return uniqueOptions
 }
 
 export function CategorySelect({
@@ -51,9 +51,9 @@ export function CategorySelect({
   const uniqueOptions = useMemo(() => getUniqueOptions(options), [options])
   const searchValue = normaliseOption(value)
 
-  const filteredOptions = uniqueOptions
-    .filter((option) => normaliseOption(option).includes(searchValue))
-    .slice(0, 8)
+  const filteredOptions = uniqueOptions.filter((option) =>
+    normaliseOption(option).includes(searchValue),
+  )
 
   const hasExactMatch = uniqueOptions.some(
     (option) => normaliseOption(option) === searchValue,

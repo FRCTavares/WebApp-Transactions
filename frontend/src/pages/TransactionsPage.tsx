@@ -13,6 +13,7 @@ import {
 } from '../components/TransactionFilters'
 import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
 import { CategorySelect } from '../components/CategorySelect'
+import { CATEGORY_OPTIONS } from '../constants/categories'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
 import {
@@ -33,6 +34,8 @@ import {
   getInitialFilterState,
   getInitialFormState,
   getMonthDateRange,
+  getRankedOwedPeople,
+  getRankedTransactionCategories,
   getRemainingOwedAmount,
   getTransactionsForDisplay,
   parseMoneyInput,
@@ -60,6 +63,7 @@ export function TransactionsPage() {
   const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
   const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
   const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([])
   const [isCreateRepaymentEnabled, setIsCreateRepaymentEnabled] = useState(false)
   const [repaymentPerson, setRepaymentPerson] = useState('')
   const [repaymentPersonOptions, setRepaymentPersonOptions] = useState<string[]>([])
@@ -129,6 +133,7 @@ export function TransactionsPage() {
     setCreateOwedRows([])
     resetCreateRepaymentState()
     loadTransactions(initialFilters)
+    loadCategoryOptions()
   }, [direction, monthKey])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -154,14 +159,21 @@ export function TransactionsPage() {
     resetCreateRepaymentState()
   }
 
+  function loadCategoryOptions() {
+    Promise.all([
+      listTransactions({ direction: 'in', limit: 500 }),
+      listTransactions({ direction: 'out', limit: 500 }),
+    ])
+      .then(([moneyInRows, moneyOutRows]) => {
+        setCategoryOptions(getRankedTransactionCategories([...moneyInRows, ...moneyOutRows], CATEGORY_OPTIONS))
+      })
+      .catch(() => setCategoryOptions(CATEGORY_OPTIONS))
+  }
+
   function loadOwedPersonOptions() {
     listOwedItems({ limit: 500 })
       .then((items) => {
-        const people = Array.from(
-          new Set(items.map((item) => item.person.trim()).filter(Boolean)),
-        ).sort((first, second) => first.localeCompare(second))
-
-        setOwedPersonOptions(people)
+        setOwedPersonOptions(getRankedOwedPeople(items))
       })
       .catch(() => {
         setOwedPersonOptions([])
@@ -466,6 +478,7 @@ export function TransactionsPage() {
             : 'Transaction created.',
       )
       loadTransactions()
+      loadCategoryOptions()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to create transaction or owed split')
     }
@@ -743,10 +756,6 @@ export function TransactionsPage() {
 
   const selectedMonth = filters.month || monthKey
   const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth)
-  const categoryOptions = transactions
-    .map((transaction) => transaction.category)
-    .filter((category): category is string => Boolean(category))
-
   return (
     <section className={`app-page transactions-page transactions-page-${direction}`}>
       <div className="page-header transactions-page-header">
@@ -809,6 +818,7 @@ export function TransactionsPage() {
           direction={direction}
           onSubmit={handleCreateTransactionSubmit}
           onChange={updateForm}
+          categoryOptions={categoryOptions}
           onCancel={() => {
             resetCreateFormState()
             setIsCreateFormOpen(false)
@@ -857,6 +867,7 @@ export function TransactionsPage() {
             void saveEditFromForm()
           }}
           onChange={updateEditForm}
+          categoryOptions={categoryOptions}
           onCancel={() => {
             setEditingTransaction(null)
             setEditForm(getInitialFormState(direction, monthKey))

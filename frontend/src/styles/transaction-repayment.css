@@ -307,3 +307,72 @@
     padding-inline: 0.6rem;
   }
 }
+
+
+.transaction-create-owed-row-wrap {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.transaction-create-owed-person-options {
+  display: none;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding: 0.05rem 0 0.25rem;
+  scrollbar-width: none;
+}
+
+.transaction-create-owed-row-wrap:focus-within .transaction-create-owed-person-options {
+  display: flex;
+}
+
+.transaction-create-owed-person-options::-webkit-scrollbar {
+  display: none;
+}
+
+.transaction-create-owed-person-options button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.transaction-create-owed-person-options button:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 760px) {
+  .transaction-create-owed-body {
+    gap: 0.8rem;
+  }
+
+  .transaction-create-owed-rows {
+    gap: 0.85rem;
+  }
+
+  .transaction-create-owed-row {
+    grid-template-columns: minmax(0, 1fr) 7.25rem auto;
+    gap: 0.55rem;
+  }
+
+  .transaction-create-owed-row label {
+    gap: 0.35rem;
+  }
+
+  .transaction-create-owed-person-options {
+    margin-top: -0.15rem;
+  }
+
+  .transaction-create-owed-person-options button {
+    min-height: 2.1rem;
+    padding: 0 0.75rem;
+    font-size: 0.88rem;
+  }
+}
+
