@@ -62,6 +62,7 @@ export function getInitialFilterState(direction: Direction): TransactionFilterSt
     month: '',
     dateFrom: '',
     dateTo: '',
+    showFullyOwed: false,
   }
 }
 
@@ -117,14 +118,30 @@ export function sortTransactionsForDisplay(transactions: TransactionTableRow[]) 
   })
 }
 
+function isFullyOwedMoneyOut(transaction: Transaction) {
+  const transactionAmount = Number(transaction.amount)
+  const owedAmountTotal = Number(transaction.owed_amount_total ?? '0')
+
+  return (
+    transaction.direction === 'out'
+    && transaction.is_owed
+    && transactionAmount > 0
+    && owedAmountTotal >= transactionAmount - 0.0001
+  )
+}
+
 export function getTransactionsForDisplay(
   transactions: Transaction[],
   selectedMonth: string,
+  showFullyOwed = false,
 ): TransactionTableRow[] {
-  const cashbackRows = transactions.filter(isTrading212Cashback)
+  const visibleTransactions = showFullyOwed
+    ? transactions
+    : transactions.filter((transaction) => !isFullyOwedMoneyOut(transaction))
+  const cashbackRows = visibleTransactions.filter(isTrading212Cashback)
 
   if (cashbackRows.length <= 1) {
-    return sortTransactionsForDisplay(transactions)
+    return sortTransactionsForDisplay(visibleTransactions)
   }
 
   const cashbackTotal = cashbackRows.reduce(
@@ -147,7 +164,7 @@ export function getTransactionsForDisplay(
   }
 
   return sortTransactionsForDisplay([
-    ...transactions.filter((transaction) => !isTrading212Cashback(transaction)),
+    ...visibleTransactions.filter((transaction) => !isTrading212Cashback(transaction)),
     cashbackRow,
   ])
 }

@@ -10,6 +10,7 @@ export type TransactionFilterState = {
   month: string
   dateFrom: string
   dateTo: string
+  showFullyOwed: boolean
 }
 
 const sourceOptions = [
@@ -29,7 +30,7 @@ const cashflowTypeOptions = [
 
 type TransactionFiltersProps = {
   filters: TransactionFilterState
-  onChange: (field: keyof TransactionFilterState, value: string) => void
+  onChange: (field: keyof TransactionFilterState, value: string | boolean) => void
   onApply: () => void
   onClear: () => void
 }
@@ -49,6 +50,7 @@ export function TransactionFilters({
     filters.month,
     filters.dateFrom,
     filters.dateTo,
+    filters.showFullyOwed,
   ].filter(Boolean).length
 
   return (
@@ -146,6 +148,15 @@ export function TransactionFilters({
                 type="date"
                 value={filters.dateTo}
                 onChange={(event) => onChange('dateTo', event.target.value)}
+              />
+            </label>
+
+            <label>
+              Show fully owed
+              <input
+                type="checkbox"
+                checked={filters.showFullyOwed}
+                onChange={(event) => onChange('showFullyOwed', event.target.checked)}
               />
             </label>
           </div>

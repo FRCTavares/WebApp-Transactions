@@ -363,7 +363,7 @@ export function TransactionsPage() {
     return parsedRows
   }
 
-  function updateFilters(field: keyof TransactionFilterState, value: string) {
+  function updateFilters(field: keyof TransactionFilterState, value: string | boolean) {
     setFilters((currentFilters) => ({
       ...currentFilters,
       [field]: value,
@@ -844,7 +844,7 @@ export function TransactionsPage() {
   }
 
   const selectedMonth = filters.month || monthKey
-  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth)
+  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth, filters.showFullyOwed)
   return (
     <section className={`app-page transactions-page transactions-page-${direction}`}>
       <div className="page-header transactions-page-header">
