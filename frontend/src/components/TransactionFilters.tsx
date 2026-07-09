@@ -150,19 +150,19 @@ export function TransactionFilters({
                 onChange={(event) => onChange('dateTo', event.target.value)}
               />
             </label>
-
-            <label className="transaction-filter-checkbox">
-              <input
-                type="checkbox"
-                checked={filters.showFullyOwed}
-                onChange={(event) => onChange('showFullyOwed', event.target.checked)}
-              />
-              <span>Show fully owed</span>
-            </label>
           </div>
         </details>
 
         <div className="transaction-filter-actions">
+          <label className="transaction-filter-checkbox">
+            <input
+              type="checkbox"
+              checked={filters.showFullyOwed}
+              onChange={(event) => onChange('showFullyOwed', event.target.checked)}
+            />
+            <span>Show fully owed</span>
+          </label>
+
           {activeFilterCount > 0 && (
             <span className="transaction-filter-count">
               {activeFilterCount} active
