@@ -158,6 +158,16 @@
   white-space: nowrap;
 }
 
+:root[data-theme='dark'] .transaction-filter-card .transaction-filter-checkbox {
+  border-color: rgb(255 255 255 / 0.12);
+  background: #232429;
+  color: #d1d5db;
+}
+
+:root[data-theme='dark'] .transaction-filter-card .transaction-filter-checkbox input[type="checkbox"] {
+  accent-color: #8ab4f8;
+}
+
 .transaction-filter-actions {
   display: flex;
   align-items: center;
