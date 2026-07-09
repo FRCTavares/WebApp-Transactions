@@ -104,11 +104,32 @@ function getGiftGroupLabel(transaction: Transaction, selectedMonth: string) {
   return `${toTitleCase(sender)} gifts - ${getMonthLabel(selectedMonth)}`
 }
 
+function getDisplayCategory(transaction: Transaction) {
+  return transaction.owed_payment_unallocated_category ?? transaction.category
+}
+
+function getRealIncomeAmount(transaction: Transaction) {
+  const transactionAmount = Number(transaction.amount)
+  const allocatedAmount = Number(transaction.owed_payment_allocated_amount ?? '0')
+
+  if (
+    transaction.direction === 'in' &&
+    transaction.is_owed_payment &&
+    allocatedAmount > 0
+  ) {
+    return Math.max(transactionAmount - allocatedAmount, 0)
+  }
+
+  return transactionAmount
+}
+
 function getGiftGroupKey(transaction: Transaction) {
+  const category = getDisplayCategory(transaction)
+
   if (
     transaction.direction !== 'in' ||
-    transaction.category?.toLowerCase() !== 'gift' ||
-    transaction.is_owed_payment
+    category?.toLowerCase() !== 'gift' ||
+    getRealIncomeAmount(transaction) <= 0
   ) {
     return null
   }
@@ -116,7 +137,7 @@ function getGiftGroupKey(transaction: Transaction) {
   return [
     transaction.direction,
     transaction.source,
-    transaction.category.toLowerCase(),
+    category.toLowerCase(),
     normaliseGroupedDescription(transaction.description).toLowerCase(),
   ].join('|')
 }
@@ -249,7 +270,7 @@ function getGiftGroupRows(
     }
 
     const total = rows.reduce(
-      (currentTotal, transaction) => currentTotal + Number(transaction.amount),
+      (currentTotal, transaction) => currentTotal + getRealIncomeAmount(transaction),
       0,
     )
 
@@ -260,7 +281,14 @@ function getGiftGroupRows(
       description: getGiftGroupLabel(rows[0], selectedMonth),
       raw_description: 'Monthly grouped gifts',
       amount: total.toFixed(2),
+      category: 'Gift',
       notes: `${rows.length} gift rows grouped for display`,
+      is_owed_payment: false,
+      owed_payment_id: null,
+      owed_payment_person: null,
+      owed_payment_allocated_amount: null,
+      owed_payment_unallocated_amount: null,
+      owed_payment_unallocated_category: null,
       is_grouped: true,
       grouped_count: rows.length,
       dedupe_hash: `grouped-gift-${selectedMonth}-${key}`,
