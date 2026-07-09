@@ -151,13 +151,13 @@ export function TransactionFilters({
               />
             </label>
 
-            <label>
-              Show fully owed
+            <label className="transaction-filter-checkbox">
               <input
                 type="checkbox"
                 checked={filters.showFullyOwed}
                 onChange={(event) => onChange('showFullyOwed', event.target.checked)}
               />
+              <span>Show fully owed</span>
             </label>
           </div>
         </details>
