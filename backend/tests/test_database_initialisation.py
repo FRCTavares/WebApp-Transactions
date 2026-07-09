@@ -42,8 +42,32 @@ def test_initialise_database_keeps_user_scoped_dedupe_index():
     ]
 
 
-def test_initialise_database_skips_non_sqlite_engines():
+def test_initialise_database_runs_postgres_startup_migrations():
+    calls: list[str] = []
+
+    class FakeConnection:
+        def execute(self, statement):
+            calls.append(str(statement))
+
+    class FakeBegin:
+        def __enter__(self):
+            return FakeConnection()
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return False
+
+    class FakeDialect:
+        name = "postgresql"
+
     class FakePostgresEngine:
         url = "postgresql://user:password@example.com/db"
+        dialect = FakeDialect()
+
+        def begin(self):
+            return FakeBegin()
 
     initialise_database(FakePostgresEngine())
+
+    assert len(calls) == 1
+    assert "ck_transactions_cashflow_type_known" in calls[0]
+    assert "'transfer'" in calls[0]

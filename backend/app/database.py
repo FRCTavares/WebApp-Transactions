@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -83,18 +83,53 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+def run_postgres_startup_migrations(database_engine: Engine) -> None:
+    """Run small hosted Postgres compatibility migrations.
+
+    Render's free tier does not provide shell access, so narrowly scoped,
+    idempotent startup migrations are used for production constraint fixes.
+    """
+
+    if database_engine.dialect.name != "postgresql":
+        return
+
+    with database_engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1
+                        FROM information_schema.tables
+                        WHERE table_schema = 'public'
+                        AND table_name = 'transactions'
+                    ) THEN
+                        ALTER TABLE transactions
+                        DROP CONSTRAINT IF EXISTS ck_transactions_cashflow_type_known;
+
+                        ALTER TABLE transactions
+                        ADD CONSTRAINT ck_transactions_cashflow_type_known
+                        CHECK (cashflow_type IN ('income', 'expense', 'transfer'));
+                    END IF;
+                END $$;
+                """
+            )
+        )
+
+
 def initialise_database(database_engine: Engine = engine) -> None:
     """Initialise database objects needed by the application.
 
     SQLite uses SQLAlchemy table creation plus legacy startup migrations.
-    Non-SQLite databases should use explicit migration tooling instead of
-    the local SQLite startup migration path.
+    Hosted Postgres uses narrowly scoped startup compatibility migrations.
     """
 
     from app.database_migrations import run_startup_migrations
     import app.models  # noqa: F401
 
     if not is_sqlite_database_url(str(database_engine.url)):
+        run_postgres_startup_migrations(database_engine)
         return
 
     Base.metadata.create_all(bind=database_engine)
