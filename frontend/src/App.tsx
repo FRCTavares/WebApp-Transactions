@@ -28,6 +28,26 @@ export type Page =
   | 'export'
   | 'settings'
 
+const PAGE_STORAGE_KEY = 'finance-current-page'
+
+const APP_PAGES: Page[] = [
+  'dashboard',
+  'transactions',
+  'wealth',
+  'investments',
+  'owed',
+  'more',
+  'import',
+  'categories',
+  'export',
+  'settings',
+]
+
+function getInitialPage(): Page {
+  const storedPage = window.localStorage.getItem(PAGE_STORAGE_KEY)
+
+  return APP_PAGES.includes(storedPage as Page) ? storedPage as Page : 'dashboard'
+}
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -87,7 +107,7 @@ function getUserAvatarUrl(user: User | null) {
 }
 
 function App() {
-  const [page, setPage] = useState<Page>('dashboard')
+  const [page, setPage] = useState<Page>(getInitialPage)
   const [authError, setAuthError] = useState<string | null>(null)
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
@@ -120,6 +140,11 @@ function App() {
       window.removeEventListener('finance-api-slow-state', handleSlowApiState)
     }
   }, [])
+
+  function handlePageChange(nextPage: Page) {
+    setPage(nextPage)
+    window.localStorage.setItem(PAGE_STORAGE_KEY, nextPage)
+  }
 
   async function handleLogin() {
     setAuthError(null)
@@ -196,11 +221,17 @@ function App() {
           displayName={displayName}
           isAuthEnabled={isAuthEnabled}
           profileAvatarUrl={profileAvatarUrl}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
           onSignOut={handleLogout}
         />
 
         <main className={`app-main app-main-${page}`}>
+          {shouldShowGlobalPeriodSelector && (
+            <div className="global-topbar">
+              <GlobalPeriodSelector />
+            </div>
+          )}
+
           {isBackendWakeNoticeVisible && page !== 'dashboard' && (
             <div className="backend-wake-notice" role="status">
               <strong>Loading data...</strong>
@@ -208,25 +239,19 @@ function App() {
             </div>
           )}
 
-          {shouldShowGlobalPeriodSelector && (
-            <div className="global-topbar">
-              <GlobalPeriodSelector />
-            </div>
-          )}
-
           {page === 'dashboard' && <DashboardPage greeting={greeting} displayName={displayName} />}
           {page === 'transactions' && <TransactionsPage />}
-          {page === 'wealth' && <WealthPage onOpenInvestments={() => setPage('investments')} />}
+          {page === 'wealth' && <WealthPage onOpenInvestments={() => handlePageChange('investments')} />}
           {page === 'investments' && <InvestmentsPage />}
           {page === 'owed' && <OwedPage />}
           {page === 'more' && (
             <AppMobileMorePage
               isAuthEnabled={isAuthEnabled}
-              onOpenCategories={() => setPage('categories')}
-              onOpenExport={() => setPage('export')}
-              onOpenImport={() => setPage('import')}
-              onOpenInvestments={() => setPage('investments')}
-              onOpenSettings={() => setPage('settings')}
+              onOpenCategories={() => handlePageChange('categories')}
+              onOpenExport={() => handlePageChange('export')}
+              onOpenImport={() => handlePageChange('import')}
+              onOpenInvestments={() => handlePageChange('investments')}
+              onOpenSettings={() => handlePageChange('settings')}
               onSignOut={handleLogout}
             />
           )}
@@ -237,15 +262,15 @@ function App() {
             <SettingsPage
               isAuthEnabled={isAuthEnabled}
               displayName={displayName}
-              onOpenImport={() => setPage('import')}
-              onOpenExport={() => setPage('export')}
-              onOpenCategories={() => setPage('categories')}
+              onOpenImport={() => handlePageChange('import')}
+              onOpenExport={() => handlePageChange('export')}
+              onOpenCategories={() => handlePageChange('categories')}
               onSignOut={handleLogout}
             />
           )}
         </main>
 
-        <AppMobileNav currentPage={page} onPageChange={setPage} />
+        <AppMobileNav currentPage={page} onPageChange={handlePageChange} />
       </div>
     </PeriodProvider>
   )
