@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
+from app.models.owed_payment import OwedPayment
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
@@ -23,7 +24,7 @@ class TransactionService:
             transaction_data,
             user_id=self._get_user_id(current_user),
         )
-        return self._build_transaction_read(transaction, None)
+        return self._build_transaction_read(transaction, None, None)
 
     def list_transactions(
         self,
@@ -52,8 +53,13 @@ class TransactionService:
         )
 
         user_id = self._get_user_id(current_user)
+        transaction_ids = [transaction.id for transaction in transactions]
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [transaction.id for transaction in transactions],
+            transaction_ids,
+            user_id,
+        )
+        owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
+            transaction_ids,
             user_id,
         )
 
@@ -61,6 +67,7 @@ class TransactionService:
             self._build_transaction_read(
                 transaction,
                 owed_items_by_transaction_id.get(transaction.id),
+                owed_payments_by_transaction_id.get(transaction.id),
             )
             for transaction in transactions
         ]
@@ -83,8 +90,13 @@ class TransactionService:
         )
 
         user_id = self._get_user_id(current_user)
+        transaction_ids = [transaction.id for transaction in transactions]
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
-            [transaction.id for transaction in transactions],
+            transaction_ids,
+            user_id,
+        )
+        owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
+            transaction_ids,
             user_id,
         )
 
@@ -92,6 +104,7 @@ class TransactionService:
             self._build_transaction_read(
                 transaction,
                 owed_items_by_transaction_id.get(transaction.id),
+                owed_payments_by_transaction_id.get(transaction.id),
             )
             for transaction in transactions
         ]
@@ -107,10 +120,15 @@ class TransactionService:
             [transaction.id],
             user_id,
         )
+        owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
+            [transaction.id],
+            user_id,
+        )
 
         return self._build_transaction_read(
             transaction,
             owed_items_by_transaction_id.get(transaction.id),
+            owed_payments_by_transaction_id.get(transaction.id),
         )
 
     def update_transaction(
@@ -126,10 +144,15 @@ class TransactionService:
             [updated_transaction.id],
             user_id,
         )
+        owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
+            [updated_transaction.id],
+            user_id,
+        )
 
         return self._build_transaction_read(
             updated_transaction,
             owed_items_by_transaction_id.get(updated_transaction.id),
+            owed_payments_by_transaction_id.get(updated_transaction.id),
         )
 
     def delete_transaction(
@@ -221,11 +244,20 @@ class TransactionService:
         self,
         transaction: Transaction,
         owed_items: list[OwedItem] | None,
+        owed_payments: list[tuple[OwedPayment, Decimal]] | None = None,
     ) -> TransactionRead:
         data = TransactionRead.model_validate(
             self._get_transaction_read_payload(transaction),
         )
 
+        data = self._apply_owed_item_metadata(data, owed_items)
+        return self._apply_owed_payment_metadata(data, owed_payments)
+
+    def _apply_owed_item_metadata(
+        self,
+        data: TransactionRead,
+        owed_items: list[OwedItem] | None,
+    ) -> TransactionRead:
         active_owed_items = [
             owed_item
             for owed_item in owed_items or []
@@ -273,5 +305,51 @@ class TransactionService:
                 "owed_amount_total": owed_amount_total,
                 "owed_amount_paid": owed_amount_paid,
                 "owed_amount_remaining": owed_amount_remaining,
+            }
+        )
+
+    def _apply_owed_payment_metadata(
+        self,
+        data: TransactionRead,
+        owed_payments: list[tuple[OwedPayment, Decimal]] | None,
+    ) -> TransactionRead:
+        if not owed_payments:
+            return data
+
+        allocated_amount = sum(
+            (allocated for _payment, allocated in owed_payments),
+            Decimal("0"),
+        )
+        payment_amount = sum(
+            (payment.amount for payment, _allocated in owed_payments),
+            Decimal("0"),
+        )
+        unallocated_amount = payment_amount - allocated_amount
+        payment_people = sorted(
+            {
+                payment.person.strip()
+                for payment, _allocated in owed_payments
+                if payment.person.strip()
+            }
+        )
+        payment_person = payment_people[0] if len(payment_people) == 1 else f"{len(payment_people)} people"
+        unallocated_categories = sorted(
+            {
+                payment.unallocated_category.strip()
+                for payment, _allocated in owed_payments
+                if payment.unallocated_category and payment.unallocated_category.strip()
+            }
+        )
+
+        return data.model_copy(
+            update={
+                "is_owed_payment": True,
+                "owed_payment_id": owed_payments[0][0].id if len(owed_payments) == 1 else None,
+                "owed_payment_person": payment_person,
+                "owed_payment_allocated_amount": allocated_amount,
+                "owed_payment_unallocated_amount": unallocated_amount,
+                "owed_payment_unallocated_category": (
+                    unallocated_categories[0] if len(unallocated_categories) == 1 else None
+                ),
             }
         )

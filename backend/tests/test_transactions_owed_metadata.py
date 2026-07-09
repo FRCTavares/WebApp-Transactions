@@ -7,6 +7,7 @@ from app.auth.current_user import CurrentUser
 from decimal import Decimal
 
 from app.models.owed_item import OwedItem
+from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate
@@ -165,6 +166,80 @@ def test_list_transactions_only_includes_current_user_owed_metadata(db_session):
     assert transactions[0].is_owed is False
     assert transactions[0].owed_item_id is None
 
+
+
+def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_session):
+    pizza_transaction = Transaction(
+        date=date(2026, 5, 10),
+        description="Pizza",
+        raw_description="Pizza",
+        amount=Decimal("29.00"),
+        direction="out",
+        source="manual",
+        account=None,
+        category="Restaurants",
+        currency="EUR",
+    )
+    mbway_transaction = Transaction(
+        date=date(2026, 5, 11),
+        description="Grandma MBWay",
+        raw_description="Grandma MBWay",
+        amount=Decimal("50.00"),
+        direction="in",
+        source="manual",
+        account=None,
+        category="Family",
+        currency="EUR",
+    )
+    db_session.add_all([pizza_transaction, mbway_transaction])
+    db_session.flush()
+
+    owed_item = OwedItem(
+        person="Grandma",
+        amount_total=Decimal("29.00"),
+        amount_paid=Decimal("29.00"),
+        amount_remaining=Decimal("0.00"),
+        reason="Pizza",
+        status="paid",
+        linked_transaction_id=pizza_transaction.id,
+        source="manual",
+    )
+    db_session.add(owed_item)
+    db_session.flush()
+
+    owed_payment = OwedPayment(
+        person="Grandma",
+        payment_date=date(2026, 5, 11),
+        amount=Decimal("50.00"),
+        currency="EUR",
+        method="mbway",
+        linked_transaction_id=mbway_transaction.id,
+        unallocated_category="Gift",
+        unallocated_notes="Grandma gave extra",
+    )
+    db_session.add(owed_payment)
+    db_session.flush()
+
+    db_session.add(
+        OwedPaymentAllocation(
+            owed_payment_id=owed_payment.id,
+            owed_item_id=owed_item.id,
+            amount=Decimal("29.00"),
+        )
+    )
+    db_session.commit()
+
+    service = TransactionService(TransactionRepository(db_session))
+
+    transactions = service.list_transactions(direction="in")
+
+    assert len(transactions) == 1
+    assert transactions[0].is_owed_payment is True
+    assert transactions[0].owed_payment_id == owed_payment.id
+    assert transactions[0].owed_payment_person == "Grandma"
+    assert transactions[0].owed_payment_allocated_amount == Decimal("29.00")
+    assert transactions[0].owed_payment_unallocated_amount == Decimal("21.00")
+    assert transactions[0].owed_payment_unallocated_category == "Gift"
 
 
 def test_transactions_are_isolated_by_current_user(db_session):

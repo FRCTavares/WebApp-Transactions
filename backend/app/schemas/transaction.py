@@ -86,5 +86,12 @@ class TransactionRead(TransactionBase):
     owed_amount_paid: Decimal | None = None
     owed_amount_remaining: Decimal | None = None
 
+    is_owed_payment: bool = False
+    owed_payment_id: int | None = None
+    owed_payment_person: str | None = None
+    owed_payment_allocated_amount: Decimal | None = None
+    owed_payment_unallocated_amount: Decimal | None = None
+    owed_payment_unallocated_category: str | None = None
+
     created_at: DateTimeType
     updated_at: DateTimeType

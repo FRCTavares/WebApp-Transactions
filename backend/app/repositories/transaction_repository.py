@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
+from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
 
@@ -167,6 +168,50 @@ class TransactionRepository:
             ).append(owed_item)
 
         return owed_items_by_transaction_id
+
+    def list_owed_payments_by_transaction_ids(
+        self,
+        transaction_ids: list[int],
+        user_id: str,
+    ) -> dict[int, list[tuple[OwedPayment, Decimal]]]:
+        if not transaction_ids:
+            return {}
+
+        allocated_by_payment = (
+            select(
+                OwedPaymentAllocation.owed_payment_id.label("owed_payment_id"),
+                func.coalesce(func.sum(OwedPaymentAllocation.amount), 0).label("allocated_amount"),
+            )
+            .where(OwedPaymentAllocation.user_id == user_id)
+            .group_by(OwedPaymentAllocation.owed_payment_id)
+            .subquery()
+        )
+
+        statement = (
+            select(
+                OwedPayment,
+                func.coalesce(allocated_by_payment.c.allocated_amount, 0),
+            )
+            .outerjoin(
+                allocated_by_payment,
+                allocated_by_payment.c.owed_payment_id == OwedPayment.id,
+            )
+            .where(OwedPayment.user_id == user_id)
+            .where(OwedPayment.linked_transaction_id.in_(transaction_ids))
+        )
+
+        payments_by_transaction_id: dict[int, list[tuple[OwedPayment, Decimal]]] = {}
+
+        for payment, allocated_amount in self.db.execute(statement).all():
+            if payment.linked_transaction_id is None:
+                continue
+
+            payments_by_transaction_id.setdefault(
+                payment.linked_transaction_id,
+                [],
+            ).append((payment, Decimal(str(allocated_amount))))
+
+        return payments_by_transaction_id
 
     def update(
         self,

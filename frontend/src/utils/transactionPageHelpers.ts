@@ -85,6 +85,42 @@ export function isTrading212Cashback(transaction: Transaction) {
   )
 }
 
+function normaliseGroupedDescription(description: string) {
+  return description
+    .replace(/^TRF\. P\/O\s+/i, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function getGiftGroupLabel(transaction: Transaction, selectedMonth: string) {
+  const sender = normaliseGroupedDescription(transaction.description)
+
+  return `${toTitleCase(sender)} gifts - ${getMonthLabel(selectedMonth)}`
+}
+
+function getGiftGroupKey(transaction: Transaction) {
+  if (
+    transaction.direction !== 'in' ||
+    transaction.category?.toLowerCase() !== 'gift' ||
+    transaction.is_owed_payment
+  ) {
+    return null
+  }
+
+  return [
+    transaction.direction,
+    transaction.source,
+    transaction.category.toLowerCase(),
+    normaliseGroupedDescription(transaction.description).toLowerCase(),
+  ].join('|')
+}
+
 export function getMonthEndDate(month: string) {
   const [year, monthNumber] = month.split('-').map(Number)
   return new Date(year, monthNumber, 0).toISOString().slice(0, 10)
@@ -130,18 +166,38 @@ function isFullyOwedMoneyOut(transaction: Transaction) {
   )
 }
 
-export function getTransactionsForDisplay(
-  transactions: Transaction[],
+function isFullyAllocatedOwedPaymentMoneyIn(transaction: Transaction) {
+  const transactionAmount = Number(transaction.amount)
+  const allocatedAmount = Number(transaction.owed_payment_allocated_amount ?? '0')
+
+  return (
+    transaction.direction === 'in'
+    && transaction.is_owed_payment
+    && transactionAmount > 0
+    && allocatedAmount >= transactionAmount - 0.0001
+  )
+}
+
+function getVisibleTransactions(transactions: Transaction[], showFullyOwed: boolean) {
+  if (showFullyOwed) {
+    return transactions
+  }
+
+  return transactions.filter(
+    (transaction) =>
+      !isFullyOwedMoneyOut(transaction) &&
+      !isFullyAllocatedOwedPaymentMoneyIn(transaction),
+  )
+}
+
+function getCashbackGroupRow(
+  visibleTransactions: Transaction[],
   selectedMonth: string,
-  showFullyOwed = false,
-): TransactionTableRow[] {
-  const visibleTransactions = showFullyOwed
-    ? transactions
-    : transactions.filter((transaction) => !isFullyOwedMoneyOut(transaction))
+): TransactionTableRow | null {
   const cashbackRows = visibleTransactions.filter(isTrading212Cashback)
 
   if (cashbackRows.length <= 1) {
-    return sortTransactionsForDisplay(visibleTransactions)
+    return null
   }
 
   const cashbackTotal = cashbackRows.reduce(
@@ -149,7 +205,7 @@ export function getTransactionsForDisplay(
     0,
   )
 
-  const cashbackRow: TransactionTableRow = {
+  return {
     ...cashbackRows[0],
     id: -1,
     date: getMonthEndDate(selectedMonth),
@@ -162,10 +218,82 @@ export function getTransactionsForDisplay(
     grouped_count: cashbackRows.length,
     dedupe_hash: `grouped-trading212-cashback-${selectedMonth}`,
   }
+}
+
+function getGiftGroupRows(
+  visibleTransactions: Transaction[],
+  selectedMonth: string,
+) {
+  const rowsByKey = new Map<string, Transaction[]>()
+
+  for (const transaction of visibleTransactions) {
+    const key = getGiftGroupKey(transaction)
+
+    if (key === null) {
+      continue
+    }
+
+    rowsByKey.set(key, [...(rowsByKey.get(key) ?? []), transaction])
+  }
+
+  const groupedOriginalIds = new Set<number>()
+  const groupedRows: TransactionTableRow[] = []
+
+  for (const [key, rows] of rowsByKey.entries()) {
+    if (rows.length <= 1) {
+      continue
+    }
+
+    for (const row of rows) {
+      groupedOriginalIds.add(row.id)
+    }
+
+    const total = rows.reduce(
+      (currentTotal, transaction) => currentTotal + Number(transaction.amount),
+      0,
+    )
+
+    groupedRows.push({
+      ...rows[0],
+      id: -Math.abs(key.split('').reduce((hash, char) => hash + char.charCodeAt(0), 0)),
+      date: getMonthEndDate(selectedMonth),
+      description: getGiftGroupLabel(rows[0], selectedMonth),
+      raw_description: 'Monthly grouped gifts',
+      amount: total.toFixed(2),
+      notes: `${rows.length} gift rows grouped for display`,
+      is_grouped: true,
+      grouped_count: rows.length,
+      dedupe_hash: `grouped-gift-${selectedMonth}-${key}`,
+    })
+  }
+
+  return {
+    groupedOriginalIds,
+    groupedRows,
+  }
+}
+
+export function getTransactionsForDisplay(
+  transactions: Transaction[],
+  selectedMonth: string,
+  showFullyOwed = false,
+): TransactionTableRow[] {
+  const visibleTransactions = getVisibleTransactions(transactions, showFullyOwed)
+  const cashbackRow = getCashbackGroupRow(visibleTransactions, selectedMonth)
+  const { groupedOriginalIds, groupedRows } = getGiftGroupRows(visibleTransactions, selectedMonth)
+
+  const hiddenGroupedRows = new Set<number>(groupedOriginalIds)
+
+  if (cashbackRow) {
+    for (const transaction of visibleTransactions.filter(isTrading212Cashback)) {
+      hiddenGroupedRows.add(transaction.id)
+    }
+  }
 
   return sortTransactionsForDisplay([
-    ...visibleTransactions.filter((transaction) => !isTrading212Cashback(transaction)),
-    cashbackRow,
+    ...visibleTransactions.filter((transaction) => !hiddenGroupedRows.has(transaction.id)),
+    ...(cashbackRow ? [cashbackRow] : []),
+    ...groupedRows,
   ])
 }
 

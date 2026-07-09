@@ -25,6 +25,12 @@ export type Transaction = {
   owed_amount_total: string | null
   owed_amount_paid: string | null
   owed_amount_remaining: string | null
+  is_owed_payment: boolean
+  owed_payment_id: number | null
+  owed_payment_person: string | null
+  owed_payment_allocated_amount: string | null
+  owed_payment_unallocated_amount: string | null
+  owed_payment_unallocated_category: string | null
   created_at: string
   updated_at: string
 }

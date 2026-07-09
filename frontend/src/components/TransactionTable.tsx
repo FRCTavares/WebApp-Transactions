@@ -115,23 +115,37 @@ function getOwedActionLabel(transaction: TransactionTableRow) {
 function getAmountDisplay(transaction: TransactionTableRow) {
   const transactionAmount = Number(transaction.amount)
   const owedAmountTotal = getOwedAmountTotal(transaction)
+  const owedPaymentAllocatedAmount = Number(transaction.owed_payment_allocated_amount ?? '0')
   const shouldShowPersonalCost = (
     transaction.direction === 'out'
     && transaction.is_owed
     && owedAmountTotal > 0
     && transactionAmount > 0
   )
+  const shouldShowRealIncome = (
+    transaction.direction === 'in'
+    && transaction.is_owed_payment
+    && owedPaymentAllocatedAmount > 0
+    && transactionAmount > 0
+  )
 
-  if (!shouldShowPersonalCost) {
+  if (shouldShowPersonalCost) {
     return {
-      mainAmount: transaction.amount,
-      referenceAmount: null,
+      mainAmount: Math.max(transactionAmount - owedAmountTotal, 0),
+      referenceAmount: transaction.amount,
+    }
+  }
+
+  if (shouldShowRealIncome) {
+    return {
+      mainAmount: Math.max(transactionAmount - owedPaymentAllocatedAmount, 0),
+      referenceAmount: transaction.amount,
     }
   }
 
   return {
-    mainAmount: Math.max(transactionAmount - owedAmountTotal, 0),
-    referenceAmount: transaction.amount,
+    mainAmount: transaction.amount,
+    referenceAmount: null,
   }
 }
 
