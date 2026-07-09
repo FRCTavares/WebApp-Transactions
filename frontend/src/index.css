@@ -18,6 +18,7 @@
 @import './styles/transactions.css';
 @import './styles/transactions-mobile.css';
 @import './styles/transaction-repayment.css';
+@import './styles/transaction-edit-dialog.css';
 @import './styles/typography.css';
 @import './styles/loading-states.css';
 @import './styles/investment-loading-states.css';

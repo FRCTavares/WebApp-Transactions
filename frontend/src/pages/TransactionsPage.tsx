@@ -9,7 +9,7 @@ import { TransactionDeleteDialog } from '../components/transactions/TransactionD
 import { TransactionOwedSplitDialog, type OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
 import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
 import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
-import { TransactionInlineEditRow } from '../components/transactions/TransactionInlineEditRow'
+import { TransactionEditDialog } from '../components/transactions/TransactionEditDialog'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
 import type { Direction, OwedItem, Transaction } from '../types/api'
@@ -63,6 +63,7 @@ export function TransactionsPage() {
   const [repaymentUnallocatedCategory, setRepaymentUnallocatedCategory] = useState('')
   const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -486,14 +487,15 @@ export function TransactionsPage() {
     setIsCreateFormOpen(false)
     setError(null)
     setMessage(null)
+  }
 
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    })
+  function cancelEdit() {
+    setEditingTransaction(null)
+    setEditForm(getInitialFormState(direction, monthKey))
   }
 
   async function saveEditFromForm() {
-    if (!editingTransaction) {
+    if (!editingTransaction || isSavingEdit) {
       return
     }
 
@@ -507,6 +509,8 @@ export function TransactionsPage() {
       return
     }
 
+    setIsSavingEdit(true)
+
     try {
       await updateTransaction(editingTransaction.id, {
         date: editForm.date,
@@ -517,12 +521,13 @@ export function TransactionsPage() {
         notes: editForm.notes || null,
       })
 
-      setEditingTransaction(null)
-      setEditForm(getInitialFormState(direction, monthKey))
+      cancelEdit()
       setMessage('Transaction updated.')
       loadTransactions()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to update transaction')
+    } finally {
+      setIsSavingEdit(false)
     }
   }
 
@@ -889,7 +894,6 @@ export function TransactionsPage() {
           </button>
         </div>
       </div>
-
       <StatusMessage error={error} message={message} />
 
       <TransactionFilters
@@ -946,26 +950,22 @@ export function TransactionsPage() {
 
       <TransactionTable
         transactions={displayTransactions}
-        editRow={(transaction) =>
-          editingTransaction?.id === transaction.id ? (
-            <TransactionInlineEditRow
-              key={transaction.id}
-              transaction={transaction}
-              form={editForm}
-              categoryOptions={categoryOptions}
-              onChange={updateEditForm}
-              onSave={saveEditFromForm}
-              onCancel={() => {
-                setEditingTransaction(null)
-                setEditForm(getInitialFormState(direction, monthKey))
-              }}
-            />
-          ) : null
-        }
         onEdit={handleStartEdit}
         onDelete={handleDeleteTransaction}
         onMarkOwed={direction === 'out' ? openOwedDialog : undefined}
       />
+
+      {editingTransaction && (
+        <TransactionEditDialog
+          transaction={editingTransaction}
+          form={editForm}
+          categoryOptions={categoryOptions}
+          isSaving={isSavingEdit}
+          onChange={updateEditForm}
+          onSave={saveEditFromForm}
+          onCancel={cancelEdit}
+        />
+      )}
 
       {deleteDraftTransaction && (
         <TransactionDeleteDialog
