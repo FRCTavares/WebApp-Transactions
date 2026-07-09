@@ -112,6 +112,29 @@ function getOwedActionLabel(transaction: TransactionTableRow) {
   return transaction.is_owed ? 'Add owed' : 'Owed'
 }
 
+function getAmountDisplay(transaction: TransactionTableRow) {
+  const transactionAmount = Number(transaction.amount)
+  const owedAmountTotal = getOwedAmountTotal(transaction)
+  const shouldShowPersonalCost = (
+    transaction.direction === 'out'
+    && transaction.is_owed
+    && owedAmountTotal > 0
+    && transactionAmount > 0
+  )
+
+  if (!shouldShowPersonalCost) {
+    return {
+      mainAmount: transaction.amount,
+      referenceAmount: null,
+    }
+  }
+
+  return {
+    mainAmount: Math.max(transactionAmount - owedAmountTotal, 0),
+    referenceAmount: transaction.amount,
+  }
+}
+
 export function TransactionTable({
   transactions,
   createRow,
@@ -174,11 +197,14 @@ export function TransactionTable({
           {sortedTransactions.length === 0 ? (
             <p className="muted">No transactions found.</p>
           ) : (
-            sortedTransactions.map((transaction) => (
-              <article
-                key={transaction.is_grouped ? `mobile-grouped-${transaction.dedupe_hash}` : `mobile-${transaction.id}`}
-                className={getMobileCardClassName(transaction)}
-              >
+            sortedTransactions.map((transaction) => {
+              const amountDisplay = getAmountDisplay(transaction)
+
+              return (
+                <article
+                  key={transaction.is_grouped ? `mobile-grouped-${transaction.dedupe_hash}` : `mobile-${transaction.id}`}
+                  className={getMobileCardClassName(transaction)}
+                >
                 <div className="transaction-mobile-card-main">
                   <div>
                     <strong>{transaction.description}</strong>
@@ -187,7 +213,14 @@ export function TransactionTable({
                       {transaction.category ? ` · ${transaction.category}` : ''}
                     </p>
                   </div>
-                  <span>{formatMoney(transaction.amount, transaction.currency)}</span>
+                  <div className="transaction-mobile-amount">
+                    <strong>{formatMoney(amountDisplay.mainAmount, transaction.currency)}</strong>
+                    {amountDisplay.referenceAmount !== null && (
+                      <span className="muted small">
+                        of {formatMoney(amountDisplay.referenceAmount, transaction.currency)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="transaction-mobile-card-meta">
@@ -241,8 +274,9 @@ export function TransactionTable({
                     )}
                   </div>
                 )}
-              </article>
-            ))
+                </article>
+              )
+            })
           )}
         </div>
       )}
@@ -288,6 +322,7 @@ export function TransactionTable({
           )}
 
           {sortedTransactions.map((transaction) => {
+            const amountDisplay = getAmountDisplay(transaction)
             const customEditRow = editRow?.(transaction)
 
             if (customEditRow) {
@@ -334,7 +369,14 @@ export function TransactionTable({
                   <span className="badge badge-source">{transaction.source}</span>
                 </td>
                 <td className="right">
-                  {formatMoney(transaction.amount, transaction.currency)}
+                  <div>
+                    <div>{formatMoney(amountDisplay.mainAmount, transaction.currency)}</div>
+                    {amountDisplay.referenceAmount !== null && (
+                      <div className="muted small">
+                        of {formatMoney(amountDisplay.referenceAmount, transaction.currency)}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 {showActions && (
                   <td>
