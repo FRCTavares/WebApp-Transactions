@@ -1,0 +1,224 @@
+/* Desktop owed person cards */
+@media (min-width: 801px) {
+  .owed-person-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .owed-person-groups .owed-person-card {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    height: 390px;
+    min-height: 390px;
+    max-height: 390px;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--theme-border, #d1d5db) 86%, transparent);
+    border-radius: 1.15rem;
+    background: color-mix(in srgb, var(--theme-surface, #ffffff) 97%, var(--theme-muted, #64748b));
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  .owed-person-groups .owed-person-card-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1rem;
+    padding: 1rem 1.05rem 0.85rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border, #e5e7eb) 78%, transparent);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--theme-surface, #ffffff) 94%, var(--theme-muted, #64748b)),
+        color-mix(in srgb, var(--theme-surface, #ffffff) 98%, var(--theme-muted, #64748b))
+      );
+  }
+
+  .owed-person-groups .owed-person-card-header h2 {
+    margin: 0 0 0.2rem;
+    overflow: hidden;
+    color: var(--theme-text, #111827);
+    font-size: 1.12rem;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .owed-person-groups .owed-person-card-header p {
+    margin: 0;
+    color: var(--theme-muted, #64748b);
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .owed-person-groups .owed-person-card-header > strong {
+    color: var(--theme-text, #111827);
+    font-size: 1.45rem;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    white-space: nowrap;
+  }
+
+  .owed-person-groups .owed-person-card-hint {
+    display: none;
+  }
+
+  .owed-person-groups .owed-person-card-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.15rem;
+    padding: 0 0.8rem 0 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border, #e5e7eb) 72%, transparent);
+    color: var(--theme-muted, #64748b);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .owed-person-groups .owed-person-card-columns span:nth-child(3),
+  .owed-person-groups .owed-person-card-columns span:nth-child(4) {
+    text-align: right;
+  }
+
+  .owed-person-groups .owed-person-items {
+    display: grid;
+    align-content: start;
+    gap: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .owed-person-groups .owed-person-items::-webkit-scrollbar {
+    width: 0.65rem;
+  }
+
+  .owed-person-groups .owed-person-items::-webkit-scrollbar-thumb {
+    border: 0.2rem solid transparent;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--theme-muted, #64748b) 42%, transparent);
+    background-clip: padding-box;
+  }
+
+  .owed-person-groups .owed-person-item {
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--theme-border, #e5e7eb) 72%, transparent);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .owed-person-groups .owed-person-item:last-child {
+    border-bottom: 0;
+  }
+
+  .owed-person-groups .owed-person-item-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.55rem;
+    padding: 0.45rem 0.8rem 0.45rem 1rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .owed-person-groups .owed-person-item-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .owed-person-groups .owed-person-item-summary:hover {
+    background: color-mix(in srgb, var(--theme-muted, #64748b) 7%, transparent);
+  }
+
+  .owed-person-groups .owed-person-item-title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theme-text, #111827);
+    font-size: 0.82rem;
+    font-weight: 850;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .owed-person-groups .owed-person-item-status-compact {
+    justify-self: start;
+    max-width: 5.6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .owed-person-groups .owed-person-item-paid,
+  .owed-person-groups .owed-person-item-amount {
+    color: var(--theme-text, #111827);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 850;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .owed-person-groups .owed-person-item-paid {
+    color: var(--theme-muted, #64748b);
+  }
+
+  .owed-person-groups .owed-person-item-more {
+    display: grid;
+    width: 1rem;
+    height: 1rem;
+    place-items: center;
+    color: var(--theme-muted, #64748b);
+    font-size: 0.95rem;
+    font-weight: 950;
+    line-height: 1;
+    opacity: 0.65;
+  }
+
+  .owed-person-groups .owed-person-item[open] .owed-person-item-more {
+    transform: rotate(90deg);
+  }
+
+  .owed-person-groups .owed-person-item-details {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0 1rem 0.8rem;
+  }
+
+  .owed-person-groups .owed-person-item-status-row {
+    display: none;
+  }
+
+  .owed-person-groups .owed-person-item-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .owed-person-groups .owed-person-item-actions button {
+    min-height: 2rem;
+    padding: 0 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  .owed-flat-table-hidden {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .owed-person-card-columns,
+  .owed-person-item-status-compact,
+  .owed-person-item-paid {
+    display: none;
+  }
+}

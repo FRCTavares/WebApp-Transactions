@@ -10,7 +10,6 @@ import {
 import { listTransactions } from '../api/transactions'
 import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItemsTable'
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
-import { OwedSummaryCards } from '../components/owed/OwedSummaryCards'
 import { StatusMessage } from '../components/StatusMessage'
 import type { OwedItem, OwedPaymentMethod, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
@@ -157,24 +156,6 @@ function getFormStateFromItem(item: OwedItem): OwedFormState {
     linkedTransactionId: item.linked_transaction_id?.toString() ?? '',
     notes: item.notes ?? '',
   }
-}
-
-function getItemsTotal(items: OwedItem[], field: 'amount_total' | 'amount_paid' | 'amount_remaining') {
-  return items.reduce((total, item) => total + Number(item[field]), 0)
-}
-
-function getActiveItems(items: OwedItem[]) {
-  return items.filter(
-    (item) => item.status === 'open' || item.status === 'partially_paid',
-  )
-}
-
-function getPaidItems(items: OwedItem[]) {
-  return items.filter((item) => item.status === 'paid')
-}
-
-function getCancelledItems(items: OwedItem[]) {
-  return items.filter((item) => item.status === 'cancelled')
 }
 
 function parseLinkedTransactionId(value: string) {
@@ -545,18 +526,11 @@ export function OwedPage() {
     }
   }
 
-  const activeItems = getActiveItems(items)
-  const paidItems = getPaidItems(items)
-  const cancelledItems = getCancelledItems(items)
   const currentMonthKey = getCurrentMonthKey()
   const visibleItems =
     tableMonthFilter === 'current'
       ? items.filter((item) => isItemInMonth(item, currentMonthKey))
       : items
-  const totalStillOwed = getItemsTotal(activeItems, 'amount_remaining')
-  const totalAlreadyReimbursed = getItemsTotal(items, 'amount_paid')
-  const totalOriginalAmount = getItemsTotal(items, 'amount_total')
-
   return (
     <section className="app-page owed-page owed-page-polished">
       <div className="page-header owed-page-header">
@@ -593,15 +567,6 @@ export function OwedPage() {
 
       <StatusMessage error={error} message={message} />
 
-      <OwedSummaryCards
-        activeItems={activeItems}
-        paidItems={paidItems}
-        cancelledItems={cancelledItems}
-        totalStillOwed={totalStillOwed}
-        totalAlreadyReimbursed={totalAlreadyReimbursed}
-        totalOriginalAmount={totalOriginalAmount}
-      />
-
       <OwedStatusToolbar
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
@@ -637,7 +602,6 @@ export function OwedPage() {
           </button>
         </div>
       </div>
-
 
       {isPaymentModalOpen && (
         <div className="modal-backdrop" role="dialog" aria-modal="true">

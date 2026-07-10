@@ -90,13 +90,13 @@ export function OwedItemsTable({
   onCancelEdit,
   formatLinkedTransactionOption,
 }: OwedItemsTableProps) {
-  const shouldShowTableOnMobile = isCreateRowOpen || Boolean(editingItem)
+  const shouldShowFlatTable = isCreateRowOpen || Boolean(editingItem)
   const personGroups = getPersonGroups(items)
 
   return (
     <>
-      {!shouldShowTableOnMobile && (
-        <div className="owed-mobile-groups">
+      {!shouldShowFlatTable && (
+        <div className="owed-person-groups owed-mobile-groups">
           {personGroups.length === 0 ? (
             <div className="owed-empty-state owed-mobile-empty">
               <strong>No owed items in this view</strong>
@@ -128,11 +128,24 @@ export function OwedItemsTable({
                   </div>
                 )}
 
+                <div className="owed-person-card-columns" aria-hidden="true">
+                  <span>Description</span>
+                  <span>Status</span>
+                  <span>Paid</span>
+                  <span>Remaining</span>
+                </div>
+
                 <div className="owed-person-items">
                   {group.items.map((item) => (
                     <details key={item.id} className="owed-person-item">
                       <summary className="owed-person-item-summary">
                         <span className="owed-person-item-title">{item.reason}</span>
+                        <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')} owed-person-item-status-compact`}>
+                          {getStatusLabel(item)}
+                        </span>
+                        <span className="owed-person-item-paid">
+                          {formatMoney(item.amount_paid)}
+                        </span>
                         <span className="owed-person-item-amount">
                           {formatMoney(item.amount_remaining)}
                         </span>
@@ -183,7 +196,7 @@ export function OwedItemsTable({
         </div>
       )}
 
-      <div className={`content-card table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowTableOnMobile ? 'owed-table-has-inline-form' : ''}`}>
+      <div className={`content-card table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowFlatTable ? 'owed-table-has-inline-form' : 'owed-flat-table-hidden'}`}>
         <table className="owed-table">
         <thead>
           <tr>
