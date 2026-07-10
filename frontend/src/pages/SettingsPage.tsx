@@ -1,5 +1,3 @@
-import { useTheme, type ThemePreference } from '../context/ThemeContext'
-
 type SettingsPageProps = {
   isAuthEnabled: boolean
   displayName: string
@@ -15,15 +13,6 @@ type SettingsActionProps = {
   actionLabel: string
   onClick: () => void
 }
-
-const THEME_OPTIONS: {
-  value: ThemePreference
-  title: string
-}[] = [
-  { value: 'system', title: 'System' },
-  { value: 'light', title: 'Light' },
-  { value: 'dark', title: 'Dark' },
-]
 
 function SettingsAction({
   title,
@@ -42,36 +31,6 @@ function SettingsAction({
   )
 }
 
-function ThemePreferenceControl() {
-  const { resolvedTheme, setThemePreference, themePreference } = useTheme()
-
-  return (
-    <div className="settings-theme-row">
-      <div>
-        <strong>Theme</strong>
-        <small>
-          {themePreference === 'system'
-            ? `Follow system appearance. Currently ${resolvedTheme}.`
-            : `Always use ${themePreference} mode.`}
-        </small>
-      </div>
-
-      <div className="settings-segmented-control" role="group" aria-label="Theme">
-        {THEME_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className={themePreference === option.value ? 'active' : ''}
-            onClick={() => setThemePreference(option.value)}
-          >
-            {option.title}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export function SettingsPage({
   isAuthEnabled,
   displayName,
@@ -86,19 +45,11 @@ export function SettingsPage({
         <p className="eyebrow">Settings</p>
         <h1>Settings</h1>
         <p className="page-subtitle">
-          Manage appearance, data tools, rules, and access mode.
+          Manage data tools, rules, and access mode.
         </p>
       </header>
 
       <div className="settings-balanced-grid">
-        <section className="settings-group settings-group-appearance">
-          <header className="settings-group-header">
-            <h2>Appearance</h2>
-          </header>
-
-          <ThemePreferenceControl />
-        </section>
-
         <section className="settings-group settings-group-access">
           <header className="settings-group-header">
             <h2>Access</h2>

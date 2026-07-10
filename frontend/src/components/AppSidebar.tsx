@@ -3,13 +3,16 @@ import {
   LayoutDashboard,
   PiggyBank,
   ReceiptText,
+  Moon,
   Settings,
+  Sun,
   TrendingUp,
   Upload,
   UserRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Page } from '../App'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
   {
@@ -63,6 +66,8 @@ export function AppSidebar({
   onPageChange,
   onSignOut,
 }: AppSidebarProps) {
+  const { resolvedTheme, setThemePreference } = useTheme()
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -100,6 +105,32 @@ export function AppSidebar({
           </section>
         ))}
       </nav>
+
+      <div className="sidebar-footer-controls">
+        <div className="sidebar-theme-switch" role="group" aria-label="Theme">
+          <button
+            type="button"
+            className={resolvedTheme === 'light' ? 'active' : ''}
+            aria-label="Use light mode"
+            aria-pressed={resolvedTheme === 'light'}
+            title="Light mode"
+            onClick={() => setThemePreference('light')}
+          >
+            <Sun className="sidebar-theme-switch-icon" aria-hidden="true" />
+          </button>
+
+          <button
+            type="button"
+            className={resolvedTheme === 'dark' ? 'active' : ''}
+            aria-label="Use dark mode"
+            aria-pressed={resolvedTheme === 'dark'}
+            title="Dark mode"
+            onClick={() => setThemePreference('dark')}
+          >
+            <Moon className="sidebar-theme-switch-icon" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
 
       <div className="sidebar-profile">
         <div className="sidebar-profile-main">

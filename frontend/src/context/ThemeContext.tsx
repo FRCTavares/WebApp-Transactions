@@ -7,12 +7,12 @@ import {
   type ReactNode,
 } from 'react'
 
-export type ThemePreference = 'light' | 'dark' | 'system'
-type ResolvedTheme = 'light' | 'dark'
+export type ThemePreference = 'light' | 'dark'
+type StoredThemePreference = ThemePreference | 'system'
 
 type ThemeContextValue = {
   themePreference: ThemePreference
-  resolvedTheme: ResolvedTheme
+  resolvedTheme: ThemePreference
   setThemePreference: (themePreference: ThemePreference) => void
 }
 
@@ -20,25 +20,7 @@ const THEME_STORAGE_KEY = 'finance-theme-preference'
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-function getStoredThemePreference(): ThemePreference {
-  if (typeof window === 'undefined') {
-    return 'system'
-  }
-
-  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY)
-
-  if (
-    storedValue === 'light' ||
-    storedValue === 'dark' ||
-    storedValue === 'system'
-  ) {
-    return storedValue
-  }
-
-  return 'system'
-}
-
-function getSystemTheme(): ResolvedTheme {
+function getSystemTheme(): ThemePreference {
   if (
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -49,12 +31,22 @@ function getSystemTheme(): ResolvedTheme {
   return 'light'
 }
 
-function getResolvedTheme(themePreference: ThemePreference): ResolvedTheme {
-  if (themePreference === 'system') {
+function getStoredThemePreference(): ThemePreference {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY) as StoredThemePreference | null
+
+  if (storedValue === 'light' || storedValue === 'dark') {
+    return storedValue
+  }
+
+  if (storedValue === 'system') {
     return getSystemTheme()
   }
 
-  return themePreference
+  return 'light'
 }
 
 type ThemeProviderProps = {
@@ -65,31 +57,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(
     getStoredThemePreference,
   )
-  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme)
 
-  const resolvedTheme = themePreference === 'system' ? systemTheme : themePreference
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-    function handleSystemThemeChange() {
-      setSystemTheme(getSystemTheme())
-    }
-
-    handleSystemThemeChange()
-    mediaQuery.addEventListener('change', handleSystemThemeChange)
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange)
-    }
-  }, [])
+  const resolvedTheme = themePreference
 
   useEffect(() => {
-    const nextResolvedTheme = getResolvedTheme(themePreference)
-
-    document.documentElement.dataset.theme = nextResolvedTheme
+    document.documentElement.dataset.theme = resolvedTheme
     document.documentElement.dataset.themePreference = themePreference
-    document.documentElement.style.colorScheme = nextResolvedTheme
+    document.documentElement.style.colorScheme = resolvedTheme
+    window.localStorage.setItem(THEME_STORAGE_KEY, themePreference)
   }, [themePreference, resolvedTheme])
 
   function setThemePreference(nextThemePreference: ThemePreference) {
