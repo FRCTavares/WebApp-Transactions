@@ -18,6 +18,7 @@ def run_startup_migrations(engine: Engine) -> None:
         return
 
     _run_investment_funding_month_migrations(engine=engine)
+    _run_transaction_category_migrations(engine=engine)
     _run_transaction_migrations(engine=engine)
     _run_import_batch_user_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
@@ -33,6 +34,75 @@ def run_startup_migrations(engine: Engine) -> None:
 
 
 
+
+
+def _run_transaction_category_migrations(engine: Engine) -> None:
+    if _table_exists(
+        engine=engine,
+        table_name="transaction_categories",
+    ):
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE transaction_categories ("
+                "id INTEGER NOT NULL, "
+                "user_id VARCHAR(100) NOT NULL "
+                "DEFAULT 'local-default-user', "
+                "name VARCHAR(100) NOT NULL, "
+                "direction VARCHAR(10) NOT NULL, "
+                "cashflow_type VARCHAR(30) NOT NULL, "
+                "is_active BOOLEAN NOT NULL DEFAULT 1, "
+                "sort_order INTEGER NOT NULL DEFAULT 0, "
+                "created_at DATETIME NOT NULL "
+                "DEFAULT CURRENT_TIMESTAMP, "
+                "updated_at DATETIME NOT NULL "
+                "DEFAULT CURRENT_TIMESTAMP, "
+                "PRIMARY KEY (id), "
+                "CONSTRAINT ck_transaction_categories_direction_known "
+                "CHECK (direction IN ('in', 'out')), "
+                "CONSTRAINT ck_transaction_categories_cashflow_type_known "
+                "CHECK (cashflow_type IN "
+                "('income', 'expense', 'transfer')), "
+                "CONSTRAINT ck_transaction_categories_sort_order_non_negative "
+                "CHECK (sort_order >= 0), "
+                "CONSTRAINT "
+                "uq_transaction_categories_user_name_direction_type "
+                "UNIQUE (user_id, name, direction, cashflow_type)"
+                ")"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX ix_transaction_categories_user_id "
+                "ON transaction_categories (user_id)"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX ix_transaction_categories_direction "
+                "ON transaction_categories (direction)"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX ix_transaction_categories_cashflow_type "
+                "ON transaction_categories (cashflow_type)"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX ix_transaction_categories_is_active "
+                "ON transaction_categories (is_active)"
+            )
+        )
+        connection.execute(
+            text(
+                "CREATE INDEX ix_transaction_categories_sort_order "
+                "ON transaction_categories (sort_order)"
+            )
+        )
 
 
 def _run_cashflow_type_migrations(engine: Engine) -> None:

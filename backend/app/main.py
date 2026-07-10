@@ -32,6 +32,7 @@ from app.models import (
     OwedPayment,
     OwedPaymentAllocation,
     Transaction,
+    TransactionCategory,
     WealthAccount,
     WealthSnapshot,
 )
@@ -49,6 +50,7 @@ from app.routers.me import router as me_router
 from app.routers.owed import router as owed_router
 from app.routers.summary import router as summary_router
 from app.routers.transactions import router as transactions_router
+from app.routers.transaction_categories import router as transaction_categories_router
 from app.routers.wealth import router as wealth_router
 
 
@@ -163,6 +165,7 @@ async def require_app_access_token(request: Request, call_next):
 
 app.include_router(admin_router)
 app.include_router(transactions_router)
+app.include_router(transaction_categories_router)
 app.include_router(owed_router)
 app.include_router(summary_router)
 app.include_router(imports_router)
