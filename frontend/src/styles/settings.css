@@ -42,7 +42,7 @@
 }
 
 .settings-group-access {
-  min-height: 9.8rem;
+  min-height: 0;
 }
 
 .settings-group-header {
@@ -58,7 +58,14 @@
   text-transform: uppercase;
 }
 
-.settings-list-row,
+.settings-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.92rem 1rem;
+}
 
 .settings-list-row > span {
   display: grid;
@@ -98,6 +105,18 @@
   font-size: 0.8rem;
   font-style: normal;
   font-weight: 850;
+}
+
+
+.settings-account-row {
+  display: grid;
+  align-items: start;
+  justify-content: stretch;
+  gap: 0.28rem;
+}
+
+.settings-account-row > em {
+  justify-self: start;
 }
 
 .settings-account-row .danger-button {

@@ -106,34 +106,35 @@ export function AppSidebar({
         ))}
       </nav>
 
-      <div className="sidebar-footer-controls">
-        <div className="sidebar-theme-switch" role="group" aria-label="Theme">
-          <button
-            type="button"
-            className={resolvedTheme === 'light' ? 'active' : ''}
-            aria-label="Use light mode"
-            aria-pressed={resolvedTheme === 'light'}
-            title="Light mode"
-            onClick={() => setThemePreference('light')}
-          >
-            <Sun className="sidebar-theme-switch-icon" aria-hidden="true" />
-          </button>
+      <div className="sidebar-footer">
+        <div className="sidebar-footer-controls">
+          <div className="sidebar-theme-switch" role="group" aria-label="Theme">
+            <button
+              type="button"
+              className={resolvedTheme === 'light' ? 'theme-option-active' : ''}
+              aria-label="Use light mode"
+              aria-pressed={resolvedTheme === 'light'}
+              title="Light mode"
+              onClick={() => setThemePreference('light')}
+            >
+              <Sun className="sidebar-theme-switch-icon" aria-hidden="true" />
+            </button>
 
-          <button
-            type="button"
-            className={resolvedTheme === 'dark' ? 'active' : ''}
-            aria-label="Use dark mode"
-            aria-pressed={resolvedTheme === 'dark'}
-            title="Dark mode"
-            onClick={() => setThemePreference('dark')}
-          >
-            <Moon className="sidebar-theme-switch-icon" aria-hidden="true" />
-          </button>
+            <button
+              type="button"
+              className={resolvedTheme === 'dark' ? 'theme-option-active' : ''}
+              aria-label="Use dark mode"
+              aria-pressed={resolvedTheme === 'dark'}
+              title="Dark mode"
+              onClick={() => setThemePreference('dark')}
+            >
+              <Moon className="sidebar-theme-switch-icon" aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="sidebar-profile">
-        <div className="sidebar-profile-main">
+        <div className="sidebar-profile">
+          <div className="sidebar-profile-main">
           {profileAvatarUrl ? (
             <img
               src={profileAvatarUrl}
@@ -155,15 +156,16 @@ export function AppSidebar({
           </div>
         </div>
 
-        {isAuthEnabled && (
-          <button
-            type="button"
-            className="sidebar-signout-button"
-            onClick={onSignOut}
-          >
-            Sign out
-          </button>
-        )}
+          {isAuthEnabled && (
+            <button
+              type="button"
+              className="sidebar-signout-button"
+              onClick={onSignOut}
+            >
+              Sign out
+            </button>
+          )}
+        </div>
       </div>
     </aside>
   )
