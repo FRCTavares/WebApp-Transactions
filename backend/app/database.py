@@ -108,6 +108,15 @@ def run_postgres_startup_migrations(database_engine: Engine) -> None:
                         ALTER TABLE transactions
                         DROP CONSTRAINT IF EXISTS ck_transactions_cashflow_type_known;
 
+                        UPDATE transactions
+                        SET cashflow_type = CASE
+                            WHEN direction = 'in' THEN 'income'
+                            WHEN direction = 'out' THEN 'expense'
+                            ELSE 'expense'
+                        END
+                        WHERE cashflow_type IS NULL
+                        OR cashflow_type NOT IN ('income', 'expense', 'transfer');
+
                         ALTER TABLE transactions
                         ADD CONSTRAINT ck_transactions_cashflow_type_known
                         CHECK (cashflow_type IN ('income', 'expense', 'transfer'));

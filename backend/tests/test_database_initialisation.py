@@ -70,4 +70,6 @@ def test_initialise_database_runs_postgres_startup_migrations():
 
     assert len(calls) == 1
     assert "ck_transactions_cashflow_type_known" in calls[0]
+    assert "UPDATE transactions" in calls[0]
+    assert "NOT IN ('income', 'expense', 'transfer')" in calls[0]
     assert "'transfer'" in calls[0]
