@@ -51,9 +51,10 @@
 }
 
 .badge,
+
 .expense-chart-centre span,
-.wealth-summary-card span,
-.owed-summary-card span {
+
+.wealth-summary-card span {
   font-size: var(--font-label);
   font-weight: var(--weight-label);
   letter-spacing: var(--tracking-label);
@@ -87,9 +88,10 @@
   }
 
   .wealth-summary-card:not(.wealth-summary-card-primary) strong,
+
   .investment-summary-grid strong,
-  .expense-chart-centre strong,
-  .owed-summary-card strong {
+
+  .expense-chart-centre strong {
     font-size: var(--font-metric-medium);
     letter-spacing: var(--tracking-tight);
   }

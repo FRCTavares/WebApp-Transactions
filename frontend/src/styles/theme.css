@@ -54,50 +54,93 @@
 }
 
 :root[data-theme='dark'] .sidebar,
+
 :root[data-theme='dark'] .mobile-bottom-nav,
+
 :root[data-theme='dark'] .global-period-selector,
+
 :root[data-theme='dark'] .panel-card,
+
 :root[data-theme='dark'] .content-card,
+
 :root[data-theme='dark'] .card,
+
 :root[data-theme='dark'] .summary-card,
+
 :root[data-theme='dark'] .filter-panel,
+
 :root[data-theme='dark'] .manual-form,
+
 :root[data-theme='dark'] .table-wrap,
+
 :root[data-theme='dark'] .settings-card,
+
 :root[data-theme='dark'] .settings-status,
+
 :root[data-theme='dark'] .settings-action-button,
+
 :root[data-theme='dark'] .unlock-card,
+
 :root[data-theme='dark'] .portfolio-snapshot,
+
 :root[data-theme='dark'] .dashboard-panel,
+
 :root[data-theme='dark'] .dashboard-metric-card,
+
 :root[data-theme='dark'] .expense-chart-card,
+
 :root[data-theme='dark'] .expense-chart-legend-row,
+
 :root[data-theme='dark'] .transaction-filter-card,
+
 :root[data-theme='dark'] .transaction-desktop-table-wrap,
-:root[data-theme='dark'] .owed-summary-card,
+
 :root[data-theme='dark'] .owed-toolbar,
+
 :root[data-theme='dark'] .owed-table-filter-card,
+
 :root[data-theme='dark'] .owed-table-wrap,
+
 :root[data-theme='dark'] .owed-person-card,
+
 :root[data-theme='dark'] .owed-person-item,
+
 :root[data-theme='dark'] .wealth-summary-card,
+
 :root[data-theme='dark'] .wealth-account-card,
+
 :root[data-theme='dark'] .wealth-subaccount-row,
+
 :root[data-theme='dark'] .wealth-table-wrap,
+
 :root[data-theme='dark'] .wealth-chart-card,
+
 :root[data-theme='dark'] .wealth-chart-wrap,
+
 :root[data-theme='dark'] .wealth-modal-card,
+
 :root[data-theme='dark'] .wealth-modal-subaccount-row,
+
 :root[data-theme='dark'] .investments-page-polished .portfolio-snapshot,
+
 :root[data-theme='dark'] .investments-page-polished .panel-card,
+
 :root[data-theme='dark'] .investments-page-polished .filter-panel,
+
 :root[data-theme='dark'] .investment-holding-card,
+
 :root[data-theme='dark'] .investment-trend-visual,
+
 :root[data-theme='dark'] .market-data-refresh-card,
+
 :root[data-theme='dark'] .market-data-holding-card,
+
 :root[data-theme='dark'] .market-data-advanced,
+
 :root[data-theme='dark'] .import-preview-section,
+
 :root[data-theme='dark'] .import-commit-panel,
+
 :root[data-theme='dark'] .category-detail-panel {
   border-color: var(--theme-border);
   background: var(--theme-surface);
@@ -110,62 +153,109 @@
 }
 
 :root[data-theme='dark'] h1,
+
 :root[data-theme='dark'] h2,
+
 :root[data-theme='dark'] h3,
+
 :root[data-theme='dark'] strong,
+
 :root[data-theme='dark'] .account-greeting,
+
 :root[data-theme='dark'] .page-title-block h1,
+
 :root[data-theme='dark'] .settings-card-header h2,
+
 :root[data-theme='dark'] .settings-action-button strong,
+
 :root[data-theme='dark'] .dashboard-page .dashboard-hero h1,
+
 :root[data-theme='dark'] .dashboard-panel-header h2,
+
 :root[data-theme='dark'] .dashboard-recent-main strong,
+
 :root[data-theme='dark'] .transactions-page .page-title-block h1,
+
 :root[data-theme='dark'] .transactions-page .transaction-description-line span:first-child,
+
 :root[data-theme='dark'] .transactions-page td.right,
+
 :root[data-theme='dark'] .owed-page-polished .page-title-block h1,
-:root[data-theme='dark'] .owed-page-polished .owed-summary-card strong,
+
 :root[data-theme='dark'] .wealth-page .page-title-block h1,
+
 :root[data-theme='dark'] .wealth-summary-card strong,
+
 :root[data-theme='dark'] .wealth-account-card h3,
+
 :root[data-theme='dark'] .wealth-subaccount-row strong,
+
 :root[data-theme='dark'] .wealth-modal-header h2,
+
 :root[data-theme='dark'] .wealth-modal-total strong,
+
 :root[data-theme='dark'] .investments-page-polished .page-title-block h1,
+
 :root[data-theme='dark'] .investments-page-polished .portfolio-snapshot h2,
+
 :root[data-theme='dark'] .investments-page-polished .section-header h2,
+
 :root[data-theme='dark'] .investment-trend-header h2,
+
 :root[data-theme='dark'] .investment-trend-current strong {
   color: var(--theme-text);
 }
 
 :root[data-theme='dark'] p,
+
 :root[data-theme='dark'] small,
+
 :root[data-theme='dark'] .muted,
+
 :root[data-theme='dark'] .page-subtitle,
+
 :root[data-theme='dark'] .account-subtitle,
+
 :root[data-theme='dark'] .nav-group h3,
+
 :root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
+
 :root[data-theme='dark'] .settings-action-button small,
+
 :root[data-theme='dark'] .global-period-selector label span,
+
 :root[data-theme='dark'] .dashboard-page .dashboard-hero p,
+
 :root[data-theme='dark'] .dashboard-panel-header p,
+
 :root[data-theme='dark'] .dashboard-recent-main span,
+
 :root[data-theme='dark'] .dashboard-recent-date,
+
 :root[data-theme='dark'] .transactions-page td .muted.small,
+
 :root[data-theme='dark'] .transactions-page .transaction-filter-card label,
-:root[data-theme='dark'] .owed-summary-card span,
-:root[data-theme='dark'] .owed-summary-card small,
+
 :root[data-theme='dark'] .wealth-summary-card span,
+
 :root[data-theme='dark'] .wealth-summary-card small,
+
 :root[data-theme='dark'] .wealth-account-type,
+
 :root[data-theme='dark'] .wealth-account-card p,
+
 :root[data-theme='dark'] .wealth-subaccount-row span,
+
 :root[data-theme='dark'] .wealth-chart-label,
+
 :root[data-theme='dark'] .investment-trend-label,
+
 :root[data-theme='dark'] .investment-trend-legend,
+
 :root[data-theme='dark'] .investment-trend-current span,
+
 :root[data-theme='dark'] .investment-holding-ticker,
+
 :root[data-theme='dark'] .investment-holding-meta {
   color: var(--theme-muted);
 }
@@ -406,21 +496,35 @@
 }
 
 :root[data-theme='dark'] .settings-card,
+
 :root[data-theme='dark'] .dashboard-panel,
+
 :root[data-theme='dark'] .dashboard-metric-card,
+
 :root[data-theme='dark'] .transaction-filter-card,
+
 :root[data-theme='dark'] .transaction-desktop-table-wrap,
-:root[data-theme='dark'] .owed-summary-card,
+
 :root[data-theme='dark'] .owed-toolbar,
+
 :root[data-theme='dark'] .owed-table-filter-card,
+
 :root[data-theme='dark'] .owed-table-wrap,
+
 :root[data-theme='dark'] .wealth-page .panel-card,
+
 :root[data-theme='dark'] .wealth-summary-card,
+
 :root[data-theme='dark'] .wealth-chart-card,
+
 :root[data-theme='dark'] .investments-page-polished .portfolio-snapshot,
+
 :root[data-theme='dark'] .investments-page-polished .panel-card,
+
 :root[data-theme='dark'] .panel-card,
+
 :root[data-theme='dark'] .content-card,
+
 :root[data-theme='dark'] .card {
   border-color: rgb(255 255 255 / 0.105);
   background:
@@ -662,28 +766,49 @@
   box-shadow: none;
 }
 
-/* Main cards: less glow, more native dark-panel feel. */
+/* Main cards: less glow,
+
+more native dark-panel feel. */
 :root[data-theme='dark'] .settings-card,
+
 :root[data-theme='dark'] .dashboard-panel,
+
 :root[data-theme='dark'] .dashboard-metric-card,
+
 :root[data-theme='dark'] .transaction-filter-card,
+
 :root[data-theme='dark'] .transaction-desktop-table-wrap,
-:root[data-theme='dark'] .owed-summary-card,
+
 :root[data-theme='dark'] .owed-toolbar,
+
 :root[data-theme='dark'] .owed-table-filter-card,
+
 :root[data-theme='dark'] .owed-table-wrap,
+
 :root[data-theme='dark'] .wealth-page .panel-card,
+
 :root[data-theme='dark'] .wealth-summary-card,
+
 :root[data-theme='dark'] .wealth-chart-card,
+
 :root[data-theme='dark'] .investments-page-polished .portfolio-snapshot,
+
 :root[data-theme='dark'] .investments-page-polished .panel-card,
+
 :root[data-theme='dark'] .panel-card,
+
 :root[data-theme='dark'] .content-card,
+
 :root[data-theme='dark'] .card,
+
 :root[data-theme='dark'] .expense-chart-card,
+
 :root[data-theme='dark'] .portfolio-snapshot,
+
 :root[data-theme='dark'] .filter-panel,
+
 :root[data-theme='dark'] .manual-form,
+
 :root[data-theme='dark'] .table-wrap {
   border-color: rgb(255 255 255 / 0.105);
   background: #1c1d21 !important;
@@ -943,13 +1068,19 @@
 
 /* Summary cards that still had hardcoded light backgrounds. */
 :root[data-theme='dark'] .investments-page-polished .investment-summary-grid article,
+
 :root[data-theme='dark'] .investments-page-polished .investment-summary-market-value,
+
 :root[data-theme='dark'] .investments-page-polished .investment-summary-gain,
+
 :root[data-theme='dark'] .import-summary-grid .summary-card,
+
 :root[data-theme='dark'] .import-summary-card-primary,
-:root[data-theme='dark'] .owed-summary-card-primary,
+
 :root[data-theme='dark'] .wealth-summary-card-primary,
+
 :root[data-theme='dark'] .wealth-owed-summary-card,
+
 :root[data-theme='dark'] .wealth-investments-summary-card {
   border-color: rgb(255 255 255 / 0.105) !important;
   background: #202126 !important;
@@ -957,10 +1088,13 @@
 }
 
 :root[data-theme='dark'] .investments-page-polished .investment-summary-grid article strong,
+
 :root[data-theme='dark'] .investments-page-polished .investment-summary-grid article span,
+
 :root[data-theme='dark'] .summary-card strong,
+
 :root[data-theme='dark'] .summary-card h2,
-:root[data-theme='dark'] .owed-summary-card-primary strong,
+
 :root[data-theme='dark'] .wealth-summary-card-primary strong {
   color: var(--theme-text) !important;
 }

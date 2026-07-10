@@ -31,48 +31,6 @@
     font-size: 0.95rem;
   }
 
-  .owed-page-polished .owed-summary-grid {
-    gap: 0 !important;
-  }
-
-  .owed-page-polished .owed-summary-card-primary {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    column-gap: 0.8rem;
-    min-height: 0 !important;
-    padding: 0.75rem 0.85rem !important;
-    border-radius: 1rem !important;
-  }
-
-  .owed-page-polished .owed-summary-card-primary span {
-    grid-column: 1;
-    margin: 0 0 0.18rem !important;
-    font-size: 0.68rem !important;
-    line-height: 1;
-    letter-spacing: 0.11em;
-  }
-
-  .owed-page-polished .owed-summary-card-primary strong {
-    grid-column: 1;
-    margin: 0 !important;
-    font-size: clamp(1.65rem, 7vw, 2rem) !important;
-    line-height: 1 !important;
-    letter-spacing: -0.055em;
-  }
-
-  .owed-page-polished .owed-summary-card-primary small {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
-    padding: 0.38rem 0.55rem;
-    border-radius: 999px;
-    background: rgb(148 163 184 / 0.12);
-    font-size: 0.72rem !important;
-    font-weight: 850;
-    white-space: nowrap;
-  }
-
   .owed-page-polished .owed-toolbar,
   .owed-page-polished .owed-table-filter-card {
     padding: 0 !important;
@@ -161,7 +119,6 @@
   .owed-person-card-header > strong {
     font-size: 1.15rem;
   }
-
 
   .owed-person-card-hint {
     display: flex;
@@ -356,15 +313,12 @@
     gap: 0.7rem !important;
   }
 
-  .owed-page-polished .owed-summary-grid,
   .owed-page-polished .owed-toolbar,
+
   .owed-page-polished .owed-table-filter-card,
+
   .owed-mobile-groups {
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  .owed-page-polished .owed-summary-card-primary {
     margin-bottom: 0 !important;
   }
 
@@ -405,7 +359,6 @@
     gap: 0.62rem !important;
   }
 }
-
 
 /* Owed mobile theme safety pass. */
 @media (max-width: 800px) {
