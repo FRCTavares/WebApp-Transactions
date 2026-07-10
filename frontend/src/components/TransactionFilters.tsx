@@ -29,6 +29,7 @@ const cashflowTypeOptions = [
 ]
 
 type TransactionFiltersProps = {
+  direction: 'in' | 'out'
   filters: TransactionFilterState
   onChange: (field: keyof TransactionFilterState, value: string | boolean) => void
   onApply: () => void
@@ -36,6 +37,7 @@ type TransactionFiltersProps = {
 }
 
 export function TransactionFilters({
+  direction,
   filters,
   onChange,
   onApply,
@@ -80,7 +82,7 @@ export function TransactionFilters({
           <input
             value={filters.search}
             onChange={(event) => onChange('search', event.target.value)}
-            placeholder="Search transactions..."
+            placeholder={direction === "in" ? "Search income..." : "Search expenses..."}
           />
         </label>
 
@@ -160,7 +162,7 @@ export function TransactionFilters({
               checked={filters.showFullyOwed}
               onChange={(event) => onChange('showFullyOwed', event.target.checked)}
             />
-            <span>Show fully owed</span>
+            <span>{direction === "in" ? "Show fully allocated repayments" : "Show fully owed"}</span>
           </label>
 
           {activeFilterCount > 0 && (

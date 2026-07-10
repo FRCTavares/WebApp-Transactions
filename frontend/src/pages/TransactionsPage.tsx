@@ -897,6 +897,7 @@ export function TransactionsPage() {
       <StatusMessage error={error} message={message} />
 
       <TransactionFilters
+        direction={direction}
         filters={filters}
         onChange={updateFilters}
         onApply={() => loadTransactions()}
