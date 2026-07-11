@@ -18,9 +18,10 @@ const chartWindowOptions = [
 
 type ChartPoint = {
   month: string
-  allocated: number
+  allocated: number | null
   marketValue: number | null
   gain: number | null
+  isEstimated: boolean
 }
 
 type TrendCoordinate = {
@@ -69,11 +70,16 @@ function buildPoints(series: InvestmentMonthlySeriesPoint[]): ChartPoint[] {
   return series
     .map((point) => ({
       month: point.month,
-      allocated: toNumber(point.allocated_eur),
+      allocated: toNullableNumber(point.allocated_eur),
       marketValue: toNullableNumber(point.market_value_eur),
       gain: toNullableNumber(point.gain_eur),
+      isEstimated: point.is_estimated,
     }))
-    .filter((point) => point.allocated > 0 || point.marketValue !== null)
+    .filter(
+      (point) =>
+        (point.allocated !== null && point.allocated > 0)
+        || point.marketValue !== null,
+    )
 }
 
 function getPointX(index: number, pointCount: number) {
@@ -237,10 +243,11 @@ export function InvestmentPortfolioTrendChart({
     )
   }
 
-  const allValues = points.flatMap((point) => [
-    point.allocated,
-    point.marketValue ?? point.allocated,
-  ])
+  const allValues = points.flatMap((point) =>
+    [point.allocated, point.marketValue].filter(
+      (value): value is number => value !== null,
+    ),
+  )
   const minValue = Math.min(...allValues) * 0.96
   const maxValue = Math.max(...allValues) * 1.04
   const allocatedCoordinates = getCoordinates(points, minValue, maxValue, (point) => point.allocated)
@@ -359,12 +366,15 @@ export function InvestmentPortfolioTrendChart({
                 />
                 <text x="12" y="20" fill="#64748b" fontSize="11" fontWeight="800">
                   {formatMonth(activePoint.month)}
+                  {activePoint.isEstimated ? ' · estimated' : ''}
                 </text>
                 <text x="12" y="41" fill="#111827" fontSize="13" fontWeight="850">
                   Portfolio: {activePoint.marketValue === null ? '-' : formatMoney(activePoint.marketValue.toFixed(2))}
                 </text>
                 <text x="12" y="59" fill="#64748b" fontSize="12" fontWeight="750">
-                  Allocated: {formatMoney(activePoint.allocated.toFixed(2))}
+                  Allocated: {activePoint.allocated === null
+                    ? '-'
+                    : formatMoney(activePoint.allocated.toFixed(2))}
                 </text>
               </g>
             </>

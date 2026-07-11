@@ -1,12 +1,13 @@
 import json
 
+from app.recovery_registry import EXPORT_FORMAT_VERSION
 from scripts.restore_json_export_dry_run import run_restore_dry_run
 from scripts.validate_json_export import REQUIRED_TABLES
 
 
 def build_empty_valid_export():
     return {
-        "format_version": 1,
+        "format_version": EXPORT_FORMAT_VERSION,
         "user_id": "user@example.com",
         "email": "user@example.com",
         "tables": {table_name: [] for table_name in REQUIRED_TABLES},
@@ -28,7 +29,9 @@ def test_restore_dry_run_accepts_empty_valid_export(tmp_path):
 def test_restore_dry_run_rejects_invalid_export(tmp_path):
     export_path = tmp_path / "bad-export.json"
     sqlite_path = tmp_path / "restore.db"
-    export_path.write_text(json.dumps({"format_version": 1}))
+    export_path.write_text(
+        json.dumps({"format_version": EXPORT_FORMAT_VERSION})
+    )
 
     try:
         run_restore_dry_run(export_path, sqlite_path)

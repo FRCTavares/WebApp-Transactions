@@ -339,7 +339,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               <div>
                 <p>Investments</p>
                 <strong>{investmentChange ? formatMoney(investmentChange) : '-'}</strong>
-                <small>Unrealised monthly gain/loss</small>
+                <small>
+                  {investmentMonthlyChange?.is_estimated
+                    ? 'Estimated unrealised monthly gain/loss'
+                    : 'Unrealised monthly gain/loss'}
+                </small>
               </div>
             </article>
 

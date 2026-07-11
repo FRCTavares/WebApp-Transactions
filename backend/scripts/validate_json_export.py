@@ -7,19 +7,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
-REQUIRED_TABLES = [
-    "transactions",
-    "owed_items",
-    "owed_payments",
-    "owed_payment_allocations",
-    "wealth_accounts",
-    "wealth_snapshots",
-    "investment_events",
-    "import_batches",
-    "cashflow_rules",
-    "description_rules",
-]
+from app.recovery_registry import (
+    EXPORT_FORMAT_VERSION,
+    USER_RECOVERY_TABLE_NAMES,
+)
+
+
+REQUIRED_TABLES = list(USER_RECOVERY_TABLE_NAMES)
 
 
 @dataclass(frozen=True)
@@ -42,8 +40,12 @@ def validate_export(data: Any) -> list[ValidationIssue]:
     if not isinstance(data, dict):
         return [ValidationIssue("Export root must be a JSON object.")]
 
-    if data.get("format_version") != 1:
-        issues.append(ValidationIssue("format_version must be 1."))
+    if data.get("format_version") != EXPORT_FORMAT_VERSION:
+        issues.append(
+            ValidationIssue(
+                f"format_version must be {EXPORT_FORMAT_VERSION}."
+            )
+        )
 
     if not isinstance(data.get("user_id"), str) or not data.get("user_id"):
         issues.append(ValidationIssue("user_id must be a non-empty string."))

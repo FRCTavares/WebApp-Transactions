@@ -22,6 +22,7 @@ def build_create_event_candidate(
         "isin": event_data.isin,
         "quantity": event_data.quantity,
         "price": event_data.price,
+        "currency": event_data.currency,
     }
 
 
@@ -41,6 +42,7 @@ def build_update_event_candidate(
         "isin": update_data.get("isin", event.isin),
         "quantity": update_data.get("quantity", event.quantity),
         "price": update_data.get("price", event.price),
+        "currency": update_data.get("currency", event.currency),
     }
 
 
@@ -57,6 +59,7 @@ def build_existing_event_candidate(
         "isin": event.isin,
         "quantity": event.quantity,
         "price": event.price,
+        "currency": event.currency,
     }
 
 
@@ -119,7 +122,7 @@ def validate_market_sell_timeline(
         )
     )
 
-    holdings: dict[tuple[str, str, str, str], Decimal] = {}
+    holdings: dict[tuple[str, str, str, str, str], Decimal] = {}
 
     for entry in entries:
         if entry["event_type"] not in {"market_buy", "market_sell"}:
@@ -139,7 +142,10 @@ def validate_market_sell_timeline(
         if quantity > current_quantity:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Investment sell quantity cannot exceed available holdings",
+                detail=(
+                    "Investment sell quantity cannot exceed available holdings "
+                    "in the matching currency"
+                ),
             )
 
         holdings[key] = current_quantity - quantity
@@ -148,8 +154,8 @@ def validate_market_sell_timeline(
 def get_affected_market_identity_keys(
     candidate: MarketEventCandidate,
     existing_event: InvestmentEvent | None,
-) -> set[tuple[str, str, str, str]]:
-    keys: set[tuple[str, str, str, str]] = set()
+) -> set[tuple[str, str, str, str, str]]:
+    keys: set[tuple[str, str, str, str, str]] = set()
 
     if existing_event is not None and existing_event.event_type in {
         "market_buy",
@@ -165,12 +171,13 @@ def get_affected_market_identity_keys(
 
 def get_market_identity_key(
     candidate: MarketEventCandidate,
-) -> tuple[str, str, str, str]:
+) -> tuple[str, str, str, str, str]:
     return (
         str(candidate["source"] or ""),
         str(candidate["account"] or ""),
         str(candidate["ticker"] or ""),
         str(candidate["isin"] or ""),
+        str(candidate["currency"] or "").upper(),
     )
 
 

@@ -21,6 +21,7 @@ from app.schemas.investment_event import (
     ManualFundingResolutionCreate,
 )
 from app.schemas.transaction import TransactionCreate
+from app.services.investment_cost_basis import build_average_cost_positions
 
 
 class InvestmentEventService:
@@ -87,56 +88,7 @@ class InvestmentEventService:
             source=source,
             user_id=self._get_user_id(current_user),
         )
-        positions: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
-
-        for event in events:
-            if event.event_type not in {"market_buy", "market_sell"}:
-                continue
-
-            if event.quantity is None or event.quantity <= 0:
-                continue
-
-            key = (
-                event.source,
-                event.account,
-                event.ticker,
-                event.isin,
-            )
-
-            if key not in positions:
-                positions[key] = {
-                    "source": event.source,
-                    "account": event.account,
-                    "instrument_name": event.instrument_name,
-                    "ticker": event.ticker,
-                    "isin": event.isin,
-                    "quantity": Decimal("0"),
-                    "cost_buckets": {},
-                }
-
-            position = positions[key]
-            cost_buckets = position["cost_buckets"]
-
-            if event.currency not in cost_buckets:
-                cost_buckets[event.currency] = {
-                    "quantity": Decimal("0"),
-                    "total_cost": Decimal("0"),
-                }
-
-            bucket = cost_buckets[event.currency]
-
-            if event.event_type == "market_buy":
-                position["quantity"] = position["quantity"] + event.quantity
-                bucket["quantity"] = bucket["quantity"] + event.quantity
-                bucket["total_cost"] = bucket["total_cost"] + event.amount
-
-                if position["instrument_name"] is None:
-                    position["instrument_name"] = event.instrument_name
-
-            if event.event_type == "market_sell":
-                position["quantity"] = position["quantity"] - event.quantity
-                bucket["quantity"] = bucket["quantity"] - event.quantity
-                bucket["total_cost"] = bucket["total_cost"] - event.amount
+        positions = build_average_cost_positions(events)
 
         open_positions = []
 
@@ -205,8 +157,14 @@ class InvestmentEventService:
         end_date = self._get_next_month_start(year, month)
         month_end = end_date.fromordinal(end_date.toordinal() - 1)
 
-        start_value = self._get_portfolio_value_on(start_date, current_user)
-        end_value = self._get_portfolio_value_on(month_end, current_user)
+        start_value, start_value_estimated = self._get_portfolio_value_on(
+            start_date,
+            current_user,
+        )
+        end_value, end_value_estimated = self._get_portfolio_value_on(
+            month_end,
+            current_user,
+        )
         net_invested = self._get_net_invested_between(
             start_date,
             end_date,
@@ -226,6 +184,7 @@ class InvestmentEventService:
             "end_value": end_value,
             "net_invested": net_invested,
             "unrealised_monthly_change": unrealised_monthly_change,
+            "is_estimated": start_value_estimated or end_value_estimated,
         }
 
     def get_monthly_series(
@@ -245,11 +204,17 @@ class InvestmentEventService:
             )
             month_end = next_month_start.fromordinal(next_month_start.toordinal() - 1)
 
-            allocated = self._get_total_cost_basis_on(month_end, current_user)
-            market_value = self._get_portfolio_value_on(month_end, current_user)
+            allocated, allocated_estimated = self._get_total_cost_basis_on(
+                month_end,
+                current_user,
+            )
+            market_value, market_value_estimated = self._get_portfolio_value_on(
+                month_end,
+                current_user,
+            )
             gain = None
 
-            if market_value is not None:
+            if market_value is not None and allocated is not None:
                 gain = (market_value - allocated).quantize(Decimal("0.01"))
 
             series.append(
@@ -258,6 +223,9 @@ class InvestmentEventService:
                     "allocated_eur": allocated,
                     "market_value_eur": market_value,
                     "gain_eur": gain,
+                    "is_estimated": (
+                        allocated_estimated or market_value_estimated
+                    ),
                 }
             )
 
@@ -267,9 +235,10 @@ class InvestmentEventService:
         self,
         value_date: date,
         current_user: CurrentUser | None = None,
-    ) -> Decimal:
+    ) -> tuple[Decimal | None, bool]:
         holdings = self._get_holding_cost_buckets_on(value_date, current_user)
         total_cost_eur = Decimal("0")
+        is_estimated = False
 
         for holding in holdings.values():
             ticker = holding["ticker"]
@@ -282,70 +251,35 @@ class InvestmentEventService:
                 if quantity <= 0 or total_cost <= 0:
                     continue
 
-                fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
-                    currency,
-                    ticker=ticker,
-                    isin=isin,
-                    current_user=current_user,
+                fx_rate_to_eur, fx_is_estimated = (
+                    self._get_historical_fx_rate_to_eur(
+                        currency=currency,
+                        value_date=value_date,
+                        ticker=ticker,
+                        isin=isin,
+                        current_user=current_user,
+                    )
                 )
 
                 if fx_rate_to_eur is None:
-                    continue
+                    return None, False
 
                 total_cost_eur += total_cost * fx_rate_to_eur
+                is_estimated = is_estimated or fx_is_estimated
 
-        return total_cost_eur.quantize(Decimal("0.01"))
+        return total_cost_eur.quantize(Decimal("0.01")), is_estimated
 
     def _get_holding_cost_buckets_on(
         self,
         value_date: date,
         current_user: CurrentUser | None = None,
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
-        holdings: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
-
-        for event in self.repository.list_until(
+        events = self.repository.list_until(
             value_date,
             user_id=self._get_user_id(current_user),
-        ):
-            if event.event_type not in {"market_buy", "market_sell"}:
-                continue
+        )
 
-            if event.quantity is None or event.quantity <= 0:
-                continue
-
-            key = (
-                event.source,
-                event.account,
-                event.ticker,
-                event.isin,
-            )
-
-            if key not in holdings:
-                holdings[key] = {
-                    "ticker": event.ticker,
-                    "isin": event.isin,
-                    "cost_buckets": {},
-                }
-
-            cost_buckets = holdings[key]["cost_buckets"]
-
-            if event.currency not in cost_buckets:
-                cost_buckets[event.currency] = {
-                    "quantity": Decimal("0"),
-                    "total_cost": Decimal("0"),
-                }
-
-            bucket = cost_buckets[event.currency]
-
-            if event.event_type == "market_buy":
-                bucket["quantity"] = bucket["quantity"] + event.quantity
-                bucket["total_cost"] = bucket["total_cost"] + event.amount
-
-            if event.event_type == "market_sell":
-                bucket["quantity"] = bucket["quantity"] - event.quantity
-                bucket["total_cost"] = bucket["total_cost"] - event.amount
-
-        return holdings
+        return build_average_cost_positions(events)
 
     def _shift_month(self, month_date: date, offset: int) -> date:
         month_index = month_date.year * 12 + month_date.month - 1 + offset
@@ -358,13 +292,13 @@ class InvestmentEventService:
         self,
         value_date: date,
         current_user: CurrentUser | None = None,
-    ) -> Decimal | None:
+    ) -> tuple[Decimal | None, bool]:
         if self.market_price_history_repository is None:
-            return None
+            return None, False
 
         holdings = self._get_holdings_on(value_date, current_user)
         total_value = Decimal("0")
-        has_unpriced_holding = False
+        is_estimated = False
 
         for holding in holdings.values():
             quantity = holding["quantity"]
@@ -380,27 +314,30 @@ class InvestmentEventService:
             )
 
             if valuation_price is None:
-                has_unpriced_holding = True
-                continue
+                return None, False
 
-            price_value, price_currency = valuation_price
-            fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
-                price_currency,
-                ticker=holding["ticker"],
-                isin=holding["isin"],
-                current_user=current_user,
+            price_value, price_currency, price_is_estimated = valuation_price
+            fx_rate_to_eur, fx_is_estimated = (
+                self._get_historical_fx_rate_to_eur(
+                    currency=price_currency,
+                    value_date=value_date,
+                    ticker=holding["ticker"],
+                    isin=holding["isin"],
+                    current_user=current_user,
+                )
             )
 
             if fx_rate_to_eur is None:
-                has_unpriced_holding = True
-                continue
+                return None, False
 
             total_value += quantity * price_value * fx_rate_to_eur
+            is_estimated = (
+                is_estimated
+                or price_is_estimated
+                or fx_is_estimated
+            )
 
-        if has_unpriced_holding:
-            return None
-
-        return total_value.quantize(Decimal("0.01"))
+        return total_value.quantize(Decimal("0.01")), is_estimated
 
     def _get_valuation_price_on(
         self,
@@ -408,7 +345,7 @@ class InvestmentEventService:
         ticker: str | None,
         isin: str | None,
         current_user: CurrentUser | None = None,
-    ) -> tuple[Decimal, str] | None:
+    ) -> tuple[Decimal, str, bool] | None:
         if self.market_price_history_repository is not None:
             historical_price = self.market_price_history_repository.get_latest_on_or_before(
                 price_date=value_date,
@@ -417,7 +354,11 @@ class InvestmentEventService:
             )
 
             if historical_price is not None:
-                return historical_price.close_price, historical_price.currency
+                return (
+                    historical_price.close_price,
+                    historical_price.currency,
+                    historical_price.price_date < value_date,
+                )
 
         events = sorted(
             self.repository.list_until(
@@ -441,7 +382,7 @@ class InvestmentEventService:
             if event.price is None or event.price <= 0:
                 continue
 
-            return event.price, event.currency
+            return event.price, event.currency, True
 
         return None
 
@@ -608,6 +549,70 @@ class InvestmentEventService:
             "unrealised_gain": unrealised_gain,
             "unrealised_gain_percent": unrealised_gain_percent,
         }
+
+    def _get_historical_fx_rate_to_eur(
+        self,
+        currency: str,
+        value_date: date,
+        ticker: str | None = None,
+        isin: str | None = None,
+        current_user: CurrentUser | None = None,
+    ) -> tuple[Decimal | None, bool]:
+        if currency == "EUR":
+            return Decimal("1"), False
+
+        events = sorted(
+            self.repository.list_until(
+                value_date,
+                user_id=self._get_user_id(current_user),
+            ),
+            key=lambda item: (item.date, item.id),
+            reverse=True,
+        )
+
+        for event in events:
+            if (
+                event.fx_rate_to_eur is not None
+                and event.fx_rate_to_eur > 0
+                and (
+                    event.currency == currency
+                    or event.original_currency == currency
+                )
+            ):
+                return event.fx_rate_to_eur, event.date < value_date
+
+        for event in events:
+            if event.event_type not in {"market_buy", "market_sell"}:
+                continue
+
+            if ticker is not None and event.ticker != ticker:
+                continue
+
+            if isin is not None and event.isin != isin:
+                continue
+
+            if event.currency != "EUR":
+                continue
+
+            if (
+                event.quantity is None
+                or event.price is None
+                or event.quantity <= 0
+                or event.price <= 0
+                or event.amount <= 0
+            ):
+                continue
+
+            native_value = event.quantity * event.price
+
+            if native_value <= 0:
+                continue
+
+            return (
+                event.amount / native_value
+            ).quantize(Decimal("0.00000008")), True
+
+        return None, False
 
     def _get_latest_fx_rate_to_eur(
         self,

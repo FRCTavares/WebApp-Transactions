@@ -1,28 +1,22 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from getpass import getpass
 from pathlib import Path
 from typing import Any
 
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
 from sqlalchemy import MetaData, Table, create_engine, func, insert, select, text
 from sqlalchemy.engine import Engine
 
+from app.recovery_registry import MIGRATION_TABLE_ORDER
 
-TABLE_ORDER = [
-    "import_batches",
-    "transactions",
-    "wealth_accounts",
-    "owed_items",
-    "owed_payments",
-    "owed_payment_allocations",
-    "investment_events",
-    "market_prices",
-    "market_price_history",
-    "wealth_snapshots",
-    "cashflow_rules",
-    "description_rules",
-]
+
+TABLE_ORDER = list(MIGRATION_TABLE_ORDER)
 
 DEFAULT_SQLITE_PATH = Path(__file__).resolve().parents[1] / "data" / "finance.db"
 

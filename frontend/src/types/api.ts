@@ -160,13 +160,15 @@ export type InvestmentMonthlyChange = {
   end_value: string | null
   net_invested: string
   unrealised_monthly_change: string | null
+  is_estimated: boolean
 }
 
 export type InvestmentMonthlySeriesPoint = {
   month: string
-  allocated_eur: string
+  allocated_eur: string | null
   market_value_eur: string | null
   gain_eur: string | null
+  is_estimated: boolean
 }
 
 export type InvestmentEventFilters = {

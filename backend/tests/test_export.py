@@ -1,3 +1,5 @@
+import json
+import sqlite3
 from datetime import date
 from decimal import Decimal
 
@@ -9,11 +11,14 @@ from app.models.cashflow_rule import CashflowRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
+from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
+from app.models.transaction_category import TransactionCategory
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
+from scripts.restore_json_export_dry_run import run_restore_dry_run
 
 
 def get_test_client(db_session):
@@ -128,6 +133,27 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
         )
     )
 
+    db_session.add(
+        TransactionCategory(
+            user_id=user_id,
+            name=f"{user_id} category",
+            direction="out",
+            cashflow_type="expense",
+            is_active=True,
+            sort_order=1,
+        )
+    )
+
+    db_session.add(
+        InvestmentFundingMonth(
+            user_id=user_id,
+            month="2026-06",
+            source="trading212",
+            manual_amount=Decimal("100.00"),
+            cashback_rounding_amount=Decimal("1.00"),
+            currency="EUR",
+        )
+    )
 
     db_session.add(
         CashflowRule(
@@ -173,19 +199,21 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
     body = response.json()
     tables = body["tables"]
 
-    assert body["format_version"] == 1
+    assert body["format_version"] == 2
     assert body["user_id"] == "local-default-user"
     assert body["email"] is None
 
     expected_tables = {
+        "import_batches",
         "transactions",
+        "transaction_categories",
+        "wealth_accounts",
         "owed_items",
         "owed_payments",
         "owed_payment_allocations",
-        "wealth_accounts",
-        "wealth_snapshots",
         "investment_events",
-        "import_batches",
+        "investment_funding_months",
+        "wealth_snapshots",
         "cashflow_rules",
         "description_rules",
     }
@@ -249,3 +277,78 @@ def test_export_json_requires_auth_when_supabase_auth_is_enabled(monkeypatch):
 
     assert response.status_code == 401
     assert response.json() == {"detail": "Missing bearer token"}
+
+
+def test_generated_export_restores_all_rows_and_relationships(
+    db_session,
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
+
+    add_export_fixture_rows(db_session, "local-default-user")
+    add_export_fixture_rows(db_session, "other-user")
+
+    try:
+        with get_test_client(db_session) as client:
+            response = client.get("/api/export/json")
+    finally:
+        clear_test_client_overrides()
+
+    assert response.status_code == 200
+
+    exported_data = response.json()
+    export_path = tmp_path / "generated-export.json"
+    restored_database_path = tmp_path / "restored.db"
+
+    export_path.write_text(
+        json.dumps(exported_data),
+        encoding="utf-8",
+    )
+
+    restored_counts, audit_results = run_restore_dry_run(
+        export_path,
+        restored_database_path,
+    )
+
+    expected_counts = {
+        table_name: len(rows)
+        for table_name, rows in exported_data["tables"].items()
+    }
+
+    assert restored_counts == expected_counts
+    assert all(result["passed"] for result in audit_results)
+
+    with sqlite3.connect(restored_database_path) as connection:
+        transaction_id, import_batch_id = connection.execute(
+            "SELECT id, import_batch_id FROM transactions"
+        ).fetchone()
+        owed_item_id, linked_transaction_id = connection.execute(
+            "SELECT id, linked_transaction_id FROM owed_items"
+        ).fetchone()
+        owed_payment_id = connection.execute(
+            "SELECT id FROM owed_payments"
+        ).fetchone()[0]
+        allocation_payment_id, allocation_item_id = connection.execute(
+            "SELECT owed_payment_id, owed_item_id "
+            "FROM owed_payment_allocations"
+        ).fetchone()
+        wealth_account_id = connection.execute(
+            "SELECT id FROM wealth_accounts"
+        ).fetchone()[0]
+        snapshot_account_id = connection.execute(
+            "SELECT account_id FROM wealth_snapshots"
+        ).fetchone()[0]
+        exported_batch_id = connection.execute(
+            "SELECT id FROM import_batches"
+        ).fetchone()[0]
+
+    assert import_batch_id == exported_batch_id
+    assert linked_transaction_id == transaction_id
+    assert allocation_payment_id == owed_payment_id
+    assert allocation_item_id == owed_item_id
+    assert snapshot_account_id == wealth_account_id

@@ -18,7 +18,11 @@ from app.auth.current_user import (
 )
 
 
-def make_supabase_token(email: str, secret: str = "test-secret") -> str:
+def make_supabase_token(
+    email: str,
+    secret: str = "test-secret",
+    subject: str = "00000000-0000-0000-0000-000000000000",
+) -> str:
     now = int(time.time())
 
     return jwt.encode(
@@ -26,7 +30,7 @@ def make_supabase_token(email: str, secret: str = "test-secret") -> str:
             "aud": "authenticated",
             "exp": now + 3600,
             "iat": now,
-            "sub": "00000000-0000-0000-0000-000000000000",
+            "sub": subject,
             "email": email,
             "role": "authenticated",
         },
@@ -138,7 +142,7 @@ def test_current_user_dependency_returns_allowed_supabase_jwt_user(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == {
-        "user_id": "me@example.com",
+        "user_id": "00000000-0000-0000-0000-000000000000",
         "email": "me@example.com",
     }
 
@@ -295,4 +299,92 @@ def test_privileged_user_accepts_configured_admin(monkeypatch):
         )
 
     assert response.status_code == 200
-    assert response.json() == {"user_id": "admin@example.com"}
+    assert response.json() == {
+        "user_id": "00000000-0000-0000-0000-000000000000"
+    }
+
+
+def test_supabase_user_id_remains_stable_when_email_changes(monkeypatch):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    subject = "11111111-2222-3333-4444-555555555555"
+
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv(
+        "ALLOWED_USER_EMAILS",
+        "old@example.com,new@example.com",
+    )
+
+    app = FastAPI()
+
+    @app.get("/whoami")
+    def whoami(current_user: CurrentUser = Depends(get_current_user)):
+        return {"user_id": current_user.id, "email": current_user.email}
+
+    old_email_token = make_supabase_token(
+        "old@example.com",
+        secret=secret,
+        subject=subject,
+    )
+    new_email_token = make_supabase_token(
+        "new@example.com",
+        secret=secret,
+        subject=subject,
+    )
+
+    with TestClient(app) as client:
+        old_response = client.get(
+            "/whoami",
+            headers={"Authorization": f"Bearer {old_email_token}"},
+        )
+        new_response = client.get(
+            "/whoami",
+            headers={"Authorization": f"Bearer {new_email_token}"},
+        )
+
+    assert old_response.status_code == 200
+    assert new_response.status_code == 200
+    assert old_response.json() == {
+        "user_id": subject,
+        "email": "old@example.com",
+    }
+    assert new_response.json() == {
+        "user_id": subject,
+        "email": "new@example.com",
+    }
+
+
+def test_supabase_user_rejects_token_without_subject(monkeypatch):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    now = int(time.time())
+
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    token = jwt.encode(
+        {
+            "aud": "authenticated",
+            "exp": now + 3600,
+            "iat": now,
+            "email": "me@example.com",
+            "role": "authenticated",
+        },
+        secret,
+        algorithm="HS256",
+    )
+
+    app = FastAPI()
+
+    @app.get("/whoami")
+    def whoami(current_user: CurrentUser = Depends(get_current_user)):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/whoami",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Bearer token does not include a subject"
+    }

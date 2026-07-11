@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy.inspection import inspect
 
 from app.auth.current_user import CurrentUser
+from app.recovery_registry import EXPORT_FORMAT_VERSION
 from app.repositories.export_repository import ExportRepository
 
 
@@ -34,7 +35,7 @@ class ExportService:
         exported_data = self.repository.export_user_data(current_user.id)
 
         return {
-            "format_version": 1,
+            "format_version": EXPORT_FORMAT_VERSION,
             "user_id": current_user.id,
             "email": current_user.email,
             "tables": {

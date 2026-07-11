@@ -110,13 +110,15 @@ class InvestmentMonthlyChangeRead(BaseModel):
     end_value: Decimal | None
     net_invested: Decimal
     unrealised_monthly_change: Decimal | None
+    is_estimated: bool
 
 
 class InvestmentMonthlySeriesPointRead(BaseModel):
     month: str
-    allocated_eur: Decimal
+    allocated_eur: Decimal | None
     market_value_eur: Decimal | None
     gain_eur: Decimal | None
+    is_estimated: bool
 
 
 class ManualFundingResolutionCreate(BaseModel):

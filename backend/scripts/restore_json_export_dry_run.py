@@ -13,27 +13,22 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from sqlalchemy import Date, DateTime, Numeric, create_engine, insert
+from sqlalchemy import Date, DateTime, Numeric, create_engine, func, insert, select
 from sqlalchemy.engine import Engine
 
 import app.models  # noqa: F401
 from app.database import Base
+from app.recovery_registry import USER_RECOVERY_TABLE_NAMES
 from scripts.audit_data_integrity import run_audit
-from scripts.validate_json_export import REQUIRED_TABLES, load_json_file, validate_export
+from scripts.validate_json_export import (
+    REQUIRED_TABLES,
+    get_table_counts,
+    load_json_file,
+    validate_export,
+)
 
 
-RESTORE_TABLE_ORDER = [
-    "import_batches",
-    "transactions",
-    "owed_items",
-    "owed_payments",
-    "owed_payment_allocations",
-    "wealth_accounts",
-    "wealth_snapshots",
-    "investment_events",
-    "cashflow_rules",
-    "description_rules",
-]
+RESTORE_TABLE_ORDER = list(USER_RECOVERY_TABLE_NAMES)
 
 
 def create_sqlite_engine(sqlite_path: Path) -> Engine:
@@ -102,6 +97,42 @@ def restore_export_to_engine(data: dict[str, Any], engine: Engine) -> dict[str, 
     return restored_counts
 
 
+def get_restored_table_counts(engine: Engine) -> dict[str, int]:
+    counts: dict[str, int] = {}
+
+    with engine.connect() as connection:
+        for table_name in RESTORE_TABLE_ORDER:
+            table = Base.metadata.tables[table_name]
+            counts[table_name] = int(
+                connection.execute(
+                    select(func.count()).select_from(table)
+                ).scalar_one()
+            )
+
+    return counts
+
+
+def verify_restored_table_counts(
+    expected_counts: dict[str, int],
+    restored_counts: dict[str, int],
+) -> None:
+    mismatches = [
+        (
+            f"{table_name}: expected={expected_counts.get(table_name, 0)}, "
+            f"restored={restored_counts.get(table_name, 0)}"
+        )
+        for table_name in RESTORE_TABLE_ORDER
+        if expected_counts.get(table_name, 0)
+        != restored_counts.get(table_name, 0)
+    ]
+
+    if mismatches:
+        raise RuntimeError(
+            "Restored row count verification failed: "
+            + "; ".join(mismatches)
+        )
+
+
 def run_restore_dry_run(export_path: Path, sqlite_path: Path) -> tuple[dict[str, int], list[dict[str, object]]]:
     data = load_json_file(export_path)
     issues = validate_export(data)
@@ -113,8 +144,16 @@ def run_restore_dry_run(export_path: Path, sqlite_path: Path) -> tuple[dict[str,
     if not isinstance(data, dict):
         raise ValueError("Export root must be a JSON object.")
 
+    expected_counts = get_table_counts(data)
     engine = create_sqlite_engine(sqlite_path)
-    restored_counts = restore_export_to_engine(data, engine)
+
+    restore_export_to_engine(data, engine)
+
+    restored_counts = get_restored_table_counts(engine)
+    verify_restored_table_counts(
+        expected_counts=expected_counts,
+        restored_counts=restored_counts,
+    )
     audit_results = run_audit(engine)
 
     return restored_counts, audit_results

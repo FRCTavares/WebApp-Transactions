@@ -153,6 +153,26 @@ def decode_supabase_jwt(token: str) -> dict[str, Any]:
     return payload
 
 
+def get_subject_from_supabase_payload(payload: dict[str, Any]) -> str:
+    raw_subject = payload.get("sub")
+
+    if not isinstance(raw_subject, str) or not raw_subject.strip():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer token does not include a subject",
+        )
+
+    subject = raw_subject.strip()
+
+    if len(subject) > 100:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer token subject is too long",
+        )
+
+    return subject
+
+
 def get_email_from_supabase_payload(payload: dict[str, Any]) -> str:
     raw_email = payload.get("email")
 
@@ -174,6 +194,7 @@ def get_email_from_supabase_payload(payload: dict[str, Any]) -> str:
 def get_supabase_user_from_request(request: Request) -> CurrentUser:
     token = get_authorization_bearer_token(request)
     payload = decode_supabase_jwt(token)
+    subject = get_subject_from_supabase_payload(payload)
     email = get_email_from_supabase_payload(payload)
 
     if not is_allowed_user_email(email):
@@ -182,7 +203,7 @@ def get_supabase_user_from_request(request: Request) -> CurrentUser:
             detail="User email is not allowed",
         )
 
-    return CurrentUser(id=email, email=email)
+    return CurrentUser(id=subject, email=email)
 
 
 def get_header_bridge_user_from_request(request: Request) -> CurrentUser:

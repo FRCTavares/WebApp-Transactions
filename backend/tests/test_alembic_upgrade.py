@@ -42,6 +42,28 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
         == ["user_id", "dedupe_hash"]
     )
 
+    investment_funding_indexes = {
+        index["name"]: index["column_names"]
+        for index in inspector.get_indexes(
+            "investment_funding_months"
+        )
+    }
+
+    assert investment_funding_indexes[
+        "ix_investment_funding_months_user_id"
+    ] == ["user_id"]
+    assert investment_funding_indexes[
+        "ix_investment_funding_months_month"
+    ] == ["month"]
+    assert investment_funding_indexes[
+        "ix_investment_funding_months_source"
+    ] == ["source"]
+    assert investment_funding_indexes[
+        "ix_investment_funding_months_user_month"
+    ] == ["user_id", "month"]
+    assert investment_funding_indexes[
+        "ix_investment_funding_months_user_source"
+    ] == ["user_id", "source"]
 
     owed_payment_columns = {
         column["name"]
