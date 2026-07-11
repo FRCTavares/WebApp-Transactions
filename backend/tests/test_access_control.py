@@ -209,6 +209,7 @@ def test_production_config_requires_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
 
@@ -222,6 +223,7 @@ def test_production_config_requires_supabase_url(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
     monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
 
@@ -243,11 +245,29 @@ def test_production_config_requires_allowed_user_emails(monkeypatch):
             pass
 
 
+def test_production_config_requires_admin_user_emails(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql://user:pass@example.com/db",
+    )
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.delenv("ADMIN_USER_EMAILS", raising=False)
+    monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
+    monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
+
+    with pytest.raises(RuntimeError, match="ADMIN_USER_EMAILS is required"):
+        with TestClient(app):
+            pass
+
+
 def test_production_config_rejects_wildcard_cors(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "*")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
 
@@ -261,6 +281,7 @@ def test_production_config_rejects_local_network_only(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
 
@@ -274,6 +295,7 @@ def test_production_config_accepts_required_settings(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
     monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)

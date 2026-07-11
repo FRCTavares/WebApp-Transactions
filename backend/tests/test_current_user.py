@@ -7,9 +7,11 @@ from fastapi.testclient import TestClient
 from app.auth.current_user import (
     LOCAL_DEFAULT_USER_ID,
     CurrentUser,
+    get_admin_user_emails,
     get_allowed_user_emails,
     get_current_user,
     get_local_default_user,
+    get_privileged_user,
     is_allowed_user_email,
     is_supabase_auth_enabled,
     normalise_user_email,
@@ -198,3 +200,99 @@ def test_current_user_dependency_rejects_disallowed_supabase_jwt_user(monkeypatc
 
     assert response.status_code == 403
     assert response.json() == {"detail": "User email is not allowed"}
+
+
+def test_admin_user_email_helpers(monkeypatch):
+    monkeypatch.setenv(
+        "ADMIN_USER_EMAILS",
+        " ADMIN@example.com, second@example.com ",
+    )
+
+    assert get_admin_user_emails() == {
+        "admin@example.com",
+        "second@example.com",
+    }
+
+
+def test_privileged_user_allows_local_default_user_without_supabase(monkeypatch):
+    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
+    monkeypatch.delenv("ADMIN_USER_EMAILS", raising=False)
+
+    app = FastAPI()
+
+    @app.get("/privileged")
+    def privileged(
+        current_user: CurrentUser = Depends(get_privileged_user),
+    ):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get("/privileged")
+
+    assert response.status_code == 200
+    assert response.json() == {"user_id": LOCAL_DEFAULT_USER_ID}
+
+
+def test_privileged_user_rejects_authenticated_non_admin(monkeypatch):
+    monkeypatch.setenv(
+        "SUPABASE_JWT_SECRET",
+        "test-secret-at-least-thirty-two-bytes-long",
+    )
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+
+    token = make_supabase_token(
+        "me@example.com",
+        secret="test-secret-at-least-thirty-two-bytes-long",
+    )
+
+    app = FastAPI()
+
+    @app.get("/privileged")
+    def privileged(
+        current_user: CurrentUser = Depends(get_privileged_user),
+    ):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/privileged",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Privileged access is required"}
+
+
+def test_privileged_user_accepts_configured_admin(monkeypatch):
+    monkeypatch.setenv(
+        "SUPABASE_JWT_SECRET",
+        "test-secret-at-least-thirty-two-bytes-long",
+    )
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+
+    token = make_supabase_token(
+        "ADMIN@example.com",
+        secret="test-secret-at-least-thirty-two-bytes-long",
+    )
+
+    app = FastAPI()
+
+    @app.get("/privileged")
+    def privileged(
+        current_user: CurrentUser = Depends(get_privileged_user),
+    ):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/privileged",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"user_id": "admin@example.com"}

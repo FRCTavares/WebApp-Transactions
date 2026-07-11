@@ -22,5 +22,7 @@ services:
         sync: false
       - key: ALLOWED_USER_EMAILS
         sync: false
+      - key: ADMIN_USER_EMAILS
+        sync: false
       - key: LOCAL_NETWORK_ONLY
         value: "false"

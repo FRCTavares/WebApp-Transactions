@@ -3,6 +3,11 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from app.auth.current_user import (
+    CurrentUser,
+    get_current_user,
+    get_privileged_user,
+)
 from app.database import get_db
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
@@ -39,6 +44,7 @@ def get_market_price_service(
 @router.get("", response_model=list[MarketPriceRead])
 def list_market_prices(
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_latest()
 
@@ -48,6 +54,7 @@ def get_latest_market_price(
     ticker: str | None = Query(default=None),
     isin: str | None = Query(default=None),
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.get_latest(
         ticker=ticker,
@@ -63,6 +70,7 @@ def list_market_price_history(
     date_to: date | None = Query(default=None),
     limit: int = Query(default=500, ge=1, le=5000),
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_history(
         ticker=ticker,
@@ -77,6 +85,7 @@ def list_market_price_history(
 def fetch_latest_market_price(
     request: MarketPriceFetchLatestRequest,
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
 ):
     return service.fetch_latest(request)
 
@@ -85,6 +94,7 @@ def fetch_latest_market_price(
 def fetch_market_price_history(
     request: MarketPriceFetchHistoryRequest,
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
 ):
     return service.fetch_history(request)
 
@@ -97,6 +107,7 @@ def fetch_market_price_history(
 def create_or_update_market_price(
     price_data: MarketPriceCreate,
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
 ):
     return service.create_or_update_latest(price_data)
 
@@ -106,6 +117,7 @@ def update_market_price(
     price_id: int,
     price_data: MarketPriceUpdate,
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
 ):
     return service.update(price_id, price_data)
 
@@ -114,5 +126,6 @@ def update_market_price(
 def delete_market_price(
     price_id: int,
     service: MarketPriceService = Depends(get_market_price_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
 ):
     service.delete(price_id)

@@ -25,17 +25,24 @@ Required Render environment variables:
 - `DATABASE_URL`
 - `SUPABASE_URL`
 - `ALLOWED_USER_EMAILS`
+- `ADMIN_USER_EMAILS`
 - `CORS_ORIGINS`
 
 Production examples:
 
 - `SUPABASE_URL=https://your-project-ref.supabase.co`
 - `ALLOWED_USER_EMAILS=you@example.com`
+- `ADMIN_USER_EMAILS=you@example.com`
 - `CORS_ORIGINS=https://your-vercel-app.vercel.app`
 
 `LOCAL_NETWORK_ONLY` must be false on Render.
 
 `APP_ACCESS_TOKEN` is legacy/local-only fallback auth. It is skipped when Supabase auth is enabled and should not be treated as the production auth mechanism.
+
+`ADMIN_USER_EMAILS` controls privileged shared-data mutations. Authenticated
+allowed users may read market prices, but only configured admin emails may fetch,
+create, update, or delete shared market-price records. Every admin email should
+also be present in `ALLOWED_USER_EMAILS`.
 
 
 ## Production safety guard
@@ -45,6 +52,7 @@ When `APP_ENV=production`, the backend fails startup if:
 - `DATABASE_URL` is missing.
 - `SUPABASE_URL` is missing.
 - `ALLOWED_USER_EMAILS` is empty.
+- `ADMIN_USER_EMAILS` is empty.
 - `CORS_ORIGINS` contains `*`.
 - `LOCAL_NETWORK_ONLY=true`.
 

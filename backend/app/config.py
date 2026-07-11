@@ -33,6 +33,7 @@ def validate_production_config() -> None:
     database_url = os.getenv("DATABASE_URL", "").strip()
     supabase_url = os.getenv("SUPABASE_URL", "").strip()
     allowed_user_emails = os.getenv("ALLOWED_USER_EMAILS", "").strip()
+    admin_user_emails = os.getenv("ADMIN_USER_EMAILS", "").strip()
     cors_origins = get_cors_origins()
 
     if not database_url:
@@ -43,6 +44,9 @@ def validate_production_config() -> None:
 
     if not allowed_user_emails:
         errors.append("ALLOWED_USER_EMAILS is required when APP_ENV=production")
+
+    if not admin_user_emails:
+        errors.append("ADMIN_USER_EMAILS is required when APP_ENV=production")
 
     if "*" in cors_origins:
         errors.append("CORS_ORIGINS must not contain * when APP_ENV=production")

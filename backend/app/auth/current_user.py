@@ -4,7 +4,7 @@ from functools import lru_cache
 from typing import Any
 
 import jwt
-from fastapi import HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError, PyJWKClientError
 
@@ -219,3 +219,28 @@ def get_current_user(request: Request) -> CurrentUser:
         return get_local_default_user()
 
     return get_header_bridge_user_from_request(request)
+
+
+def get_admin_user_emails() -> set[str]:
+    raw_emails = os.getenv("ADMIN_USER_EMAILS", "")
+
+    return {
+        normalise_user_email(email)
+        for email in raw_emails.split(",")
+        if normalise_user_email(email)
+    }
+
+
+def get_privileged_user(
+    current_user: CurrentUser = Depends(get_current_user),
+) -> CurrentUser:
+    if current_user.id == LOCAL_DEFAULT_USER_ID and not is_supabase_auth_enabled():
+        return current_user
+
+    if current_user.email and current_user.email in get_admin_user_emails():
+        return current_user
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Privileged access is required",
+    )

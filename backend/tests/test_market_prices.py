@@ -1,7 +1,31 @@
+import time
+from datetime import date
 from decimal import Decimal
 
+import jwt
+import pytest
+
 from app.models.investment_event import InvestmentEvent
-from datetime import date
+
+
+def make_market_price_token(
+    email: str,
+    secret: str = "test-secret-at-least-thirty-two-bytes-long",
+) -> str:
+    now = int(time.time())
+
+    return jwt.encode(
+        {
+            "aud": "authenticated",
+            "exp": now + 3600,
+            "iat": now,
+            "sub": "00000000-0000-0000-0000-000000000000",
+            "email": email,
+            "role": "authenticated",
+        },
+        secret,
+        algorithm="HS256",
+    )
 
 
 def create_market_buy(db_session, *, ticker="VWCE", isin="IE00BK5BQT80"):
@@ -390,3 +414,138 @@ def test_positions_derive_market_fx_rate_from_eur_market_buy(client, db_session)
     assert position["market_fx_rate_to_eur"] == "0.86408066"
     assert position["market_value_currency"] == "EUR"
     assert position["market_value"] == "1.25"
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "request_body"),
+    [
+        ("GET", "/api/market-prices", None),
+        ("GET", "/api/market-prices/latest?ticker=VWCE", None),
+        ("GET", "/api/market-prices/history?ticker=VWCE", None),
+        ("POST", "/api/market-prices/fetch/latest", {}),
+        ("POST", "/api/market-prices/fetch/history", {}),
+        ("POST", "/api/market-prices", {}),
+        ("PATCH", "/api/market-prices/999999", {}),
+        ("DELETE", "/api/market-prices/999999", None),
+    ],
+)
+def test_market_price_routes_require_authentication_when_supabase_is_enabled(
+    client,
+    monkeypatch,
+    method,
+    path,
+    request_body,
+):
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    request_kwargs = {}
+
+    if request_body is not None:
+        request_kwargs["json"] = request_body
+
+    response = client.request(method, path, **request_kwargs)
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing bearer token"}
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "request_body"),
+    [
+        ("POST", "/api/market-prices/fetch/latest", {}),
+        ("POST", "/api/market-prices/fetch/history", {}),
+        ("POST", "/api/market-prices", {}),
+        ("PATCH", "/api/market-prices/999999", {}),
+        ("DELETE", "/api/market-prices/999999", None),
+    ],
+)
+def test_market_price_mutations_reject_authenticated_non_admin(
+    client,
+    monkeypatch,
+    method,
+    path,
+    request_body,
+):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+
+    token = make_market_price_token("me@example.com", secret)
+    request_kwargs = {
+        "headers": {"Authorization": f"Bearer {token}"},
+    }
+
+    if request_body is not None:
+        request_kwargs["json"] = request_body
+
+    response = client.request(method, path, **request_kwargs)
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Privileged access is required"}
+
+
+def test_market_price_create_accepts_configured_admin(
+    client,
+    monkeypatch,
+):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+
+    token = make_market_price_token("admin@example.com", secret)
+
+    response = client.post(
+        "/api/market-prices",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "ticker": "VWCE",
+            "isin": "IE00BK5BQT80",
+            "price": "150.00",
+            "currency": "EUR",
+            "source": "manual",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["ticker"] == "VWCE"
+
+
+def test_market_price_reads_accept_authenticated_non_admin(
+    client,
+    monkeypatch,
+):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv(
+        "ALLOWED_USER_EMAILS",
+        "admin@example.com,me@example.com",
+    )
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+
+    admin_token = make_market_price_token("admin@example.com", secret)
+    user_token = make_market_price_token("me@example.com", secret)
+
+    create_response = client.post(
+        "/api/market-prices",
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "ticker": "VWCE",
+            "isin": "IE00BK5BQT80",
+            "price": "150.00",
+            "currency": "EUR",
+            "source": "manual",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        "/api/market-prices",
+        headers={"Authorization": f"Bearer {user_token}"},
+    )
+
+    assert response.status_code == 200
+    assert len(response.json()) == 1
