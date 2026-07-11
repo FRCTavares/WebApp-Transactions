@@ -1,3 +1,8 @@
+from app.auth.current_user import (
+    LOCAL_DEFAULT_USER_ID,
+    CurrentUser,
+    get_current_user,
+)
 from app.models.import_batch import ImportBatch
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
@@ -120,3 +125,108 @@ def test_delete_legacy_excel_import_batch_deletes_transactions_and_owed_items(
     assert db_session.get(ImportBatch, import_batch_id) is None
     assert db_session.query(Transaction).count() == 0
     assert db_session.query(OwedItem).count() == 0
+
+
+def test_legacy_excel_import_is_scoped_to_authenticated_user(
+    client,
+    db_session,
+):
+    workbook_content = build_workbook_bytes()
+    first_user = CurrentUser(id="user-one", email="one@example.com")
+    second_user = CurrentUser(id="user-two", email="two@example.com")
+
+    client.app.dependency_overrides[get_current_user] = lambda: first_user
+
+    first_response = client.post(
+        "/api/legacy-excel-import/commit",
+        files={
+            "file": (
+                "legacy_finance.xlsx",
+                workbook_content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert first_response.json()["rows_inserted"] == 9
+
+    first_user_transactions = (
+        db_session.query(Transaction)
+        .filter(Transaction.user_id == first_user.id)
+        .all()
+    )
+    first_user_owed_items = (
+        db_session.query(OwedItem)
+        .filter(OwedItem.user_id == first_user.id)
+        .all()
+    )
+    first_user_batches = (
+        db_session.query(ImportBatch)
+        .filter(ImportBatch.user_id == first_user.id)
+        .all()
+    )
+
+    assert len(first_user_transactions) == 6
+    assert len(first_user_owed_items) == 3
+    assert len(first_user_batches) == 1
+
+    client.app.dependency_overrides[get_current_user] = lambda: second_user
+
+    second_user_list_response = client.get("/api/transactions")
+
+    assert second_user_list_response.status_code == 200
+    assert second_user_list_response.json() == []
+
+    second_response = client.post(
+        "/api/legacy-excel-import/commit",
+        files={
+            "file": (
+                "legacy_finance.xlsx",
+                workbook_content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+
+    assert second_response.status_code == 200
+    assert second_response.json()["rows_inserted"] == 9
+
+    second_user_transactions = (
+        db_session.query(Transaction)
+        .filter(Transaction.user_id == second_user.id)
+        .all()
+    )
+    second_user_owed_items = (
+        db_session.query(OwedItem)
+        .filter(OwedItem.user_id == second_user.id)
+        .all()
+    )
+    second_user_batches = (
+        db_session.query(ImportBatch)
+        .filter(ImportBatch.user_id == second_user.id)
+        .all()
+    )
+
+    assert len(second_user_transactions) == 6
+    assert len(second_user_owed_items) == 3
+    assert len(second_user_batches) == 1
+
+    assert (
+        db_session.query(Transaction)
+        .filter(Transaction.user_id == LOCAL_DEFAULT_USER_ID)
+        .count()
+        == 0
+    )
+    assert (
+        db_session.query(OwedItem)
+        .filter(OwedItem.user_id == LOCAL_DEFAULT_USER_ID)
+        .count()
+        == 0
+    )
+    assert (
+        db_session.query(ImportBatch)
+        .filter(ImportBatch.user_id == LOCAL_DEFAULT_USER_ID)
+        .count()
+        == 0
+    )

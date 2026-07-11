@@ -184,9 +184,11 @@ class LegacyExcelImportService:
         )
 
         rows_skipped = preview.rows_duplicates + preview.rows_invalid
+        user_id = self._get_user_id(current_user)
         transactions_to_insert = self._build_transactions_to_insert(
             preview=preview,
             import_batch_id=None,
+            user_id=user_id,
         )
         owed_items_to_insert = self._build_owed_items_to_insert(
             preview=preview,
@@ -221,12 +223,13 @@ class LegacyExcelImportService:
                 rows_inserted=rows_inserted,
                 rows_skipped=rows_skipped,
             ),
-            user_id=self._get_user_id(current_user),
+            user_id=user_id,
         )
 
         transactions_to_insert = self._build_transactions_to_insert(
             preview=preview,
             import_batch_id=import_batch.id,
+            user_id=user_id,
         )
         owed_items_to_insert = self._build_owed_items_to_insert(
             preview=preview,
@@ -236,13 +239,13 @@ class LegacyExcelImportService:
         if transactions_to_insert:
             self.transaction_repository.bulk_insert(
                 transactions_to_insert,
-                self._get_user_id(current_user),
+                user_id,
             )
 
         if owed_items_to_insert:
             self.owed_repository.bulk_insert(
                 owed_items_to_insert,
-                self._get_user_id(current_user),
+                user_id,
             )
 
         return LegacyExcelCommitResponse(
@@ -481,6 +484,7 @@ class LegacyExcelImportService:
         self,
         preview: LegacyExcelPreviewResponse,
         import_batch_id: int | None,
+        user_id: str,
     ) -> list[Transaction]:
         transactions_to_insert: list[Transaction] = []
 
@@ -490,7 +494,7 @@ class LegacyExcelImportService:
 
             transactions_to_insert.append(
                 Transaction(
-                    user_id=LOCAL_DEFAULT_USER_ID,
+                    user_id=user_id,
                     date=preview_transaction.date,
                     description=preview_transaction.description,
                     raw_description=preview_transaction.raw_description,

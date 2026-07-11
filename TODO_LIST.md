@@ -142,29 +142,6 @@ A paid plan will eventually be justified by:
 | Documentation | 2/5 | Deployment docs exist, but several documents are stale |
 | Global release readiness | 2/5 | Suitable for controlled use, not public global shipment |
 ## 5. Critical Blockers
-### CRIT-002: Fix legacy Excel transaction ownership
-- Evidence:
-  - `LegacyExcelImportService._build_transactions_to_insert()` sets `user_id=LOCAL_DEFAULT_USER_ID`.
-- Paths:
-  - `backend/app/services/legacy_excel_import_service.py`
-  - `backend/app/routers/legacy_excel_imports.py`
-  - `backend/tests/test_legacy_excel_import_commit.py`
-- Risk:
-  - Imported transactions can be assigned to the wrong owner.
-  - Imported records may disappear for the authenticated user.
-  - Cross-user contamination is possible.
-- Proposed fix:
-  - Pass the authenticated user ID into `_build_transactions_to_insert()`.
-  - Remove the hard-coded owner.
-  - Audit owed-item and wealth builders for the same pattern.
-  - Add two-user ownership tests.
-- Acceptance criteria:
-  - Imported transactions belong to `current_user.id`.
-  - No authenticated import writes `local-default-user`.
-  - User A cannot see User B legacy imports.
-- Dependencies: None
-- Effort: Small
-- Paid plan required: No
 ### CRIT-003: Make import commits atomic
 - Evidence:
   - Import batches, transactions, and investment events commit through separate repository operations.
