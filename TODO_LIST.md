@@ -142,29 +142,6 @@ A paid plan will eventually be justified by:
 | Documentation | 2/5 | Deployment docs exist, but several documents are stale |
 | Global release readiness | 2/5 | Suitable for controlled use, not public global shipment |
 ## 5. Critical Blockers
-### CRIT-001: Protect every market-price endpoint
-- Evidence:
-  - `backend/app/routers/market_prices.py` contains no `Depends(get_current_user)`.
-  - Unauthenticated production requests to `/api/market-prices` and `/api/market-prices/history` returned `200`.
-  - Invalid unauthenticated writes reached validation or repository logic and returned `422` or `404`.
-- Risk:
-  - Public reads of shared market data.
-  - Public create, update, delete, and provider-fetch access.
-  - Possible corruption of valuation data.
-  - Abuse of outbound market-data calls.
-- Proposed fix:
-  - Add `CurrentUser = Depends(get_current_user)` to every route.
-  - Decide whether authenticated users may mutate global prices.
-  - Require explicit privileged authorization for mutation and fetch endpoints.
-  - Rate-limit provider-backed endpoints.
-- Acceptance criteria:
-  - Every unauthenticated market-price route returns `401`.
-  - Mutation endpoints require privileged authorization.
-  - Tests cover all market-price routes.
-  - Production smoke tests confirm the policy.
-- Dependencies: Authorization-role decision
-- Effort: Small
-- Paid plan required: No
 ### CRIT-002: Fix legacy Excel transaction ownership
 - Evidence:
   - `LegacyExcelImportService._build_transactions_to_insert()` sets `user_id=LOCAL_DEFAULT_USER_ID`.
