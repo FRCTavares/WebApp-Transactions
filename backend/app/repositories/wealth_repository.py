@@ -23,11 +23,17 @@ class WealthRepository:
         self,
         account_data: WealthAccountCreate,
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        commit: bool = True,
     ) -> WealthAccount:
         account = WealthAccount(user_id=user_id, **account_data.model_dump())
         self.db.add(account)
-        self.db.commit()
-        self.db.refresh(account)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(account)
+        else:
+            self.db.flush()
+
         return account
 
     def list_accounts(
@@ -112,12 +118,17 @@ class WealthRepository:
         self,
         snapshots: list[WealthSnapshot],
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        commit: bool = True,
     ) -> None:
         for snapshot in snapshots:
             snapshot.user_id = user_id
 
         self.db.add_all(snapshots)
-        self.db.commit()
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
 
     def delete_snapshots_by_import_batch(
         self,

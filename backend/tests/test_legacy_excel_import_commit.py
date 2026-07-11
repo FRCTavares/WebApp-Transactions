@@ -1,3 +1,10 @@
+import pytest
+
+from app.repositories.import_batch_repository import ImportBatchRepository
+from app.repositories.owed_repository import OwedRepository
+from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
+from app.services.legacy_excel_import_service import LegacyExcelImportService
 from app.auth.current_user import (
     LOCAL_DEFAULT_USER_ID,
     CurrentUser,
@@ -230,3 +237,51 @@ def test_legacy_excel_import_is_scoped_to_authenticated_user(
         .count()
         == 0
     )
+
+
+def test_legacy_excel_commit_rolls_back_all_records_on_owed_failure(
+    db_session,
+    monkeypatch,
+):
+    transaction_repository = TransactionRepository(db_session)
+    owed_repository = OwedRepository(db_session)
+    import_batch_repository = ImportBatchRepository(db_session)
+    service = LegacyExcelImportService(
+        transaction_repository=transaction_repository,
+        owed_repository=owed_repository,
+        import_batch_repository=import_batch_repository,
+        wealth_repository=WealthRepository(db_session),
+    )
+
+    original_bulk_insert = owed_repository.bulk_insert
+
+    def fail_after_owed_flush(
+        owed_items,
+        user_id,
+        commit=True,
+    ):
+        result = original_bulk_insert(
+            owed_items,
+            user_id=user_id,
+            commit=commit,
+        )
+        raise RuntimeError("forced failure after owed item flush")
+
+    monkeypatch.setattr(
+        owed_repository,
+        "bulk_insert",
+        fail_after_owed_flush,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="forced failure after owed item flush",
+    ):
+        service.commit_import_from_file(
+            file_content=build_workbook_bytes(),
+            filename="legacy_rollback.xlsx",
+        )
+
+    assert db_session.query(ImportBatch).count() == 0
+    assert db_session.query(Transaction).count() == 0
+    assert db_session.query(OwedItem).count() == 0

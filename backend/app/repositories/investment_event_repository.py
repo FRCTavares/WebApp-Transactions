@@ -190,14 +190,19 @@ class InvestmentEventRepository:
         self,
         events: list[InvestmentEvent],
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        commit: bool = True,
     ) -> list[InvestmentEvent]:
         for event in events:
             event.user_id = user_id
 
         self.db.add_all(events)
-        self.db.commit()
 
-        for event in events:
-            self.db.refresh(event)
+        if commit:
+            self.db.commit()
+
+            for event in events:
+                self.db.refresh(event)
+        else:
+            self.db.flush()
 
         return events

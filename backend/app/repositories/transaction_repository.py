@@ -299,15 +299,20 @@ class TransactionRepository:
         self,
         transactions: list[Transaction],
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        commit: bool = True,
     ) -> list[Transaction]:
         for transaction in transactions:
             transaction.user_id = user_id
 
         self.db.add_all(transactions)
-        self.db.commit()
 
-        for transaction in transactions:
-            self.db.refresh(transaction)
+        if commit:
+            self.db.commit()
+
+            for transaction in transactions:
+                self.db.refresh(transaction)
+        else:
+            self.db.flush()
 
         return transactions
 

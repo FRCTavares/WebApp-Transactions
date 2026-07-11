@@ -1,6 +1,13 @@
 from io import BytesIO
 from decimal import Decimal
 
+import pytest
+
+from app.repositories.import_batch_repository import ImportBatchRepository
+from app.repositories.owed_repository import OwedRepository
+from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.wealth_repository import WealthRepository
+from app.services.legacy_excel_import_service import LegacyExcelImportService
 from openpyxl import Workbook
 
 from app.importers.legacy_excel import LegacyExcelImporter
@@ -224,3 +231,49 @@ def test_delete_legacy_wealth_import_batch_deletes_snapshots(client, db_session)
     assert db_session.get(ImportBatch, import_batch_id) is None
     assert db_session.query(WealthSnapshot).count() == 0
     assert db_session.query(WealthAccount).count() == 5
+
+
+def test_legacy_wealth_commit_rolls_back_accounts_batch_and_snapshots(
+    db_session,
+    monkeypatch,
+):
+    wealth_repository = WealthRepository(db_session)
+    service = LegacyExcelImportService(
+        transaction_repository=TransactionRepository(db_session),
+        owed_repository=OwedRepository(db_session),
+        import_batch_repository=ImportBatchRepository(db_session),
+        wealth_repository=wealth_repository,
+    )
+
+    original_bulk_insert = wealth_repository.bulk_insert_snapshots
+
+    def fail_after_snapshot_flush(
+        snapshots,
+        user_id,
+        commit=True,
+    ):
+        original_bulk_insert(
+            snapshots,
+            user_id=user_id,
+            commit=commit,
+        )
+        raise RuntimeError("forced failure after wealth snapshot flush")
+
+    monkeypatch.setattr(
+        wealth_repository,
+        "bulk_insert_snapshots",
+        fail_after_snapshot_flush,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="forced failure after wealth snapshot flush",
+    ):
+        service.commit_wealth_import_from_file(
+            file_content=build_wealth_workbook_bytes(),
+            filename="wealth_rollback.xlsx",
+        )
+
+    assert db_session.query(ImportBatch).count() == 0
+    assert db_session.query(WealthAccount).count() == 0
+    assert db_session.query(WealthSnapshot).count() == 0

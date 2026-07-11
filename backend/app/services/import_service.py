@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.importers.activobank import ActivoBankImporter
@@ -397,42 +398,63 @@ class ImportService:
             ]
         )
 
-        import_batch = self.import_batch_repository.create(
-            source=source,
-            filename=filename,
-            rows_total=preview.rows_total,
-            rows_inserted=rows_inserted,
-            rows_skipped=rows_skipped,
-            status=self._get_import_status(
+        user_id = self._get_user_id(current_user)
+        db = self.import_batch_repository.db
+
+        try:
+            import_batch = self.import_batch_repository.create(
+                source=source,
+                filename=filename,
                 rows_total=preview.rows_total,
                 rows_inserted=rows_inserted,
                 rows_skipped=rows_skipped,
-            ),
-            user_id=self._get_user_id(current_user),
-        )
-
-        transactions_to_insert = self._build_transactions_to_insert(
-            import_batch_id=import_batch.id,
-            preview=preview,
-            current_user=current_user,
-        )
-        investment_events_to_insert = self._build_investment_events_to_insert(
-            import_batch_id=import_batch.id,
-            preview=preview,
-            current_user=current_user,
-        )
-
-        if transactions_to_insert:
-            self.transaction_repository.bulk_insert(
-                transactions_to_insert,
-                user_id=self._get_user_id(current_user),
+                status=self._get_import_status(
+                    rows_total=preview.rows_total,
+                    rows_inserted=rows_inserted,
+                    rows_skipped=rows_skipped,
+                ),
+                user_id=user_id,
+                commit=False,
             )
 
-        if investment_events_to_insert and self.investment_event_repository is not None:
-            self.investment_event_repository.bulk_insert(
-                investment_events_to_insert,
-                user_id=self._get_user_id(current_user),
+            transactions_to_insert = self._build_transactions_to_insert(
+                import_batch_id=import_batch.id,
+                preview=preview,
+                current_user=current_user,
             )
+            investment_events_to_insert = self._build_investment_events_to_insert(
+                import_batch_id=import_batch.id,
+                preview=preview,
+                current_user=current_user,
+            )
+
+            if transactions_to_insert:
+                self.transaction_repository.bulk_insert(
+                    transactions_to_insert,
+                    user_id=user_id,
+                    commit=False,
+                )
+
+            if (
+                investment_events_to_insert
+                and self.investment_event_repository is not None
+            ):
+                self.investment_event_repository.bulk_insert(
+                    investment_events_to_insert,
+                    user_id=user_id,
+                    commit=False,
+                )
+
+            db.commit()
+        except IntegrityError as error:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Import conflicts with records committed by another request",
+            ) from error
+        except Exception:
+            db.rollback()
+            raise
 
         return {
             "import_batch_id": import_batch.id,

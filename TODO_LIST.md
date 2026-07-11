@@ -142,27 +142,6 @@ A paid plan will eventually be justified by:
 | Documentation | 2/5 | Deployment docs exist, but several documents are stale |
 | Global release readiness | 2/5 | Suitable for controlled use, not public global shipment |
 ## 5. Critical Blockers
-### CRIT-003: Make import commits atomic
-- Evidence:
-  - Import batches, transactions, and investment events commit through separate repository operations.
-- Risk:
-  - Partial imports.
-  - Incorrect batch counts.
-  - Difficult recovery after exceptions.
-  - Race-condition failures during deduplication.
-- Proposed fix:
-  - Let the service own one database transaction.
-  - Replace repository-level commits with `flush()` where composition is required.
-  - Commit once after all records and counts are valid.
-  - Roll back the complete import on failure.
-  - Handle `IntegrityError` as a controlled conflict.
-- Acceptance criteria:
-  - Forced failure at any stage leaves no partial records.
-  - Concurrent duplicate imports do not produce unhandled `500` responses.
-  - Batch counts match committed records.
-- Dependencies: Repository transaction-boundary cleanup
-- Effort: Medium
-- Paid plan required: No
 ### CRIT-004: Complete backup, export, restore, and migration coverage
 - Evidence:
   - Current models include `transaction_categories` and `investment_funding_months`.

@@ -18,6 +18,7 @@ class ImportBatchRepository:
         rows_skipped: int,
         status: str,
         user_id: str = LOCAL_DEFAULT_USER_ID,
+        commit: bool = True,
     ) -> ImportBatch:
         import_batch = ImportBatch(
             user_id=user_id,
@@ -30,8 +31,13 @@ class ImportBatchRepository:
         )
 
         self.db.add(import_batch)
-        self.db.commit()
-        self.db.refresh(import_batch)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(import_batch)
+        else:
+            self.db.flush()
+
         return import_batch
 
     def list(

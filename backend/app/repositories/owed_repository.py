@@ -125,15 +125,20 @@ class OwedRepository:
         self,
         owed_items: list[OwedItem],
         user_id: str,
+        commit: bool = True,
     ) -> list[OwedItem]:
         for owed_item in owed_items:
             owed_item.user_id = user_id
 
         self.db.add_all(owed_items)
-        self.db.commit()
 
-        for owed_item in owed_items:
-            self.db.refresh(owed_item)
+        if commit:
+            self.db.commit()
+
+            for owed_item in owed_items:
+                self.db.refresh(owed_item)
+        else:
+            self.db.flush()
 
         return owed_items
 

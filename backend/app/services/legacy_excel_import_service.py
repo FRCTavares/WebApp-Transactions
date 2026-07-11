@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
+
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.importers.legacy_excel import LegacyExcelImporter
 from app.models.owed_item import OwedItem
@@ -212,41 +215,58 @@ class LegacyExcelImportService:
                 status="skipped",
             )
 
-        import_batch = self.import_batch_repository.create(
-            source=SOURCE,
-            filename=filename,
-            rows_total=preview.rows_total,
-            rows_inserted=rows_inserted,
-            rows_skipped=rows_skipped,
-            status=self._get_import_status(
+        db = self.import_batch_repository.db
+
+        try:
+            import_batch = self.import_batch_repository.create(
+                source=SOURCE,
+                filename=filename,
                 rows_total=preview.rows_total,
                 rows_inserted=rows_inserted,
                 rows_skipped=rows_skipped,
-            ),
-            user_id=user_id,
-        )
-
-        transactions_to_insert = self._build_transactions_to_insert(
-            preview=preview,
-            import_batch_id=import_batch.id,
-            user_id=user_id,
-        )
-        owed_items_to_insert = self._build_owed_items_to_insert(
-            preview=preview,
-            import_batch_id=import_batch.id,
-        )
-
-        if transactions_to_insert:
-            self.transaction_repository.bulk_insert(
-                transactions_to_insert,
-                user_id,
+                status=self._get_import_status(
+                    rows_total=preview.rows_total,
+                    rows_inserted=rows_inserted,
+                    rows_skipped=rows_skipped,
+                ),
+                user_id=user_id,
+                commit=False,
             )
 
-        if owed_items_to_insert:
-            self.owed_repository.bulk_insert(
-                owed_items_to_insert,
-                user_id,
+            transactions_to_insert = self._build_transactions_to_insert(
+                preview=preview,
+                import_batch_id=import_batch.id,
+                user_id=user_id,
             )
+            owed_items_to_insert = self._build_owed_items_to_insert(
+                preview=preview,
+                import_batch_id=import_batch.id,
+            )
+
+            if transactions_to_insert:
+                self.transaction_repository.bulk_insert(
+                    transactions_to_insert,
+                    user_id,
+                    commit=False,
+                )
+
+            if owed_items_to_insert:
+                self.owed_repository.bulk_insert(
+                    owed_items_to_insert,
+                    user_id,
+                    commit=False,
+                )
+
+            db.commit()
+        except IntegrityError as error:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Import conflicts with records committed by another request",
+            ) from error
+        except Exception:
+            db.rollback()
+            raise
 
         return LegacyExcelCommitResponse(
             import_batch_id=import_batch.id,
@@ -376,67 +396,84 @@ class LegacyExcelImportService:
             )
 
         accounts_created = 0
+        user_id = self._get_user_id(current_user)
+        db = self.import_batch_repository.db
 
-        for preview_snapshot in snapshots_to_insert:
-            account = self.wealth_repository.get_account_by_name(
-                preview_snapshot.account_name,
-                self._get_user_id(current_user),
-            )
-
-            if account is None:
-                self.wealth_repository.create_account(
-                    self._build_wealth_account_create_payload(preview_snapshot),
-                    self._get_user_id(current_user),
+        try:
+            for preview_snapshot in snapshots_to_insert:
+                account = self.wealth_repository.get_account_by_name(
+                    preview_snapshot.account_name,
+                    user_id,
                 )
-                accounts_created += 1
 
-        import_batch = self.import_batch_repository.create(
-            source="legacy_excel_wealth",
-            filename=filename,
-            rows_total=preview.rows_total,
-            rows_inserted=len(snapshots_to_insert),
-            rows_skipped=preview.rows_duplicates,
-            status=self._get_import_status(
+                if account is None:
+                    self.wealth_repository.create_account(
+                        self._build_wealth_account_create_payload(preview_snapshot),
+                        user_id,
+                        commit=False,
+                    )
+                    accounts_created += 1
+
+            import_batch = self.import_batch_repository.create(
+                source="legacy_excel_wealth",
+                filename=filename,
                 rows_total=preview.rows_total,
                 rows_inserted=len(snapshots_to_insert),
                 rows_skipped=preview.rows_duplicates,
-            ),
-            user_id=self._get_user_id(current_user),
-        )
-
-        snapshot_models: list[WealthSnapshot] = []
-
-        for preview_snapshot in snapshots_to_insert:
-            account = self.wealth_repository.get_account_by_name(
-                preview_snapshot.account_name,
-                self._get_user_id(current_user),
+                status=self._get_import_status(
+                    rows_total=preview.rows_total,
+                    rows_inserted=len(snapshots_to_insert),
+                    rows_skipped=preview.rows_duplicates,
+                ),
+                user_id=user_id,
+                commit=False,
             )
 
-            if account is None:
-                continue
+            snapshot_models: list[WealthSnapshot] = []
 
-            snapshot_models.append(
-                WealthSnapshot(
-                    user_id=self._get_user_id(current_user),
-                    snapshot_date=preview_snapshot.snapshot_date,
-                    account_id=account.id,
-                    balance=preview_snapshot.balance,
-                    currency=preview_snapshot.currency,
-                    balance_eur=preview_snapshot.balance_eur,
-                    fx_rate_to_eur=preview_snapshot.fx_rate_to_eur,
-                    interest_earned=preview_snapshot.interest_earned,
-                    notes=preview_snapshot.notes,
-                    source="legacy_excel_wealth",
-                    import_batch_id=import_batch.id,
-                    external_id=preview_snapshot.external_id,
-                    dedupe_hash=preview_snapshot.dedupe_hash,
+            for preview_snapshot in snapshots_to_insert:
+                account = self.wealth_repository.get_account_by_name(
+                    preview_snapshot.account_name,
+                    user_id,
                 )
+
+                if account is None:
+                    continue
+
+                snapshot_models.append(
+                    WealthSnapshot(
+                        user_id=user_id,
+                        snapshot_date=preview_snapshot.snapshot_date,
+                        account_id=account.id,
+                        balance=preview_snapshot.balance,
+                        currency=preview_snapshot.currency,
+                        balance_eur=preview_snapshot.balance_eur,
+                        fx_rate_to_eur=preview_snapshot.fx_rate_to_eur,
+                        interest_earned=preview_snapshot.interest_earned,
+                        notes=preview_snapshot.notes,
+                        source="legacy_excel_wealth",
+                        import_batch_id=import_batch.id,
+                        external_id=preview_snapshot.external_id,
+                        dedupe_hash=preview_snapshot.dedupe_hash,
+                    )
+                )
+
+            self.wealth_repository.bulk_insert_snapshots(
+                snapshot_models,
+                user_id,
+                commit=False,
             )
 
-        self.wealth_repository.bulk_insert_snapshots(
-            snapshot_models,
-            self._get_user_id(current_user),
-        )
+            db.commit()
+        except IntegrityError as error:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Import conflicts with records committed by another request",
+            ) from error
+        except Exception:
+            db.rollback()
+            raise
 
         return LegacyExcelWealthCommitResponse(
             import_batch_id=import_batch.id,
