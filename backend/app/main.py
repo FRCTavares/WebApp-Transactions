@@ -21,7 +21,6 @@ from app.config import get_cors_origins, validate_production_config
 from app.database import initialise_database
 from app.models import (
     CashflowRule,
-    CategoryRule,
     DescriptionRule,
     ImportBatch,
     InvestmentEvent,
@@ -38,7 +37,6 @@ from app.models import (
 )
 from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
-from app.routers.category_rules import router as category_rules_router
 from app.routers.description_rules import router as description_rules_router
 from app.routers.export import router as export_router
 from app.routers.imports import router as imports_router
@@ -175,7 +173,6 @@ app.include_router(legacy_excel_imports_router)
 app.include_router(market_prices_router)
 app.include_router(me_router)
 app.include_router(cashflow_rules_router)
-app.include_router(category_rules_router)
 app.include_router(description_rules_router)
 app.include_router(export_router)
 app.include_router(wealth_router)

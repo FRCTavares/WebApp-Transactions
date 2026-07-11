@@ -19,6 +19,7 @@ def run_startup_migrations(engine: Engine) -> None:
 
     _run_investment_funding_month_migrations(engine=engine)
     _run_transaction_category_migrations(engine=engine)
+    _drop_removed_category_rules_table(engine=engine)
     _run_transaction_migrations(engine=engine)
     _run_import_batch_user_migrations(engine=engine)
     _run_investment_event_migrations(engine=engine)
@@ -34,6 +35,14 @@ def run_startup_migrations(engine: Engine) -> None:
 
 
 
+
+
+def _drop_removed_category_rules_table(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="category_rules"):
+        return
+
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE category_rules"))
 
 
 def _run_transaction_category_migrations(engine: Engine) -> None:
@@ -428,7 +437,6 @@ def _run_owed_user_migrations(engine: Engine) -> None:
 
 def _run_rule_user_migrations(engine: Engine) -> None:
     rule_tables = [
-        "category_rules",
         "cashflow_rules",
         "description_rules",
     ]

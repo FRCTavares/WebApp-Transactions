@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.cashflow_rule import CashflowRule
-from app.models.category_rule import CategoryRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
@@ -18,7 +17,6 @@ from app.models.wealth_snapshot import WealthSnapshot
 UserScopedModel = TypeVar(
     "UserScopedModel",
     CashflowRule,
-    CategoryRule,
     DescriptionRule,
     ImportBatch,
     InvestmentEvent,
@@ -61,7 +59,6 @@ class ExportRepository:
             "wealth_snapshots": self.list_for_user(WealthSnapshot, user_id),
             "investment_events": self.list_for_user(InvestmentEvent, user_id),
             "import_batches": self.list_for_user(ImportBatch, user_id),
-            "category_rules": self.list_for_user(CategoryRule, user_id),
             "cashflow_rules": self.list_for_user(CashflowRule, user_id),
             "description_rules": self.list_for_user(DescriptionRule, user_id),
         }

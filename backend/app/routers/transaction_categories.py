@@ -8,8 +8,14 @@ from app.repositories.transaction_category_repository import (
 )
 from app.schemas.transaction_category import (
     TransactionCategoryCreate,
+    TransactionCategoryMigrationApply,
+    TransactionCategoryMigrationApplyRead,
+    TransactionCategoryMigrationPreviewRead,
     TransactionCategoryRead,
+    TransactionCategoryReplaceDelete,
+    TransactionCategoryReplaceDeleteRead,
     TransactionCategoryUpdate,
+    TransactionCategoryUsageRead,
 )
 from app.services.transaction_category_service import (
     TransactionCategoryService,
@@ -92,6 +98,78 @@ def get_transaction_category(
 ):
     return service.get_category(
         category_id,
+        current_user,
+    )
+
+
+@router.get(
+    "/{category_id}/migration-preview",
+    response_model=TransactionCategoryMigrationPreviewRead,
+)
+def get_transaction_category_migration_preview(
+    category_id: int,
+    service: TransactionCategoryService = Depends(
+        get_transaction_category_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.get_migration_preview(
+        category_id,
+        current_user,
+    )
+
+
+@router.post(
+    "/{category_id}/apply-migration",
+    response_model=TransactionCategoryMigrationApplyRead,
+)
+def apply_transaction_category_migration(
+    category_id: int,
+    payload: TransactionCategoryMigrationApply,
+    service: TransactionCategoryService = Depends(
+        get_transaction_category_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.apply_reviewed_migration(
+        category_id,
+        payload,
+        current_user,
+    )
+
+
+@router.get(
+    "/{category_id}/usage",
+    response_model=TransactionCategoryUsageRead,
+)
+def get_transaction_category_usage(
+    category_id: int,
+    service: TransactionCategoryService = Depends(
+        get_transaction_category_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.get_category_usage(
+        category_id,
+        current_user,
+    )
+
+
+@router.post(
+    "/{category_id}/replace-and-delete",
+    response_model=TransactionCategoryReplaceDeleteRead,
+)
+def replace_and_delete_transaction_category(
+    category_id: int,
+    payload: TransactionCategoryReplaceDelete,
+    service: TransactionCategoryService = Depends(
+        get_transaction_category_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.replace_and_delete_category(
+        category_id,
+        payload.replacement_category_id,
         current_user,
     )
 

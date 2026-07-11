@@ -17,7 +17,6 @@ REQUIRED_TABLES = [
     "wealth_snapshots",
     "investment_events",
     "import_batches",
-    "category_rules",
     "cashflow_rules",
     "description_rules",
 ]

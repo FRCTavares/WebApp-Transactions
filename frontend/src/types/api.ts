@@ -1,6 +1,17 @@
 export type Direction = 'in' | 'out'
 export type CashflowType = 'income' | 'expense' | 'transfer'
 
+export type TransactionCategory = {
+  id: number
+  name: string
+  direction: Direction
+  cashflow_type: CashflowType
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export type Transaction = {
   id: number
   date: string
@@ -488,27 +499,6 @@ export type ImportBatch = {
   rows_inserted: number
   rows_skipped: number
   status: string
-}
-
-export type CategoryRule = {
-  id: number
-  name: string
-  category: string
-  match_text: string
-  match_field: 'description' | 'raw_description' | 'merchant'
-  direction: Direction | null
-  source: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-}
-
-export type CategoryRuleSuggestion = {
-  description: string
-  source: string
-  direction: Direction
-  count: number
-  total: string
 }
 
 export type DescriptionRule = {

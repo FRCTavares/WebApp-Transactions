@@ -31,7 +31,6 @@ RESTORE_TABLE_ORDER = [
     "wealth_accounts",
     "wealth_snapshots",
     "investment_events",
-    "category_rules",
     "cashflow_rules",
     "description_rules",
 ]

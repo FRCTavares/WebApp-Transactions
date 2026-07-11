@@ -3,7 +3,7 @@ import { createOwedItem, createOwedPayment, listOwedItems, listOwedPayments } fr
 import { createTransaction, deleteTransaction, exportTransactionsCsv, listTransactions, updateTransaction } from '../api/transactions'
 import { TransactionFilters, type TransactionFilterState } from '../components/TransactionFilters'
 import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
-import { CATEGORY_OPTIONS } from '../constants/categories'
+import { listTransactionCategories } from '../api/transactionCategories'
 import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
 import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
 import { TransactionOwedSplitDialog, type OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
@@ -12,7 +12,12 @@ import { TransactionCreateRepaymentSection } from '../components/transactions/Tr
 import { TransactionEditDialog } from '../components/transactions/TransactionEditDialog'
 import { StatusMessage } from '../components/StatusMessage'
 import { usePeriod } from '../context/PeriodContext'
-import type { Direction, OwedItem, Transaction } from '../types/api'
+import type {
+  Direction,
+  OwedItem,
+  Transaction,
+  TransactionCategory,
+} from '../types/api'
 import { formatMoney } from '../utils/format'
 import {
   createOwedSplitRow,
@@ -24,14 +29,12 @@ import {
   getInitialFormState,
   getMonthDateRange,
   getRankedOwedPeople,
-  getRankedTransactionCategories,
   getRemainingOwedAmount,
   getTransactionsForDisplay,
   parseMoneyInput,
   type ParsedCreateOwedRow,
   type ParsedRepaymentAllocation,
 } from '../utils/transactionPageHelpers'
-
 export function TransactionsPage() {
   const { monthKey } = usePeriod()
   const [direction, setDirection] = useState<Direction>('out')
@@ -54,7 +57,7 @@ export function TransactionsPage() {
   const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
   const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
   const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
-  const [categoryOptions, setCategoryOptions] = useState<string[]>([])
+  const [categoryOptions, setCategoryOptions] = useState<TransactionCategory[]>([])
   const [isCreateRepaymentEnabled, setIsCreateRepaymentEnabled] = useState(false)
   const [repaymentPerson, setRepaymentPerson] = useState('')
   const [repaymentPersonOptions, setRepaymentPersonOptions] = useState<string[]>([])
@@ -152,14 +155,9 @@ export function TransactionsPage() {
   }
 
   function loadCategoryOptions() {
-    Promise.all([
-      listTransactions({ direction: 'in', limit: 500 }),
-      listTransactions({ direction: 'out', limit: 500 }),
-    ])
-      .then(([moneyInRows, moneyOutRows]) => {
-        setCategoryOptions(getRankedTransactionCategories([...moneyInRows, ...moneyOutRows], CATEGORY_OPTIONS))
-      })
-      .catch(() => setCategoryOptions(CATEGORY_OPTIONS))
+    listTransactionCategories({ active_only: true, limit: 500 })
+      .then(setCategoryOptions)
+      .catch(() => setCategoryOptions([]))
   }
 
   function loadOwedPersonOptions() {
@@ -899,6 +897,7 @@ export function TransactionsPage() {
       <TransactionFilters
         direction={direction}
         filters={filters}
+        categoryOptions={categoryOptions}
         onChange={updateFilters}
         onApply={() => loadTransactions()}
         onClear={clearFilters}

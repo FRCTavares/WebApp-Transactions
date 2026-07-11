@@ -8,6 +8,7 @@ type CategorySelectProps = {
   options?: string[]
   placeholder?: string
   className?: string
+  allowCreate?: boolean
 }
 
 function normaliseOption(value: string) {
@@ -45,6 +46,7 @@ export function CategorySelect({
   options = CATEGORY_OPTIONS,
   placeholder = 'Type to search or create',
   className,
+  allowCreate = true,
 }: CategorySelectProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -59,7 +61,8 @@ export function CategorySelect({
     (option) => normaliseOption(option) === searchValue,
   )
 
-  const shouldShowCreateOption = value.trim() !== '' && !hasExactMatch
+  const shouldShowCreateOption =
+    allowCreate && value.trim() !== '' && !hasExactMatch
 
   const input = (
     <div className={`category-combobox ${className ?? ''}`}>

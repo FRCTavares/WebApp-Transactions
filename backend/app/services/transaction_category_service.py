@@ -7,7 +7,14 @@ from app.repositories.transaction_category_repository import (
 )
 from app.schemas.transaction_category import (
     TransactionCategoryCreate,
+    TransactionCategoryMigrationApply,
+    TransactionCategoryMigrationApplyRead,
+    TransactionCategoryMigrationPreviewRead,
+    TransactionCategoryMigrationTransactionRead,
+    TransactionCategoryRead,
+    TransactionCategoryReplaceDeleteRead,
     TransactionCategoryUpdate,
+    TransactionCategoryUsageRead,
 )
 
 
@@ -31,10 +38,7 @@ class TransactionCategoryService:
             user_id=user_id,
         )
 
-        return self.repository.create(
-            normalised_data,
-            user_id,
-        )
+        return self.repository.create(normalised_data, user_id)
 
     def list_categories(
         self,
@@ -96,13 +100,210 @@ class TransactionCategoryService:
             self._normalise_update(category_data),
         )
 
+    def get_migration_preview(
+        self,
+        category_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionCategoryMigrationPreviewRead:
+        category = self.get_category(category_id, current_user)
+        transactions = self.repository.list_migration_transactions(category)
+
+        replacement_categories = [
+            replacement
+            for replacement in self.repository.list(
+                user_id=self._get_user_id(current_user),
+                active_only=True,
+                direction=category.direction,
+                cashflow_type=category.cashflow_type,
+                limit=500,
+            )
+            if replacement.id != category.id
+        ]
+
+        return TransactionCategoryMigrationPreviewRead(
+            category=TransactionCategoryRead.model_validate(category),
+            transactions=[
+                TransactionCategoryMigrationTransactionRead(
+                    id=transaction.id,
+                    date=transaction.date,
+                    description=transaction.description,
+                    raw_description=transaction.raw_description,
+                    merchant=transaction.merchant,
+                    source=transaction.source,
+                    account=transaction.account,
+                    amount=str(transaction.amount),
+                    currency=transaction.currency,
+                )
+                for transaction in transactions
+            ],
+            replacement_categories=[
+                TransactionCategoryRead.model_validate(replacement)
+                for replacement in replacement_categories
+            ],
+        )
+
+    def apply_reviewed_migration(
+        self,
+        category_id: int,
+        migration_data: TransactionCategoryMigrationApply,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionCategoryMigrationApplyRead:
+        category = self.get_category(category_id, current_user)
+        affected_transactions = (
+            self.repository.list_migration_transactions(category)
+        )
+
+        affected_ids = {
+            transaction.id
+            for transaction in affected_transactions
+        }
+        submitted_ids = [
+            assignment.transaction_id
+            for assignment in migration_data.transaction_assignments
+        ]
+
+        if len(submitted_ids) != len(set(submitted_ids)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Transaction assignments contain duplicate IDs",
+            )
+
+        if set(submitted_ids) != affected_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Every affected transaction must have exactly "
+                    "one replacement"
+                ),
+            )
+
+        replacement_ids = {
+            assignment.replacement_category_id
+            for assignment in migration_data.transaction_assignments
+        }
+
+        replacements = {
+            replacement_id: self.get_category(
+                replacement_id,
+                current_user,
+            )
+            for replacement_id in replacement_ids
+        }
+
+        for replacement in replacements.values():
+            self._validate_replacement_category(
+                category,
+                replacement,
+            )
+
+        transaction_replacements = {
+            assignment.transaction_id: replacements[
+                assignment.replacement_category_id
+            ].name
+            for assignment in migration_data.transaction_assignments
+        }
+
+        transactions_updated = (
+            self.repository.apply_reviewed_migration(
+                category=category,
+                transaction_replacements=transaction_replacements,
+            )
+        )
+
+        return TransactionCategoryMigrationApplyRead(
+            deleted_category_id=category.id,
+            transactions_updated=transactions_updated,
+        )
+
+    def get_category_usage(
+        self,
+        category_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionCategoryUsageRead:
+        category = self.get_category(category_id, current_user)
+
+        return TransactionCategoryUsageRead(
+            transaction_count=self.repository.get_usage_count(category),
+        )
+
     def delete_category(
         self,
         category_id: int,
         current_user: CurrentUser | None = None,
     ) -> None:
         category = self.get_category(category_id, current_user)
+        usage = self.repository.get_usage_count(category)
+
+        if usage > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Category is still used by transactions. "
+                    "Choose replacements before deleting it."
+                ),
+            )
+
         self.repository.delete(category)
+
+    def replace_and_delete_category(
+        self,
+        category_id: int,
+        replacement_category_id: int,
+        current_user: CurrentUser | None = None,
+    ) -> TransactionCategoryReplaceDeleteRead:
+        category = self.get_category(category_id, current_user)
+        replacement = self.get_category(
+            replacement_category_id,
+            current_user,
+        )
+
+        self._validate_replacement_category(
+            category,
+            replacement,
+        )
+
+        transactions_updated = self.repository.replace_and_delete(
+            category,
+            replacement,
+        )
+
+        return TransactionCategoryReplaceDeleteRead(
+            deleted_category_id=category.id,
+            replacement_category_id=replacement.id,
+            transactions_updated=transactions_updated,
+        )
+
+    def _validate_replacement_category(
+        self,
+        category: TransactionCategory,
+        replacement: TransactionCategory,
+    ) -> None:
+        if replacement.id == category.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Replacement category must be different",
+            )
+
+        if not replacement.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Replacement category must be active",
+            )
+
+        if replacement.direction != category.direction:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Replacement category must use the same direction",
+            )
+
+        if replacement.cashflow_type != category.cashflow_type:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Replacement category must use the same "
+                    "cashflow type"
+                ),
+            )
 
     def _raise_if_duplicate(
         self,
@@ -132,7 +333,10 @@ class TransactionCategoryService:
             if existing_fingerprint == candidate_fingerprint:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="An equivalent transaction category already exists",
+                    detail=(
+                        "An equivalent transaction category "
+                        "already exists"
+                    ),
                 )
 
     def _get_update_candidate(
@@ -144,7 +348,10 @@ class TransactionCategoryService:
 
         return TransactionCategoryCreate(
             name=update_data.get("name", category.name),
-            direction=update_data.get("direction", category.direction),
+            direction=update_data.get(
+                "direction",
+                category.direction,
+            ),
             cashflow_type=update_data.get(
                 "cashflow_type",
                 category.cashflow_type,

@@ -3,7 +3,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
 import { ImportPage } from './pages/ImportPage'
-import { CategoryRulesPage } from './pages/CategoryRulesPage'
+import { CategoriesPage } from './pages/CategoriesPage'
 import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
 import { ExportPage } from './pages/ExportPage'
@@ -256,7 +256,7 @@ function App() {
             />
           )}
           {page === 'import' && <ImportPage />}
-          {page === 'categories' && <CategoryRulesPage />}
+          {page === 'categories' && <CategoriesPage />}
           {page === 'export' && <ExportPage />}
           {page === 'settings' && (
             <SettingsPage

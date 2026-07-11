@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import type { CashflowType } from '../types/api'
+import { getTransactionCategoryOptions } from '../constants/categories'
+import type {
+  CashflowType,
+  TransactionCategory,
+} from '../types/api'
 import { CategorySelect } from './CategorySelect'
 
 export type TransactionFilterState = {
@@ -31,6 +35,7 @@ const cashflowTypeOptions = [
 type TransactionFiltersProps = {
   direction: 'in' | 'out'
   filters: TransactionFilterState
+  categoryOptions: TransactionCategory[]
   onChange: (field: keyof TransactionFilterState, value: string | boolean) => void
   onApply: () => void
   onClear: () => void
@@ -39,6 +44,7 @@ type TransactionFiltersProps = {
 export function TransactionFilters({
   direction,
   filters,
+  categoryOptions,
   onChange,
   onApply,
   onClear,
@@ -90,6 +96,14 @@ export function TransactionFilters({
           label="Category"
           value={filters.category}
           onChange={(value) => onChange('category', value)}
+          options={getTransactionCategoryOptions(
+            direction,
+            filters.cashflowType || (direction === 'in' ? 'income' : 'expense'),
+            categoryOptions,
+            filters.category,
+          )}
+          placeholder="All categories"
+          allowCreate={false}
         />
 
         <label>

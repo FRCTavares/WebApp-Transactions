@@ -1,6 +1,14 @@
 import { type FormEvent, type ReactNode } from 'react'
 import { CategorySelect } from './CategorySelect'
-import type { CashflowType, Direction } from '../types/api'
+import {
+  getCashflowTypeOptions,
+  getTransactionCategoryOptions,
+} from '../constants/categories'
+import type {
+  CashflowType,
+  Direction,
+  TransactionCategory,
+} from '../types/api'
 
 export type TransactionFormState = {
   date: string
@@ -9,33 +17,6 @@ export type TransactionFormState = {
   cashflow_type: CashflowType
   category: string
   notes: string
-}
-
-type CashflowTypeOption = {
-  value: CashflowType
-  label: string
-}
-
-function getCashflowTypeOptions(direction?: Direction): CashflowTypeOption[] {
-  if (direction === 'in') {
-    return [
-      { value: 'income', label: 'Income' },
-      { value: 'transfer', label: 'Transfer' },
-    ]
-  }
-
-  if (direction === 'out') {
-    return [
-      { value: 'expense', label: 'Expense' },
-      { value: 'transfer', label: 'Transfer' },
-    ]
-  }
-
-  return [
-    { value: 'income', label: 'Income' },
-    { value: 'expense', label: 'Expense' },
-    { value: 'transfer', label: 'Transfer' },
-  ]
 }
 
 type TransactionFormProps = {
@@ -48,7 +29,7 @@ type TransactionFormProps = {
   direction?: Direction
   editingTransactionId?: number
   onCancel?: () => void
-  categoryOptions?: string[]
+  categoryOptions?: TransactionCategory[]
 }
 
 export function TransactionForm({
@@ -98,15 +79,22 @@ export function TransactionForm({
           />
         </label>
 
-        {direction !== 'in' && (
-          <CategorySelect
-            label="Category"
-            value={form.category}
-            onChange={(value) => onChange('category', value)}
-            options={categoryOptions}
-            placeholder="Category"
-          />
-        )}
+        <CategorySelect
+          label="Category"
+          value={form.category}
+          onChange={(value) => onChange('category', value)}
+          options={
+            direction
+              ? getTransactionCategoryOptions(
+                  direction,
+                  form.cashflow_type,
+                  categoryOptions,
+                  form.category,
+                )
+              : categoryOptions?.map((category) => category.name)
+          }
+          placeholder="Category"
+        />
       </div>
 
       <div className="transaction-form-secondary-fields">

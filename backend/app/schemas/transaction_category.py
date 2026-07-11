@@ -1,3 +1,4 @@
+from datetime import date as DateType
 from datetime import datetime as DateTimeType
 from typing import Literal
 
@@ -18,10 +19,14 @@ class TransactionCategoryBase(BaseModel):
     @model_validator(mode="after")
     def validate_direction_and_cashflow_type(self):
         if self.direction == "in" and self.cashflow_type == "expense":
-            raise ValueError("Money In categories cannot use expense cashflow type")
+            raise ValueError(
+                "Money In categories cannot use expense cashflow type"
+            )
 
         if self.direction == "out" and self.cashflow_type == "income":
-            raise ValueError("Money Out categories cannot use income cashflow type")
+            raise ValueError(
+                "Money Out categories cannot use income cashflow type"
+            )
 
         return self
 
@@ -44,3 +49,51 @@ class TransactionCategoryRead(TransactionCategoryBase):
     id: int
     created_at: DateTimeType
     updated_at: DateTimeType
+
+
+class TransactionCategoryUsageRead(BaseModel):
+    transaction_count: int
+
+
+class TransactionCategoryMigrationTransactionRead(BaseModel):
+    id: int
+    date: DateType
+    description: str
+    raw_description: str
+    merchant: str | None = None
+    source: str
+    account: str | None = None
+    amount: str
+    currency: str
+
+
+class TransactionCategoryMigrationPreviewRead(BaseModel):
+    category: TransactionCategoryRead
+    transactions: list[TransactionCategoryMigrationTransactionRead]
+    replacement_categories: list[TransactionCategoryRead]
+
+
+class TransactionCategoryMigrationTransactionAssignment(BaseModel):
+    transaction_id: int = Field(gt=0)
+    replacement_category_id: int = Field(gt=0)
+
+
+class TransactionCategoryMigrationApply(BaseModel):
+    transaction_assignments: list[
+        TransactionCategoryMigrationTransactionAssignment
+    ]
+
+
+class TransactionCategoryMigrationApplyRead(BaseModel):
+    deleted_category_id: int
+    transactions_updated: int
+
+
+class TransactionCategoryReplaceDelete(BaseModel):
+    replacement_category_id: int = Field(gt=0)
+
+
+class TransactionCategoryReplaceDeleteRead(BaseModel):
+    deleted_category_id: int
+    replacement_category_id: int
+    transactions_updated: int

@@ -81,8 +81,8 @@ export function SettingsPage({
           </header>
 
           <SettingsAction
-            title="Categories / Rules"
-            description="Manage category, description, and cashflow rules."
+            title="Categories"
+            description="Choose the categories available in transactions."
             actionLabel="Open"
             onClick={onOpenCategories}
           />

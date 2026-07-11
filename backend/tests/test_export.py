@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import get_db
 from app.models.cashflow_rule import CashflowRule
-from app.models.category_rule import CategoryRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
@@ -129,15 +128,6 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
         )
     )
 
-    db_session.add(
-        CategoryRule(
-            user_id=user_id,
-            name=f"{user_id} category rule",
-            category="Food",
-            match_text=user_id,
-            match_field="description",
-        )
-    )
 
     db_session.add(
         CashflowRule(
@@ -196,7 +186,6 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
         "wealth_snapshots",
         "investment_events",
         "import_batches",
-        "category_rules",
         "cashflow_rules",
         "description_rules",
     }

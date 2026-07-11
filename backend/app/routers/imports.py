@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
-from app.repositories.category_rule_repository import CategoryRuleRepository
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.owed_repository import OwedRepository
@@ -14,7 +13,6 @@ from app.schemas.import_batch import ImportBatchDeleteResponse, ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.investment_event import InvestmentEventRead
 from app.schemas.transaction import TransactionRead
-from app.services.category_rule_service import CategoryRuleService
 from app.services.fx_match_service import FxMatchService
 from app.services.import_service import ImportService
 
@@ -28,17 +26,10 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
     wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
     owed_repository = OwedRepository(db)
-    category_rule_repository = CategoryRuleRepository(db)
-    category_rule_service = CategoryRuleService(
-        category_rule_repository=category_rule_repository,
-        transaction_repository=transaction_repository,
-    )
-
     return ImportService(
         transaction_repository=transaction_repository,
         import_batch_repository=import_batch_repository,
         wealth_repository=wealth_repository,
-        category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,
     )
@@ -50,16 +41,10 @@ def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
     wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
     owed_repository = OwedRepository(db)
-    category_rule_repository = CategoryRuleRepository(db)
-    category_rule_service = CategoryRuleService(
-        category_rule_repository=category_rule_repository,
-        transaction_repository=transaction_repository,
-    )
     import_service = ImportService(
         transaction_repository=transaction_repository,
         import_batch_repository=import_batch_repository,
         wealth_repository=wealth_repository,
-        category_rule_service=category_rule_service,
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,
     )
@@ -188,4 +173,3 @@ async def preview_fx_matches(
         filename=filename,
         current_user=current_user,
     )
-

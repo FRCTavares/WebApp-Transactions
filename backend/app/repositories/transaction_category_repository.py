@@ -1,6 +1,7 @@
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
+from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
 from app.schemas.transaction_category import (
     TransactionCategoryCreate,
@@ -61,7 +62,6 @@ class TransactionCategoryRepository:
             )
 
         statement = statement.offset(offset).limit(limit)
-
         return list(self.db.scalars(statement).all())
 
     def list_all(
@@ -73,7 +73,6 @@ class TransactionCategoryRepository:
             .where(TransactionCategory.user_id == user_id)
             .order_by(TransactionCategory.id.asc())
         )
-
         return list(self.db.scalars(statement).all())
 
     def get_by_id(
@@ -87,7 +86,6 @@ class TransactionCategoryRepository:
             .where(TransactionCategory.user_id == user_id)
             .limit(1)
         )
-
         return self.db.scalar(statement)
 
     def update(
@@ -104,6 +102,100 @@ class TransactionCategoryRepository:
         self.db.commit()
         self.db.refresh(category)
         return category
+
+    def list_migration_transactions(
+        self,
+        category: TransactionCategory,
+    ) -> list[Transaction]:
+        statement = (
+            select(Transaction)
+            .where(Transaction.user_id == category.user_id)
+            .where(Transaction.category == category.name)
+            .where(Transaction.direction == category.direction)
+            .where(
+                Transaction.cashflow_type == category.cashflow_type
+            )
+            .order_by(
+                Transaction.description.asc(),
+                Transaction.date.desc(),
+                Transaction.id.desc(),
+            )
+        )
+        return list(self.db.scalars(statement).all())
+
+    def get_usage_count(
+        self,
+        category: TransactionCategory,
+    ) -> int:
+        statement = (
+            select(func.count(Transaction.id))
+            .where(Transaction.user_id == category.user_id)
+            .where(Transaction.category == category.name)
+            .where(Transaction.direction == category.direction)
+            .where(
+                Transaction.cashflow_type == category.cashflow_type
+            )
+        )
+        return int(self.db.scalar(statement) or 0)
+
+    def apply_reviewed_migration(
+        self,
+        category: TransactionCategory,
+        transaction_replacements: dict[int, str],
+    ) -> int:
+        transactions_updated = 0
+
+        try:
+            for transaction_id, replacement_name in (
+                transaction_replacements.items()
+            ):
+                result = self.db.execute(
+                    update(Transaction)
+                    .where(Transaction.id == transaction_id)
+                    .where(Transaction.user_id == category.user_id)
+                    .where(Transaction.category == category.name)
+                    .where(Transaction.direction == category.direction)
+                    .where(
+                        Transaction.cashflow_type
+                        == category.cashflow_type
+                    )
+                    .values(category=replacement_name)
+                )
+                transactions_updated += result.rowcount or 0
+
+            self.db.delete(category)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
+        return transactions_updated
+
+    def replace_and_delete(
+        self,
+        category: TransactionCategory,
+        replacement: TransactionCategory,
+    ) -> int:
+        try:
+            result = self.db.execute(
+                update(Transaction)
+                .where(Transaction.user_id == category.user_id)
+                .where(Transaction.category == category.name)
+                .where(Transaction.direction == category.direction)
+                .where(
+                    Transaction.cashflow_type
+                    == category.cashflow_type
+                )
+                .values(category=replacement.name)
+            )
+
+            self.db.delete(category)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
+        return result.rowcount or 0
 
     def delete(
         self,

@@ -1,11 +1,18 @@
 import { CategorySelect } from '../CategorySelect'
 import type { TransactionFormState } from '../TransactionForm'
-import type { Transaction } from '../../types/api'
+import {
+  getCashflowTypeOptions,
+  getTransactionCategoryOptions,
+} from '../../constants/categories'
+import type {
+  Transaction,
+  TransactionCategory,
+} from '../../types/api'
 
 type TransactionEditDialogProps = {
   transaction: Transaction
   form: TransactionFormState
-  categoryOptions: string[]
+  categoryOptions: TransactionCategory[]
   isSaving: boolean
   onChange: (field: keyof TransactionFormState, value: string) => void
   onSave: () => void
@@ -85,9 +92,11 @@ export function TransactionEditDialog({
               value={form.cashflow_type}
               onChange={(event) => onChange('cashflow_type', event.target.value)}
             >
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-              <option value="transfer">Transfer</option>
+              {getCashflowTypeOptions(transaction.direction).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -95,7 +104,12 @@ export function TransactionEditDialog({
             label="Category"
             value={form.category}
             onChange={(value) => onChange('category', value)}
-            options={categoryOptions}
+            options={getTransactionCategoryOptions(
+              transaction.direction,
+              form.cashflow_type,
+              categoryOptions,
+              form.category,
+            )}
             placeholder="Category"
           />
         </div>

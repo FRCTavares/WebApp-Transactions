@@ -20,7 +20,6 @@ TABLE_ORDER = [
     "market_prices",
     "market_price_history",
     "wealth_snapshots",
-    "category_rules",
     "cashflow_rules",
     "description_rules",
 ]

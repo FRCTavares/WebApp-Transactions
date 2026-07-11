@@ -23,7 +23,6 @@ from app.schemas.import_preview import (
     ImportPreviewResponse,
     ImportPreviewTransaction,
 )
-from app.services.category_rule_service import CategoryRuleService
 from app.services.dedupe_service import DedupeService
 
 
@@ -33,14 +32,12 @@ class ImportService:
         transaction_repository: TransactionRepository,
         import_batch_repository: ImportBatchRepository,
         wealth_repository: WealthRepository | None = None,
-        category_rule_service: CategoryRuleService | None = None,
         investment_event_repository: InvestmentEventRepository | None = None,
         owed_repository: OwedRepository | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
         self.wealth_repository = wealth_repository
-        self.category_rule_service = category_rule_service
         self.investment_event_repository = investment_event_repository
         self.owed_repository = owed_repository
         self.dedupe_service = DedupeService(
@@ -568,7 +565,7 @@ class ImportService:
             )
             or dedupe_hash in seen_hashes
         )
-        category = self._guess_category(transaction, current_user)
+        category = None
 
         return ImportPreviewTransaction(
             row_number=row_number,
@@ -657,16 +654,6 @@ class ImportService:
         }
 
         return legacy_mapping.get(cashflow_type, cashflow_type)
-
-    def _guess_category(
-        self,
-        transaction: NormalisedTransaction,
-        current_user: CurrentUser | None = None,
-    ) -> str | None:
-        if self.category_rule_service is None:
-            return None
-
-        return self.category_rule_service.guess_category(transaction, current_user)
 
     def _get_csv_importer(self, source: str):
         source = source.strip().lower()
