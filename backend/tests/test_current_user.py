@@ -22,18 +22,23 @@ def make_supabase_token(
     email: str,
     secret: str = "test-secret",
     subject: str = "00000000-0000-0000-0000-000000000000",
+    issuer: str | None = None,
 ) -> str:
     now = int(time.time())
+    payload = {
+        "aud": "authenticated",
+        "exp": now + 3600,
+        "iat": now,
+        "sub": subject,
+        "email": email,
+        "role": "authenticated",
+    }
+
+    if issuer is not None:
+        payload["iss"] = issuer
 
     return jwt.encode(
-        {
-            "aud": "authenticated",
-            "exp": now + 3600,
-            "iat": now,
-            "sub": subject,
-            "email": email,
-            "role": "authenticated",
-        },
+        payload,
         secret,
         algorithm="HS256",
     )
@@ -144,6 +149,79 @@ def test_current_user_dependency_returns_allowed_supabase_jwt_user(monkeypatch):
     assert response.json() == {
         "user_id": "00000000-0000-0000-0000-000000000000",
         "email": "me@example.com",
+    }
+
+
+def test_current_user_accepts_expected_supabase_issuer(monkeypatch):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+    supabase_url = "https://example.supabase.co"
+    expected_issuer = f"{supabase_url}/auth/v1"
+
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SUPABASE_URL", supabase_url)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+
+    token = make_supabase_token(
+        "me@example.com",
+        secret=secret,
+        issuer=expected_issuer,
+    )
+
+    app = FastAPI()
+
+    @app.get("/whoami")
+    def whoami(current_user: CurrentUser = Depends(get_current_user)):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/whoami",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "user_id": "00000000-0000-0000-0000-000000000000"
+    }
+
+
+def test_current_user_rejects_wrong_supabase_issuer(monkeypatch):
+    secret = "test-secret-at-least-thirty-two-bytes-long"
+
+    monkeypatch.setenv(
+        "SUPABASE_JWT_SECRET",
+        secret,
+    )
+    monkeypatch.setenv(
+        "SUPABASE_URL",
+        "https://expected-project.supabase.co",
+    )
+    monkeypatch.setenv(
+        "ALLOWED_USER_EMAILS",
+        "me@example.com",
+    )
+
+    token = make_supabase_token(
+        "me@example.com",
+        secret=secret,
+        issuer="https://different-project.supabase.co/auth/v1",
+    )
+
+    app = FastAPI()
+
+    @app.get("/whoami")
+    def whoami(current_user: CurrentUser = Depends(get_current_user)):
+        return {"user_id": current_user.id}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/whoami",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid bearer token"
     }
 
 

@@ -31,6 +31,7 @@ Required Render environment variables:
 Production examples:
 
 - `SUPABASE_URL=https://your-project-ref.supabase.co`
+  - JWT issuer validation expects `https://your-project-ref.supabase.co/auth/v1`.
 - `ALLOWED_USER_EMAILS=you@example.com`
 - `ADMIN_USER_EMAILS=you@example.com`
 - `CORS_ORIGINS=https://your-vercel-app.vercel.app`
@@ -105,7 +106,7 @@ Use:
 
 Expected `/api/me` response:
 
-`{"user_id":"you@example.com","email":"you@example.com"}`
+`{"user_id":"00000000-0000-0000-0000-000000000000","email":"you@example.com"}`
 
 
 ## Production smoke test

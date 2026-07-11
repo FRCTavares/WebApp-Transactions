@@ -56,6 +56,24 @@ def get_supabase_url() -> str:
     return os.getenv("SUPABASE_URL", "").strip().rstrip("/")
 
 
+def get_supabase_issuer() -> str:
+    supabase_url = get_supabase_url()
+
+    if not supabase_url:
+        return ""
+
+    return f"{supabase_url}/auth/v1"
+
+
+def get_supabase_decode_options() -> dict[str, str]:
+    issuer = get_supabase_issuer()
+
+    if not issuer:
+        return {}
+
+    return {"issuer": issuer}
+
+
 def get_supabase_jwks_url() -> str:
     explicit_url = os.getenv("SUPABASE_JWKS_URL", "").strip()
 
@@ -103,6 +121,7 @@ def decode_supabase_jwt_with_legacy_secret(token: str) -> dict[str, Any]:
         secret,
         algorithms=["HS256"],
         audience="authenticated",
+        **get_supabase_decode_options(),
     )
 
 
@@ -119,6 +138,7 @@ def decode_supabase_jwt_with_jwks(token: str) -> dict[str, Any]:
         signing_key.key,
         algorithms=["ES256", "RS256"],
         audience="authenticated",
+        **get_supabase_decode_options(),
     )
 
 
