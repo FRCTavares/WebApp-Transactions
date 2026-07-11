@@ -30,17 +30,16 @@ F - Transactions has a solid personal-use foundation:
 The application is not ready for unrestricted global release.
 The most urgent remaining blockers are:
 
-1. JWT issuer validation is not yet explicit.
-2. User-owned repositories and services still contain silent `local-default-user` fallbacks.
-3. Linked financial records do not yet have relational foreign keys.
-4. Upload endpoints have no size limits and load complete files into memory.
-5. Import confirmation is not bound to the exact previewed file.
-6. Pending FX handling is not consistent across transactions and investments.
-7. Frontend lint currently fails.
-8. There is no complete CI workflow.
-9. Render free hosting causes measured cold starts of approximately 53 seconds.
-10. Accessibility and keyboard support remain incomplete.
-11. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
+1. User-owned repositories and services still contain silent `local-default-user` fallbacks.
+2. Linked financial records do not yet have relational foreign keys.
+3. Upload endpoints have no size limits and load complete files into memory.
+4. Import confirmation is not bound to the exact previewed file.
+5. Pending FX handling is not consistent across transactions and investments.
+6. Frontend lint currently fails.
+7. There is no complete CI workflow.
+8. Render free hosting causes measured cold starts of approximately 53 seconds.
+9. Accessibility and keyboard support remain incomplete.
+10. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
 
 The correct strategy is not a large rewrite. Fix the security and data-integrity blockers first, establish reliable recovery and CI, then improve accessibility, navigation, internationalization, observability, and release operations.
 
@@ -83,11 +82,10 @@ The correct strategy is not a large rewrite. Fix the security and data-integrity
 - Supabase Auth
 - Google OAuth
 - Bearer tokens sent from frontend to backend
-- JWT signature, expiration, and audience validation
+- JWT signature, expiration, audience, and issuer validation
 - Email-based allowlist
 - Application owner ID derived from validated Supabase `sub`
 - Production rows were migrated atomically from the legacy normalized-email owner to the Supabase `sub`
-- Explicit JWT issuer validation remains pending
 
 ### Deployment
 
@@ -167,7 +165,7 @@ A paid plan will eventually be justified by:
 | Core functionality | 4/5 | Broad feature coverage and working production deployment |
 | Backend architecture | 3/5 | Good layering, but transaction boundaries and defaults need work |
 | Data integrity | 3/5 | Atomic imports and investment accounting are corrected; foreign keys remain missing |
-| Authentication | 4/5 | Stable `sub` ownership is deployed and production data is migrated; issuer validation remains |
+| Authentication | 5/5 | Stable `sub` ownership is deployed, production data is migrated, and JWT issuer validation is enforced |
 | Authorization | 3/5 | Market routes are protected; broader explicit ownership hardening remains |
 | Import reliability | 3/5 | Atomic commits pass; upload controls and preview binding remain |
 | Recovery | 3/5 | Complete registry-based recovery passes local tests; production PostgreSQL restoration also passes |
@@ -199,23 +197,6 @@ Completed and validated:
 The combined working tree must not be deployed before the production ownership cutover is completed safely.
 
 ## 6. High Priority
-
-### HIGH-002: Validate JWT issuer explicitly
-
-- Evidence:
-  - Signature, audience, and expiry are checked.
-  - Explicit issuer validation was not found.
-
-- Proposed fix:
-  - Derive the expected issuer from the Supabase project.
-  - Pass `issuer=` during JWT decoding.
-  - Validate `sub`, `email`, `aud`, `exp`, and issuer.
-
-- Acceptance criteria:
-  - Wrong-issuer tokens are rejected.
-  - Valid Supabase tokens remain accepted.
-- Effort: Small
-- Paid plan required: No
 
 ### HIGH-003: Remove silent production fallbacks to `local-default-user`
 
@@ -1043,6 +1024,9 @@ Current working-tree evidence on 2026-07-11:
 - Restore evidence is retained outside the repository in the secured local backup directory.
 - Production ownership migration completed atomically: the legacy owner now has zero rows and the Supabase subject owns all 1,029 rows with unchanged per-table counts.
 - Authenticated production smoke testing passed for dashboard, transactions, wealth, investments, owed records, settings, and categories.
+- Supabase JWT issuer validation is enforced for both legacy-secret and JWKS decoding paths.
+- Wrong-issuer regression tests pass and valid Supabase issuer tokens remain accepted.
+- Commit `27a93f7` deployed successfully; fresh production sign-in and authenticated dashboard data loading passed.
 
 ---
 
