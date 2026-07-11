@@ -30,18 +30,17 @@ F - Transactions has a solid personal-use foundation:
 The application is not ready for unrestricted global release.
 The most urgent remaining blockers are:
 
-1. Production ownership still needs an atomic migration from the legacy email owner to the stable Supabase `sub`.
-2. JWT issuer validation is not yet explicit.
-3. User-owned repositories and services still contain silent `local-default-user` fallbacks.
-4. Linked financial records do not yet have relational foreign keys.
-5. Upload endpoints have no size limits and load complete files into memory.
-6. Import confirmation is not bound to the exact previewed file.
-7. Pending FX handling is not consistent across transactions and investments.
-8. Frontend lint currently fails.
-9. There is no complete CI workflow.
-10. Render free hosting causes measured cold starts of approximately 53 seconds.
-11. Accessibility and keyboard support remain incomplete.
-12. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
+1. JWT issuer validation is not yet explicit.
+2. User-owned repositories and services still contain silent `local-default-user` fallbacks.
+3. Linked financial records do not yet have relational foreign keys.
+4. Upload endpoints have no size limits and load complete files into memory.
+5. Import confirmation is not bound to the exact previewed file.
+6. Pending FX handling is not consistent across transactions and investments.
+7. Frontend lint currently fails.
+8. There is no complete CI workflow.
+9. Render free hosting causes measured cold starts of approximately 53 seconds.
+10. Accessibility and keyboard support remain incomplete.
+11. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
 
 The correct strategy is not a large rewrite. Fix the security and data-integrity blockers first, establish reliable recovery and CI, then improve accessibility, navigation, internationalization, observability, and release operations.
 
@@ -86,8 +85,8 @@ The correct strategy is not a large rewrite. Fix the security and data-integrity
 - Bearer tokens sent from frontend to backend
 - JWT signature, expiration, and audience validation
 - Email-based allowlist
-- Working-tree application owner ID derived from validated Supabase `sub`
-- Production rows still require migration from the legacy normalized-email owner
+- Application owner ID derived from validated Supabase `sub`
+- Production rows were migrated atomically from the legacy normalized-email owner to the Supabase `sub`
 - Explicit JWT issuer validation remains pending
 
 ### Deployment
@@ -168,7 +167,7 @@ A paid plan will eventually be justified by:
 | Core functionality | 4/5 | Broad feature coverage and working production deployment |
 | Backend architecture | 3/5 | Good layering, but transaction boundaries and defaults need work |
 | Data integrity | 3/5 | Atomic imports and investment accounting are corrected; foreign keys remain missing |
-| Authentication | 3/5 | Stable `sub` ownership is implemented locally; production cutover and issuer validation remain |
+| Authentication | 4/5 | Stable `sub` ownership is deployed and production data is migrated; issuer validation remains |
 | Authorization | 3/5 | Market routes are protected; broader explicit ownership hardening remains |
 | Import reliability | 3/5 | Atomic commits pass; upload controls and preview binding remain |
 | Recovery | 3/5 | Complete registry-based recovery passes local tests; production PostgreSQL restoration also passes |
@@ -200,38 +199,6 @@ Completed and validated:
 The combined working tree must not be deployed before the production ownership cutover is completed safely.
 
 ## 6. High Priority
-
-### HIGH-001: Use Supabase `sub` as the stable user ID
-
-- Status:
-  - Backend implementation and atomic migration tooling are complete.
-  - Read-only production preflight found 1,029 legacy-owned rows and zero target-owned rows.
-  - The production PostgreSQL dump restored into an isolated PostgreSQL database and every application-table row count matched production.
-  - This item remains open until production ownership migration, post-migration verification, deployment, and smoke testing succeed.
-
-- Evidence:
-  - `CurrentUser.id` uses the validated JWT `sub`.
-  - Email remains metadata and the allowlist input.
-  - Tests verify that changing email does not change the logical owner.
-  - `backend/scripts/migrate_user_ownership.py` performs one transactional migration with collision and row-count checks.
-
-- Risk:
-  - Deploying `sub` ownership before migrating production rows would make existing records appear missing.
-
-- Remaining work:
-  - Apply the ownership migration atomically.
-  - Verify all legacy-owner counts become zero.
-  - Verify target-owner counts total 1,029 with unchanged per-table counts.
-  - Deploy the `sub`-based backend.
-  - Smoke-test authenticated production data access.
-
-- Acceptance criteria:
-  - New records use Supabase user IDs.
-  - Existing production data is migrated without loss.
-  - Email changes do not affect ownership.
-  - Production counts are verified before and after cutover.
-- Effort: Medium
-- Paid plan required: No
 
 ### HIGH-002: Validate JWT issuer explicitly
 
@@ -889,7 +856,7 @@ Document:
 - [x] Protect market-price endpoints.
 - [x] Fix legacy import ownership.
 - [x] Add regression tests.
-- [ ] Deploy and smoke-test the combined production changes.
+- [x] Deploy and smoke-test the combined production changes.
 
 ### Phase 1: Financial correctness and atomicity
 
@@ -903,7 +870,7 @@ Document:
 
 - [x] Complete registry-based export and local restore tooling.
 - [x] Complete a production PostgreSQL backup and restore drill.
-- [ ] Migrate production ownership to Supabase `sub`.
+- [x] Migrate production ownership to Supabase `sub`.
 - [ ] Remove silent local defaults.
 - [ ] Add foreign keys.
 
@@ -1074,7 +1041,8 @@ Current working-tree evidence on 2026-07-11:
 - PostgreSQL restore drill passed: true.
 - Restored Alembic revision: `c4d2e6f8a130`.
 - Restore evidence is retained outside the repository in the secured local backup directory.
-- HIGH-001 remains open until production ownership migration, post-migration verification, deployment, and smoke testing complete.
+- Production ownership migration completed atomically: the legacy owner now has zero rows and the Supabase subject owns all 1,029 rows with unchanged per-table counts.
+- Authenticated production smoke testing passed for dashboard, transactions, wealth, investments, owed records, settings, and categories.
 
 ---
 
