@@ -1,15 +1,19 @@
 from datetime import date
 from decimal import Decimal
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment
 from app.repositories.owed_repository import OwedRepository
 from app.services.owed_service import OwedService
 
 
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
+
 def test_rename_person_updates_owed_items_and_payments(db_session):
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Avó",
         amount_total=Decimal("12.81"),
         amount_paid=Decimal("12.81"),
@@ -20,6 +24,7 @@ def test_rename_person_updates_owed_items_and_payments(db_session):
         source="manual",
     )
     payment = OwedPayment(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Avó",
         payment_date=date(2026, 7, 7),
         amount=Decimal("20.00"),
@@ -38,6 +43,7 @@ def test_rename_person_updates_owed_items_and_payments(db_session):
             (),
             {"from_person": "Avó", "to_person": "Grandma"},
         )(),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     db_session.refresh(owed_item)

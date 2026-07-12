@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.importers.activobank import ActivoBankImporter
 from app.importers.base import (
     ImportParseResult,
@@ -50,22 +50,24 @@ class ImportService:
         self,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[ImportBatch]:
         return self.import_batch_repository.list(
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def get_import_batch(
         self,
         import_batch_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportBatch:
         import_batch = self.import_batch_repository.get_by_id(
             import_batch_id,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         if import_batch is None:
@@ -81,15 +83,16 @@ class ImportService:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[Transaction]:
-        self.get_import_batch(import_batch_id, current_user)
+        self.get_import_batch(import_batch_id, current_user=current_user)
 
         return self.transaction_repository.list_by_import_batch(
             import_batch_id=import_batch_id,
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def list_import_batch_investment_events(
@@ -97,9 +100,10 @@ class ImportService:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[InvestmentEvent]:
-        self.get_import_batch(import_batch_id, current_user)
+        self.get_import_batch(import_batch_id, current_user=current_user)
 
         if self.investment_event_repository is None:
             return []
@@ -108,15 +112,16 @@ class ImportService:
             import_batch_id=import_batch_id,
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def delete_import_batch(
         self,
         import_batch_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int | str]:
-        import_batch = self.get_import_batch(import_batch_id, current_user)
+        import_batch = self.get_import_batch(import_batch_id, current_user=current_user)
 
         deleted_investment_events = 0
         deleted_owed_items = 0
@@ -126,25 +131,25 @@ class ImportService:
             deleted_investment_events = (
                 self.investment_event_repository.delete_by_import_batch(
                     import_batch_id=import_batch_id,
-                    user_id=self._get_user_id(current_user),
+                    user_id=current_user.id,
                 )
             )
 
         deleted_transactions = self.transaction_repository.delete_by_import_batch(
             import_batch_id=import_batch_id,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         if self.owed_repository is not None:
             deleted_owed_items = self.owed_repository.delete_by_import_batch(
                 import_batch_id=import_batch_id,
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
             )
 
         if self.wealth_repository is not None:
             deleted_wealth_snapshots = self.wealth_repository.delete_snapshots_by_import_batch(
                 import_batch_id,
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
             )
 
         deleted_total = (
@@ -176,7 +181,8 @@ class ImportService:
         source: str,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportPreviewResponse:
         parse_result = self._parse_file(
             source=source,
@@ -194,7 +200,8 @@ class ImportService:
         self,
         source: str,
         csv_content: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportPreviewResponse:
         parse_result = self._parse_csv(
             source=source,
@@ -212,7 +219,8 @@ class ImportService:
         source: str,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int | str]:
         preview = self.preview_import_from_file(
             source=source,
@@ -233,7 +241,8 @@ class ImportService:
         source: str,
         csv_content: str,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int | str]:
         preview = self.preview_import(
             source=source,
@@ -308,7 +317,8 @@ class ImportService:
         self,
         source: str,
         parse_result: ImportParseResult,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportPreviewResponse:
         preview_transactions: list[ImportPreviewTransaction] = []
         preview_investment_events: list[ImportPreviewInvestmentEvent] = []
@@ -379,7 +389,8 @@ class ImportService:
         source: str,
         filename: str,
         preview: ImportPreviewResponse,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int | str]:
         self._raise_for_pending_fx(preview)
 
@@ -398,7 +409,7 @@ class ImportService:
             ]
         )
 
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         db = self.import_batch_repository.db
 
         try:
@@ -491,7 +502,8 @@ class ImportService:
         self,
         import_batch_id: int,
         preview: ImportPreviewResponse,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[Transaction]:
         transactions_to_insert: list[Transaction] = []
 
@@ -501,7 +513,7 @@ class ImportService:
 
             transactions_to_insert.append(
                 Transaction(
-                    user_id=self._get_user_id(current_user),
+                    user_id=current_user.id,
                     date=preview_transaction.date,
                     description=preview_transaction.description,
                     raw_description=preview_transaction.raw_description,
@@ -529,7 +541,8 @@ class ImportService:
         self,
         import_batch_id: int,
         preview: ImportPreviewResponse,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[InvestmentEvent]:
         events_to_insert: list[InvestmentEvent] = []
 
@@ -539,7 +552,7 @@ class ImportService:
 
             events_to_insert.append(
                 InvestmentEvent(
-                    user_id=self._get_user_id(current_user),
+                    user_id=current_user.id,
                     date=preview_event.date,
                     source=preview_event.source,
                     account=preview_event.account,
@@ -577,13 +590,14 @@ class ImportService:
         row_number: int,
         transaction: NormalisedTransaction,
         seen_hashes: set[str],
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportPreviewTransaction:
         dedupe_hash = self.dedupe_service.create_hash(transaction)
         is_duplicate = (
             self.dedupe_service.is_duplicate(
                 dedupe_hash,
-                self._get_user_id(current_user),
+                user_id=current_user.id,
             )
             or dedupe_hash in seen_hashes
         )
@@ -616,13 +630,14 @@ class ImportService:
         row_number: int,
         event: NormalisedInvestmentEvent,
         seen_hashes: set[str],
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> ImportPreviewInvestmentEvent:
         dedupe_hash = self.dedupe_service.create_investment_event_hash(event)
         is_duplicate = (
             self.dedupe_service.is_duplicate_investment_event(
                 dedupe_hash,
-                self._get_user_id(current_user),
+                user_id=current_user.id,
             )
             or dedupe_hash in seen_hashes
         )
@@ -707,10 +722,3 @@ class ImportService:
             return "partial"
 
         return "failed"
-
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id

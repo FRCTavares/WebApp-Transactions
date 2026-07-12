@@ -3,7 +3,6 @@ from datetime import date
 from sqlalchemy import delete as sqlalchemy_delete, select
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 from app.schemas.investment_event import InvestmentEventCreate, InvestmentEventUpdate
 
@@ -15,7 +14,8 @@ class InvestmentEventRepository:
     def create(
         self,
         event_data: InvestmentEventCreate,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> InvestmentEvent:
         event = InvestmentEvent(
             user_id=user_id,
@@ -34,7 +34,8 @@ class InvestmentEventRepository:
         date_to: date | None = None,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
@@ -64,7 +65,8 @@ class InvestmentEventRepository:
     def list_all(
         self,
         source: str | None = None,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
@@ -83,7 +85,8 @@ class InvestmentEventRepository:
     def list_until(
         self,
         end_date: date,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
@@ -98,7 +101,8 @@ class InvestmentEventRepository:
         self,
         start_date: date,
         end_date: date,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
@@ -115,7 +119,8 @@ class InvestmentEventRepository:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentEvent]:
         statement = (
             select(InvestmentEvent)
@@ -131,7 +136,8 @@ class InvestmentEventRepository:
     def get_by_id(
         self,
         event_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> InvestmentEvent | None:
         statement = (
             select(InvestmentEvent)
@@ -162,7 +168,8 @@ class InvestmentEventRepository:
     def delete_by_import_batch(
         self,
         import_batch_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> int:
         statement = (
             sqlalchemy_delete(InvestmentEvent)
@@ -177,7 +184,8 @@ class InvestmentEventRepository:
     def exists_by_dedupe_hash(
         self,
         dedupe_hash: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> bool:
         statement = (
             select(InvestmentEvent.id)
@@ -189,7 +197,8 @@ class InvestmentEventRepository:
     def bulk_insert(
         self,
         events: list[InvestmentEvent],
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         commit: bool = True,
     ) -> list[InvestmentEvent]:
         for event in events:

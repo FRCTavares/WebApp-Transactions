@@ -4,7 +4,6 @@ from decimal import Decimal
 from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
@@ -18,7 +17,8 @@ class TransactionRepository:
     def create(
         self,
         transaction_data: TransactionCreate,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> Transaction:
         transaction = Transaction(
             user_id=user_id,
@@ -41,7 +41,8 @@ class TransactionRepository:
         limit: int = 100,
         offset: int = 0,
         uncategorised_only: bool = False,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
@@ -87,7 +88,8 @@ class TransactionRepository:
         import_batch_id: int,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
@@ -103,7 +105,8 @@ class TransactionRepository:
     def list_uncategorised(
         self,
         limit: int = 1000,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
@@ -118,7 +121,8 @@ class TransactionRepository:
     def list_for_description_rule_application(
         self,
         limit: int = 1000,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[Transaction]:
         statement = (
             select(Transaction)
@@ -132,7 +136,8 @@ class TransactionRepository:
     def get_by_id(
         self,
         transaction_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> Transaction | None:
         statement = (
             select(Transaction)
@@ -144,6 +149,7 @@ class TransactionRepository:
     def list_owed_items_by_transaction_ids(
         self,
         transaction_ids: list[int],
+        *,
         user_id: str,
     ) -> dict[int, list[OwedItem]]:
         if not transaction_ids:
@@ -172,6 +178,7 @@ class TransactionRepository:
     def list_owed_payments_by_transaction_ids(
         self,
         transaction_ids: list[int],
+        *,
         user_id: str,
     ) -> dict[int, list[tuple[OwedPayment, Decimal]]]:
         if not transaction_ids:
@@ -271,7 +278,8 @@ class TransactionRepository:
     def delete_by_import_batch(
         self,
         import_batch_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> int:
         statement = (
             sqlalchemy_delete(Transaction)
@@ -286,7 +294,8 @@ class TransactionRepository:
     def exists_by_dedupe_hash(
         self,
         dedupe_hash: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> bool:
         statement = (
             select(Transaction.id)
@@ -298,7 +307,8 @@ class TransactionRepository:
     def bulk_insert(
         self,
         transactions: list[Transaction],
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         commit: bool = True,
     ) -> list[Transaction]:
         for transaction in transactions:
@@ -322,7 +332,8 @@ class TransactionRepository:
         source: str = "activobank",
         days_window: int = 3,
         limit: int = 20,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[Transaction]:
         date_from = target_date - timedelta(days=days_window)
         date_to = target_date + timedelta(days=days_window)
@@ -347,7 +358,8 @@ class TransactionRepository:
         month: int | None = None,
         direction: str | None = None,
         cashflow_type: str | None = None,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[tuple[str, str | None, Decimal, Decimal, Decimal, int]]:
         category_label = func.coalesce(Transaction.category, "Uncategorised")
         owed_by_transaction = (
@@ -413,7 +425,8 @@ class TransactionRepository:
         self,
         direction: str | None = None,
         limit: int = 20,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[tuple[str, str, str, int, Decimal]]:
         total_amount = func.sum(Transaction.amount)
         transaction_count = func.count(Transaction.id)
@@ -446,7 +459,8 @@ class TransactionRepository:
         self,
         direction: str | None = None,
         limit: int = 50,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[tuple[str, str, str, str, int, Decimal]]:
         total_amount = func.sum(Transaction.amount)
         transaction_count = func.count(Transaction.id)

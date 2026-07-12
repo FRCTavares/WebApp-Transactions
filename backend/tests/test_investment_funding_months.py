@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.investment_funding_month_repository import (
     InvestmentFundingMonthRepository,
 )
@@ -11,6 +12,7 @@ def test_upsert_investment_funding_month_creates_then_updates(db_session):
     service = InvestmentFundingMonthService(
         InvestmentFundingMonthRepository(db_session),
     )
+    current_user = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
     created = service.upsert_funding_month(
         InvestmentFundingMonthCreate(
@@ -19,7 +21,8 @@ def test_upsert_investment_funding_month_creates_then_updates(db_session):
             manual_amount=Decimal("100.00"),
             cashback_rounding_amount=Decimal("9.77"),
             notes="Manual investment plus cashback, rounding, and residual cash.",
-        )
+        ),
+        current_user=current_user,
     )
 
     assert created.id is not None
@@ -35,7 +38,8 @@ def test_upsert_investment_funding_month_creates_then_updates(db_session):
             manual_amount=Decimal("100.00"),
             cashback_rounding_amount=Decimal("10.00"),
             notes="Updated note.",
-        )
+        ),
+        current_user=current_user,
     )
 
     assert updated.id == created.id
@@ -45,6 +49,7 @@ def test_upsert_investment_funding_month_creates_then_updates(db_session):
     funding_months = service.list_funding_months(
         month="2026-06",
         source="trading212",
+        current_user=current_user,
     )
 
     assert len(funding_months) == 1

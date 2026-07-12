@@ -34,7 +34,7 @@ def create_cashflow_rule(
     service: CashflowRuleService = Depends(get_cashflow_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_rule(rule_data, current_user)
+    return service.create_rule(rule_data, current_user=current_user)
 
 
 @router.get("", response_model=list[CashflowRuleRead])
@@ -71,7 +71,7 @@ def get_cashflow_rule(
     service: CashflowRuleService = Depends(get_cashflow_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_rule(rule_id, current_user)
+    return service.get_rule(rule_id, current_user=current_user)
 
 
 @router.patch("/{rule_id}", response_model=CashflowRuleRead)
@@ -81,7 +81,7 @@ def update_cashflow_rule(
     service: CashflowRuleService = Depends(get_cashflow_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_rule(rule_id, rule_data, current_user)
+    return service.update_rule(rule_id, rule_data, current_user=current_user)
 
 
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -90,5 +90,5 @@ def delete_cashflow_rule(
     service: CashflowRuleService = Depends(get_cashflow_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_rule(rule_id, current_user)
+    service.delete_rule(rule_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

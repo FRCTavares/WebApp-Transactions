@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from decimal import Decimal
@@ -9,6 +9,9 @@ from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate
 from app.services.summary_service import SummaryService
 from app.repositories.summary_repository import SummaryRepository
+
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(db_session):
@@ -28,7 +31,8 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             direction="in",
             source="manual",
             currency="EUR",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -40,7 +44,8 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             source="manual",
             currency="EUR",
             category="Groceries",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -53,7 +58,8 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             source="activobank",
             currency="EUR",
             category="Transfers",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -66,7 +72,8 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             source="activobank",
             currency="EUR",
             category="Transfers",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -79,10 +86,15 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
             source="activobank",
             currency="EUR",
             category="Transfers",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
-    summary = service.get_monthly_summary(year=2026, month=5)
+    summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=LOCAL_CURRENT_USER,
+    )
 
     assert summary.money_in == Decimal("1000.00")
     assert summary.money_out == Decimal("50.00")
@@ -111,7 +123,8 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
             source="manual",
             currency="EUR",
             category="Groceries",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -124,7 +137,8 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
             source="manual",
             currency="EUR",
             category="Food",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     transaction_repository.create(
         TransactionCreate(
@@ -137,12 +151,14 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
             source="manual",
             currency="EUR",
             category="Salary",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     from app.models.owed_item import OwedItem
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Mother",
         amount_total=Decimal("30.00"),
         amount_paid=Decimal("0.00"),
@@ -155,7 +171,11 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
     db_session.add(owed_item)
     db_session.commit()
 
-    summary = service.get_monthly_summary(year=2026, month=5)
+    summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=LOCAL_CURRENT_USER,
+    )
 
     assert summary.money_in == Decimal("100.00")
     assert summary.money_out == Decimal("55.00")
@@ -232,7 +252,8 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
             source="manual",
             currency="EUR",
             category="Restaurants",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     mbway_transaction = transaction_repository.create(
         TransactionCreate(
@@ -245,10 +266,12 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
             source="manual",
             currency="EUR",
             category="Family",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         amount_total=Decimal("29.00"),
         amount_paid=Decimal("29.00"),
@@ -262,6 +285,7 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
     db_session.flush()
 
     owed_payment = OwedPayment(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         payment_date=date(2026, 5, 11),
         amount=Decimal("50.00"),
@@ -275,6 +299,7 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
     db_session.flush()
 
     allocation = OwedPaymentAllocation(
+        user_id=LOCAL_DEFAULT_USER_ID,
         owed_payment_id=owed_payment.id,
         owed_item_id=owed_item.id,
         amount=Decimal("29.00"),
@@ -282,7 +307,11 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
     db_session.add(allocation)
     db_session.commit()
 
-    summary = service.get_monthly_summary(year=2026, month=5)
+    summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=LOCAL_CURRENT_USER,
+    )
 
     assert summary.gross_money_in == Decimal("50.00")
     assert summary.reimbursement_received_amount == Decimal("29.00")
@@ -313,12 +342,14 @@ def test_summary_allows_multiple_people_to_fully_null_shared_expense(db_session)
             source="manual",
             currency="EUR",
             category="Health",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     db_session.add_all(
         [
             OwedItem(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 person="Mother",
                 amount_total=Decimal("20.00"),
                 amount_paid=Decimal("0.00"),
@@ -329,6 +360,7 @@ def test_summary_allows_multiple_people_to_fully_null_shared_expense(db_session)
                 source="manual",
             ),
             OwedItem(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 person="Father",
                 amount_total=Decimal("20.00"),
                 amount_paid=Decimal("0.00"),
@@ -342,7 +374,11 @@ def test_summary_allows_multiple_people_to_fully_null_shared_expense(db_session)
     )
     db_session.commit()
 
-    summary = service.get_monthly_summary(year=2026, month=5)
+    summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=LOCAL_CURRENT_USER,
+    )
 
     assert summary.money_in == Decimal("0.00")
     assert summary.money_out == Decimal("40.00")
@@ -370,7 +406,8 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
             source="manual",
             currency="EUR",
             category="Restaurants",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
     mbway_transaction = transaction_repository.create(
         TransactionCreate(
@@ -383,10 +420,12 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
             source="manual",
             currency="EUR",
             category="Family",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         amount_total=Decimal("29.00"),
         amount_paid=Decimal("29.00"),
@@ -400,6 +439,7 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
     db_session.flush()
 
     owed_payment = OwedPayment(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         payment_date=date(2026, 5, 11),
         amount=Decimal("50.00"),
@@ -413,6 +453,7 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
     db_session.flush()
 
     allocation = OwedPaymentAllocation(
+        user_id=LOCAL_DEFAULT_USER_ID,
         owed_payment_id=owed_payment.id,
         owed_item_id=owed_item.id,
         amount=Decimal("29.00"),
@@ -420,7 +461,11 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
     db_session.add(allocation)
     db_session.commit()
 
-    summary = service.get_monthly_summary(year=2026, month=5)
+    summary = service.get_monthly_summary(
+        year=2026,
+        month=5,
+        current_user=LOCAL_CURRENT_USER,
+    )
 
     assert summary.gross_money_in == Decimal("50.00")
     assert summary.reimbursement_received_amount == Decimal("29.00")
@@ -428,4 +473,3 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
     assert summary.money_in == Decimal("21.00")
     assert summary.personal_money_out == Decimal("0.00")
     assert summary.personal_net == Decimal("21.00")
-

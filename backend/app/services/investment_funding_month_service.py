@@ -1,4 +1,4 @@
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.investment_funding_month import InvestmentFundingMonth
 from app.repositories.investment_funding_month_repository import InvestmentFundingMonthRepository
 from app.schemas.investment_funding_month import (
@@ -15,20 +15,22 @@ class InvestmentFundingMonthService:
         self,
         month: str | None = None,
         source: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[InvestmentFundingMonth]:
         return self.repository.list(
             month=month,
             source=source,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def upsert_funding_month(
         self,
         data: InvestmentFundingMonthCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> InvestmentFundingMonth:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         existing = self.repository.get_by_month_and_source(
             month=data.month,
             source=data.source,
@@ -47,9 +49,3 @@ class InvestmentFundingMonthService:
                 notes=data.notes,
             ),
         )
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id

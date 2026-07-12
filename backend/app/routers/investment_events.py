@@ -46,7 +46,7 @@ def create_investment_event(
     service: InvestmentEventService = Depends(get_investment_event_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_event(event_data, current_user)
+    return service.create_event(event_data, current_user=current_user)
 
 
 @router.get("", response_model=list[InvestmentEventRead])
@@ -115,7 +115,7 @@ def get_investment_event(
     service: InvestmentEventService = Depends(get_investment_event_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_event(event_id, current_user)
+    return service.get_event(event_id, current_user=current_user)
 
 
 @router.post(

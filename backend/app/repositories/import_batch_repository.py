@@ -1,7 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.import_batch import ImportBatch
 
 
@@ -17,7 +16,8 @@ class ImportBatchRepository:
         rows_inserted: int,
         rows_skipped: int,
         status: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         commit: bool = True,
     ) -> ImportBatch:
         import_batch = ImportBatch(
@@ -44,7 +44,8 @@ class ImportBatchRepository:
         self,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[ImportBatch]:
         statement = (
             select(ImportBatch)
@@ -59,7 +60,8 @@ class ImportBatchRepository:
     def get_by_id(
         self,
         import_batch_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> ImportBatch | None:
         statement = (
             select(ImportBatch)

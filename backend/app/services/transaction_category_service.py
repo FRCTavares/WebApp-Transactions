@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.transaction_category import TransactionCategory
 from app.repositories.transaction_category_repository import (
     TransactionCategoryRepository,
@@ -28,9 +28,10 @@ class TransactionCategoryService:
     def create_category(
         self,
         category_data: TransactionCategoryCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategory:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         normalised_data = self._normalise_create(category_data)
 
         self._raise_if_duplicate(
@@ -47,10 +48,11 @@ class TransactionCategoryService:
         cashflow_type: str | None = None,
         limit: int = 200,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[TransactionCategory]:
         return self.repository.list(
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
             active_only=active_only,
             direction=direction,
             cashflow_type=cashflow_type,
@@ -61,11 +63,12 @@ class TransactionCategoryService:
     def get_category(
         self,
         category_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategory:
         category = self.repository.get_by_id(
             category_id,
-            self._get_user_id(current_user),
+            current_user.id,
         )
 
         if category is None:
@@ -80,10 +83,11 @@ class TransactionCategoryService:
         self,
         category_id: int,
         category_data: TransactionCategoryUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategory:
-        category = self.get_category(category_id, current_user)
-        user_id = self._get_user_id(current_user)
+        category = self.get_category(category_id, current_user=current_user)
+        user_id = current_user.id
         candidate_data = self._get_update_candidate(
             category,
             category_data,
@@ -103,15 +107,16 @@ class TransactionCategoryService:
     def get_migration_preview(
         self,
         category_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategoryMigrationPreviewRead:
-        category = self.get_category(category_id, current_user)
+        category = self.get_category(category_id, current_user=current_user)
         transactions = self.repository.list_migration_transactions(category)
 
         replacement_categories = [
             replacement
             for replacement in self.repository.list(
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
                 active_only=True,
                 direction=category.direction,
                 cashflow_type=category.cashflow_type,
@@ -146,9 +151,10 @@ class TransactionCategoryService:
         self,
         category_id: int,
         migration_data: TransactionCategoryMigrationApply,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategoryMigrationApplyRead:
-        category = self.get_category(category_id, current_user)
+        category = self.get_category(category_id, current_user=current_user)
         affected_transactions = (
             self.repository.list_migration_transactions(category)
         )
@@ -185,7 +191,7 @@ class TransactionCategoryService:
         replacements = {
             replacement_id: self.get_category(
                 replacement_id,
-                current_user,
+                current_user=current_user,
             )
             for replacement_id in replacement_ids
         }
@@ -218,9 +224,10 @@ class TransactionCategoryService:
     def get_category_usage(
         self,
         category_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategoryUsageRead:
-        category = self.get_category(category_id, current_user)
+        category = self.get_category(category_id, current_user=current_user)
 
         return TransactionCategoryUsageRead(
             transaction_count=self.repository.get_usage_count(category),
@@ -229,9 +236,10 @@ class TransactionCategoryService:
     def delete_category(
         self,
         category_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        category = self.get_category(category_id, current_user)
+        category = self.get_category(category_id, current_user=current_user)
         usage = self.repository.get_usage_count(category)
 
         if usage > 0:
@@ -249,12 +257,13 @@ class TransactionCategoryService:
         self,
         category_id: int,
         replacement_category_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionCategoryReplaceDeleteRead:
-        category = self.get_category(category_id, current_user)
+        category = self.get_category(category_id, current_user=current_user)
         replacement = self.get_category(
             replacement_category_id,
-            current_user,
+            current_user=current_user,
         )
 
         self._validate_replacement_category(
@@ -396,12 +405,3 @@ class TransactionCategoryService:
             direction,
             cashflow_type,
         )
-
-    def _get_user_id(
-        self,
-        current_user: CurrentUser | None,
-    ) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id

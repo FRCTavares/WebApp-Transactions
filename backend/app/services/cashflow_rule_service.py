@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.cashflow_rule import CashflowRule
 from app.models.transaction import Transaction
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
@@ -20,9 +20,10 @@ class CashflowRuleService:
     def create_rule(
         self,
         rule_data: CashflowRuleCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> CashflowRule:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         self._raise_if_duplicate_rule(rule_data, user_id)
         return self.cashflow_rule_repository.create(rule_data, user_id)
 
@@ -31,9 +32,10 @@ class CashflowRuleService:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[CashflowRule]:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
 
         return self.cashflow_rule_repository.list(
             user_id=user_id,
@@ -45,9 +47,10 @@ class CashflowRuleService:
     def get_rule(
         self,
         rule_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> CashflowRule:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         rule = self.cashflow_rule_repository.get_by_id(rule_id, user_id)
 
         if rule is None:
@@ -62,25 +65,28 @@ class CashflowRuleService:
         self,
         rule_id: int,
         rule_data: CashflowRuleUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> CashflowRule:
-        rule = self.get_rule(rule_id, current_user)
-        user_id = self._get_user_id(current_user)
+        rule = self.get_rule(rule_id, current_user=current_user)
+        user_id = current_user.id
         self._raise_if_duplicate_rule_update(rule, rule_data, user_id)
         return self.cashflow_rule_repository.update(rule, rule_data)
 
     def delete_rule(
         self,
         rule_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        rule = self.get_rule(rule_id, current_user)
+        rule = self.get_rule(rule_id, current_user=current_user)
         self.cashflow_rule_repository.delete(rule)
 
     def apply_rules_to_existing_transactions(
         self,
         limit: int = 1000,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int]:
         if self.transaction_repository is None:
             raise HTTPException(
@@ -90,10 +96,10 @@ class CashflowRuleService:
 
         transactions = self.transaction_repository.list_for_description_rule_application(
             limit=limit,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
         rules = self.cashflow_rule_repository.list(
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
             active_only=True,
             limit=1000,
         )
@@ -183,13 +189,6 @@ class CashflowRuleService:
             user_id=user_id,
             exclude_rule_id=rule.id,
         )
-
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _rule_fingerprint(
         self,

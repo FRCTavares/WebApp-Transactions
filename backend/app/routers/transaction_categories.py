@@ -50,7 +50,7 @@ def create_transaction_category(
 ):
     return service.create_category(
         category_data,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -98,7 +98,7 @@ def get_transaction_category(
 ):
     return service.get_category(
         category_id,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -115,7 +115,7 @@ def get_transaction_category_migration_preview(
 ):
     return service.get_migration_preview(
         category_id,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -134,7 +134,7 @@ def apply_transaction_category_migration(
     return service.apply_reviewed_migration(
         category_id,
         payload,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -151,7 +151,7 @@ def get_transaction_category_usage(
 ):
     return service.get_category_usage(
         category_id,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -170,7 +170,7 @@ def replace_and_delete_transaction_category(
     return service.replace_and_delete_category(
         category_id,
         payload.replacement_category_id,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -189,7 +189,7 @@ def update_transaction_category(
     return service.update_category(
         category_id,
         category_data,
-        current_user,
+        current_user=current_user,
     )
 
 
@@ -206,7 +206,7 @@ def delete_transaction_category(
 ):
     service.delete_category(
         category_id,
-        current_user,
+        current_user=current_user,
     )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)

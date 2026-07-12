@@ -1,13 +1,16 @@
 from datetime import date
-
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from decimal import Decimal
+
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.cashflow_rule import CashflowRuleCreate, CashflowRuleUpdate
 from app.schemas.transaction import TransactionCreate
 from app.services.cashflow_rule_service import CashflowRuleService
+
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_cashflow_rule_crud(db_session):
@@ -22,7 +25,8 @@ def test_cashflow_rule_crud(db_session):
             match_field="raw_description",
             direction="out",
             source="activobank",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert rule.id is not None
@@ -34,12 +38,13 @@ def test_cashflow_rule_crud(db_session):
             name="Trading 212 movement",
             cashflow_type="transfer",
         ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert updated.name == "Trading 212 movement"
     assert updated.cashflow_type == "transfer"
 
-    service.delete_rule(rule.id)
+    service.delete_rule(rule.id, current_user=LOCAL_CURRENT_USER)
 
     assert repository.get_by_id(rule.id, LOCAL_DEFAULT_USER_ID) is None
 
@@ -57,10 +62,10 @@ def test_duplicate_cashflow_rule_is_rejected(db_session):
         source="activobank",
     )
 
-    service.create_rule(payload)
+    service.create_rule(payload, current_user=LOCAL_CURRENT_USER)
 
     try:
-        service.create_rule(payload)
+        service.create_rule(payload, current_user=LOCAL_CURRENT_USER)
     except Exception as error:
         assert "equivalent cashflow rule" in str(error)
     else:
@@ -84,7 +89,8 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
             direction="out",
             source="activobank",
             currency="EUR",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     non_matching_transaction = transaction_repository.create(
@@ -96,7 +102,8 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
             direction="out",
             source="manual",
             currency="EUR",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     service.create_rule(
@@ -107,10 +114,11 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
             match_field="raw_description",
             direction="out",
             source="activobank",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
-    result = service.apply_rules_to_existing_transactions()
+    result = service.apply_rules_to_existing_transactions(current_user=LOCAL_CURRENT_USER)
 
     db_session.refresh(matching_transaction)
     db_session.refresh(non_matching_transaction)
@@ -177,7 +185,8 @@ def test_cashflow_rule_can_set_income_type(db_session):
             match_field="raw_description",
             direction="in",
             source="activobank",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert rule.cashflow_type == "income"
@@ -195,7 +204,8 @@ def test_cashflow_rule_can_set_expense_type(db_session):
             match_field="raw_description",
             direction="out",
             source="activobank",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert rule.cashflow_type == "expense"
@@ -205,7 +215,6 @@ def test_cashflow_rules_are_isolated_by_user(db_session):
     from fastapi import HTTPException
     import pytest
 
-    from app.auth.current_user import CurrentUser
 
     repository = CashflowRuleRepository(db_session)
     service = CashflowRuleService(repository)
@@ -222,13 +231,13 @@ def test_cashflow_rules_are_isolated_by_user(db_session):
         source="activobank",
     )
 
-    first_rule = service.create_rule(payload, first_user)
-    second_rule = service.create_rule(payload, second_user)
+    first_rule = service.create_rule(payload, current_user=first_user)
+    second_rule = service.create_rule(payload, current_user=second_user)
 
     assert [rule.id for rule in service.list_rules(current_user=first_user)] == [first_rule.id]
     assert [rule.id for rule in service.list_rules(current_user=second_user)] == [second_rule.id]
 
     with pytest.raises(HTTPException) as caught_error:
-        service.get_rule(second_rule.id, first_user)
+        service.get_rule(second_rule.id, current_user=first_user)
 
     assert caught_error.value.status_code == 404

@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment
 from app.models.transaction import Transaction
@@ -18,11 +18,12 @@ class TransactionService:
     def create_transaction(
         self,
         transaction_data: TransactionCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionRead:
         transaction = self.repository.create(
             transaction_data,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
         return self._build_transaction_read(transaction, None, None)
 
@@ -37,7 +38,8 @@ class TransactionService:
         search: str | None = None,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[TransactionRead]:
         transactions = self.repository.list(
             direction=direction,
@@ -49,18 +51,18 @@ class TransactionService:
             search=search,
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         transaction_ids = [transaction.id for transaction in transactions]
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             transaction_ids,
-            user_id,
+            user_id=user_id,
         )
         owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
             transaction_ids,
-            user_id,
+            user_id=user_id,
         )
 
         return [
@@ -77,7 +79,8 @@ class TransactionService:
         direction: str | None = None,
         source: str | None = None,
         limit: int = 100,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[TransactionRead]:
         transactions = self.repository.list(
             direction=direction,
@@ -86,18 +89,18 @@ class TransactionService:
             limit=limit,
             offset=0,
             uncategorised_only=True,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         transaction_ids = [transaction.id for transaction in transactions]
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             transaction_ids,
-            user_id,
+            user_id=user_id,
         )
         owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
             transaction_ids,
-            user_id,
+            user_id=user_id,
         )
 
         return [
@@ -112,17 +115,18 @@ class TransactionService:
     def get_transaction(
         self,
         transaction_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionRead:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         transaction = self._get_transaction_model(transaction_id, user_id)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [transaction.id],
-            user_id,
+            user_id=user_id,
         )
         owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
             [transaction.id],
-            user_id,
+            user_id=user_id,
         )
 
         return self._build_transaction_read(
@@ -135,18 +139,19 @@ class TransactionService:
         self,
         transaction_id: int,
         transaction_data: TransactionUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> TransactionRead:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         transaction = self._get_transaction_model(transaction_id, user_id)
         updated_transaction = self.repository.update(transaction, transaction_data)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [updated_transaction.id],
-            user_id,
+            user_id=user_id,
         )
         owed_payments_by_transaction_id = self.repository.list_owed_payments_by_transaction_ids(
             [updated_transaction.id],
-            user_id,
+            user_id=user_id,
         )
 
         return self._build_transaction_read(
@@ -158,11 +163,12 @@ class TransactionService:
     def delete_transaction(
         self,
         transaction_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
         transaction = self._get_transaction_model(
             transaction_id,
-            self._get_user_id(current_user),
+            current_user.id,
         )
         self.repository.delete(transaction)
 
@@ -171,7 +177,10 @@ class TransactionService:
         transaction_id: int,
         user_id: str,
     ) -> Transaction:
-        transaction = self.repository.get_by_id(transaction_id, user_id)
+        transaction = self.repository.get_by_id(
+            transaction_id,
+            user_id=user_id,
+        )
 
         if transaction is None:
             raise HTTPException(
@@ -180,13 +189,6 @@ class TransactionService:
             )
 
         return transaction
-
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _get_transaction_read_payload(self, transaction: Transaction) -> dict:
         return {

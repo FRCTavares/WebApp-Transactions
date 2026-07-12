@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.description_rule import DescriptionRule
 from app.models.transaction import Transaction
 from app.repositories.description_rule_repository import DescriptionRuleRepository
@@ -24,9 +24,10 @@ class DescriptionRuleService:
     def create_rule(
         self,
         rule_data: DescriptionRuleCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> DescriptionRule:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         self._raise_if_duplicate_rule(rule_data, user_id)
         return self.description_rule_repository.create(rule_data, user_id)
 
@@ -35,9 +36,10 @@ class DescriptionRuleService:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[DescriptionRule]:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
 
         return self.description_rule_repository.list(
             user_id=user_id,
@@ -49,9 +51,10 @@ class DescriptionRuleService:
     def get_rule(
         self,
         rule_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> DescriptionRule:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         rule = self.description_rule_repository.get_by_id(rule_id, user_id)
 
         if rule is None:
@@ -66,25 +69,28 @@ class DescriptionRuleService:
         self,
         rule_id: int,
         rule_data: DescriptionRuleUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> DescriptionRule:
-        rule = self.get_rule(rule_id, current_user)
-        user_id = self._get_user_id(current_user)
+        rule = self.get_rule(rule_id, current_user=current_user)
+        user_id = current_user.id
         self._raise_if_duplicate_rule_update(rule, rule_data, user_id)
         return self.description_rule_repository.update(rule, rule_data)
 
     def delete_rule(
         self,
         rule_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        rule = self.get_rule(rule_id, current_user)
+        rule = self.get_rule(rule_id, current_user=current_user)
         self.description_rule_repository.delete(rule)
 
     def apply_rules_to_existing_transactions(
         self,
         limit: int = 1000,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, int]:
         if self.transaction_repository is None:
             raise HTTPException(
@@ -94,10 +100,10 @@ class DescriptionRuleService:
 
         transactions = self.transaction_repository.list_for_description_rule_application(
             limit=limit,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
         rules = self.description_rule_repository.list(
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
             active_only=True,
             limit=1000,
         )
@@ -127,7 +133,8 @@ class DescriptionRuleService:
         self,
         direction: str | None = None,
         limit: int = 50,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[DescriptionRuleSuggestion]:
         if self.transaction_repository is None:
             raise HTTPException(
@@ -138,7 +145,7 @@ class DescriptionRuleService:
         rows = self.transaction_repository.get_description_rule_suggestions(
             direction=direction,
             limit=limit,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         return [
@@ -220,13 +227,6 @@ class DescriptionRuleService:
             user_id=user_id,
             exclude_rule_id=rule.id,
         )
-
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _rule_fingerprint(
         self,

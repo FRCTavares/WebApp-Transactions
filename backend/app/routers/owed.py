@@ -77,7 +77,7 @@ def create_owed_item(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_owed_item(owed_data, current_user)
+    return service.create_owed_item(owed_data, current_user=current_user)
 
 
 @router.get("", response_model=list[OwedItemRead])
@@ -137,7 +137,7 @@ def record_owed_payment(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.record_payment(payment_data, current_user)
+    return service.record_payment(payment_data, current_user=current_user)
 
 
 @router.get("/payments", response_model=list[OwedPaymentRead])
@@ -162,7 +162,7 @@ def rename_owed_person(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.rename_person(rename_data, current_user)
+    return service.rename_person(rename_data, current_user=current_user)
 
 
 @router.get("/payments/{payment_id}", response_model=OwedPaymentRead)
@@ -171,7 +171,7 @@ def get_owed_payment(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_payment(payment_id, current_user)
+    return service.get_payment(payment_id, current_user=current_user)
 
 
 @router.delete("/payments/{payment_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -180,7 +180,7 @@ def delete_owed_payment(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_payment(payment_id, current_user)
+    service.delete_payment(payment_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -190,7 +190,7 @@ def get_owed_item(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_owed_item(owed_item_id, current_user)
+    return service.get_owed_item(owed_item_id, current_user=current_user)
 
 
 @router.patch("/{owed_item_id}", response_model=OwedItemRead)
@@ -200,7 +200,7 @@ def update_owed_item(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_owed_item(owed_item_id, owed_data, current_user)
+    return service.update_owed_item(owed_item_id, owed_data, current_user=current_user)
 
 
 @router.delete("/{owed_item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -209,5 +209,5 @@ def delete_owed_item(
     service: OwedService = Depends(get_owed_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_owed_item(owed_item_id, current_user)
+    service.delete_owed_item(owed_item_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.summary import (
@@ -24,7 +24,8 @@ class SummaryService:
         self,
         year: int | None = None,
         month: int | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> MonthlySummary:
         today = date.today()
 
@@ -37,7 +38,7 @@ class SummaryService:
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
 
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         gross_money_in = self.repository.get_gross_money_in(
             start_date=start_date,
             end_date=end_date,
@@ -104,7 +105,8 @@ class SummaryService:
         month: int | None = None,
         direction: str | None = None,
         cashflow_type: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> CategorySummaryResponse:
         if self.transaction_repository is None:
             raise RuntimeError("Transaction repository is required for category summary")
@@ -122,7 +124,7 @@ class SummaryService:
             month=month,
             direction=direction,
             cashflow_type=effective_cashflow_type,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         items = [
@@ -149,9 +151,3 @@ class SummaryService:
             return date(year + 1, 1, 1)
 
         return date(year, month + 1, 1)
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id

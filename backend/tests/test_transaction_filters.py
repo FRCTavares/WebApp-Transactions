@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.transaction import Transaction
 
 
@@ -16,6 +17,7 @@ def create_transaction(
     category=None,
 ):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=transaction_date,
         description=description,
         raw_description=raw_description,

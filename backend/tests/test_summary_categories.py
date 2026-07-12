@@ -1,14 +1,19 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.transaction import Transaction
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.summary_service import SummaryService
 
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
 def test_get_category_summary_groups_by_category_direction_and_month(db_session):
     transactions = [
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 1),
             description="Auchan",
             raw_description="Auchan",
@@ -20,6 +25,7 @@ def test_get_category_summary_groups_by_category_direction_and_month(db_session)
             currency="EUR",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 2),
             description="Auchan",
             raw_description="Auchan",
@@ -31,6 +37,7 @@ def test_get_category_summary_groups_by_category_direction_and_month(db_session)
             currency="EUR",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 3),
             description="Salary",
             raw_description="Salary",
@@ -42,6 +49,7 @@ def test_get_category_summary_groups_by_category_direction_and_month(db_session)
             currency="EUR",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 6, 1),
             description="Metro",
             raw_description="Metro",
@@ -63,6 +71,7 @@ def test_get_category_summary_groups_by_category_direction_and_month(db_session)
         year=2026,
         month=5,
         direction="out",
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     assert len(rows) == 1
@@ -78,6 +87,7 @@ def test_get_category_summary_groups_by_category_direction_and_month(db_session)
 def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
     transactions = [
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 1),
             description="Groceries",
             raw_description="Groceries",
@@ -90,6 +100,7 @@ def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
             cashflow_type="expense",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 2),
             description="Investment",
             raw_description="Investment",
@@ -102,6 +113,7 @@ def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
             cashflow_type="transfer",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 3),
             description="Own-account transfer",
             raw_description="Own-account transfer",
@@ -127,6 +139,7 @@ def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
         year=2026,
         month=5,
         direction="out",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert len(response.items) == 1
@@ -136,6 +149,7 @@ def test_summary_service_defaults_out_category_summary_to_expenses(db_session):
 def test_summary_service_defaults_in_category_summary_to_income(db_session):
     transactions = [
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 1),
             description="Salary",
             raw_description="Salary",
@@ -148,6 +162,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
             cashflow_type="income",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 2),
             description="Refund",
             raw_description="Refund",
@@ -160,6 +175,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
             cashflow_type="expense",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 3),
             description="Savings transfer",
             raw_description="Savings transfer",
@@ -185,6 +201,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
         year=2026,
         month=5,
         direction="in",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert len(response.items) == 1
@@ -194,6 +211,7 @@ def test_summary_service_defaults_in_category_summary_to_income(db_session):
 def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db_session):
     transactions = [
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 1),
             description="Groceries",
             raw_description="Groceries",
@@ -206,6 +224,7 @@ def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db
             cashflow_type="expense",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 2),
             description="Investment",
             raw_description="Investment",
@@ -232,6 +251,7 @@ def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db
         month=5,
         direction="out",
         cashflow_type="transfer",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert len(response.items) == 1

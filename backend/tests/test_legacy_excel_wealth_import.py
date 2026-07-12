@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -14,6 +15,9 @@ from app.importers.legacy_excel import LegacyExcelImporter
 from app.models.import_batch import ImportBatch
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
 
 
 def build_wealth_workbook_bytes() -> bytes:
@@ -272,6 +276,7 @@ def test_legacy_wealth_commit_rolls_back_accounts_batch_and_snapshots(
         service.commit_wealth_import_from_file(
             file_content=build_wealth_workbook_bytes(),
             filename="wealth_rollback.xlsx",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert db_session.query(ImportBatch).count() == 0

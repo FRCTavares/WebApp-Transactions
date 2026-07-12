@@ -1,7 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_funding_month import InvestmentFundingMonth
 from app.schemas.investment_funding_month import (
     InvestmentFundingMonthCreate,
@@ -17,7 +16,8 @@ class InvestmentFundingMonthRepository:
         self,
         month: str | None = None,
         source: str | None = None,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[InvestmentFundingMonth]:
         statement = (
             select(InvestmentFundingMonth)
@@ -40,7 +40,8 @@ class InvestmentFundingMonthRepository:
         self,
         month: str,
         source: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> InvestmentFundingMonth | None:
         statement = (
             select(InvestmentFundingMonth)
@@ -54,7 +55,8 @@ class InvestmentFundingMonthRepository:
     def create(
         self,
         data: InvestmentFundingMonthCreate,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> InvestmentFundingMonth:
         funding_month = InvestmentFundingMonth(
             user_id=user_id,

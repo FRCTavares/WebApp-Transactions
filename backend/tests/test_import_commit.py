@@ -2,11 +2,14 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.import_batch import ImportBatch
 from app.models.transaction import Transaction
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.import_service import ImportService
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_import_commit_inserts_then_skips_duplicates(db_session):
@@ -26,11 +29,13 @@ def test_import_commit_inserts_then_skips_duplicates(db_session):
         source="revolut",
         csv_content=csv_content,
         filename="revolut_test.csv",
+        current_user=LOCAL_CURRENT_USER,
     )
     second_result = service.commit_import(
         source="revolut",
         csv_content=csv_content,
         filename="revolut_test.csv",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert first_result["rows_total"] == 2
@@ -88,6 +93,7 @@ def test_import_commit_rolls_back_batch_and_transactions_on_late_failure(
             source="revolut",
             csv_content=csv_content,
             filename="rollback.csv",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert db_session.query(ImportBatch).count() == 0
@@ -131,6 +137,7 @@ def test_import_commit_returns_controlled_conflict_for_integrity_error(
             source="revolut",
             csv_content=csv_content,
             filename="conflict.csv",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert caught_error.value.status_code == 409
@@ -157,6 +164,7 @@ def test_import_batch_counts_match_committed_transactions(db_session):
         source="revolut",
         csv_content=csv_content,
         filename="counts.csv",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     import_batch = db_session.get(

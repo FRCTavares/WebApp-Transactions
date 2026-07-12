@@ -4,11 +4,15 @@ from decimal import Decimal
 import pytest
 from fastapi import HTTPException
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.description_rule_repository import DescriptionRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.description_rule import DescriptionRuleCreate, DescriptionRuleUpdate
 from app.schemas.transaction import TransactionCreate
 from app.services.description_rule_service import DescriptionRuleService
+
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_description_rule_service_rejects_duplicate_rule(db_session):
@@ -25,7 +29,7 @@ def test_description_rule_service_rejects_duplicate_rule(db_session):
         is_active=True,
     )
 
-    service.create_rule(rule_data)
+    service.create_rule(rule_data, current_user=LOCAL_CURRENT_USER)
 
     with pytest.raises(HTTPException) as caught_error:
         service.create_rule(
@@ -37,7 +41,8 @@ def test_description_rule_service_rejects_duplicate_rule(db_session):
                 direction="out",
                 source="revolut",
                 is_active=False,
-            )
+            ),
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert caught_error.value.status_code == 409
@@ -56,7 +61,8 @@ def test_description_rule_service_rejects_duplicate_rule_update(db_session):
             direction="out",
             source="revolut",
             is_active=True,
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     second_rule = service.create_rule(
@@ -68,7 +74,8 @@ def test_description_rule_service_rejects_duplicate_rule_update(db_session):
             direction="out",
             source="revolut",
             is_active=True,
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     with pytest.raises(HTTPException) as caught_error:
@@ -77,6 +84,7 @@ def test_description_rule_service_rejects_duplicate_rule_update(db_session):
             DescriptionRuleUpdate(
                 match_text=existing_rule.match_text,
             ),
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert caught_error.value.status_code == 409
@@ -101,7 +109,8 @@ def test_apply_description_rules_updates_description_and_preserves_raw_descripti
             account="Revolut",
             currency="EUR",
             notes="Card payment",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     service.create_rule(
@@ -113,12 +122,16 @@ def test_apply_description_rules_updates_description_and_preserves_raw_descripti
             direction="out",
             source="revolut",
             is_active=True,
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
-    result = service.apply_rules_to_existing_transactions()
+    result = service.apply_rules_to_existing_transactions(current_user=LOCAL_CURRENT_USER)
 
-    updated_transaction = transaction_repository.get_by_id(transaction.id)
+    updated_transaction = transaction_repository.get_by_id(
+        transaction.id,
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
 
     assert result == {
         "checked": 1,
@@ -148,7 +161,8 @@ def test_inactive_description_rules_are_not_applied(db_session):
             account="Revolut",
             currency="EUR",
             notes="Card payment",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     service.create_rule(
@@ -160,12 +174,16 @@ def test_inactive_description_rules_are_not_applied(db_session):
             direction="out",
             source="revolut",
             is_active=False,
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
-    result = service.apply_rules_to_existing_transactions()
+    result = service.apply_rules_to_existing_transactions(current_user=LOCAL_CURRENT_USER)
 
-    updated_transaction = transaction_repository.get_by_id(transaction.id)
+    updated_transaction = transaction_repository.get_by_id(
+        transaction.id,
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
 
     assert result == {
         "checked": 1,
@@ -196,7 +214,8 @@ def test_description_rule_suggestions_group_transactions(db_session):
                 currency="EUR",
                 external_id=external_suffix,
                 notes="Card payment",
-            )
+            ),
+            user_id=LOCAL_DEFAULT_USER_ID,
         )
 
     transaction_repository.create(
@@ -209,10 +228,11 @@ def test_description_rule_suggestions_group_transactions(db_session):
             source="manual",
             account="Manual",
             currency="EUR",
-        )
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
-    suggestions = service.get_rule_suggestions(direction="out")
+    suggestions = service.get_rule_suggestions(direction="out", current_user=LOCAL_CURRENT_USER)
 
     assert len(suggestions) == 1
     assert suggestions[0].raw_description == "TGTG aqwt6rwqmw7b0 LISBOA PT"
@@ -257,8 +277,6 @@ def test_description_rule_suggestions_endpoint(client):
 
 
 def test_description_rules_are_isolated_by_user(db_session):
-    from app.auth.current_user import CurrentUser
-
     repository = DescriptionRuleRepository(db_session)
     service = DescriptionRuleService(repository)
 
@@ -275,13 +293,13 @@ def test_description_rules_are_isolated_by_user(db_session):
         is_active=True,
     )
 
-    first_rule = service.create_rule(payload, first_user)
-    second_rule = service.create_rule(payload, second_user)
+    first_rule = service.create_rule(payload, current_user=first_user)
+    second_rule = service.create_rule(payload, current_user=second_user)
 
     assert [rule.id for rule in service.list_rules(current_user=first_user)] == [first_rule.id]
     assert [rule.id for rule in service.list_rules(current_user=second_user)] == [second_rule.id]
 
     with pytest.raises(HTTPException) as caught_error:
-        service.get_rule(second_rule.id, first_user)
+        service.get_rule(second_rule.id, current_user=first_user)
 
     assert caught_error.value.status_code == 404

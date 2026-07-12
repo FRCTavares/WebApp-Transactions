@@ -55,7 +55,7 @@ def create_wealth_account(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_account(account_data, current_user)
+    return service.create_account(account_data, current_user=current_user)
 
 
 @router.get("/accounts", response_model=list[WealthAccountRead])
@@ -80,7 +80,7 @@ def get_wealth_account(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_account(account_id, current_user)
+    return service.get_account(account_id, current_user=current_user)
 
 
 @router.patch("/accounts/{account_id}", response_model=WealthAccountRead)
@@ -90,7 +90,7 @@ def update_wealth_account(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_account(account_id, account_data, current_user)
+    return service.update_account(account_id, account_data, current_user=current_user)
 
 
 @router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -99,7 +99,7 @@ def delete_wealth_account(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_account(account_id, current_user)
+    service.delete_account(account_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -113,7 +113,7 @@ def create_wealth_snapshot(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_snapshot(snapshot_data, current_user)
+    return service.create_snapshot(snapshot_data, current_user=current_user)
 
 
 @router.get("/snapshots", response_model=list[WealthSnapshotRead])
@@ -142,7 +142,7 @@ def get_wealth_snapshot(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_snapshot(snapshot_id, current_user)
+    return service.get_snapshot(snapshot_id, current_user=current_user)
 
 
 @router.patch("/snapshots/{snapshot_id}", response_model=WealthSnapshotRead)
@@ -152,7 +152,7 @@ def update_wealth_snapshot(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_snapshot(snapshot_id, snapshot_data, current_user)
+    return service.update_snapshot(snapshot_id, snapshot_data, current_user=current_user)
 
 
 @router.delete("/snapshots/{snapshot_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -161,7 +161,7 @@ def delete_wealth_snapshot(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_snapshot(snapshot_id, current_user)
+    service.delete_snapshot(snapshot_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -170,7 +170,7 @@ def get_wealth_summary(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_summary(current_user)
+    return service.get_summary(current_user=current_user)
 
 
 @router.get("/monthly", response_model=list[WealthMonthlyRead])
@@ -178,4 +178,4 @@ def get_wealth_monthly(
     service: WealthService = Depends(get_wealth_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_monthly_totals(current_user)
+    return service.get_monthly_totals(current_user=current_user)

@@ -4,7 +4,6 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.schemas.wealth import (
@@ -22,7 +21,8 @@ class WealthRepository:
     def create_account(
         self,
         account_data: WealthAccountCreate,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         commit: bool = True,
     ) -> WealthAccount:
         account = WealthAccount(user_id=user_id, **account_data.model_dump())
@@ -41,7 +41,8 @@ class WealthRepository:
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[WealthAccount]:
         statement = (
             select(WealthAccount)
@@ -58,7 +59,8 @@ class WealthRepository:
     def get_account_by_id(
         self,
         account_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> WealthAccount | None:
         statement = (
             select(WealthAccount)
@@ -71,7 +73,8 @@ class WealthRepository:
     def get_account_by_name(
         self,
         name: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> WealthAccount | None:
         statement = (
             select(WealthAccount)
@@ -85,7 +88,8 @@ class WealthRepository:
         self,
         account_id: int,
         snapshot_date: date,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         exclude_snapshot_id: int | None = None,
     ) -> bool:
         statement = (
@@ -104,7 +108,8 @@ class WealthRepository:
     def exists_snapshot_by_dedupe_hash(
         self,
         dedupe_hash: str,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> bool:
         statement = (
             select(WealthSnapshot.id)
@@ -117,7 +122,8 @@ class WealthRepository:
     def bulk_insert_snapshots(
         self,
         snapshots: list[WealthSnapshot],
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
         commit: bool = True,
     ) -> None:
         for snapshot in snapshots:
@@ -133,7 +139,8 @@ class WealthRepository:
     def delete_snapshots_by_import_batch(
         self,
         import_batch_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> int:
         snapshots = list(
             self.db.scalars(
@@ -174,7 +181,8 @@ class WealthRepository:
     def create_snapshot(
         self,
         snapshot_data: WealthSnapshotCreate,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> WealthSnapshot:
         snapshot = WealthSnapshot(user_id=user_id, **snapshot_data.model_dump())
         self.db.add(snapshot)
@@ -189,7 +197,8 @@ class WealthRepository:
         date_to: date | None = None,
         limit: int = 100,
         offset: int = 0,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[WealthSnapshot]:
         statement = (
             select(WealthSnapshot)
@@ -215,7 +224,8 @@ class WealthRepository:
     def get_snapshot_by_id(
         self,
         snapshot_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> WealthSnapshot | None:
         statement = (
             select(WealthSnapshot)
@@ -246,7 +256,8 @@ class WealthRepository:
     def has_snapshots_for_account(
         self,
         account_id: int,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> bool:
         statement = (
             select(WealthSnapshot.id)
@@ -258,7 +269,8 @@ class WealthRepository:
 
     def get_latest_snapshot_date(
         self,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> date | None:
         statement = (
             select(func.max(WealthSnapshot.snapshot_date))
@@ -268,7 +280,8 @@ class WealthRepository:
 
     def count_active_accounts(
         self,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> int:
         statement = (
             select(func.count(WealthAccount.id))
@@ -279,7 +292,8 @@ class WealthRepository:
 
     def sum_interest_earned(
         self,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> Decimal:
         statement = (
             select(func.coalesce(func.sum(WealthSnapshot.interest_earned), 0))
@@ -289,7 +303,8 @@ class WealthRepository:
 
     def list_all_snapshots_ascending(
         self,
-        user_id: str = LOCAL_DEFAULT_USER_ID,
+        *,
+        user_id: str,
     ) -> list[WealthSnapshot]:
         statement = (
             select(WealthSnapshot)

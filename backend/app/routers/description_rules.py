@@ -35,7 +35,7 @@ def create_description_rule(
     service: DescriptionRuleService = Depends(get_description_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_rule(rule_data, current_user)
+    return service.create_rule(rule_data, current_user=current_user)
 
 
 @router.get("", response_model=list[DescriptionRuleRead])
@@ -86,7 +86,7 @@ def get_description_rule(
     service: DescriptionRuleService = Depends(get_description_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_rule(rule_id, current_user)
+    return service.get_rule(rule_id, current_user=current_user)
 
 
 @router.patch("/{rule_id}", response_model=DescriptionRuleRead)
@@ -96,7 +96,7 @@ def update_description_rule(
     service: DescriptionRuleService = Depends(get_description_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_rule(rule_id, rule_data, current_user)
+    return service.update_rule(rule_id, rule_data, current_user=current_user)
 
 
 @router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -105,5 +105,5 @@ def delete_description_rule(
     service: DescriptionRuleService = Depends(get_description_rule_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_rule(rule_id, current_user)
+    service.delete_rule(rule_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

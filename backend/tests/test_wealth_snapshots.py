@@ -318,6 +318,7 @@ def test_wealth_monthly_totals_use_derived_investment_value_not_brokerage_snapsh
     db_session.add_all(
         [
             InvestmentEvent(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 date=date(2026, 6, 1),
                 source="trading212",
                 account="Trading 212",
@@ -559,4 +560,3 @@ def test_reject_wealth_snapshot_update_with_inconsistent_balance_eur(client):
     assert update_response.json()["detail"] == (
         "balance_eur must match balance multiplied by fx_rate_to_eur"
     )
-

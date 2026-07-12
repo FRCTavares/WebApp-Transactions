@@ -15,6 +15,9 @@ from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from tests.test_legacy_excel_importer import build_workbook_bytes
 
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
+
 
 def test_legacy_excel_commit_inserts_transactions_and_owed_items(client, db_session):
     response = client.post(
@@ -280,6 +283,7 @@ def test_legacy_excel_commit_rolls_back_all_records_on_owed_failure(
         service.commit_import_from_file(
             file_content=build_workbook_bytes(),
             filename="legacy_rollback.xlsx",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert db_session.query(ImportBatch).count() == 0

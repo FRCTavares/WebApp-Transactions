@@ -3,7 +3,7 @@ from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.importers.legacy_excel import LegacyExcelImporter
 from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
@@ -48,8 +48,10 @@ class LegacyExcelImportService:
         self,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> LegacyExcelPreviewResponse:
+        user_id = current_user.id
         parse_result = self.importer.parse_excel(file_content)
 
         transactions: list[LegacyExcelPreviewTransaction] = []
@@ -69,7 +71,7 @@ class LegacyExcelImportService:
             is_duplicate = (
                 self.transaction_repository.exists_by_dedupe_hash(
                     dedupe_hash,
-                    self._get_user_id(current_user),
+                    user_id=user_id,
                 )
                 or dedupe_hash in seen_transaction_hashes
             )
@@ -107,7 +109,7 @@ class LegacyExcelImportService:
             is_duplicate = (
                 self.owed_repository.exists_by_dedupe_hash(
                     dedupe_hash,
-                    self._get_user_id(current_user),
+                    user_id=user_id,
                 )
                 or dedupe_hash in seen_owed_hashes
             )
@@ -178,7 +180,8 @@ class LegacyExcelImportService:
         self,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> LegacyExcelCommitResponse:
         preview = self.preview_import_from_file(
             file_content=file_content,
@@ -187,7 +190,7 @@ class LegacyExcelImportService:
         )
 
         rows_skipped = preview.rows_duplicates + preview.rows_invalid
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         transactions_to_insert = self._build_transactions_to_insert(
             preview=preview,
             import_batch_id=None,
@@ -196,6 +199,7 @@ class LegacyExcelImportService:
         owed_items_to_insert = self._build_owed_items_to_insert(
             preview=preview,
             import_batch_id=None,
+            user_id=user_id,
         )
         rows_inserted = len(transactions_to_insert) + len(owed_items_to_insert)
 
@@ -241,19 +245,20 @@ class LegacyExcelImportService:
             owed_items_to_insert = self._build_owed_items_to_insert(
                 preview=preview,
                 import_batch_id=import_batch.id,
+                user_id=user_id,
             )
 
             if transactions_to_insert:
                 self.transaction_repository.bulk_insert(
                     transactions_to_insert,
-                    user_id,
+                    user_id=user_id,
                     commit=False,
                 )
 
             if owed_items_to_insert:
                 self.owed_repository.bulk_insert(
                     owed_items_to_insert,
-                    user_id,
+                    user_id=user_id,
                     commit=False,
                 )
 
@@ -288,11 +293,13 @@ class LegacyExcelImportService:
         self,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> LegacyExcelWealthPreviewResponse:
         if self.wealth_repository is None:
             raise RuntimeError("Wealth repository is required for wealth import")
 
+        user_id = current_user.id
         snapshots: list[LegacyExcelPreviewWealthSnapshot] = []
         seen_hashes: set[str] = set()
 
@@ -304,20 +311,20 @@ class LegacyExcelImportService:
             )
             account = self.wealth_repository.get_account_by_name(
                 snapshot.account_name,
-                self._get_user_id(current_user),
+                user_id=user_id,
             )
             is_duplicate = (
                 dedupe_hash in seen_hashes
                 or self.wealth_repository.exists_snapshot_by_dedupe_hash(
                     dedupe_hash,
-                    self._get_user_id(current_user),
+                    user_id=user_id,
                 )
                 or (
                     account is not None
                     and self.wealth_repository.exists_snapshot_for_account_date(
                         account_id=account.id,
                         snapshot_date=snapshot.snapshot_date,
-                        user_id=self._get_user_id(current_user),
+                        user_id=user_id,
                     )
                 )
             )
@@ -366,7 +373,8 @@ class LegacyExcelImportService:
         self,
         file_content: bytes,
         filename: str,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> LegacyExcelWealthCommitResponse:
         if self.wealth_repository is None:
             raise RuntimeError("Wealth repository is required for wealth import")
@@ -396,20 +404,20 @@ class LegacyExcelImportService:
             )
 
         accounts_created = 0
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         db = self.import_batch_repository.db
 
         try:
             for preview_snapshot in snapshots_to_insert:
                 account = self.wealth_repository.get_account_by_name(
                     preview_snapshot.account_name,
-                    user_id,
+                    user_id=user_id,
                 )
 
                 if account is None:
                     self.wealth_repository.create_account(
                         self._build_wealth_account_create_payload(preview_snapshot),
-                        user_id,
+                        user_id=user_id,
                         commit=False,
                     )
                     accounts_created += 1
@@ -434,7 +442,7 @@ class LegacyExcelImportService:
             for preview_snapshot in snapshots_to_insert:
                 account = self.wealth_repository.get_account_by_name(
                     preview_snapshot.account_name,
-                    user_id,
+                    user_id=user_id,
                 )
 
                 if account is None:
@@ -460,7 +468,7 @@ class LegacyExcelImportService:
 
             self.wealth_repository.bulk_insert_snapshots(
                 snapshot_models,
-                user_id,
+                user_id=user_id,
                 commit=False,
             )
 
@@ -555,6 +563,8 @@ class LegacyExcelImportService:
         self,
         preview: LegacyExcelPreviewResponse,
         import_batch_id: int | None,
+        *,
+        user_id: str,
     ) -> list[OwedItem]:
         owed_items_to_insert: list[OwedItem] = []
 
@@ -564,6 +574,7 @@ class LegacyExcelImportService:
 
             owed_items_to_insert.append(
                 OwedItem(
+                    user_id=user_id,
                     person=preview_owed_item.person,
                     amount_total=preview_owed_item.amount_total,
                     amount_paid=preview_owed_item.amount_paid,
@@ -623,12 +634,6 @@ class LegacyExcelImportService:
             owed_open_total=owed_open_total,
             owed_paid_total=owed_paid_total,
         )
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _get_import_status(
         self,

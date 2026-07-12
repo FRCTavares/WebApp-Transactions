@@ -2,6 +2,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
 from app.models.transaction import Transaction
@@ -9,6 +10,8 @@ from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.import_service import ImportService
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_trading212_preview_and_commit_splits_transactions_and_investment_events(db_session):
@@ -26,7 +29,7 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
         investment_event_repository=investment_event_repository,
     )
 
-    preview = service.preview_import(source="trading212", csv_content=csv_content)
+    preview = service.preview_import(source="trading212", csv_content=csv_content, current_user=LOCAL_CURRENT_USER)
 
     assert preview.rows_total == 3
     assert preview.rows_valid == 3
@@ -45,14 +48,21 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
         source="trading212",
         csv_content=csv_content,
         filename="trading212.csv",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert result["rows_inserted"] == 3
     assert result["transactions_inserted"] == 0
     assert result["investment_events_inserted"] == 3
 
-    transactions = transaction_repository.list(source="trading212")
-    events = investment_event_repository.list(source="trading212")
+    transactions = transaction_repository.list(
+        source="trading212",
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+    events = investment_event_repository.list(
+        source="trading212",
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
 
     assert len(transactions) == 0
     assert len(events) == 3
@@ -80,6 +90,7 @@ Bank Transfer,2026-05-02 11:00:00,Bank Transfer,transfer-1,100.00,EUR,,,,,,
     preview = service.preview_import(
         source="trading212",
         csv_content=csv_content,
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert len(preview.transactions) == 1
@@ -113,6 +124,7 @@ Bank Transfer,2026-05-02 11:00:00,Bank Transfer,transfer-1,100.00,EUR,,,,,,
             source="trading212",
             csv_content=csv_content,
             filename="trading212_rollback.csv",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert db_session.query(ImportBatch).count() == 0

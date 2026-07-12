@@ -74,7 +74,7 @@ def create_transaction(
     service: TransactionService = Depends(get_transaction_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.create_transaction(transaction_data, current_user)
+    return service.create_transaction(transaction_data, current_user=current_user)
 
 
 @router.get("", response_model=list[TransactionRead])
@@ -172,7 +172,7 @@ def get_transaction(
     service: TransactionService = Depends(get_transaction_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_transaction(transaction_id, current_user)
+    return service.get_transaction(transaction_id, current_user=current_user)
 
 
 @router.patch("/{transaction_id}", response_model=TransactionRead)
@@ -182,7 +182,7 @@ def update_transaction(
     service: TransactionService = Depends(get_transaction_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.update_transaction(transaction_id, transaction_data, current_user)
+    return service.update_transaction(transaction_id, transaction_data, current_user=current_user)
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -191,5 +191,5 @@ def delete_transaction(
     service: TransactionService = Depends(get_transaction_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    service.delete_transaction(transaction_id, current_user)
+    service.delete_transaction(transaction_id, current_user=current_user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

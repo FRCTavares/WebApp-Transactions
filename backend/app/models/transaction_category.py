@@ -10,7 +10,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.database import Base
 
 
@@ -45,7 +44,6 @@ class TransactionCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[str] = mapped_column(
         String(100),
-        default=LOCAL_DEFAULT_USER_ID,
         index=True,
     )
     name: Mapped[str] = mapped_column(String(100), index=True)

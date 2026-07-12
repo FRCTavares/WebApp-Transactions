@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.transaction_category_repository import (
     TransactionCategoryRepository,
 )
@@ -11,6 +11,9 @@ from app.schemas.transaction_category import (
 from app.services.transaction_category_service import (
     TransactionCategoryService,
 )
+
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_transaction_category_endpoint_crud(client):
@@ -90,7 +93,8 @@ def test_transaction_category_rejects_case_insensitive_duplicate(
             name="Food",
             direction="out",
             cashflow_type="expense",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     with pytest.raises(HTTPException) as caught_error:
@@ -99,7 +103,8 @@ def test_transaction_category_rejects_case_insensitive_duplicate(
                 name=" food ",
                 direction="out",
                 cashflow_type="expense",
-            )
+            ),
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert caught_error.value.status_code == 409
@@ -118,7 +123,7 @@ def test_transaction_categories_are_isolated_by_user(db_session):
             direction="out",
             cashflow_type="expense",
         ),
-        first_user,
+        current_user=first_user,
     )
 
     second_category = service.create_category(
@@ -127,7 +132,7 @@ def test_transaction_categories_are_isolated_by_user(db_session):
             direction="in",
             cashflow_type="income",
         ),
-        second_user,
+        current_user=second_user,
     )
 
     assert [
@@ -147,7 +152,7 @@ def test_transaction_categories_are_isolated_by_user(db_session):
     with pytest.raises(HTTPException) as caught_error:
         service.get_category(
             second_category.id,
-            first_user,
+            current_user=first_user,
         )
 
     assert caught_error.value.status_code == 404
@@ -317,7 +322,6 @@ def test_replace_and_delete_does_not_change_other_user_data(db_session):
     from datetime import date
     from decimal import Decimal
 
-    from app.auth.current_user import CurrentUser
     from app.models.transaction import Transaction
 
     repository = TransactionCategoryRepository(db_session)
@@ -332,7 +336,7 @@ def test_replace_and_delete_does_not_change_other_user_data(db_session):
             direction="out",
             cashflow_type="expense",
         ),
-        first_user,
+        current_user=first_user,
     )
     groceries = service.create_category(
         TransactionCategoryCreate(
@@ -340,7 +344,7 @@ def test_replace_and_delete_does_not_change_other_user_data(db_session):
             direction="out",
             cashflow_type="expense",
         ),
-        first_user,
+        current_user=first_user,
     )
 
     other_user_transaction = Transaction(
@@ -361,7 +365,7 @@ def test_replace_and_delete_does_not_change_other_user_data(db_session):
     result = service.replace_and_delete_category(
         food.id,
         groceries.id,
-        first_user,
+        current_user=first_user,
     )
 
     db_session.refresh(other_user_transaction)

@@ -1,8 +1,8 @@
 # F - Transactions: Global Release Readiness TODO List
 
-Last audited: 2026-07-11
+Last audited: 2026-07-12
 Original audit baseline: commit `96c3f0c`
-Current verification: 321 backend tests pass; frontend build passes; frontend lint still fails
+Current verification: 327 backend tests pass; frontend build passes; frontend lint still fails
 Current deployment: Vercel frontend, Render backend, Supabase Postgres and Auth, Google OAuth
 
 ## 1. Executive Summary
@@ -14,9 +14,9 @@ F - Transactions has a solid personal-use foundation:
 - SQLite support for local development.
 - Supabase Postgres for production.
 - Supabase Auth with Google OAuth.
-- User-scoped queries across most financial features.
+- Explicit user ownership is enforced across repositories, services, and ORM constructors.
 - Alembic migrations that successfully build a clean database through revision `d9e4f6a2b731`.
-- 321 passing backend tests.
+- 327 passing backend tests.
 - Successful frontend production build.
 - Working production CORS, bearer-token enforcement, and security headers.
 - Current local database passes the existing integrity audit.
@@ -30,16 +30,15 @@ F - Transactions has a solid personal-use foundation:
 The application is not ready for unrestricted global release.
 The most urgent remaining blockers are:
 
-1. User-owned repositories and services still contain silent `local-default-user` fallbacks.
-2. Linked financial records do not yet have relational foreign keys.
-3. Upload endpoints have no size limits and load complete files into memory.
-4. Import confirmation is not bound to the exact previewed file.
-5. Pending FX handling is not consistent across transactions and investments.
-6. Frontend lint currently fails.
-7. There is no complete CI workflow.
-8. Render free hosting causes measured cold starts of approximately 53 seconds.
-9. Accessibility and keyboard support remain incomplete.
-10. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
+1. Linked financial records do not yet have relational foreign keys.
+2. Upload endpoints have no size limits and load complete files into memory.
+3. Import confirmation is not bound to the exact previewed file.
+4. Pending FX handling is not consistent across transactions and investments.
+5. Frontend lint currently fails.
+6. There is no complete CI workflow.
+7. Render free hosting causes measured cold starts of approximately 53 seconds.
+8. Accessibility and keyboard support remain incomplete.
+9. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
 
 The correct strategy is not a large rewrite. Fix the security and data-integrity blockers first, establish reliable recovery and CI, then improve accessibility, navigation, internationalization, observability, and release operations.
 
@@ -163,10 +162,10 @@ A paid plan will eventually be justified by:
 | Area | Score | Summary |
 |---|---:|---|
 | Core functionality | 4/5 | Broad feature coverage and working production deployment |
-| Backend architecture | 3/5 | Good layering, but transaction boundaries and defaults need work |
+| Backend architecture | 4/5 | Good layering and explicit ownership; broader transaction boundaries still need work |
 | Data integrity | 3/5 | Atomic imports and investment accounting are corrected; foreign keys remain missing |
 | Authentication | 5/5 | Stable `sub` ownership is deployed, production data is migrated, and JWT issuer validation is enforced |
-| Authorization | 3/5 | Market routes are protected; broader explicit ownership hardening remains |
+| Authorization | 4/5 | Market routes are protected and user-owned operations require explicit ownership |
 | Import reliability | 3/5 | Atomic commits pass; upload controls and preview binding remain |
 | Recovery | 3/5 | Complete registry-based recovery passes local tests; production PostgreSQL restoration also passes |
 | Security | 2/5 | Basic headers and auth exist; rate limiting, limits, monitoring, and privacy are absent |
@@ -174,7 +173,7 @@ A paid plan will eventually be justified by:
 | UI/UX | 3/5 | Functional and responsive, but navigation, loading, consistency, and personal defaults need work |
 | Accessibility | 1/5 | Dialog, combobox, chart, zoom, focus, and motion issues remain |
 | Internationalization | 1/5 | Hard-coded English, EUR, locales, and personal assumptions |
-| Testing | 4/5 | 321 backend tests pass; frontend lint, frontend tests, and end-to-end coverage remain weak |
+| Testing | 4/5 | 327 backend tests pass; frontend lint, frontend tests, and end-to-end coverage remain weak |
 | CI/CD | 1/5 | No normal release validation workflow |
 | Observability | 1/5 | No structured logging, metrics, monitoring, or alerting |
 | Performance | 2/5 | Free-host cold starts, full-memory uploads, and repeated commits |
@@ -194,28 +193,9 @@ Completed and validated:
 - `CRIT-005`: Corrected investment sell cost basis using moving weighted-average cost.
 - `CRIT-006`: Removed look-ahead bias from historical investment valuations.
 
-The combined working tree must not be deployed before the production ownership cutover is completed safely.
+The combined working tree must not be deployed before the remaining high-priority integrity and release checks are completed.
 
 ## 6. High Priority
-
-### HIGH-003: Remove silent production fallbacks to `local-default-user`
-
-- Evidence:
-  - Repositories and services widely default to local ownership.
-
-- Risk:
-  - Missed ownership arguments silently read or write the wrong user.
-
-- Proposed fix:
-  - Require explicit `user_id` in user-owned repositories.
-  - Require `CurrentUser` in production services.
-  - Keep local behavior in a deliberate adapter or test fixture.
-
-- Acceptance criteria:
-  - Production code cannot call user-owned operations without an owner.
-  - Static checks or tests fail when ownership is omitted.
-- Effort: Large
-- Paid plan required: No
 
 ### HIGH-004: Add relational foreign keys and ownership-safe relationships
 
@@ -852,7 +832,6 @@ Document:
 - [x] Complete registry-based export and local restore tooling.
 - [x] Complete a production PostgreSQL backup and restore drill.
 - [x] Migrate production ownership to Supabase `sub`.
-- [ ] Remove silent local defaults.
 - [ ] Add foreign keys.
 
 ### Phase 3: Release engineering
@@ -999,12 +978,15 @@ Global release readiness requires:
 
 ## 24. Verification Evidence
 
-Current working-tree evidence on 2026-07-11:
+Current working-tree evidence on 2026-07-12:
 
 - Branch: `main`.
 - Original audit baseline: commit `96c3f0c`.
-- Full backend suite: 321 tests passed with 4 short test-key warnings.
+- Full backend suite: 327 tests passed with 4 short test-key warnings.
 - Python compilation passed.
+- Explicit ownership is required across user-owned repositories, services, routers, and ORM constructors.
+- All 12 user-owned model fields have no Python-side or server-side ownership default.
+- Permanent source-level ownership guardrails reject omitted owners and unapproved local fallback references.
 - Alembic has one head: `d9e4f6a2b731`.
 - Clean temporary Alembic upgrade passed through `d9e4f6a2b731`.
 - Frontend production build passed.

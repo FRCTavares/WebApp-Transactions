@@ -4,12 +4,16 @@ from decimal import Decimal
 import pytest
 from fastapi import HTTPException
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.transaction import Transaction
 from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.fx_match_service import FxMatchService
 from app.services.import_service import ImportService
+
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def build_service(db_session) -> FxMatchService:
@@ -31,6 +35,7 @@ def test_fx_match_preview_suggests_activobank_outflows(db_session):
     transaction_repository.bulk_insert(
         [
             Transaction(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 date=date(2024, 9, 8),
                 description="Transfer to Trading 212",
                 raw_description="Transfer to Trading 212",
@@ -42,6 +47,7 @@ def test_fx_match_preview_suggests_activobank_outflows(db_session):
                 currency="EUR",
             ),
             Transaction(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 date=date(2024, 9, 20),
                 description="Too far away",
                 raw_description="Too far away",
@@ -53,6 +59,7 @@ def test_fx_match_preview_suggests_activobank_outflows(db_session):
                 currency="EUR",
             ),
             Transaction(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 date=date(2024, 9, 8),
                 description="Wrong source",
                 raw_description="Wrong source",
@@ -63,7 +70,8 @@ def test_fx_match_preview_suggests_activobank_outflows(db_session):
                 account="Revolut",
                 currency="EUR",
             ),
-        ]
+        ],
+        user_id=LOCAL_DEFAULT_USER_ID,
     )
 
     csv_content = """Action,Time,Notes,ID,Total,Currency (Total),Charge amount,Currency (Charge amount),Deposit fee,Currency (Deposit fee),Merchant name,Merchant category
@@ -77,6 +85,7 @@ Market buy,2024-09-09 10:05:00,Market buy,market-1,37.00,USD,,,,,,
         source="trading212",
         file_content=csv_content.encode("utf-8"),
         filename="trading212.csv",
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert response.source == "trading212"
@@ -106,6 +115,7 @@ def test_fx_match_preview_rejects_non_trading212_source(db_session):
             source="revolut",
             file_content=b"",
             filename="revolut.csv",
+            current_user=LOCAL_CURRENT_USER,
         )
 
     assert error.value.status_code == 400

@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.transaction import Transaction
 from app.repositories.owed_repository import OwedRepository
 from app.schemas.owed_item import OwedItemCreate, OwedPaymentCreate
@@ -55,6 +55,7 @@ def test_create_owed_item_rejects_duplicate_linked_transaction_for_same_person(
     db_session,
 ):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 21),
         description="MiniPreco",
         raw_description="MINIPRECO",
@@ -90,6 +91,7 @@ def test_create_owed_items_allows_split_people_until_transaction_total(
     db_session,
 ):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 21),
         description="Pharmacy",
         raw_description="PHARMACY",
@@ -736,6 +738,7 @@ def test_list_and_get_owed_payments(client):
 
 def test_record_payment_linked_to_money_in_transaction_succeeds(client, db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 17),
         description="Grandma transfer",
         raw_description="TRF GRANDMA",
@@ -797,6 +800,7 @@ def test_record_payment_rejects_missing_linked_transaction(client):
 
 def test_record_payment_rejects_money_out_linked_transaction(client, db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 17),
         description="Supermarket",
         raw_description="SUPERMARKET",
@@ -828,6 +832,7 @@ def test_record_payment_rejects_money_out_linked_transaction(client, db_session)
 
 def test_record_payment_rejects_linked_transaction_over_allocation(client, db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 17),
         description="Grandma transfer",
         raw_description="TRF GRANDMA",
@@ -878,7 +883,7 @@ def test_owed_items_are_isolated_by_user(db_session):
             reason="Groceries",
             amount_total=Decimal("20.00"),
         ),
-        first_user,
+        current_user=first_user,
     )
     second_item = service.create_owed_item(
         OwedItemCreate(
@@ -886,7 +891,7 @@ def test_owed_items_are_isolated_by_user(db_session):
             reason="Groceries",
             amount_total=Decimal("20.00"),
         ),
-        second_user,
+        current_user=second_user,
     )
 
     assert [item.id for item in service.list_owed_items(current_user=first_user)] == [first_item.id]
@@ -907,7 +912,7 @@ def test_owed_payments_are_isolated_by_user(db_session):
             reason="Groceries",
             amount_total=Decimal("20.00"),
         ),
-        first_user,
+        current_user=first_user,
     )
     second_item = service.create_owed_item(
         OwedItemCreate(
@@ -915,7 +920,7 @@ def test_owed_payments_are_isolated_by_user(db_session):
             reason="Groceries",
             amount_total=Decimal("20.00"),
         ),
-        second_user,
+        current_user=second_user,
     )
 
     first_payment = service.record_payment(
@@ -931,7 +936,7 @@ def test_owed_payments_are_isolated_by_user(db_session):
                 }
             ],
         ),
-        first_user,
+        current_user=first_user,
     )
     second_payment = service.record_payment(
         OwedPaymentCreate(
@@ -946,7 +951,7 @@ def test_owed_payments_are_isolated_by_user(db_session):
                 }
             ],
         ),
-        second_user,
+        current_user=second_user,
     )
 
     assert [payment.id for payment in service.list_payments(current_user=first_user)] == [first_payment.id]

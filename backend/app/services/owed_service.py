@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.repositories.owed_repository import OwedRepository
@@ -30,9 +30,10 @@ class OwedService:
     def create_owed_item(
         self,
         owed_data: OwedItemCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedItem:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         owed_data = self._with_dedupe_hash(owed_data, user_id)
 
         if owed_data.dedupe_hash and self.repository.exists_by_dedupe_hash(
@@ -73,9 +74,10 @@ class OwedService:
         person: str | None = None,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[OwedItem]:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
 
         return self.repository.list(
             user_id=user_id,
@@ -88,9 +90,10 @@ class OwedService:
     def get_owed_item(
         self,
         owed_item_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedItem:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         owed_item = self.repository.get_by_id(owed_item_id, user_id)
 
         if owed_item is None:
@@ -105,9 +108,10 @@ class OwedService:
         self,
         owed_item_id: int,
         owed_data: OwedItemUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedItem:
-        owed_item = self.get_owed_item(owed_item_id, current_user)
+        owed_item = self.get_owed_item(owed_item_id, current_user=current_user)
 
         amount_total = owed_data.amount_total
         if amount_total is None:
@@ -147,17 +151,21 @@ class OwedService:
     def delete_owed_item(
         self,
         owed_item_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        owed_item = self.get_owed_item(owed_item_id, current_user)
+        owed_item = self.get_owed_item(owed_item_id, current_user=current_user)
         self.repository.delete(owed_item)
 
     def record_payment(
         self,
         payment_data: OwedPaymentCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedPaymentRead:
+        user_id = current_user.id
         payment = OwedPayment(
+            user_id=user_id,
             person=payment_data.person,
             payment_date=payment_data.payment_date,
             amount=payment_data.amount,
@@ -169,7 +177,6 @@ class OwedService:
             unallocated_notes=payment_data.unallocated_notes,
         )
 
-        user_id = self._get_user_id(current_user)
         self._validate_linked_payment_transaction(
             linked_transaction_id=payment_data.linked_transaction_id,
             amount=payment_data.amount,
@@ -219,15 +226,16 @@ class OwedService:
         person: str | None = None,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[OwedPaymentRead]:
         return [
             self._build_payment_read(
                 payment,
-                self._get_user_id(current_user),
+                current_user.id,
             )
             for payment in self.repository.list_payments(
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
                 person=person,
                 limit=limit,
                 offset=offset,
@@ -237,9 +245,10 @@ class OwedService:
     def rename_person(
         self,
         rename_data: OwedPersonRename,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedPersonRenameRead:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         from_person = rename_data.from_person.strip()
         to_person = rename_data.to_person.strip()
 
@@ -271,9 +280,10 @@ class OwedService:
     def get_payment(
         self,
         payment_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> OwedPaymentRead:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         payment = self.repository.get_payment_by_id(payment_id, user_id)
 
         if payment is None:
@@ -287,9 +297,10 @@ class OwedService:
     def delete_payment(
         self,
         payment_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         payment = self.repository.get_payment_by_id(payment_id, user_id)
 
         if payment is None:
@@ -328,7 +339,8 @@ class OwedService:
     def _validate_requested_allocations(
         self,
         payment_data: OwedPaymentCreate,
-        current_user: CurrentUser | None,
+        *,
+        current_user: CurrentUser,
     ) -> list[tuple[OwedItem, Decimal]]:
         if not payment_data.allocations:
             return []
@@ -340,7 +352,7 @@ class OwedService:
         for allocation_data in payment_data.allocations:
             owed_item = self.get_owed_item(
                 allocation_data.owed_item_id,
-                current_user,
+                current_user=current_user,
             )
 
             if owed_item.person != payment_data.person:
@@ -391,6 +403,7 @@ class OwedService:
             )
 
         allocation = OwedPaymentAllocation(
+            user_id=owed_item.user_id,
             owed_payment_id=payment_id,
             owed_item_id=owed_item.id,
             amount=amount,
@@ -453,7 +466,7 @@ class OwedService:
 
         transaction = self.transaction_repository.get_by_id(
             linked_transaction_id,
-            user_id,
+            user_id=user_id,
         )
 
         if transaction is None:
@@ -495,7 +508,7 @@ class OwedService:
 
         transaction = self.transaction_repository.get_by_id(
             linked_transaction_id,
-            user_id,
+            user_id=user_id,
         )
 
         if transaction is None:
@@ -568,9 +581,3 @@ class OwedService:
         dedupe_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
         return owed_data.model_copy(update={"dedupe_hash": dedupe_hash})
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id

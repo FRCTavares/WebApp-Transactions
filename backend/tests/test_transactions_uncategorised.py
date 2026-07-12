@@ -1,11 +1,13 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.transaction import Transaction
 
 def test_list_uncategorised_transactions_route_filters_uncategorised_outgoing(client, db_session):
     transactions = [
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 1),
             description="Uncategorised out",
             raw_description="Uncategorised out",
@@ -17,6 +19,7 @@ def test_list_uncategorised_transactions_route_filters_uncategorised_outgoing(cl
             currency="EUR",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 2),
             description="Categorised out",
             raw_description="Categorised out",
@@ -28,6 +31,7 @@ def test_list_uncategorised_transactions_route_filters_uncategorised_outgoing(cl
             currency="EUR",
         ),
         Transaction(
+            user_id=LOCAL_DEFAULT_USER_ID,
             date=date(2026, 5, 3),
             description="Uncategorised in",
             raw_description="Uncategorised in",

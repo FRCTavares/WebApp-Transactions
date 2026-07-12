@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.repositories.owed_repository import OwedRepository
@@ -34,33 +34,42 @@ class WealthService:
     def create_account(
         self,
         account_data: WealthAccountCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthAccount:
         account_data = account_data.model_copy(
             update={"currency": account_data.currency.upper()}
         )
-        return self.repository.create_account(account_data, self._get_user_id(current_user))
+        return self.repository.create_account(
+            account_data,
+            user_id=current_user.id,
+        )
 
     def list_accounts(
         self,
         active_only: bool = False,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[WealthAccount]:
         return self.repository.list_accounts(
             active_only=active_only,
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def get_account(
         self,
         account_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthAccount:
-        account = self.repository.get_account_by_id(account_id, self._get_user_id(current_user))
+        account = self.repository.get_account_by_id(
+            account_id,
+            user_id=current_user.id,
+        )
 
         if account is None:
             raise HTTPException(
@@ -74,9 +83,10 @@ class WealthService:
         self,
         account_id: int,
         account_data: WealthAccountUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthAccount:
-        account = self.get_account(account_id, current_user)
+        account = self.get_account(account_id, current_user=current_user)
         update_data = account_data.model_dump(exclude_unset=True)
 
         if "currency" in update_data and update_data["currency"] is not None:
@@ -89,11 +99,15 @@ class WealthService:
     def delete_account(
         self,
         account_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        account = self.get_account(account_id, current_user)
+        account = self.get_account(account_id, current_user=current_user)
 
-        if self.repository.has_snapshots_for_account(account_id, self._get_user_id(current_user)):
+        if self.repository.has_snapshots_for_account(
+            account_id,
+            user_id=current_user.id,
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete a wealth account with snapshots",
@@ -104,11 +118,12 @@ class WealthService:
     def create_snapshot(
         self,
         snapshot_data: WealthSnapshotCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthSnapshot:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
 
-        self.get_account(snapshot_data.account_id, current_user)
+        self.get_account(snapshot_data.account_id, current_user=current_user)
         self._raise_if_duplicate_snapshot(
             account_id=snapshot_data.account_id,
             snapshot_date=snapshot_data.snapshot_date,
@@ -116,7 +131,10 @@ class WealthService:
         )
 
         snapshot_data = self._normalise_snapshot_create(snapshot_data)
-        return self.repository.create_snapshot(snapshot_data, user_id)
+        return self.repository.create_snapshot(
+            snapshot_data,
+            user_id=user_id,
+        )
 
     def list_snapshots(
         self,
@@ -125,10 +143,11 @@ class WealthService:
         date_to: date | None = None,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[WealthSnapshot]:
         if account_id is not None:
-            self.get_account(account_id, current_user)
+            self.get_account(account_id, current_user=current_user)
 
         return self.repository.list_snapshots(
             account_id=account_id,
@@ -136,15 +155,19 @@ class WealthService:
             date_to=date_to,
             limit=limit,
             offset=offset,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
     def get_snapshot(
         self,
         snapshot_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthSnapshot:
-        snapshot = self.repository.get_snapshot_by_id(snapshot_id, self._get_user_id(current_user))
+        snapshot = self.repository.get_snapshot_by_id(
+            snapshot_id,
+            user_id=current_user.id,
+        )
 
         if snapshot is None:
             raise HTTPException(
@@ -158,14 +181,15 @@ class WealthService:
         self,
         snapshot_id: int,
         snapshot_data: WealthSnapshotUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthSnapshot:
-        user_id = self._get_user_id(current_user)
-        snapshot = self.get_snapshot(snapshot_id, current_user)
+        user_id = current_user.id
+        snapshot = self.get_snapshot(snapshot_id, current_user=current_user)
 
         account_id = snapshot_data.account_id
         if account_id is not None:
-            self.get_account(account_id, current_user)
+            self.get_account(account_id, current_user=current_user)
 
         normalised_data = self._normalise_snapshot_update(
             existing_snapshot=snapshot,
@@ -186,17 +210,21 @@ class WealthService:
     def delete_snapshot(
         self,
         snapshot_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        snapshot = self.get_snapshot(snapshot_id, current_user)
+        snapshot = self.get_snapshot(snapshot_id, current_user=current_user)
         self.repository.delete_snapshot(snapshot)
 
     def get_summary(
         self,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> WealthSummaryRead:
-        user_id = self._get_user_id(current_user)
-        snapshots = self.repository.list_all_snapshots_ascending(user_id)
+        user_id = current_user.id
+        snapshots = self.repository.list_all_snapshots_ascending(
+            user_id=user_id,
+        )
         latest_by_account = self._get_latest_snapshot_by_account(snapshots)
         derived_account_ids = self._get_derived_account_ids(user_id)
 
@@ -209,25 +237,32 @@ class WealthService:
             Decimal("0"),
         )
         money_owed_to_me = self._get_money_owed_to_me(user_id)
-        investment_value = self._get_current_investment_value(current_user)
+        investment_value = self._get_current_investment_value(current_user=current_user)
 
         return WealthSummaryRead(
             current_total_wealth_eur=snapshot_total + money_owed_to_me + investment_value,
             account_count=self._count_active_manual_accounts(user_id),
-            latest_snapshot_date=self.repository.get_latest_snapshot_date(user_id),
-            total_interest_earned=self.repository.sum_interest_earned(user_id),
+            latest_snapshot_date=self.repository.get_latest_snapshot_date(
+                user_id=user_id,
+            ),
+            total_interest_earned=self.repository.sum_interest_earned(
+                user_id=user_id,
+            ),
             money_owed_to_me_eur=money_owed_to_me,
             investment_value_eur=investment_value,
         )
 
     def get_monthly_totals(
         self,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[WealthMonthlyRead]:
-        user_id = self._get_user_id(current_user)
-        snapshots = self.repository.list_all_snapshots_ascending(user_id)
+        user_id = current_user.id
+        snapshots = self.repository.list_all_snapshots_ascending(
+            user_id=user_id,
+        )
         derived_account_ids = self._get_derived_account_ids(user_id)
-        investment_values_by_month = self._get_monthly_investment_values(current_user)
+        investment_values_by_month = self._get_monthly_investment_values(current_user=current_user)
         snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
@@ -297,7 +332,8 @@ class WealthService:
 
     def _get_current_investment_value(
         self,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> Decimal:
         if self.investment_event_service is None:
             return Decimal("0")
@@ -318,7 +354,8 @@ class WealthService:
 
     def _get_monthly_investment_values(
         self,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, Decimal]:
         if self.investment_event_service is None:
             return {}
@@ -400,12 +437,6 @@ class WealthService:
             or "btc" in text
             or "bitcoin" in text
         )
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _normalise_snapshot_create(
         self,

@@ -75,7 +75,7 @@ def get_import_batch(
     service: ImportService = Depends(get_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.get_import_batch(batch_id, current_user)
+    return service.get_import_batch(batch_id, current_user=current_user)
 
 
 @router.get("/batches/{batch_id}/transactions", response_model=list[TransactionRead])
@@ -119,7 +119,7 @@ def delete_import_batch(
     service: ImportService = Depends(get_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    return service.delete_import_batch(batch_id, current_user)
+    return service.delete_import_batch(batch_id, current_user=current_user)
 
 
 @router.post("/preview", response_model=ImportPreviewResponse)

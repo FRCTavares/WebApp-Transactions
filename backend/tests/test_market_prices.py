@@ -5,6 +5,7 @@ from decimal import Decimal
 import jwt
 import pytest
 
+from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 
 
@@ -30,6 +31,7 @@ def make_market_price_token(
 
 def create_market_buy(db_session, *, ticker="VWCE", isin="IE00BK5BQT80"):
     event = InvestmentEvent(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 6, 1),
         source="trading212",
         account="Trading 212",

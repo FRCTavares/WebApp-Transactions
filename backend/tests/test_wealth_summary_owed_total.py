@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
 from app.models.market_price import MarketPrice
 from app.models.owed_item import OwedItem
@@ -14,8 +15,12 @@ from app.services.investment_event_service import InvestmentEventService
 from app.services.wealth_service import WealthService
 
 
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
+
 def test_wealth_summary_includes_active_owed_remaining_total(db_session):
     account = WealthAccount(
+        user_id=LOCAL_DEFAULT_USER_ID,
         name="Savings",
         account_type="savings_account",
         currency="EUR",
@@ -26,6 +31,7 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
 
     db_session.add(
         WealthSnapshot(
+            user_id=LOCAL_DEFAULT_USER_ID,
             snapshot_date=date(2026, 6, 1),
             account_id=account.id,
             balance=Decimal("1000.00"),
@@ -36,6 +42,7 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
     )
     db_session.add(
         OwedItem(
+            user_id=LOCAL_DEFAULT_USER_ID,
             person="Mother",
             amount_total=Decimal("200.00"),
             amount_paid=Decimal("50.00"),
@@ -46,6 +53,7 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
     )
     db_session.add(
         OwedItem(
+            user_id=LOCAL_DEFAULT_USER_ID,
             person="Friend",
             amount_total=Decimal("30.00"),
             amount_paid=Decimal("30.00"),
@@ -56,6 +64,7 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
     )
     db_session.add(
         OwedItem(
+            user_id=LOCAL_DEFAULT_USER_ID,
             person="Cancelled",
             amount_total=Decimal("40.00"),
             amount_paid=Decimal("0.00"),
@@ -71,7 +80,7 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
         OwedRepository(db_session),
     )
 
-    summary = service.get_summary()
+    summary = service.get_summary(current_user=LOCAL_CURRENT_USER)
 
     assert summary.money_owed_to_me_eur == Decimal("150.00")
     assert summary.current_total_wealth_eur == Decimal("1150.00")
@@ -79,12 +88,14 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
 
 def test_wealth_summary_derives_investments_without_counting_investment_snapshots(db_session):
     savings_account = WealthAccount(
+        user_id=LOCAL_DEFAULT_USER_ID,
         name="Savings",
         account_type="savings_account",
         currency="EUR",
         is_active=True,
     )
     investment_account = WealthAccount(
+        user_id=LOCAL_DEFAULT_USER_ID,
         name="Trading 212 CSPX",
         account_type="brokerage",
         currency="EUR",
@@ -97,6 +108,7 @@ def test_wealth_summary_derives_investments_without_counting_investment_snapshot
     db_session.add_all(
         [
             WealthSnapshot(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 snapshot_date=date(2026, 6, 1),
                 account_id=savings_account.id,
                 balance=Decimal("1000.00"),
@@ -105,6 +117,7 @@ def test_wealth_summary_derives_investments_without_counting_investment_snapshot
                 fx_rate_to_eur=Decimal("1.00000000"),
             ),
             WealthSnapshot(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 snapshot_date=date(2026, 6, 1),
                 account_id=investment_account.id,
                 balance=Decimal("9999.00"),
@@ -113,6 +126,7 @@ def test_wealth_summary_derives_investments_without_counting_investment_snapshot
                 fx_rate_to_eur=Decimal("1.00000000"),
             ),
             InvestmentEvent(
+                user_id=LOCAL_DEFAULT_USER_ID,
                 date=date(2026, 6, 1),
                 source="trading212",
                 account="Trading 212",
@@ -149,7 +163,7 @@ def test_wealth_summary_derives_investments_without_counting_investment_snapshot
         investment_event_service=investment_service,
     )
 
-    summary = service.get_summary()
+    summary = service.get_summary(current_user=LOCAL_CURRENT_USER)
 
     assert summary.investment_value_eur == Decimal("240.00")
     assert summary.current_total_wealth_eur == Decimal("1240.00")

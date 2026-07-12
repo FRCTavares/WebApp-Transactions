@@ -1,9 +1,12 @@
 from datetime import date
 from decimal import Decimal
 
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.schemas.investment_event import InvestmentEventCreate, InvestmentEventUpdate
 from app.services.investment_event_service import InvestmentEventService
+
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_create_and_list_investment_event(db_session):
@@ -30,10 +33,11 @@ def test_create_and_list_investment_event(db_session):
             fx_rate_source="pending",
             external_id="market-1",
             dedupe_hash="test-investment-event-hash",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
-    events = service.list_events(source="trading212")
+    events = service.list_events(source="trading212", current_user=LOCAL_CURRENT_USER)
 
     assert len(events) == 1
     assert events[0].id == created_event.id
@@ -58,12 +62,14 @@ def test_update_investment_event(db_session):
             raw_description="Interest on cash | ID: interest-1",
             amount=Decimal("0.03"),
             currency="EUR",
-        )
+        ),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     updated_event = service.update_event(
         created_event.id,
         InvestmentEventUpdate(notes="Monthly broker interest"),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert updated_event.notes == "Monthly broker interest"

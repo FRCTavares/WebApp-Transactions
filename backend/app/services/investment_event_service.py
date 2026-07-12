@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
-from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import CurrentUser
 from app.models.investment_event import InvestmentEvent
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
@@ -40,9 +40,10 @@ class InvestmentEventService:
     def create_event(
         self,
         event_data: InvestmentEventCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> InvestmentEvent:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         candidate = build_create_event_candidate(event_data)
 
         validate_market_event_candidate(candidate)
@@ -51,7 +52,10 @@ class InvestmentEventService:
             existing_events=self.repository.list_all(user_id=user_id),
         )
 
-        return self.repository.create(event_data, user_id)
+        return self.repository.create(
+            event_data,
+            user_id=user_id,
+        )
 
     def list_events(
         self,
@@ -61,9 +65,10 @@ class InvestmentEventService:
         date_to: date | None = None,
         limit: int = 100,
         offset: int = 0,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[InvestmentEvent]:
-        user_id = self._get_user_id(current_user)
+        user_id = current_user.id
         events = self.repository.list(
             source=source,
             event_type=event_type,
@@ -75,18 +80,19 @@ class InvestmentEventService:
         )
 
         return [
-            self._attach_matched_transaction(event, user_id)
+            self._attach_matched_transaction(event, user_id=user_id)
             for event in events
         ]
 
     def list_positions(
         self,
         source: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[dict[str, object]]:
         events = self.repository.list_all(
             source=source,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
         positions = build_average_cost_positions(events)
 
@@ -151,7 +157,8 @@ class InvestmentEventService:
         self,
         year: int,
         month: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, Decimal | str]:
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
@@ -159,16 +166,16 @@ class InvestmentEventService:
 
         start_value, start_value_estimated = self._get_portfolio_value_on(
             start_date,
-            current_user,
+            current_user=current_user,
         )
         end_value, end_value_estimated = self._get_portfolio_value_on(
             month_end,
-            current_user,
+            current_user=current_user,
         )
         net_invested = self._get_net_invested_between(
             start_date,
             end_date,
-            current_user,
+            current_user=current_user,
         )
 
         unrealised_monthly_change = None
@@ -190,7 +197,8 @@ class InvestmentEventService:
     def get_monthly_series(
         self,
         months: int = 24,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> list[dict[str, Decimal | str | None]]:
         today = date.today()
         start_month = self._shift_month(date(today.year, today.month, 1), -(months - 1))
@@ -206,11 +214,11 @@ class InvestmentEventService:
 
             allocated, allocated_estimated = self._get_total_cost_basis_on(
                 month_end,
-                current_user,
+                current_user=current_user,
             )
             market_value, market_value_estimated = self._get_portfolio_value_on(
                 month_end,
-                current_user,
+                current_user=current_user,
             )
             gain = None
 
@@ -234,9 +242,10 @@ class InvestmentEventService:
     def _get_total_cost_basis_on(
         self,
         value_date: date,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> tuple[Decimal | None, bool]:
-        holdings = self._get_holding_cost_buckets_on(value_date, current_user)
+        holdings = self._get_holding_cost_buckets_on(value_date, current_user=current_user)
         total_cost_eur = Decimal("0")
         is_estimated = False
 
@@ -272,11 +281,12 @@ class InvestmentEventService:
     def _get_holding_cost_buckets_on(
         self,
         value_date: date,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
         events = self.repository.list_until(
             value_date,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         return build_average_cost_positions(events)
@@ -291,12 +301,13 @@ class InvestmentEventService:
     def _get_portfolio_value_on(
         self,
         value_date: date,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> tuple[Decimal | None, bool]:
         if self.market_price_history_repository is None:
             return None, False
 
-        holdings = self._get_holdings_on(value_date, current_user)
+        holdings = self._get_holdings_on(value_date, current_user=current_user)
         total_value = Decimal("0")
         is_estimated = False
 
@@ -344,7 +355,8 @@ class InvestmentEventService:
         value_date: date,
         ticker: str | None,
         isin: str | None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> tuple[Decimal, str, bool] | None:
         if self.market_price_history_repository is not None:
             historical_price = self.market_price_history_repository.get_latest_on_or_before(
@@ -363,7 +375,7 @@ class InvestmentEventService:
         events = sorted(
             self.repository.list_until(
                 value_date,
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
             ),
             key=lambda item: (item.date, item.id),
             reverse=True,
@@ -389,13 +401,14 @@ class InvestmentEventService:
     def _get_holdings_on(
         self,
         value_date: date,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
         holdings: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
 
         for event in self.repository.list_until(
             value_date,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         ):
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
@@ -429,14 +442,15 @@ class InvestmentEventService:
         self,
         start_date: date,
         end_date: date,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> Decimal:
         net_invested = Decimal("0")
 
         for event in self.repository.list_between(
             start_date,
             end_date,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         ):
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
@@ -453,12 +467,6 @@ class InvestmentEventService:
                 net_invested -= amount_eur
 
         return net_invested.quantize(Decimal("0.01"))
-
-    def _get_user_id(self, current_user: CurrentUser | None) -> str:
-        if current_user is None:
-            return LOCAL_DEFAULT_USER_ID
-
-        return current_user.id
 
     def _get_event_amount_eur(self, event: InvestmentEvent) -> Decimal | None:
         if event.currency == "EUR":
@@ -481,7 +489,8 @@ class InvestmentEventService:
         isin: str | None,
         quantity: Decimal,
         costs: list[dict[str, Decimal | str]],
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> dict[str, Decimal | str | None]:
         empty_fields = {
             "market_price": None,
@@ -556,7 +565,8 @@ class InvestmentEventService:
         value_date: date,
         ticker: str | None = None,
         isin: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> tuple[Decimal | None, bool]:
         if currency == "EUR":
             return Decimal("1"), False
@@ -564,7 +574,7 @@ class InvestmentEventService:
         events = sorted(
             self.repository.list_until(
                 value_date,
-                user_id=self._get_user_id(current_user),
+                user_id=current_user.id,
             ),
             key=lambda item: (item.date, item.id),
             reverse=True,
@@ -619,13 +629,14 @@ class InvestmentEventService:
         currency: str,
         ticker: str | None = None,
         isin: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> Decimal | None:
         if currency == "EUR":
             return Decimal("1")
 
         events = sorted(
-            self.repository.list_all(user_id=self._get_user_id(current_user)),
+            self.repository.list_all(user_id=current_user.id),
             key=lambda item: item.date,
             reverse=True,
         )
@@ -677,7 +688,8 @@ class InvestmentEventService:
         costs: list[dict[str, Decimal | str]],
         ticker: str | None = None,
         isin: str | None = None,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> Decimal | None:
         total_cost_eur = Decimal("0")
 
@@ -705,11 +717,12 @@ class InvestmentEventService:
     def get_event(
         self,
         event_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> InvestmentEvent:
         event = self.repository.get_by_id(
             event_id,
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         if event is None:
@@ -718,16 +731,17 @@ class InvestmentEventService:
                 detail="Investment event not found",
             )
 
-        return self._attach_matched_transaction(event, self._get_user_id(current_user))
+        return self._attach_matched_transaction(event, user_id=current_user.id)
 
     def update_event(
         self,
         event_id: int,
         event_data: InvestmentEventUpdate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> InvestmentEvent:
-        user_id = self._get_user_id(current_user)
-        event = self.get_event(event_id, current_user)
+        user_id = current_user.id
+        event = self.get_event(event_id, current_user=current_user)
         candidate = build_update_event_candidate(event, event_data)
 
         validate_market_event_candidate(candidate)
@@ -742,15 +756,17 @@ class InvestmentEventService:
     def delete_event(
         self,
         event_id: int,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> None:
-        event = self.get_event(event_id, current_user)
+        event = self.get_event(event_id, current_user=current_user)
         self.repository.delete(event)
 
 
     def _attach_matched_transaction(
         self,
         event: InvestmentEvent,
+        *,
         user_id: str,
     ) -> InvestmentEvent:
         matched_transaction = None
@@ -772,7 +788,8 @@ class InvestmentEventService:
         self,
         event_id: int,
         resolution_data: ManualFundingResolutionCreate,
-        current_user: CurrentUser | None = None,
+        *,
+        current_user: CurrentUser,
     ) -> tuple[InvestmentEvent, int]:
         if self.transaction_repository is None:
             raise HTTPException(
@@ -780,7 +797,7 @@ class InvestmentEventService:
                 detail="Transaction repository is required",
             )
 
-        event = self.get_event(event_id, current_user)
+        event = self.get_event(event_id, current_user=current_user)
 
         if event.event_type != "deposit":
             raise HTTPException(
@@ -814,7 +831,7 @@ class InvestmentEventService:
                 currency="EUR",
                 notes=resolution_data.notes,
             ),
-            user_id=self._get_user_id(current_user),
+            user_id=current_user.id,
         )
 
         updated_event = self.repository.update(

@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime
 import pytest
 from fastapi import HTTPException
 
-from app.auth.current_user import CurrentUser
+from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from decimal import Decimal
 
 from app.models.owed_item import OwedItem
@@ -14,8 +14,12 @@ from app.schemas.transaction import TransactionCreate
 from app.services.transaction_service import TransactionService
 
 
+LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
+
 def test_list_transactions_includes_owed_metadata(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 28),
         description="Dominos",
         raw_description="DOMINOS EXPO II",
@@ -30,6 +34,7 @@ def test_list_transactions_includes_owed_metadata(db_session):
     db_session.flush()
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         amount_total=Decimal("29.00"),
         amount_paid=Decimal("0.00"),
@@ -44,7 +49,7 @@ def test_list_transactions_includes_owed_metadata(db_session):
 
     service = TransactionService(TransactionRepository(db_session))
 
-    transactions = service.list_transactions(direction="out")
+    transactions = service.list_transactions(direction="out", current_user=LOCAL_CURRENT_USER)
 
     assert len(transactions) == 1
     assert transactions[0].is_owed is True
@@ -58,6 +63,7 @@ def test_list_transactions_includes_owed_metadata(db_session):
 
 def test_list_transactions_marks_non_owed_transaction(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 28),
         description="Coffee",
         raw_description="MY BREAK DELTA",
@@ -73,7 +79,7 @@ def test_list_transactions_marks_non_owed_transaction(db_session):
 
     service = TransactionService(TransactionRepository(db_session))
 
-    transactions = service.list_transactions(direction="out")
+    transactions = service.list_transactions(direction="out", current_user=LOCAL_CURRENT_USER)
 
     assert len(transactions) == 1
     assert transactions[0].is_owed is False
@@ -87,6 +93,7 @@ def test_list_transactions_marks_non_owed_transaction(db_session):
 
 def test_get_transaction_includes_paid_owed_metadata(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 28),
         description="Dominos",
         raw_description="DOMINOS EXPO II",
@@ -101,6 +108,7 @@ def test_get_transaction_includes_paid_owed_metadata(db_session):
     db_session.flush()
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         amount_total=Decimal("29.00"),
         amount_paid=Decimal("29.00"),
@@ -115,7 +123,7 @@ def test_get_transaction_includes_paid_owed_metadata(db_session):
 
     service = TransactionService(TransactionRepository(db_session))
 
-    result = service.get_transaction(transaction.id)
+    result = service.get_transaction(transaction.id, current_user=LOCAL_CURRENT_USER)
 
     assert result.is_owed is True
     assert result.owed_item_id == owed_item.id
@@ -128,6 +136,7 @@ def test_get_transaction_includes_paid_owed_metadata(db_session):
 
 def test_list_transactions_only_includes_current_user_owed_metadata(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 28),
         description="Dominos",
         raw_description="DOMINOS EXPO II",
@@ -159,7 +168,7 @@ def test_list_transactions_only_includes_current_user_owed_metadata(db_session):
 
     transactions = service.list_transactions(
         direction="out",
-        current_user=CurrentUser(id="local-default-user"),
+        current_user=LOCAL_CURRENT_USER,
     )
 
     assert len(transactions) == 1
@@ -170,6 +179,7 @@ def test_list_transactions_only_includes_current_user_owed_metadata(db_session):
 
 def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_session):
     pizza_transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 10),
         description="Pizza",
         raw_description="Pizza",
@@ -181,6 +191,7 @@ def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_sessio
         currency="EUR",
     )
     mbway_transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         date=date(2026, 5, 11),
         description="Grandma MBWay",
         raw_description="Grandma MBWay",
@@ -195,6 +206,7 @@ def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_sessio
     db_session.flush()
 
     owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         amount_total=Decimal("29.00"),
         amount_paid=Decimal("29.00"),
@@ -208,6 +220,7 @@ def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_sessio
     db_session.flush()
 
     owed_payment = OwedPayment(
+        user_id=LOCAL_DEFAULT_USER_ID,
         person="Grandma",
         payment_date=date(2026, 5, 11),
         amount=Decimal("50.00"),
@@ -222,6 +235,7 @@ def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_sessio
 
     db_session.add(
         OwedPaymentAllocation(
+            user_id=LOCAL_DEFAULT_USER_ID,
             owed_payment_id=owed_payment.id,
             owed_item_id=owed_item.id,
             amount=Decimal("29.00"),
@@ -231,7 +245,7 @@ def test_list_transactions_includes_owed_payment_metadata_for_money_in(db_sessio
 
     service = TransactionService(TransactionRepository(db_session))
 
-    transactions = service.list_transactions(direction="in")
+    transactions = service.list_transactions(direction="in", current_user=LOCAL_CURRENT_USER)
 
     assert len(transactions) == 1
     assert transactions[0].is_owed_payment is True
@@ -292,6 +306,7 @@ def test_transactions_are_isolated_by_current_user(db_session):
 
 def test_transaction_read_normalises_legacy_cashflow_type(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         id=999001,
         created_at=datetime(2026, 5, 28, tzinfo=UTC),
         updated_at=datetime(2026, 5, 28, tzinfo=UTC),
@@ -316,6 +331,7 @@ def test_transaction_read_normalises_legacy_cashflow_type(db_session):
 
 def test_transaction_read_falls_back_for_unknown_cashflow_type(db_session):
     transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
         id=999002,
         created_at=datetime(2026, 5, 28, tzinfo=UTC),
         updated_at=datetime(2026, 5, 28, tzinfo=UTC),
