@@ -196,28 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-009: Add a complete CI workflow
-
-- Evidence:
-  - Only the keep-warm workflow exists.
-  - Frontend lint fails.
-
-- Required checks:
-  - backend tests
-  - frontend lint
-  - frontend build
-  - clean Alembic upgrade
-  - integrity audit
-  - export and restore test
-  - dependency checks
-  - `git diff --check`
-
-- Acceptance criteria:
-  - Merges require all checks.
-  - Deployment is blocked when CI fails.
-- Effort: Medium
-- Paid plan required: No
-
 ### HIGH-010: Pin backend dependencies
 
 - Evidence:
