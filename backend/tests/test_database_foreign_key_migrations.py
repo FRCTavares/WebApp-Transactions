@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -50,7 +51,9 @@ def create_legacy_database(tmp_path):
 
     result = subprocess.run(
         [
-            ".venv/bin/alembic",
+            sys.executable,
+            "-m",
+            "alembic",
             "upgrade",
             PREVIOUS_REVISION,
         ],

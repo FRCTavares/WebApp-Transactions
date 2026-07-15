@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from sqlalchemy import create_engine, inspect
@@ -85,7 +86,7 @@ def test_alembic_upgrade_head_has_production_indexes(tmp_path):
     env["DATABASE_URL"] = database_url
 
     subprocess.run(
-        [".venv/bin/alembic", "upgrade", "head"],
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
         check=True,
         env=env,
         cwd=Path.cwd(),

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -200,7 +201,7 @@ def test_data_integrity_audit_script_exit_code_reflects_failures(tmp_path):
     env["DATABASE_URL"] = f"sqlite:///{database_path}"
 
     result = subprocess.run(
-        [".venv/bin/python", "scripts/audit_data_integrity.py"],
+        [sys.executable, "scripts/audit_data_integrity.py"],
         cwd=Path.cwd(),
         env=env,
         text=True,

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from sqlalchemy import create_engine, text
@@ -16,7 +17,7 @@ def run_alembic(
     env["DATABASE_URL"] = database_url
 
     return subprocess.run(
-        [".venv/bin/alembic", *arguments],
+        [sys.executable, "-m", "alembic", *arguments],
         check=False,
         env=env,
         cwd=Path.cwd(),
