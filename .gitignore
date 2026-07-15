@@ -34,3 +34,4 @@ backups/
 backend/.env
 frontend/.env
 
+backend/data/
