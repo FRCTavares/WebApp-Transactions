@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 
 from sqlalchemy import delete as sqlalchemy_delete, select

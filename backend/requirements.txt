@@ -4,6 +4,7 @@ sqlalchemy
 pydantic
 python-multipart
 pytest
+httpx2
 openpyxl
 yfinance
 psycopg[binary]
