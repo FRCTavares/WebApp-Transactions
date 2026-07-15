@@ -196,32 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-011: Establish tested backup and recovery objectives
-
-- Status:
-  - A custom-format production PostgreSQL dump passed checksum and archive validation.
-  - It restored into an isolated PostgreSQL database.
-  - Every application-table row count matched production.
-  - The restored Alembic revision is `c4d2e6f8a130`.
-  - Generated JSON exports also restore into clean SQLite with matching counts.
-
-- Remaining work:
-  - Define production RPO and RTO.
-  - Define backup retention, encryption, off-device storage, and restore ownership.
-  - Replace direct SQLite file copying with the SQLite backup API or `VACUUM INTO`.
-  - Schedule repeatable restore drills.
-
-- Acceptance criteria:
-  - A recent production PostgreSQL backup restores into a clean environment.
-  - Restored schema revision and row counts match production.
-  - A recent JSON export restores into clean SQLite with matching counts.
-  - Retention, encryption, RPO, and RTO are documented.
-- Effort: Medium
-
-- Paid plan required:
-  - No for manual tested exports and database dumps.
-  - Possibly yes for managed point-in-time recovery and longer retention.
-
 ## 7. Medium Priority
 
 ### MED-001: Fix all frontend lint errors

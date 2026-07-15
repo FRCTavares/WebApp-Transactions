@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
@@ -47,7 +47,7 @@ def test_create_owed_item_records_created_event(client, db_session):
 
     assert len(events) == 1
     assert events[0].event_type == "created"
-    assert events[0].effective_date == date.today()
+    assert events[0].effective_date == datetime.now(UTC).date()
     assert events[0].amount_total == Decimal("30.00")
     assert events[0].amount_paid == Decimal("0.00")
     assert events[0].amount_remaining == Decimal("30.00")
@@ -172,7 +172,7 @@ def test_delete_payment_records_reversal_event(client, db_session):
         "payment",
         "payment_reversed",
     ]
-    assert events[-1].effective_date == date.today()
+    assert events[-1].effective_date == datetime.now(UTC).date()
     assert events[-1].owed_payment_id == payment_id
     assert events[-1].amount_paid == Decimal("0.00")
     assert events[-1].amount_remaining == Decimal("30.00")
@@ -200,4 +200,4 @@ def test_delete_owed_item_soft_deletes_and_records_event(
         "created",
         "deleted",
     ]
-    assert events[-1].effective_date == date.today()
+    assert events[-1].effective_date == datetime.now(UTC).date()
