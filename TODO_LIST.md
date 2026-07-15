@@ -196,24 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-010: Pin backend dependencies
-
-- Evidence:
-  - `backend/requirements.txt` contains unversioned packages.
-
-- Risk:
-  - Non-reproducible and unstable builds.
-
-- Proposed fix:
-  - Use exact tested versions or a lock workflow.
-  - Add scheduled dependency updates.
-
-- Acceptance criteria:
-  - Clean installs use deterministic versions.
-  - CI runs `pip check`.
-- Effort: Small
-- Paid plan required: No
-
 ### HIGH-011: Establish tested backup and recovery objectives
 
 - Status:
