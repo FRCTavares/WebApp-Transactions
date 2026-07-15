@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 DB_PATH="${1:-backend/data/finance.db}"
 BACKUP_DIR="${2:-backups}"

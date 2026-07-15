@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sqlite3
+import sys
 from pathlib import Path
 
 
@@ -69,7 +70,7 @@ def main() -> int:
             args.backup_path,
         )
     except Exception as exc:
-        print(str(exc))
+        print(str(exc), file=sys.stderr)
         return 1
 
     print(f"Backup created: {args.backup_path}")

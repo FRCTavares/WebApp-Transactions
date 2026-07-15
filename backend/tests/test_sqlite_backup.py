@@ -66,6 +66,8 @@ def test_sqlite_backup_captures_committed_wal_rows(tmp_path):
     )
 
     assert len(backup_files) == 1
+    assert backup_directory.stat().st_mode & 0o077 == 0
+    assert backup_files[0].stat().st_mode & 0o077 == 0
 
     with sqlite3.connect(backup_files[0]) as backup:
         integrity_result = backup.execute(
@@ -89,5 +91,6 @@ def test_sqlite_backup_rejects_missing_database(tmp_path):
     )
 
     assert result.returncode != 0
+    assert result.stdout == ""
     assert "Database not found:" in result.stderr
     assert not (tmp_path / "backups").exists()
