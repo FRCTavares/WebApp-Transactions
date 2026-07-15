@@ -20,6 +20,10 @@ from app.schemas.owed_item import (
 )
 
 
+def utc_today() -> date:
+    return datetime.now(UTC).date()
+
+
 class OwedService:
     def __init__(
         self,
@@ -194,7 +198,7 @@ class OwedService:
                     self._build_event(
                         owed_item=updated_item,
                         event_type=event_type,
-                        effective_date=date.today(),
+                        effective_date=utc_today(),
                         notes="Owed item updated.",
                     )
                 )
@@ -391,7 +395,7 @@ class OwedService:
             payment.id,
             user_id,
         )
-        reversal_date = date.today()
+        reversal_date = utc_today()
 
         try:
             for allocation in allocations:
@@ -604,7 +608,7 @@ class OwedService:
         if owed_item.due_date is not None:
             return owed_item.due_date
 
-        return date.today()
+        return utc_today()
 
     def _get_update_event_type(
         self,
