@@ -1,8 +1,8 @@
 # F - Transactions: Global Release Readiness TODO List
 
-Last audited: 2026-07-12
+Last audited: 2026-07-16
 Original audit baseline: commit `96c3f0c`
-Current verification: 327 backend tests pass; frontend build passes; frontend lint still fails
+Current verification: 427 backend tests pass; frontend lint and build pass; required CI checks pass
 Current deployment: Vercel frontend, Render backend, Supabase Postgres and Auth, Google OAuth
 
 ## 1. Executive Summary
@@ -15,8 +15,8 @@ F - Transactions has a solid personal-use foundation:
 - Supabase Postgres for production.
 - Supabase Auth with Google OAuth.
 - Explicit user ownership is enforced across repositories, services, and ORM constructors.
-- Alembic migrations that successfully build a clean database through revision `d9e4f6a2b731`.
-- 327 passing backend tests.
+- Alembic migrations successfully build a clean database through revision `f7a3c9e2d814`.
+- 427 passing backend tests.
 - Successful frontend production build.
 - Working production CORS, bearer-token enforcement, and security headers.
 - Current local database passes the existing integrity audit.
@@ -28,18 +28,16 @@ F - Transactions has a solid personal-use foundation:
 - Historical investment valuations avoid future FX look-ahead.
 
 The application is not ready for unrestricted global release.
-The most urgent remaining blockers are:
+All critical and high-priority tasks in this audit are complete. The most important remaining work is:
 
-1. Linked financial records do not yet have relational foreign keys.
-2. Upload endpoints have no size limits and load complete files into memory.
-3. Import confirmation is not bound to the exact previewed file.
-4. Pending FX handling is not consistent across transactions and investments.
-5. There is no complete CI workflow.
-6. Render free hosting causes measured cold starts of approximately 53 seconds.
-7. Accessibility and keyboard support remain incomplete.
-8. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
+1. Replace composed frontend financial workflows with atomic backend commands.
+2. Add readiness checks, structured logging, rate limits, and request timeouts.
+3. Resolve accessibility and keyboard-support defects.
+4. Improve navigation, loading, error, and partial-failure behavior.
+5. Complete privacy, account deletion, internationalization, monitoring, and incident response.
+6. Accept or remove the approximately 53-second Render free-tier cold-start limitation.
 
-The correct strategy is not a large rewrite. Fix the security and data-integrity blockers first, establish reliable recovery and CI, then improve accessibility, navigation, internationalization, observability, and release operations.
+The correct strategy remains incremental: complete the medium-priority operational and UX work before public release.
 
 ## 2. Current Production Architecture
 
@@ -73,7 +71,7 @@ The correct strategy is not a large rewrite. Fix the security and data-integrity
 - Alembic migrations in production
 - Legacy SQLite startup migrations remain active for local databases
 - No database Row Level Security policies were found
-- No SQLAlchemy foreign keys were found for linked records
+- Relational foreign keys and deliberate delete behavior protect linked financial records
 
 ### Authentication
 
@@ -92,8 +90,8 @@ The correct strategy is not a large rewrite. Fix the security and data-integrity
 - Supabase free project
 - Render pre-deploy Alembic migration
 - Manual Render deployment
-- GitHub Actions workflow only for keeping the backend warm
-- No normal continuous integration workflow
+- GitHub Actions keep-warm workflow
+- Required GitHub Actions CI covering backend, recovery, frontend, dependencies, and repository hygiene
 
 ## 3. Free-Tier Viability
 
@@ -123,20 +121,13 @@ The current free-tier architecture is not suitable for:
 
 ### Free-compatible fixes
 
-The following work does not require a paid plan:
+The following remaining work does not require a paid plan:
 
-- Protect market-price routes
-- Fix legacy import ownership
-- Add CI
-- Pin dependencies
-- Add upload limits
-- Add transaction boundaries
-- Add issuer validation
+- Add atomic backend commands for composed financial workflows
+- Add readiness checks
 - Add request IDs and structured logs
+- Add rate limits and request timeouts
 - Fix accessibility defects
-- Fix lint
-- Add foreign keys through migrations
-- Update exports and recovery tools
 - Add privacy documentation
 - Add account-deletion logic
 - Add frontend URL routing
@@ -162,20 +153,20 @@ A paid plan will eventually be justified by:
 |---|---:|---|
 | Core functionality | 4/5 | Broad feature coverage and working production deployment |
 | Backend architecture | 4/5 | Good layering and explicit ownership; broader transaction boundaries still need work |
-| Data integrity | 3/5 | Atomic imports and investment accounting are corrected; foreign keys remain missing |
+| Data integrity | 4/5 | Atomic imports, investment accounting, ownership checks, and relational foreign keys are implemented |
 | Authentication | 5/5 | Stable `sub` ownership is deployed, production data is migrated, and JWT issuer validation is enforced |
 | Authorization | 4/5 | Market routes are protected and user-owned operations require explicit ownership |
-| Import reliability | 3/5 | Atomic commits pass; upload controls and preview binding remain |
-| Recovery | 3/5 | Complete registry-based recovery passes local tests; production PostgreSQL restoration also passes |
-| Security | 2/5 | Basic headers and auth exist; rate limiting, limits, monitoring, and privacy are absent |
+| Import reliability | 4/5 | Atomic commits, bounded uploads, deduplication, and preview-to-commit binding are implemented |
+| Recovery | 4/5 | PostgreSQL and JSON restore drills pass; RPO, RTO, retention, encryption, and ownership are documented |
+| Security | 3/5 | Auth, ownership, upload limits, dependency checks, and secure backups exist; rate limiting, monitoring, and privacy remain |
 | Frontend architecture | 3/5 | API separation exists, but several pages are oversized and workflow logic is duplicated |
 | UI/UX | 3/5 | Functional and responsive, but navigation, loading, consistency, and personal defaults need work |
 | Accessibility | 1/5 | Dialog, combobox, chart, zoom, focus, and motion issues remain |
 | Internationalization | 1/5 | Hard-coded English, EUR, locales, and personal assumptions |
-| Testing | 4/5 | 327 backend tests pass; frontend lint, frontend tests, and end-to-end coverage remain weak |
-| CI/CD | 1/5 | No normal release validation workflow |
+| Testing | 4/5 | 427 backend tests, frontend lint and build, migrations, and recovery checks pass; broader frontend and end-to-end coverage remains limited |
+| CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene |
 | Observability | 1/5 | No structured logging, metrics, monitoring, or alerting |
-| Performance | 2/5 | Free-host cold starts, full-memory uploads, and repeated commits |
+| Performance | 2/5 | Free-host cold starts, remaining composed workflows, and limited production observability |
 | Documentation | 2/5 | Deployment docs exist, but several documents are stale |
 | Global release readiness | 2/5 | Suitable for controlled use, not public global shipment |
 
@@ -192,27 +183,18 @@ Completed and validated:
 - `CRIT-005`: Corrected investment sell cost basis using moving weighted-average cost.
 - `CRIT-006`: Removed look-ahead bias from historical investment valuations.
 
-The combined working tree must not be deployed before the remaining high-priority integrity and release checks are completed.
+Critical security, ownership, financial-correctness, atomic-import, recovery, and high-priority release-engineering tasks are complete.
 
 ## 6. High Priority
 
+No open `HIGH` items remain in the root task list.
+
 ## 7. Medium Priority
-
-### MED-001: Fix all frontend lint errors
-
-- Evidence:
-  - Build passes.
-  - Lint reports 13 errors and 4 warnings.
-
-- Acceptance criteria:
-  - `npm run lint` exits zero.
-  - CI enforces it.
-- Effort: Small
 
 ### MED-002: Split oversized frontend files
 
 - Evidence:
-  - `TransactionsPage.tsx`: 999 lines.
+  - `TransactionsPage.tsx`: 995 lines.
   - `dashboard.css`: 922 lines.
   - `wealth.css`: 915 lines.
 
@@ -431,10 +413,9 @@ Add:
 
 ### Relationships
 
-- Add foreign keys.
-- Add cascade policies.
-- Add same-user validation.
-- Add orphan checks to the audit.
+- Foreign keys and deliberate delete behavior are implemented.
+- Same-user validation protects related records.
+- Orphan and cross-user checks are included in the integrity audit.
 
 ### Monetary values
 
@@ -469,16 +450,12 @@ Standardize supported values across:
 
 ### Security
 
-- Protect public market endpoints.
-- Add upload limits.
 - Add rate limits.
 - Add request and database timeouts.
-- Pin dependencies.
-- Add security checks in CI.
 - Add a Content Security Policy where practical.
 - Restore browser zoom.
 - Decide API documentation exposure.
-- Redact sensitive logs.
+- Add structured logs with sensitive-data redaction.
 
 ### Privacy
 
@@ -555,8 +532,7 @@ Document:
 Current constraints:
 
 - Approximately 53-second Render cold start
-- Full-memory uploads
-- Commits in loops
+- Commits in some remaining composed workflows
 - Multiple dependent frontend requests
 - Offset pagination
 - Up to 5,000 market-history rows
@@ -577,16 +553,12 @@ Improvements:
 
 ### Immediate
 
-- Add CI
-- Fix lint
-- Pin dependencies
-- Protect market endpoints
 - Add readiness
 - Add structured logs
+- Add rate limits and request timeouts
 - Document all environment variables
 - Verify Supabase redirects
 - Verify Google authorized domains
-- Test recovery
 
 ### Render
 
@@ -677,13 +649,14 @@ Document:
 
 ### Phase 3: Release engineering
 
-- Fix lint.
-- Pin dependencies.
-- Add CI.
-- Add readiness.
-- Add logging.
-- Add rate limits and timeouts.
-- Define release and rollback.
+- [x] Fix lint.
+- [x] Pin dependencies.
+- [x] Add CI.
+- [x] Define and test backup recovery objectives.
+- [ ] Add readiness.
+- [ ] Add logging.
+- [ ] Add rate limits and timeouts.
+- [ ] Define release and rollback.
 
 ### Phase 4: Accessibility and UX
 
@@ -710,14 +683,14 @@ Document:
 2. [x] Fix the legacy transaction owner.
 3. [ ] Document `VITE_SUPABASE_AUTH_ENABLED`.
 4. [ ] Restore browser zoom.
-5. [ ] Fix lint.
-6. [ ] Pin backend dependencies.
+5. [x] Fix lint.
+6. [x] Pin backend dependencies.
 7. [ ] Protect production API docs.
 8. [ ] Add readiness.
-9. [ ] Add upload limits.
+9. [x] Add upload limits.
 10. [x] Update export, validation, restore, and migration table coverage.
 11. [ ] Add request logs.
-12. [ ] Add CI.
+12. [x] Add CI.
 13. [ ] Remove personal defaults.
 14. [ ] Remove hard-coded FX ranking.
 15. [ ] Add reduced-motion support.
@@ -779,16 +752,14 @@ Do not prioritize before blockers:
 3. Is moving weighted-average cost suitable for every intended tax jurisdiction?
 4. Which base currencies are required?
 5. Which languages are required?
-6. What RPO is acceptable?
-7. What RTO is acceptable?
-8. Must the app work during backend cold starts?
-9. Is local SQLite a first-class deployment?
-10. How long are deleted accounts and backups retained?
-11. Should transaction categories become foreign-key references?
-12. Is offline use real or only installability?
-13. When does availability justify paid Render?
-14. Are users outside Portugal targeted immediately?
-15. Are market-data terms compatible with public release?
+6. Must the app work during backend cold starts?
+7. Is local SQLite a first-class deployment?
+8. How long are deleted accounts retained outside the documented backup schedule?
+9. Should transaction categories become foreign-key references?
+10. Is offline use real or only installability?
+11. When does availability justify paid Render?
+12. Are users outside Portugal targeted immediately?
+13. Are market-data terms compatible with public release?
 
 ## 23. Definition of Global Release Ready
 
@@ -819,38 +790,37 @@ Global release readiness requires:
 
 ## 24. Verification Evidence
 
-Current working-tree evidence on 2026-07-12:
+Current repository evidence on 2026-07-16:
 
 - Branch: `main`.
+- Verified code baseline before this documentation refresh: `fb56cb5`.
 - Original audit baseline: commit `96c3f0c`.
-- Full backend suite: 327 tests passed with 4 short test-key warnings.
-- Python compilation passed.
-- Explicit ownership is required across user-owned repositories, services, routers, and ORM constructors.
-- All 12 user-owned model fields have no Python-side or server-side ownership default.
-- Permanent source-level ownership guardrails reject omitted owners and unapproved local fallback references.
-- Alembic has one head: `d9e4f6a2b731`.
-- Clean temporary Alembic upgrade passed through `d9e4f6a2b731`.
+- Full backend suite: 427 tests passed with 4 short test-key warnings.
+- Frontend lint passed.
 - Frontend production build passed.
-- Frontend lint still fails with 13 errors and 4 warnings.
-- `git diff --check` passed.
-- No changed production source file reaches 1,000 lines.
-- Complete recovery registry and export format version 2 are implemented.
-- Generated JSON exports restore into clean SQLite with row-count and relationship verification.
-- Moving weighted-average investment cost basis is implemented.
-- Matching-currency sell validation is implemented.
-- Historical investment valuations avoid future FX look-ahead.
-- Supabase `sub` ownership and atomic ownership-migration tooling are implemented.
-- Production ownership preflight found 1,029 legacy-owned rows and zero target-owned rows.
-- The production PostgreSQL dump passed checksum and archive validation.
-- PostgreSQL restore drill passed: true.
-- Restored Alembic revision: `c4d2e6f8a130`.
-- Restore evidence is retained outside the repository in the secured local backup directory.
-- Production ownership migration completed atomically: the legacy owner now has zero rows and the Supabase subject owns all 1,029 rows with unchanged per-table counts.
-- Authenticated production smoke testing passed for dashboard, transactions, wealth, investments, owed records, settings, and categories.
-- Supabase JWT issuer validation is enforced for both legacy-secret and JWKS decoding paths.
-- Wrong-issuer regression tests pass and valid Supabase issuer tokens remain accepted.
-- Commit `27a93f7` deployed successfully; fresh production sign-in and authenticated dashboard data loading passed.
+- Required GitHub Actions checks passed.
+- CI covers backend tests, clean database migration, recovery, frontend lint and build, dependency audits, and repository hygiene.
+- Backend dependencies are exactly pinned.
+- Explicit ownership is required throughout authenticated user-owned workflows.
+- Supabase `sub` ownership and atomic ownership migration are implemented.
+- Relational foreign keys and deliberate delete behavior protect linked records.
+- Same-user and orphan integrity checks pass.
+- Alembic has one head: `f7a3c9e2d814`.
+- Upload request and file limits use bounded reads.
+- Import commits require the matching preview identifier, uploaded file digest, and resolved-preview digest.
+- Import commits remain atomic and duplicate-safe.
+- Complete recovery registry and export format version 3 are implemented.
+- JSON exports restore into clean SQLite with matching counts and relationship validation.
+- The production PostgreSQL backup restored successfully with matching application-table counts.
+- The restored production backup revision was `c4d2e6f8a130`.
+- Backup RPO is 24 hours and target RTO is 4 hours during owner availability.
+- Retention, encryption, off-device storage, recovery ownership, and restore-drill cadence are documented.
+- Local SQLite backup uses the SQLite online backup API and validates `PRAGMA integrity_check`.
+- SQLite backup output uses owner-only permissions and CLI failures are written to stderr.
+- Owed-item system event dates consistently use the UTC calendar date.
+- No production source file exceeds 1,000 lines.
+- No open `CRIT` or `HIGH` items remain in this task list.
 
 ---
 
-Critical security, ownership, financial correctness, atomicity, and recovery issues must be completed before public launch.
+Critical and high-priority audit items are complete. Medium-priority operational, accessibility, privacy, and release-readiness work remains before public launch.
