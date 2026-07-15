@@ -54,6 +54,11 @@ class ImportPreview(Base):
             "length(file_sha256) = 64",
             name="ck_import_previews_sha256_length",
         ),
+        CheckConstraint(
+            "resolved_payload_sha256 IS NULL OR "
+            "length(resolved_payload_sha256) = 64",
+            name="ck_import_previews_resolved_sha256_length",
+        ),
         Index(
             "ix_import_previews_user_created_at",
             "user_id",
@@ -76,6 +81,10 @@ class ImportPreview(Base):
     source: Mapped[str] = mapped_column(String(50), index=True)
     filename: Mapped[str] = mapped_column(String(255))
     file_sha256: Mapped[str] = mapped_column(String(64))
+    resolved_payload_sha256: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+    )
 
     rows_total: Mapped[int] = mapped_column(default=0)
     rows_valid: Mapped[int] = mapped_column(default=0)

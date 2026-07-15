@@ -15,10 +15,16 @@ from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.investment_event import InvestmentEventRead
 from app.schemas.transaction import TransactionRead
 from app.services.fx_match_service import FxMatchService
+from app.services.import_fx_resolution_service import (
+    ImportFxResolutionService,
+)
 from app.services.import_preview_binding_service import (
     ImportPreviewBindingService,
 )
 from app.services.import_service import ImportService
+from app.services.market_data.yfinance_provider import (
+    YFinanceMarketDataProvider,
+)
 from app.services.upload_validation import (
     get_standard_upload_policy,
     read_validated_upload,
@@ -28,7 +34,16 @@ from app.services.upload_validation import (
 router = APIRouter(prefix="/api/import", tags=["import"])
 
 
-def get_import_service(db: Session = Depends(get_db)) -> ImportService:
+def get_import_market_data_provider() -> YFinanceMarketDataProvider:
+    return YFinanceMarketDataProvider()
+
+
+def get_import_service(
+    db: Session = Depends(get_db),
+    provider: YFinanceMarketDataProvider = Depends(
+        get_import_market_data_provider
+    ),
+) -> ImportService:
     transaction_repository = TransactionRepository(db)
     import_batch_repository = ImportBatchRepository(db)
     wealth_repository = WealthRepository(db)
@@ -44,6 +59,7 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,
         preview_binding_service=preview_binding_service,
+        fx_resolution_service=ImportFxResolutionService(provider),
     )
 
 

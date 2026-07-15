@@ -313,3 +313,87 @@ def test_file_commit_rolls_back_preview_claim_on_financial_failure(
     assert stored_preview.consumed_at is None
     assert db_session.query(ImportBatch).count() == 0
     assert db_session.query(Transaction).count() == 0
+
+def test_file_commit_rejects_changed_resolved_fx_payload(
+    db_session,
+):
+    from datetime import date
+    from decimal import Decimal
+
+    from app.repositories.investment_event_repository import (
+        InvestmentEventRepository,
+    )
+    from app.services.import_fx_resolution_service import (
+        ImportFxResolutionService,
+    )
+    from app.services.market_data.base import (
+        MarketDataHistoryPoint,
+    )
+
+    class FixedFxProvider:
+        def __init__(self, rate: Decimal):
+            self.rate = rate
+
+        def get_history(self, symbol, date_from, date_to):
+            del symbol, date_from, date_to
+            return [
+                MarketDataHistoryPoint(
+                    price_date=date(2024, 9, 9),
+                    close_price=self.rate,
+                    currency="EUR",
+                )
+            ]
+
+    def build_service(rate: Decimal) -> ImportService:
+        return ImportService(
+            transaction_repository=TransactionRepository(db_session),
+            import_batch_repository=ImportBatchRepository(db_session),
+            investment_event_repository=InvestmentEventRepository(
+                db_session
+            ),
+            preview_binding_service=ImportPreviewBindingService(
+                ImportPreviewRepository(db_session)
+            ),
+            fx_resolution_service=ImportFxResolutionService(
+                FixedFxProvider(rate)
+            ),
+        )
+
+    file_content = (
+        b"Action,Time,Notes,ID,Total,Currency (Total),"
+        b"Charge amount,Currency (Charge amount),Deposit fee,"
+        b"Currency (Deposit fee),Merchant name,Merchant category\n"
+        b"Market buy,2024-09-09 10:05:00,Market buy,"
+        b"market-1,37.00,USD,,,,,,\n"
+    )
+
+    preview_service = build_service(Decimal("0.92"))
+    preview = preview_service.preview_import_from_file(
+        source="trading212",
+        file_content=file_content,
+        filename="trading212.csv",
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    assert (
+        preview.investment_events[0].fx_rate_to_eur
+        == Decimal("0.92000000")
+    )
+
+    commit_service = build_service(Decimal("0.91"))
+
+    with pytest.raises(HTTPException) as caught_error:
+        commit_service.commit_import_from_file(
+            source="trading212",
+            preview_id=preview.preview_id,
+            file_content=file_content,
+            filename="trading212.csv",
+            current_user=LOCAL_CURRENT_USER,
+        )
+
+    assert caught_error.value.status_code == 409
+    assert caught_error.value.detail == (
+        "Resolved import contents no longer match the preview"
+    )
+    assert db_session.query(ImportBatch).count() == 0
+    assert db_session.query(Transaction).count() == 0

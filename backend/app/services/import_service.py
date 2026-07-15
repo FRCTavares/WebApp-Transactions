@@ -1,3 +1,4 @@
+import json
 from zipfile import BadZipFile
 
 from fastapi import HTTPException, status
@@ -28,6 +29,9 @@ from app.schemas.import_preview import (
     ImportPreviewTransaction,
 )
 from app.services.dedupe_service import DedupeService
+from app.services.import_fx_resolution_service import (
+    ImportFxResolutionService,
+)
 from app.services.import_preview_binding_service import (
     STANDARD_IMPORT_MODE,
     ImportPreviewBindingService,
@@ -44,6 +48,7 @@ class ImportService:
         investment_event_repository: InvestmentEventRepository | None = None,
         owed_repository: OwedRepository | None = None,
         preview_binding_service: ImportPreviewBindingService | None = None,
+        fx_resolution_service: ImportFxResolutionService | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
@@ -51,6 +56,7 @@ class ImportService:
         self.investment_event_repository = investment_event_repository
         self.owed_repository = owed_repository
         self.preview_binding_service = preview_binding_service
+        self.fx_resolution_service = fx_resolution_service
         self.dedupe_service = DedupeService(
             transaction_repository=transaction_repository,
             investment_event_repository=investment_event_repository,
@@ -199,6 +205,7 @@ class ImportService:
             file_content=file_content,
             filename=filename,
         )
+        parse_result = self._resolve_pending_fx(parse_result)
         preview = self._build_preview_response(
             source=source,
             parse_result=parse_result,
@@ -215,6 +222,7 @@ class ImportService:
             file_content=file_content,
             counts=self._get_preview_counts(preview),
             current_user=current_user,
+            resolved_payload=self._serialize_resolved_preview(preview),
         )
         preview.preview_id = binding.id
         preview.expires_at = binding.expires_at
@@ -231,6 +239,7 @@ class ImportService:
             source=source,
             csv_content=csv_content,
         )
+        parse_result = self._resolve_pending_fx(parse_result)
 
         return self._build_preview_response(
             source=source,
@@ -257,6 +266,7 @@ class ImportService:
             file_content=file_content,
             filename=filename,
         )
+        parse_result = self._resolve_pending_fx(parse_result)
         preview = self._build_preview_response(
             source=source,
             parse_result=parse_result,
@@ -271,6 +281,7 @@ class ImportService:
             counts=self._get_preview_counts(preview),
             current_user=current_user,
             commit=False,
+            resolved_payload=self._serialize_resolved_preview(preview),
         )
 
         return self._commit_preview(
@@ -441,6 +452,21 @@ class ImportService:
         )
 
     @staticmethod
+    def _serialize_resolved_preview(
+        preview: ImportPreviewResponse,
+    ) -> bytes:
+        payload = preview.model_dump(
+            mode="json",
+            exclude={"preview_id", "expires_at"},
+        )
+        return json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+
+    @staticmethod
     def _get_preview_counts(
         preview: ImportPreviewResponse,
     ) -> ImportPreviewCounts:
@@ -554,6 +580,15 @@ class ImportService:
             "investment_events_inserted": len(investment_events_to_insert),
         }
 
+    def _resolve_pending_fx(
+        self,
+        parse_result: ImportParseResult,
+    ) -> ImportParseResult:
+        if self.fx_resolution_service is None:
+            return parse_result
+
+        return self.fx_resolution_service.resolve(parse_result)
+
     def _raise_for_pending_fx(self, preview: ImportPreviewResponse) -> None:
         pending_transaction_rows = [
             preview_transaction.row_number
@@ -563,16 +598,36 @@ class ImportService:
                 and preview_transaction.fx_rate_source == "pending"
             )
         ]
-        if not pending_transaction_rows:
+        pending_investment_event_rows = [
+            preview_event.row_number
+            for preview_event in preview.investment_events
+            if (
+                not preview_event.is_duplicate
+                and preview_event.fx_rate_source == "pending"
+                and not self._can_remain_unresolved(preview_event)
+            )
+        ]
+
+        if not pending_transaction_rows and not pending_investment_event_rows:
             return
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "message": "Import contains transaction rows with pending FX conversion. Preview is allowed, but commit is blocked until EUR conversion is resolved.",
+                "message": "Import contains rows with unresolved FX conversion. Preview is allowed, but commit is blocked until EUR conversion is resolved.",
                 "pending_transaction_rows": pending_transaction_rows,
-                "pending_investment_event_rows": [],
+                "pending_investment_event_rows": pending_investment_event_rows,
             },
+        )
+
+    @staticmethod
+    def _can_remain_unresolved(
+        event: ImportPreviewInvestmentEvent,
+    ) -> bool:
+        return (
+            event.event_type == "deposit"
+            and event.funding_source == "activobank"
+            and event.funding_match_status == "unmatched"
         )
 
     def _build_transactions_to_insert(

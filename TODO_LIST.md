@@ -196,22 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-008: Resolve pending FX consistently
-
-- Evidence:
-  - Pending-FX enforcement focuses on transactions.
-  - Trading 212 investment events can retain unresolved non-EUR values.
-
-- Proposed fix:
-  - Apply one pending-FX contract to transactions and investment events.
-  - Block commit or persist a clearly unresolved state.
-
-- Acceptance criteria:
-  - No unresolved event is treated as final.
-  - Preview clearly reports pending FX.
-- Effort: Medium
-- Paid plan required: No
-
 ### HIGH-009: Add a complete CI workflow
 
 - Evidence:

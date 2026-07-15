@@ -31,6 +31,12 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
     assert "import_batches" in table_names
     assert "import_previews" in table_names
     assert "investment_events" in table_names
+
+    import_preview_columns = {
+        column["name"]
+        for column in inspector.get_columns("import_previews")
+    }
+    assert "resolved_payload_sha256" in import_preview_columns
     assert "wealth_accounts" in table_names
     assert "wealth_snapshots" in table_names
 

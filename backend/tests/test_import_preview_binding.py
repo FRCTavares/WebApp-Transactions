@@ -231,3 +231,63 @@ def test_rolled_back_claim_can_be_retried(db_session):
     )
 
     assert retried.id == preview.id
+
+
+def test_resolved_payload_digest_is_stored_and_validated(db_session):
+    service = create_service(db_session)
+    preview = service.create_preview(
+        mode=STANDARD_IMPORT_MODE,
+        source="revolut",
+        filename="transactions.csv",
+        file_content=b"previewed bytes",
+        counts=COUNTS,
+        current_user=USER,
+        resolved_payload=b'{"rate":"0.92000000"}',
+    )
+
+    assert preview.resolved_payload_sha256 == service.hash_payload(
+        b'{"rate":"0.92000000"}'
+    )
+
+    validated = service.validate_and_claim_commit(
+        preview_id=preview.id,
+        mode=STANDARD_IMPORT_MODE,
+        source="revolut",
+        file_content=b"previewed bytes",
+        counts=COUNTS,
+        current_user=USER,
+        commit=True,
+        resolved_payload=b'{"rate":"0.92000000"}',
+    )
+
+    assert validated.id == preview.id
+
+
+def test_commit_rejects_changed_resolved_payload(db_session):
+    service = create_service(db_session)
+    preview = service.create_preview(
+        mode=STANDARD_IMPORT_MODE,
+        source="revolut",
+        filename="transactions.csv",
+        file_content=b"previewed bytes",
+        counts=COUNTS,
+        current_user=USER,
+        resolved_payload=b'{"rate":"0.92000000"}',
+    )
+
+    with pytest.raises(HTTPException) as caught_error:
+        service.validate_and_claim_commit(
+            preview_id=preview.id,
+            mode=STANDARD_IMPORT_MODE,
+            source="revolut",
+            file_content=b"previewed bytes",
+            counts=COUNTS,
+            current_user=USER,
+            commit=True,
+            resolved_payload=b'{"rate":"0.91000000"}',
+        )
+
+    assert caught_error.value.status_code == 409
+    assert caught_error.value.detail == (
+        "Resolved import contents no longer match the preview"
+    )

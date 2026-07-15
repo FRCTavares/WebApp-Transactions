@@ -41,6 +41,7 @@ class ImportPreviewBindingService:
         file_content: bytes,
         counts: ImportPreviewCounts,
         current_user: CurrentUser,
+        resolved_payload: bytes | None = None,
         now: datetime | None = None,
     ) -> ImportPreview:
         created_at = self._normalise_datetime(now or datetime.now(UTC))
@@ -50,6 +51,11 @@ class ImportPreviewBindingService:
             source=source,
             filename=filename,
             file_sha256=self.hash_file(file_content),
+            resolved_payload_sha256=(
+                self.hash_payload(resolved_payload)
+                if resolved_payload is not None
+                else None
+            ),
             created_at=created_at,
             expires_at=created_at + IMPORT_PREVIEW_TTL,
             rows_total=counts.rows_total,
@@ -72,6 +78,7 @@ class ImportPreviewBindingService:
         counts: ImportPreviewCounts,
         current_user: CurrentUser,
         commit: bool,
+        resolved_payload: bytes | None = None,
         now: datetime | None = None,
     ) -> ImportPreview:
         preview = self.repository.get_by_id(
@@ -118,6 +125,25 @@ class ImportPreviewBindingService:
                 detail="Import contents no longer match the preview",
             )
 
+        if preview.resolved_payload_sha256 is not None:
+            if resolved_payload is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Resolved import contents are missing",
+                )
+
+            if (
+                preview.resolved_payload_sha256
+                != self.hash_payload(resolved_payload)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "Resolved import contents no longer match "
+                        "the preview"
+                    ),
+                )
+
         claimed = self.repository.claim_unconsumed(
             preview.id,
             user_id=current_user.id,
@@ -136,6 +162,10 @@ class ImportPreviewBindingService:
     @staticmethod
     def hash_file(file_content: bytes) -> str:
         return hashlib.sha256(file_content).hexdigest()
+
+    @staticmethod
+    def hash_payload(payload: bytes) -> str:
+        return hashlib.sha256(payload).hexdigest()
 
     @staticmethod
     def _normalise_datetime(value: datetime) -> datetime:

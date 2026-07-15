@@ -41,6 +41,16 @@ function getPendingFxRowNumbers(
     .map((row) => row.row_number)
 }
 
+function canRemainUnresolved(
+  event: ImportPreviewInvestmentEvent,
+) {
+  return (
+    event.event_type === 'deposit' &&
+    event.funding_source === 'activobank' &&
+    event.funding_match_status === 'unmatched'
+  )
+}
+
 function formatFxStatus(row: {
   original_amount: string | null
   original_currency: string | null
@@ -330,9 +340,24 @@ export function ImportPage() {
   )
   const rowsToImportCount = newTransactions.length + newInvestmentEvents.length
   const pendingFxTransactionRows = getPendingFxRowNumbers(newTransactions)
-  const pendingFxEventRows = getPendingFxRowNumbers(newInvestmentEvents)
-  const hasBlockingPendingFxRows = hasPendingFx(newTransactions)
-  const hasPendingFxEventRows = pendingFxEventRows.length > 0
+  const unresolvedDepositRows = newInvestmentEvents
+    .filter(
+      (event) =>
+        event.fx_rate_source === 'pending' &&
+        canRemainUnresolved(event),
+    )
+    .map((event) => event.row_number)
+  const blockingPendingFxEventRows = newInvestmentEvents
+    .filter(
+      (event) =>
+        event.fx_rate_source === 'pending' &&
+        !canRemainUnresolved(event),
+    )
+    .map((event) => event.row_number)
+  const hasBlockingPendingFxRows =
+    hasPendingFx(newTransactions) ||
+    blockingPendingFxEventRows.length > 0
+  const hasUnresolvedDeposits = unresolvedDepositRows.length > 0
   const canCommit = Boolean(
     file &&
     preview?.preview_id &&
@@ -397,7 +422,7 @@ export function ImportPage() {
     }
 
     if (hasBlockingPendingFxRows) {
-      setError('This import has pending FX conversion on transaction rows. Resolve EUR conversion before committing.')
+      setError('This import has unresolved FX rows. Resolve EUR conversion before committing.')
       return
     }
 
@@ -603,7 +628,7 @@ export function ImportPage() {
               <p>
                 {canCommit
                   ? `${rowsToImportCount} new rows can be imported safely.`
-                  : 'Commit is disabled until the preview has new rows and no blocking transaction FX issues.'}
+                  : 'Commit is disabled until the preview has new rows and no blocking FX issues.'}
               </p>
             </div>
             <strong>{rowsToImportCount}</strong>
@@ -617,15 +642,16 @@ export function ImportPage() {
 
           {hasBlockingPendingFxRows && (
             <p className="status status-error">
-              This import has pending FX conversion on transaction rows. Commit is disabled until EUR conversion is resolved.
+              Historical EUR conversion could not be resolved for every row. Commit is disabled.
               Transaction rows: {pendingFxTransactionRows.join(', ') || 'none'}.
+              Investment event rows: {blockingPendingFxEventRows.join(', ') || 'none'}.
             </p>
           )}
 
-          {!hasBlockingPendingFxRows && hasPendingFxEventRows && (
+          {!hasBlockingPendingFxRows && hasUnresolvedDeposits && (
             <p className="status status-info">
-              Some investment events have pending FX. Commit is allowed because broker ledger events can remain in source currency.
-              Investment event rows: {pendingFxEventRows.join(', ') || 'none'}.
+              Trading 212 deposits remain explicitly unresolved until matched to their exact EUR bank transfers.
+              Deposit rows: {unresolvedDepositRows.join(', ') || 'none'}.
             </p>
           )}
 
