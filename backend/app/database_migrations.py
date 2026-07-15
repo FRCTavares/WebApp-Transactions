@@ -3,6 +3,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
 
 from app.database import is_sqlite_database_url
+from app.database_foreign_key_migrations import (
+    run_sqlite_foreign_key_migrations,
+)
 
 
 def run_startup_migrations(engine: Engine) -> None:
@@ -25,12 +28,14 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_investment_event_migrations(engine=engine)
     _run_owed_item_migrations(engine=engine)
     _run_owed_payment_migrations(engine=engine)
+    _run_owed_item_event_migrations(engine=engine)
     _run_owed_user_migrations(engine=engine)
     _run_rule_user_migrations(engine=engine)
     _run_cashflow_type_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
     _run_wealth_user_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
+    run_sqlite_foreign_key_migrations(engine)
 
 
 
@@ -585,6 +590,7 @@ def _run_owed_item_migrations(engine: Engine) -> None:
         "import_batch_id": "ALTER TABLE owed_items ADD COLUMN import_batch_id INTEGER",
         "external_id": "ALTER TABLE owed_items ADD COLUMN external_id VARCHAR(255)",
         "dedupe_hash": "ALTER TABLE owed_items ADD COLUMN dedupe_hash VARCHAR(64)",
+        "deleted_at": "ALTER TABLE owed_items ADD COLUMN deleted_at DATETIME",
     }
 
     for column_name, sql in owed_item_column_migrations.items():
@@ -595,6 +601,114 @@ def _run_owed_item_migrations(engine: Engine) -> None:
             sql=sql,
         )
 
+
+
+
+def _run_owed_item_event_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="owed_items"):
+        return
+
+    if not _table_exists(engine=engine, table_name="owed_item_events"):
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "CREATE TABLE owed_item_events ("
+                    "id INTEGER NOT NULL, "
+                    "user_id VARCHAR(100) NOT NULL, "
+                    "owed_item_id INTEGER NOT NULL, "
+                    "owed_payment_id INTEGER, "
+                    "event_type VARCHAR(30) NOT NULL, "
+                    "effective_date DATE NOT NULL, "
+                    "amount_total NUMERIC(12, 2) NOT NULL, "
+                    "amount_paid NUMERIC(12, 2) NOT NULL, "
+                    "amount_remaining NUMERIC(12, 2) NOT NULL, "
+                    "status VARCHAR(30) NOT NULL, "
+                    "notes TEXT, "
+                    "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                    "PRIMARY KEY (id), "
+                    "FOREIGN KEY(owed_item_id) REFERENCES owed_items (id) "
+                    "ON DELETE CASCADE, "
+                    "CONSTRAINT ck_owed_item_events_event_type_known "
+                    "CHECK (event_type IN ("
+                    "'created', 'adjusted', 'payment', 'payment_reversed', "
+                    "'cancelled', 'reopened', 'deleted')), "
+                    "CONSTRAINT ck_owed_item_events_amount_total_positive "
+                    "CHECK (amount_total > 0), "
+                    "CONSTRAINT ck_owed_item_events_amount_paid_non_negative "
+                    "CHECK (amount_paid >= 0), "
+                    "CONSTRAINT ck_owed_item_events_amount_remaining_non_negative "
+                    "CHECK (amount_remaining >= 0), "
+                    "CONSTRAINT ck_owed_item_events_balance_consistent "
+                    "CHECK (abs((amount_paid + amount_remaining) - amount_total) <= 0.01), "
+                    "CONSTRAINT ck_owed_item_events_status_known "
+                    "CHECK (status IN ('open', 'partially_paid', 'paid', 'cancelled'))"
+                    ")"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_user_id "
+                    "ON owed_item_events (user_id)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_owed_item_id "
+                    "ON owed_item_events (owed_item_id)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_owed_payment_id "
+                    "ON owed_item_events (owed_payment_id)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_effective_date "
+                    "ON owed_item_events (effective_date)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_user_effective_date "
+                    "ON owed_item_events (user_id, effective_date)"
+                )
+            )
+            connection.execute(
+                text(
+                    "CREATE INDEX ix_owed_item_events_user_item_effective "
+                    "ON owed_item_events "
+                    "(user_id, owed_item_id, effective_date, id)"
+                )
+            )
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO owed_item_events ("
+                "user_id, owed_item_id, owed_payment_id, event_type, "
+                "effective_date, amount_total, amount_paid, amount_remaining, "
+                "status, notes, created_at"
+                ") "
+                "SELECT "
+                "item.user_id, item.id, NULL, 'created', "
+                "COALESCE(linked_transaction.date, item.due_date, DATE(item.created_at)), "
+                "item.amount_total, item.amount_paid, item.amount_remaining, "
+                "item.status, "
+                "'Baseline event created during owed ledger migration.', "
+                "item.created_at "
+                "FROM owed_items AS item "
+                "LEFT JOIN transactions AS linked_transaction "
+                "ON linked_transaction.id = item.linked_transaction_id "
+                "AND linked_transaction.user_id = item.user_id "
+                "WHERE NOT EXISTS ("
+                "SELECT 1 FROM owed_item_events AS existing_event "
+                "WHERE existing_event.user_id = item.user_id "
+                "AND existing_event.owed_item_id = item.id"
+                ")"
+            )
+        )
 
 
 def _run_owed_payment_migrations(engine: Engine) -> None:

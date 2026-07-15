@@ -1,24 +1,18 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
+import {
+  ThemeContext,
+  type ThemePreference,
+} from './themeContextValue'
 
-export type ThemePreference = 'light' | 'dark'
 type StoredThemePreference = ThemePreference | 'system'
-
-type ThemeContextValue = {
-  themePreference: ThemePreference
-  resolvedTheme: ThemePreference
-  setThemePreference: (themePreference: ThemePreference) => void
-}
 
 const THEME_STORAGE_KEY = 'finance-theme-preference'
 
-const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function getSystemTheme(): ThemePreference {
   if (
@@ -82,14 +76,4 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
-}
-
-export function useTheme() {
-  const value = useContext(ThemeContext)
-
-  if (value === null) {
-    throw new Error('useTheme must be used inside ThemeProvider')
-  }
-
-  return value
 }

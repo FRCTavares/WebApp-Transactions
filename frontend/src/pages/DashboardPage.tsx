@@ -6,8 +6,8 @@ import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyCha
 import { formatMoney } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
-import { usePeriod } from '../context/PeriodContext'
-import { useAuth } from '../auth/AuthProvider'
+import { useAuth } from '../hooks/useAuth'
+import { usePeriod } from '../hooks/usePeriod'
 
 type CategoryRollup = {
   category: string
@@ -195,55 +195,53 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   )
 
   useEffect(() => {
-    if (isAuthLoading) {
+    if (isAuthLoading || (isAuthEnabled && !accessToken)) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const { startDate, endDate } = getDateRange(year, month)
+
+      setError(null)
+      setSelectedCategory(null)
+      setCategoryTransactions([])
+      setSummary(null)
+      setInvestmentMonthlyChange(null)
+      setCategories(null)
+      setRecentTransactions([])
       setIsDashboardLoading(true)
-      return
-    }
 
-    if (isAuthEnabled && !accessToken) {
-      setIsDashboardLoading(false)
-      return
-    }
+      Promise.all([
+        getMonthlySummary(year, month),
+        getInvestmentMonthlyChange(year, month),
+        getCategorySummary('out', year, month),
+        listTransactions({
+          direction: 'out',
+          date_from: startDate,
+          date_to: endDate,
+          limit: 5,
+        }),
+      ])
+        .then(([
+          summaryData,
+          investmentMonthlyChangeData,
+          categoryData,
+          recentTransactionData,
+        ]) => {
+          setSummary(summaryData)
+          setInvestmentMonthlyChange(investmentMonthlyChangeData)
+          setCategories(categoryData)
+          setRecentTransactions(recentTransactionData)
+        })
+        .catch((caughtError: unknown) => {
+          setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
+        })
+        .finally(() => {
+          setIsDashboardLoading(false)
+        })
+    }, 0)
 
-    const { startDate, endDate } = getDateRange(year, month)
-
-    setError(null)
-    setSelectedCategory(null)
-    setCategoryTransactions([])
-    setSummary(null)
-    setInvestmentMonthlyChange(null)
-    setCategories(null)
-    setRecentTransactions([])
-    setIsDashboardLoading(true)
-
-    Promise.all([
-      getMonthlySummary(year, month),
-      getInvestmentMonthlyChange(year, month),
-      getCategorySummary('out', year, month),
-      listTransactions({
-        direction: 'out',
-        date_from: startDate,
-        date_to: endDate,
-        limit: 5,
-      }),
-    ])
-      .then(([
-        summaryData,
-        investmentMonthlyChangeData,
-        categoryData,
-        recentTransactionData,
-      ]) => {
-        setSummary(summaryData)
-        setInvestmentMonthlyChange(investmentMonthlyChangeData)
-        setCategories(categoryData)
-        setRecentTransactions(recentTransactionData)
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
-      })
-      .finally(() => {
-        setIsDashboardLoading(false)
-      })
+    return () => window.clearTimeout(timeoutId)
   }, [accessToken, isAuthEnabled, isAuthLoading, year, month])
 
   function handleCategoryClick(category: string) {

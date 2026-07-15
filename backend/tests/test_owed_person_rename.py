@@ -4,6 +4,7 @@ from decimal import Decimal
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment
+from app.models.transaction import Transaction
 from app.repositories.owed_repository import OwedRepository
 from app.services.owed_service import OwedService
 
@@ -12,6 +13,36 @@ LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def test_rename_person_updates_owed_items_and_payments(db_session):
+    owed_transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 7, 6),
+        description="Compras Auchan",
+        raw_description="Compras Auchan",
+        amount=Decimal("12.81"),
+        direction="out",
+        cashflow_type="expense",
+        source="manual",
+        currency="EUR",
+    )
+    payment_transaction = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 7, 7),
+        description="Pagamento Avó",
+        raw_description="Pagamento Avó",
+        amount=Decimal("20.00"),
+        direction="in",
+        cashflow_type="income",
+        source="manual",
+        currency="EUR",
+    )
+    db_session.add_all(
+        [
+            owed_transaction,
+            payment_transaction,
+        ]
+    )
+    db_session.flush()
+
     owed_item = OwedItem(
         user_id=LOCAL_DEFAULT_USER_ID,
         person="Avó",
@@ -20,7 +51,7 @@ def test_rename_person_updates_owed_items_and_payments(db_session):
         amount_remaining=Decimal("0.00"),
         reason="Compras Auchan",
         status="paid",
-        linked_transaction_id=1159,
+        linked_transaction_id=owed_transaction.id,
         source="manual",
     )
     payment = OwedPayment(
@@ -30,7 +61,7 @@ def test_rename_person_updates_owed_items_and_payments(db_session):
         amount=Decimal("20.00"),
         currency="EUR",
         method="bank_transfer",
-        linked_transaction_id=1160,
+        linked_transaction_id=payment_transaction.id,
     )
     db_session.add_all([owed_item, payment])
     db_session.commit()

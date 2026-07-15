@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -62,11 +62,23 @@ class InvestmentEvent(Base):
     fx_rate_to_eur: Mapped[Optional[Decimal]] = mapped_column(Numeric(18, 8), nullable=True)
     fx_rate_source: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
 
-    transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    transaction_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("transactions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     funding_source: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
     funding_match_status: Mapped[Optional[str]] = mapped_column(String(30), nullable=True, index=True)
-    matched_transaction_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
-    import_batch_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    matched_transaction_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("transactions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    import_batch_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 

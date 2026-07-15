@@ -3,7 +3,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -56,6 +56,23 @@ def get_engine_kwargs(database_url: str) -> dict[str, Any]:
     return {}
 
 
+def enable_sqlite_foreign_keys(database_engine: Engine) -> None:
+    """Enable SQLite foreign-key enforcement for every new connection."""
+
+    if database_engine.dialect.name != "sqlite":
+        return
+
+    @event.listens_for(database_engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, connection_record) -> None:
+        del connection_record
+
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA foreign_keys=ON")
+        finally:
+            cursor.close()
+
+
 DATABASE_URL = get_database_url()
 
 
@@ -67,6 +84,7 @@ engine = create_engine(
     DATABASE_URL,
     **get_engine_kwargs(DATABASE_URL),
 )
+enable_sqlite_foreign_keys(engine)
 
 SessionLocal = sessionmaker(
     bind=engine,

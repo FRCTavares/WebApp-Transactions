@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   createOwedItem,
   createOwedPayment,
@@ -205,7 +205,7 @@ export function OwedPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  function loadItems(status = statusFilter) {
+  const loadItems = useCallback((status = statusFilter) => {
     setError(null)
 
     listOwedItems({
@@ -216,7 +216,7 @@ export function OwedPage() {
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load owed items')
       })
-  }
+  }, [statusFilter])
 
   function loadLinkedTransactions() {
     listTransactions({
@@ -242,12 +242,20 @@ export function OwedPage() {
   }
 
   useEffect(() => {
-    loadItems()
-  }, [statusFilter])
+    const timeoutId = window.setTimeout(() => {
+      loadItems()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadItems])
 
   useEffect(() => {
-    loadLinkedTransactions()
-    loadPaymentLinkedTransactions()
+    const timeoutId = window.setTimeout(() => {
+      loadLinkedTransactions()
+      loadPaymentLinkedTransactions()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   function updateForm(field: keyof OwedFormState, value: string) {
@@ -322,7 +330,7 @@ export function OwedPage() {
       return
     }
 
-    let linkedTransactionId: number | null = null
+    let linkedTransactionId: number | null
 
     try {
       linkedTransactionId = parseLinkedTransactionId(paymentForm.linkedTransactionId)
@@ -373,7 +381,7 @@ export function OwedPage() {
     const amountTotal = Math.abs(Number(form.amountTotal))
     const amountPaid = form.amountPaid ? Math.abs(Number(form.amountPaid)) : 0
 
-    let linkedTransactionId: number | null = null
+    let linkedTransactionId: number | null
 
     try {
       linkedTransactionId = parseLinkedTransactionId(form.linkedTransactionId)
@@ -431,7 +439,7 @@ export function OwedPage() {
     const amountTotal = Math.abs(Number(editForm.amountTotal))
     const amountPaid = editForm.amountPaid ? Math.abs(Number(editForm.amountPaid)) : 0
 
-    let linkedTransactionId: number | null = null
+    let linkedTransactionId: number | null
 
     try {
       linkedTransactionId = parseLinkedTransactionId(editForm.linkedTransactionId)

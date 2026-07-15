@@ -264,6 +264,7 @@ export function InvestmentsPage() {
     month,
     monthlySeries,
     positions,
+    reloadAfterMutation,
     setDateFrom,
     setDateTo,
     setEventType,
@@ -337,6 +338,7 @@ export function InvestmentsPage() {
 
       setFundingMonths([savedFundingMonth])
       setMessage('Investment funding breakdown saved.')
+      reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save funding breakdown')
     }
@@ -381,7 +383,7 @@ export function InvestmentsPage() {
 
       setMessage('Manual funding resolution saved.')
       cancelManualResolution()
-      loadEvents()
+      reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to resolve manual funding')
     }
@@ -439,7 +441,7 @@ export function InvestmentsPage() {
         setMessage(`Updated ${successCount} market prices.`)
       }
 
-      loadEvents()
+      reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to refresh market data')
     } finally {
@@ -490,7 +492,7 @@ export function InvestmentsPage() {
         currency: 'EUR',
         source: 'manual',
       })
-      loadEvents()
+      reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save market price')
     }
@@ -540,7 +542,7 @@ export function InvestmentsPage() {
         cancelMarketPriceEdit()
       }
 
-      loadEvents()
+      reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete market price')
     }

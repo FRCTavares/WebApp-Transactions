@@ -23,6 +23,125 @@ class IntegrityCheck:
     sql: str
 
 
+@dataclass(frozen=True)
+class RelationshipCheck:
+    child_table: str
+    child_column: str
+    parent_table: str
+    parent_column: str = "id"
+
+
+RELATIONSHIP_CHECKS = (
+    RelationshipCheck(
+        "transactions",
+        "import_batch_id",
+        "import_batches",
+    ),
+    RelationshipCheck(
+        "investment_events",
+        "transaction_id",
+        "transactions",
+    ),
+    RelationshipCheck(
+        "investment_events",
+        "matched_transaction_id",
+        "transactions",
+    ),
+    RelationshipCheck(
+        "investment_events",
+        "import_batch_id",
+        "import_batches",
+    ),
+    RelationshipCheck(
+        "owed_items",
+        "linked_transaction_id",
+        "transactions",
+    ),
+    RelationshipCheck(
+        "owed_items",
+        "import_batch_id",
+        "import_batches",
+    ),
+    RelationshipCheck(
+        "owed_payments",
+        "linked_transaction_id",
+        "transactions",
+    ),
+    RelationshipCheck(
+        "owed_payment_allocations",
+        "owed_payment_id",
+        "owed_payments",
+    ),
+    RelationshipCheck(
+        "owed_payment_allocations",
+        "owed_item_id",
+        "owed_items",
+    ),
+    RelationshipCheck(
+        "wealth_snapshots",
+        "account_id",
+        "wealth_accounts",
+    ),
+    RelationshipCheck(
+        "wealth_snapshots",
+        "import_batch_id",
+        "import_batches",
+    ),
+)
+
+
+def build_relationship_checks() -> list[IntegrityCheck]:
+    checks: list[IntegrityCheck] = []
+
+    for relationship in RELATIONSHIP_CHECKS:
+        relationship_name = (
+            f"{relationship.child_table}_"
+            f"{relationship.child_column}"
+        )
+
+        checks.append(
+            IntegrityCheck(
+                name=f"{relationship_name}_not_orphaned",
+                description=(
+                    f"{relationship.child_table}."
+                    f"{relationship.child_column} must reference "
+                    f"an existing {relationship.parent_table} row."
+                ),
+                sql=f"""
+                    SELECT COUNT(*)
+                    FROM {relationship.child_table} AS child
+                    LEFT JOIN {relationship.parent_table} AS parent
+                      ON parent.{relationship.parent_column}
+                       = child.{relationship.child_column}
+                    WHERE child.{relationship.child_column} IS NOT NULL
+                      AND parent.{relationship.parent_column} IS NULL
+                """,
+            )
+        )
+        checks.append(
+            IntegrityCheck(
+                name=f"{relationship_name}_same_user",
+                description=(
+                    f"{relationship.child_table}."
+                    f"{relationship.child_column} must reference "
+                    f"a {relationship.parent_table} row owned by "
+                    "the same user."
+                ),
+                sql=f"""
+                    SELECT COUNT(*)
+                    FROM {relationship.child_table} AS child
+                    JOIN {relationship.parent_table} AS parent
+                      ON parent.{relationship.parent_column}
+                       = child.{relationship.child_column}
+                    WHERE child.{relationship.child_column} IS NOT NULL
+                      AND child.user_id != parent.user_id
+                """,
+            )
+        )
+
+    return checks
+
+
 CHECKS = [
     IntegrityCheck(
         name="transactions_amount_positive",
@@ -105,34 +224,6 @@ CHECKS = [
         sql="""
             SELECT COUNT(*) FROM owed_payment_allocations
             WHERE amount <= 0
-        """,
-    ),
-    IntegrityCheck(
-        name="owed_allocations_payment_exists",
-        description="Owed payment allocations must reference an existing payment for the same user.",
-        sql="""
-            SELECT COUNT(*)
-            FROM owed_payment_allocations allocation
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM owed_payments payment
-                WHERE payment.id = allocation.owed_payment_id
-                  AND payment.user_id = allocation.user_id
-            )
-        """,
-    ),
-    IntegrityCheck(
-        name="owed_allocations_item_exists",
-        description="Owed payment allocations must reference an existing owed item for the same user.",
-        sql="""
-            SELECT COUNT(*)
-            FROM owed_payment_allocations allocation
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM owed_items item
-                WHERE item.id = allocation.owed_item_id
-                  AND item.user_id = allocation.user_id
-            )
         """,
     ),
     IntegrityCheck(
@@ -270,20 +361,6 @@ CHECKS = [
         """,
     ),
     IntegrityCheck(
-        name="wealth_snapshots_account_exists",
-        description="Wealth snapshots must reference an existing wealth account for the same user.",
-        sql="""
-            SELECT COUNT(*)
-            FROM wealth_snapshots snapshot
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM wealth_accounts account
-                WHERE account.id = snapshot.account_id
-                  AND account.user_id = snapshot.user_id
-            )
-        """,
-    ),
-    IntegrityCheck(
         name="wealth_snapshots_account_date_unique",
         description="There should be at most one wealth snapshot per user, account, and date.",
         sql="""
@@ -317,6 +394,9 @@ CHECKS = [
         """,
     ),
 ]
+
+
+CHECKS.extend(build_relationship_checks())
 
 
 def create_database_engine() -> Engine:

@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base, get_db
+from app.database import Base, enable_sqlite_foreign_keys, get_db
 from app.main import app
 from app.models import (
     ImportBatch,
@@ -23,6 +23,7 @@ def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    enable_sqlite_foreign_keys(engine)
 
     Base.metadata.create_all(bind=engine)
 

@@ -1,27 +1,9 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 import { setAccessTokenProvider } from '../api/client'
+import { AuthContext, type AuthContextValue } from './authContext'
 import { isSupabaseAuthConfigured, isSupabaseAuthEnabled, supabase } from './supabaseClient'
-
-type AuthContextValue = {
-  accessToken: string | null
-  isAuthConfigured: boolean
-  isAuthEnabled: boolean
-  isLoading: boolean
-  session: Session | null
-  signInWithGoogle: () => Promise<void>
-  signOut: () => Promise<void>
-  user: User | null
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
 
 type AuthProviderProps = {
   children: ReactNode
@@ -29,7 +11,7 @@ type AuthProviderProps = {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(Boolean(supabase))
 
   useEffect(() => {
     setAccessTokenProvider(async () => {
@@ -42,8 +24,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
 
     if (!supabase) {
-      setIsLoading(false)
-      return
+      return () => {
+        setAccessTokenProvider(null)
+      }
     }
 
     let isMounted = true
@@ -115,14 +98,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider.')
-  }
-
-  return context
 }

@@ -1,4 +1,4 @@
-import { usePeriod } from '../context/PeriodContext'
+import { usePeriod } from '../hooks/usePeriod'
 
 function getMonthLabel(monthKey: string) {
   const [year, month] = monthKey.split('-').map(Number)

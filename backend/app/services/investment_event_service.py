@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 
 from app.auth.current_user import CurrentUser
 from app.models.investment_event import InvestmentEvent
+from app.models.market_price_history import MarketPriceHistory
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
@@ -14,6 +15,9 @@ from app.services.investment_market_validation import (
     build_update_event_candidate,
     validate_market_event_candidate,
     validate_market_sell_timeline,
+)
+from app.services.investment_event_relationship_validation import (
+    validate_investment_transaction_links,
 )
 from app.schemas.investment_event import (
     InvestmentEventCreate,
@@ -46,6 +50,11 @@ class InvestmentEventService:
         user_id = current_user.id
         candidate = build_create_event_candidate(event_data)
 
+        validate_investment_transaction_links(
+            event_data,
+            transaction_repository=self.transaction_repository,
+            user_id=user_id,
+        )
         validate_market_event_candidate(candidate)
         validate_market_sell_timeline(
             candidate=candidate,
@@ -56,6 +65,16 @@ class InvestmentEventService:
             event_data,
             user_id=user_id,
         )
+
+    def get_activity_months(
+        self,
+        *,
+        current_user: CurrentUser,
+    ) -> set[str]:
+        return {
+            event.date.strftime("%Y-%m")
+            for event in self.repository.list_all(user_id=current_user.id)
+        }
 
     def list_events(
         self,
@@ -201,7 +220,27 @@ class InvestmentEventService:
         current_user: CurrentUser,
     ) -> list[dict[str, Decimal | str | None]]:
         today = date.today()
-        start_month = self._shift_month(date(today.year, today.month, 1), -(months - 1))
+        start_month = self._shift_month(
+            date(today.year, today.month, 1),
+            -(months - 1),
+        )
+        final_month_start = self._shift_month(start_month, months - 1)
+        final_next_month_start = self._get_next_month_start(
+            final_month_start.year,
+            final_month_start.month,
+        )
+        final_month_end = final_next_month_start.fromordinal(
+            final_next_month_start.toordinal() - 1
+        )
+
+        events = self.repository.list_all(user_id=current_user.id)
+        price_history = (
+            []
+            if self.market_price_history_repository is None
+            else self.market_price_history_repository.list_until(
+                end_date=final_month_end,
+            )
+        )
         series = []
 
         for index in range(months):
@@ -210,15 +249,21 @@ class InvestmentEventService:
                 month_start.year,
                 month_start.month,
             )
-            month_end = next_month_start.fromordinal(next_month_start.toordinal() - 1)
+            month_end = next_month_start.fromordinal(
+                next_month_start.toordinal() - 1
+            )
+            effective_date = min(month_end, today)
 
             allocated, allocated_estimated = self._get_total_cost_basis_on(
-                month_end,
+                effective_date,
                 current_user=current_user,
+                events=events,
             )
             market_value, market_value_estimated = self._get_portfolio_value_on(
-                month_end,
+                effective_date,
                 current_user=current_user,
+                events=events,
+                price_history=price_history,
             )
             gain = None
 
@@ -244,8 +289,13 @@ class InvestmentEventService:
         value_date: date,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
     ) -> tuple[Decimal | None, bool]:
-        holdings = self._get_holding_cost_buckets_on(value_date, current_user=current_user)
+        holdings = self._get_holding_cost_buckets_on(
+            value_date,
+            current_user=current_user,
+            events=events,
+        )
         total_cost_eur = Decimal("0")
         is_estimated = False
 
@@ -267,6 +317,7 @@ class InvestmentEventService:
                         ticker=ticker,
                         isin=isin,
                         current_user=current_user,
+                        events=events,
                     )
                 )
 
@@ -283,13 +334,22 @@ class InvestmentEventService:
         value_date: date,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
-        events = self.repository.list_until(
-            value_date,
-            user_id=current_user.id,
+        relevant_events = (
+            self.repository.list_until(
+                value_date,
+                user_id=current_user.id,
+            )
+            if events is None
+            else [
+                event
+                for event in events
+                if event.date <= value_date
+            ]
         )
 
-        return build_average_cost_positions(events)
+        return build_average_cost_positions(relevant_events)
 
     def _shift_month(self, month_date: date, offset: int) -> date:
         month_index = month_date.year * 12 + month_date.month - 1 + offset
@@ -303,11 +363,17 @@ class InvestmentEventService:
         value_date: date,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
+        price_history: list[MarketPriceHistory] | None = None,
     ) -> tuple[Decimal | None, bool]:
         if self.market_price_history_repository is None:
             return None, False
 
-        holdings = self._get_holdings_on(value_date, current_user=current_user)
+        holdings = self._get_holdings_on(
+            value_date,
+            current_user=current_user,
+            events=events,
+        )
         total_value = Decimal("0")
         is_estimated = False
 
@@ -322,6 +388,8 @@ class InvestmentEventService:
                 ticker=holding["ticker"],
                 isin=holding["isin"],
                 current_user=current_user,
+                events=events,
+                price_history=price_history,
             )
 
             if valuation_price is None:
@@ -335,6 +403,7 @@ class InvestmentEventService:
                     ticker=holding["ticker"],
                     isin=holding["isin"],
                     current_user=current_user,
+                    events=events,
                 )
             )
 
@@ -357,31 +426,61 @@ class InvestmentEventService:
         isin: str | None,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
+        price_history: list[MarketPriceHistory] | None = None,
     ) -> tuple[Decimal, str, bool] | None:
-        if self.market_price_history_repository is not None:
-            historical_price = self.market_price_history_repository.get_latest_on_or_before(
-                price_date=value_date,
-                ticker=ticker,
-                isin=isin,
+        historical_price = None
+
+        if price_history is not None:
+            matching_prices = [
+                price
+                for price in price_history
+                if price.price_date <= value_date
+                and (
+                    (ticker is not None and price.ticker == ticker)
+                    or (isin is not None and price.isin == isin)
+                )
+            ]
+
+            if matching_prices:
+                historical_price = max(
+                    matching_prices,
+                    key=lambda price: (price.price_date, price.id),
+                )
+        elif self.market_price_history_repository is not None:
+            historical_price = (
+                self.market_price_history_repository.get_latest_on_or_before(
+                    price_date=value_date,
+                    ticker=ticker,
+                    isin=isin,
+                )
             )
 
-            if historical_price is not None:
-                return (
-                    historical_price.close_price,
-                    historical_price.currency,
-                    historical_price.price_date < value_date,
-                )
+        if historical_price is not None:
+            return (
+                historical_price.close_price,
+                historical_price.currency,
+                historical_price.price_date < value_date,
+            )
 
-        events = sorted(
+        relevant_events = (
             self.repository.list_until(
                 value_date,
                 user_id=current_user.id,
-            ),
-            key=lambda item: (item.date, item.id),
-            reverse=True,
+            )
+            if events is None
+            else [
+                event
+                for event in events
+                if event.date <= value_date
+            ]
         )
 
-        for event in events:
+        for event in sorted(
+            relevant_events,
+            key=lambda item: (item.date, item.id),
+            reverse=True,
+        ):
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
 
@@ -403,13 +502,27 @@ class InvestmentEventService:
         value_date: date,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
     ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
-        holdings: dict[tuple[str, str | None, str | None, str | None], dict[str, object]] = {}
+        holdings: dict[
+            tuple[str, str | None, str | None, str | None],
+            dict[str, object],
+        ] = {}
 
-        for event in self.repository.list_until(
-            value_date,
-            user_id=current_user.id,
-        ):
+        relevant_events = (
+            self.repository.list_until(
+                value_date,
+                user_id=current_user.id,
+            )
+            if events is None
+            else [
+                event
+                for event in events
+                if event.date <= value_date
+            ]
+        )
+
+        for event in relevant_events:
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
 
@@ -567,20 +680,30 @@ class InvestmentEventService:
         isin: str | None = None,
         *,
         current_user: CurrentUser,
+        events: list[InvestmentEvent] | None = None,
     ) -> tuple[Decimal | None, bool]:
         if currency == "EUR":
             return Decimal("1"), False
 
-        events = sorted(
+        relevant_events = (
             self.repository.list_until(
                 value_date,
                 user_id=current_user.id,
-            ),
+            )
+            if events is None
+            else [
+                event
+                for event in events
+                if event.date <= value_date
+            ]
+        )
+        ordered_events = sorted(
+            relevant_events,
             key=lambda item: (item.date, item.id),
             reverse=True,
         )
 
-        for event in events:
+        for event in ordered_events:
             if (
                 event.fx_rate_to_eur is not None
                 and event.fx_rate_to_eur > 0
@@ -591,7 +714,7 @@ class InvestmentEventService:
             ):
                 return event.fx_rate_to_eur, event.date < value_date
 
-        for event in events:
+        for event in ordered_events:
             if event.event_type not in {"market_buy", "market_sell"}:
                 continue
 
@@ -744,6 +867,11 @@ class InvestmentEventService:
         event = self.get_event(event_id, current_user=current_user)
         candidate = build_update_event_candidate(event, event_data)
 
+        validate_investment_transaction_links(
+            event_data,
+            transaction_repository=self.transaction_repository,
+            user_id=user_id,
+        )
         validate_market_event_candidate(candidate)
         validate_market_sell_timeline(
             candidate=candidate,

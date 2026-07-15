@@ -1,22 +1,11 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import {
+  PeriodContext,
+  type Period,
+} from './periodContextValue'
 
 const STORAGE_KEY = 'f-transactions-selected-period'
-
-type Period = {
-  year: number
-  month: number
-  monthKey: string
-}
-
-type PeriodContextValue = Period & {
-  setPeriod: (year: number, month: number) => void
-  setMonthKey: (monthKey: string) => void
-  shiftMonth: (offset: number) => void
-  resetToCurrentMonth: () => void
-}
-
-const PeriodContext = createContext<PeriodContextValue | null>(null)
 
 function getCurrentPeriod(): Period {
   const now = new Date()
@@ -72,7 +61,7 @@ function getInitialPeriod() {
 export function PeriodProvider({ children }: { children: ReactNode }) {
   const [period, setPeriodState] = useState<Period>(getInitialPeriod)
 
-  function setPeriod(year: number, month: number) {
+  const setPeriod = useCallback((year: number, month: number) => {
     const nextPeriod = {
       year,
       month,
@@ -81,9 +70,9 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
 
     window.localStorage.setItem(STORAGE_KEY, nextPeriod.monthKey)
     setPeriodState(nextPeriod)
-  }
+  }, [])
 
-  function setMonthKey(monthKey: string) {
+  const setMonthKey = useCallback((monthKey: string) => {
     const nextPeriod = parseMonthKey(monthKey)
 
     if (!nextPeriod) {
@@ -92,17 +81,17 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
 
     window.localStorage.setItem(STORAGE_KEY, nextPeriod.monthKey)
     setPeriodState(nextPeriod)
-  }
+  }, [])
 
-  function shiftMonth(offset: number) {
+  const shiftMonth = useCallback((offset: number) => {
     const shiftedDate = new Date(period.year, period.month - 1 + offset, 1)
     setPeriod(shiftedDate.getFullYear(), shiftedDate.getMonth() + 1)
-  }
+  }, [period.month, period.year, setPeriod])
 
-  function resetToCurrentMonth() {
+  const resetToCurrentMonth = useCallback(() => {
     const currentPeriod = getCurrentPeriod()
     setPeriod(currentPeriod.year, currentPeriod.month)
-  }
+  }, [setPeriod])
 
   const value = useMemo(
     () => ({
@@ -112,18 +101,14 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
       shiftMonth,
       resetToCurrentMonth,
     }),
-    [period],
+    [
+      period,
+      resetToCurrentMonth,
+      setMonthKey,
+      setPeriod,
+      shiftMonth,
+    ],
   )
 
   return <PeriodContext.Provider value={value}>{children}</PeriodContext.Provider>
-}
-
-export function usePeriod() {
-  const context = useContext(PeriodContext)
-
-  if (!context) {
-    throw new Error('usePeriod must be used inside PeriodProvider')
-  }
-
-  return context
 }

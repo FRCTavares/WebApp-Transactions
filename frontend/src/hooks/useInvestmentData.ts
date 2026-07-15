@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useAuth } from './useAuth'
 import {
   listInvestmentEvents,
   listInvestmentMonthlySeries,
@@ -6,6 +7,12 @@ import {
 } from '../api/investmentEvents'
 import { listInvestmentFundingMonths } from '../api/investmentFundingMonths'
 import { listMarketPrices } from '../api/marketPrices'
+import {
+  buildHistoricalCacheKey,
+  invalidateHistoricalData,
+  loadHistoricalData,
+  readHistoricalData,
+} from '../utils/historicalDataCache'
 import type {
   InvestmentEvent,
   InvestmentFundingMonth,
@@ -74,10 +81,30 @@ export function useInvestmentData({
   onEventsReloaded,
   onFundingMonthsLoaded,
 }: UseInvestmentDataOptions) {
+  const { user } = useAuth()
+  const cacheUserId = user?.id ?? 'local-default-user'
+  const monthlySeriesCacheKey = buildHistoricalCacheKey(
+    'investment-monthly-series',
+    cacheUserId,
+    String(chartMonths),
+  )
+
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
-  const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>([])
-  const [isMonthlySeriesLoading, setIsMonthlySeriesLoading] = useState(false)
+  const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>(
+    () => (
+      readHistoricalData<InvestmentMonthlySeriesPoint[]>(
+        monthlySeriesCacheKey,
+      ) ?? []
+    ),
+  )
+  const [isMonthlySeriesLoading, setIsMonthlySeriesLoading] = useState(
+    () => (
+      readHistoricalData<InvestmentMonthlySeriesPoint[]>(
+        monthlySeriesCacheKey,
+      ) === undefined
+    ),
+  )
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
   const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
   const [eventType, setEventType] = useState('')
@@ -86,18 +113,39 @@ export function useInvestmentData({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  function loadMonthlySeries() {
-    setIsMonthlySeriesLoading(true)
+  const loadMonthlySeries = useCallback((force = false) => {
+    const cachedSeries = readHistoricalData<InvestmentMonthlySeriesPoint[]>(
+      monthlySeriesCacheKey,
+    )
 
-    listInvestmentMonthlySeries(chartMonths)
-      .then(setMonthlySeries)
-      .catch(() => {
-        setMonthlySeries([])
+    if (cachedSeries !== undefined && !force) {
+      setMonthlySeries(cachedSeries)
+      setIsMonthlySeriesLoading(false)
+      return Promise.resolve(cachedSeries)
+    }
+
+    if (monthlySeries.length === 0) {
+      setIsMonthlySeriesLoading(true)
+    }
+
+    return loadHistoricalData(
+      monthlySeriesCacheKey,
+      () => listInvestmentMonthlySeries(chartMonths),
+      { force },
+    )
+      .then((loadedSeries) => {
+        setMonthlySeries(loadedSeries)
+        return loadedSeries
       })
+      .catch(() => monthlySeries)
       .finally(() => {
         setIsMonthlySeriesLoading(false)
       })
-  }
+  }, [
+    chartMonths,
+    monthlySeries,
+    monthlySeriesCacheKey,
+  ])
 
   function loadEvents() {
     onBeforeLoad()
@@ -130,15 +178,25 @@ export function useInvestmentData({
         onError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
       })
 
-    loadMonthlySeries()
   }
 
   useEffect(() => {
-    loadEvents()
-    // The callback dependencies are intentionally supplied by the page and are stable
-    // enough for this local page workflow.
+    const timeoutId = window.setTimeout(() => {
+      loadEvents()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+    // The page callbacks intentionally control this one-time initial load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartMonths])
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadMonthlySeries()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadMonthlySeries])
 
   function clearFilters() {
     setEventType('')
@@ -167,7 +225,12 @@ export function useInvestmentData({
         onError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
       })
 
-    loadMonthlySeries()
+  }
+
+  function reloadAfterMutation() {
+    invalidateHistoricalData()
+    loadEvents()
+    void loadMonthlySeries(true)
   }
 
   return {
@@ -183,6 +246,7 @@ export function useInvestmentData({
     month,
     monthlySeries,
     positions,
+    reloadAfterMutation,
     setDateFrom,
     setDateTo,
     setEventType,

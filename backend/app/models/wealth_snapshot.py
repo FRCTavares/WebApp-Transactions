@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Index, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -47,7 +47,10 @@ class WealthSnapshot(Base):
     )
 
     snapshot_date: Mapped[date] = mapped_column(Date, index=True)
-    account_id: Mapped[int] = mapped_column(index=True)
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("wealth_accounts.id", ondelete="RESTRICT"),
+        index=True,
+    )
 
     balance: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(3), default="EUR", index=True)
@@ -57,7 +60,11 @@ class WealthSnapshot(Base):
     interest_earned: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     source: Mapped[str] = mapped_column(String(50), default="manual", index=True)
-    import_batch_id: Mapped[Optional[int]] = mapped_column(nullable=True, index=True)
+    import_batch_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("import_batches.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     external_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     dedupe_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 

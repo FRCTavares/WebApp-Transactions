@@ -13,7 +13,7 @@ import { AppSidebar } from './components/AppSidebar'
 import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
-import { useAuth } from './auth/AuthProvider'
+import { useAuth } from './hooks/useAuth'
 import type { User } from '@supabase/supabase-js'
 
 export type Page =

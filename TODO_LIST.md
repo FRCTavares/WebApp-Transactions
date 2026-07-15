@@ -34,11 +34,10 @@ The most urgent remaining blockers are:
 2. Upload endpoints have no size limits and load complete files into memory.
 3. Import confirmation is not bound to the exact previewed file.
 4. Pending FX handling is not consistent across transactions and investments.
-5. Frontend lint currently fails.
-6. There is no complete CI workflow.
-7. Render free hosting causes measured cold starts of approximately 53 seconds.
-8. Accessibility and keyboard support remain incomplete.
-9. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
+5. There is no complete CI workflow.
+6. Render free hosting causes measured cold starts of approximately 53 seconds.
+7. Accessibility and keyboard support remain incomplete.
+8. Monitoring, alerting, privacy, retention, and account deletion remain incomplete.
 
 The correct strategy is not a large rewrite. Fix the security and data-integrity blockers first, establish reliable recovery and CI, then improve accessibility, navigation, internationalization, observability, and release operations.
 
@@ -197,37 +196,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-004: Add relational foreign keys and ownership-safe relationships
-
-- Relationships needing review:
-  - `transactions.import_batch_id`
-  - `investment_events.transaction_id`
-  - `investment_events.matched_transaction_id`
-  - `investment_events.import_batch_id`
-  - `owed_items.linked_transaction_id`
-  - `owed_items.import_batch_id`
-  - `owed_payments.linked_transaction_id`
-  - `owed_payment_allocations.owed_payment_id`
-  - `owed_payment_allocations.owed_item_id`
-  - `wealth_snapshots.account_id`
-  - `wealth_snapshots.import_batch_id`
-
-- Risk:
-  - Orphans, invalid links, missing cascades, and cross-user references.
-
-- Proposed fix:
-  - Add foreign keys through Alembic.
-  - Define deletion behavior.
-  - Reject cross-user relationships.
-
-- Acceptance criteria:
-  - Invalid relationships fail at database level.
-  - Cascades are documented and tested.
-  - Cross-user linking is rejected.
-- Effort: Large
-- Paid plan required: No
-
-### HIGH-005: Add upload limits and safe file handling
+### HIGH-006: Add upload limits and safe file handling
 
 - Evidence:
   - Upload endpoints call `await file.read()` without size checks.
@@ -253,7 +222,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 - Effort: Medium
 - Paid plan required: No
 
-### HIGH-006: Bind import confirmation to the exact previewed file
+### HIGH-007: Bind import confirmation to the exact previewed file
 
 - Evidence:
   - Preview and commit upload and parse the file separately.
@@ -273,7 +242,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 - Effort: Medium
 - Paid plan required: No
 
-### HIGH-007: Resolve pending FX consistently
+### HIGH-008: Resolve pending FX consistently
 
 - Evidence:
   - Pending-FX enforcement focuses on transactions.
@@ -289,7 +258,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 - Effort: Medium
 - Paid plan required: No
 
-### HIGH-008: Add a complete CI workflow
+### HIGH-009: Add a complete CI workflow
 
 - Evidence:
   - Only the keep-warm workflow exists.
@@ -311,7 +280,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 - Effort: Medium
 - Paid plan required: No
 
-### HIGH-009: Pin backend dependencies
+### HIGH-010: Pin backend dependencies
 
 - Evidence:
   - `backend/requirements.txt` contains unversioned packages.
@@ -329,7 +298,7 @@ The combined working tree must not be deployed before the remaining high-priorit
 - Effort: Small
 - Paid plan required: No
 
-### HIGH-010: Establish tested backup and recovery objectives
+### HIGH-011: Establish tested backup and recovery objectives
 
 - Status:
   - A custom-format production PostgreSQL dump passed checksum and archive validation.
@@ -832,7 +801,7 @@ Document:
 - [x] Complete registry-based export and local restore tooling.
 - [x] Complete a production PostgreSQL backup and restore drill.
 - [x] Migrate production ownership to Supabase `sub`.
-- [ ] Add foreign keys.
+- [x] Add foreign keys.
 
 ### Phase 3: Release engineering
 

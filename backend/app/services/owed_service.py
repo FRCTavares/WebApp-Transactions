@@ -1,10 +1,12 @@
 import hashlib
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from fastapi import HTTPException, status
 
 from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
+from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -66,7 +68,27 @@ class OwedService:
             user_id=user_id,
         )
 
-        return self.repository.create(owed_data, amount_remaining, user_id)
+        try:
+            owed_item = self.repository.create(
+                owed_data,
+                amount_remaining,
+                user_id,
+                commit=False,
+            )
+            self.repository.create_event(
+                self._build_event(
+                    owed_item=owed_item,
+                    event_type="created",
+                    effective_date=self._get_owed_item_effective_date(owed_item),
+                    notes="Owed item created.",
+                )
+            )
+            self.repository.commit()
+            self.repository.refresh(owed_item)
+            return owed_item
+        except Exception:
+            self.repository.rollback()
+            raise
 
     def list_owed_items(
         self,
@@ -112,6 +134,9 @@ class OwedService:
         current_user: CurrentUser,
     ) -> OwedItem:
         owed_item = self.get_owed_item(owed_item_id, current_user=current_user)
+        previous_status = owed_item.status
+        previous_amount_total = owed_item.amount_total
+        previous_amount_paid = owed_item.amount_paid
 
         amount_total = owed_data.amount_total
         if amount_total is None:
@@ -146,7 +171,40 @@ class OwedService:
             exclude_owed_item_id=owed_item.id,
         )
 
-        return self.repository.update(owed_item, owed_data, amount_remaining)
+        event_type = self._get_update_event_type(
+            previous_status=previous_status,
+            new_status=status_value,
+        )
+        financial_state_changed = (
+            amount_total != previous_amount_total
+            or amount_paid != previous_amount_paid
+            or status_value != previous_status
+        )
+
+        try:
+            updated_item = self.repository.update(
+                owed_item,
+                owed_data,
+                amount_remaining,
+                commit=False,
+            )
+
+            if financial_state_changed:
+                self.repository.create_event(
+                    self._build_event(
+                        owed_item=updated_item,
+                        event_type=event_type,
+                        effective_date=date.today(),
+                        notes="Owed item updated.",
+                    )
+                )
+
+            self.repository.commit()
+            self.repository.refresh(updated_item)
+            return updated_item
+        except Exception:
+            self.repository.rollback()
+            raise
 
     def delete_owed_item(
         self,
@@ -155,7 +213,22 @@ class OwedService:
         current_user: CurrentUser,
     ) -> None:
         owed_item = self.get_owed_item(owed_item_id, current_user=current_user)
-        self.repository.delete(owed_item)
+        deleted_at = datetime.now(UTC)
+
+        try:
+            self.repository.create_event(
+                self._build_event(
+                    owed_item=owed_item,
+                    event_type="deleted",
+                    effective_date=deleted_at.date(),
+                    notes="Owed item deleted.",
+                )
+            )
+            self.repository.soft_delete(owed_item, deleted_at)
+            self.repository.commit()
+        except Exception:
+            self.repository.rollback()
+            raise
 
     def record_payment(
         self,
@@ -188,38 +261,43 @@ class OwedService:
             current_user=current_user,
         )
 
-        payment = self.repository.create_payment(payment, user_id)
+        try:
+            payment = self.repository.create_payment(payment, user_id)
+            remaining_to_allocate = payment_data.amount
 
-        remaining_to_allocate = payment_data.amount
+            if requested_allocations:
+                for owed_item, amount in requested_allocations:
+                    remaining_to_allocate = self._allocate_to_owed_item(
+                        payment=payment,
+                        owed_item=owed_item,
+                        amount=amount,
+                        remaining_to_allocate=remaining_to_allocate,
+                    )
+            else:
+                for owed_item in self.repository.list_open_by_person(
+                    payment_data.person,
+                    user_id,
+                ):
+                    if remaining_to_allocate <= 0:
+                        break
 
-        if requested_allocations:
-            for owed_item, amount in requested_allocations:
-                remaining_to_allocate = self._allocate_to_owed_item(
-                    payment_id=payment.id,
-                    owed_item=owed_item,
-                    amount=amount,
-                    remaining_to_allocate=remaining_to_allocate,
-                )
-        else:
-            for owed_item in self.repository.list_open_by_person(
-                payment_data.person,
-                user_id,
-            ):
-                if remaining_to_allocate <= 0:
-                    break
+                    amount = min(
+                        remaining_to_allocate,
+                        owed_item.amount_remaining,
+                    )
+                    remaining_to_allocate = self._allocate_to_owed_item(
+                        payment=payment,
+                        owed_item=owed_item,
+                        amount=amount,
+                        remaining_to_allocate=remaining_to_allocate,
+                    )
 
-                amount = min(remaining_to_allocate, owed_item.amount_remaining)
-                remaining_to_allocate = self._allocate_to_owed_item(
-                    payment_id=payment.id,
-                    owed_item=owed_item,
-                    amount=amount,
-                    remaining_to_allocate=remaining_to_allocate,
-                )
-
-        self.repository.commit()
-        self.repository.refresh(payment)
-
-        return self._build_payment_read(payment, user_id)
+            self.repository.commit()
+            self.repository.refresh(payment)
+            return self._build_payment_read(payment, user_id)
+        except Exception:
+            self.repository.rollback()
+            raise
 
     def list_payments(
         self,
@@ -309,32 +387,57 @@ class OwedService:
                 detail="Owed payment not found",
             )
 
-        allocations = self.repository.list_allocations_for_payment(payment.id, user_id)
+        allocations = self.repository.list_allocations_for_payment(
+            payment.id,
+            user_id,
+        )
+        reversal_date = date.today()
 
-        for allocation in allocations:
-            owed_item = self.repository.get_by_id(allocation.owed_item_id, user_id)
-
-            if owed_item is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot delete payment with missing owed item allocation",
+        try:
+            for allocation in allocations:
+                owed_item = self.repository.get_by_id(
+                    allocation.owed_item_id,
+                    user_id,
                 )
 
-            owed_item.amount_paid -= allocation.amount
-            owed_item.amount_remaining = self._calculate_amount_remaining(
-                amount_total=owed_item.amount_total,
-                amount_paid=owed_item.amount_paid,
-            )
-            owed_item.status = self._calculate_status(
-                amount_paid=owed_item.amount_paid,
-                amount_remaining=owed_item.amount_remaining,
-            )
+                if owed_item is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Cannot delete payment with missing owed item "
+                            "allocation"
+                        ),
+                    )
 
-            self.repository.save_owed_item(owed_item)
-            self.repository.delete_allocation(allocation)
+                owed_item.amount_paid -= allocation.amount
+                owed_item.amount_remaining = self._calculate_amount_remaining(
+                    amount_total=owed_item.amount_total,
+                    amount_paid=owed_item.amount_paid,
+                )
+                owed_item.status = self._calculate_status(
+                    amount_paid=owed_item.amount_paid,
+                    amount_remaining=owed_item.amount_remaining,
+                )
 
-        self.repository.delete_payment(payment)
-        self.repository.commit()
+                self.repository.save_owed_item(owed_item)
+                self.repository.create_event(
+                    self._build_event(
+                        owed_item=owed_item,
+                        event_type="payment_reversed",
+                        effective_date=reversal_date,
+                        owed_payment_id=payment.id,
+                        notes=(
+                            "Owed payment deleted and allocation reversed."
+                        ),
+                    )
+                )
+                self.repository.delete_allocation(allocation)
+
+            self.repository.delete_payment(payment)
+            self.repository.commit()
+        except Exception:
+            self.repository.rollback()
+            raise
 
     def _validate_requested_allocations(
         self,
@@ -385,7 +488,7 @@ class OwedService:
 
     def _allocate_to_owed_item(
         self,
-        payment_id: int,
+        payment: OwedPayment,
         owed_item: OwedItem,
         amount: Decimal,
         remaining_to_allocate: Decimal,
@@ -404,7 +507,7 @@ class OwedService:
 
         allocation = OwedPaymentAllocation(
             user_id=owed_item.user_id,
-            owed_payment_id=payment_id,
+            owed_payment_id=payment.id,
             owed_item_id=owed_item.id,
             amount=amount,
         )
@@ -420,6 +523,15 @@ class OwedService:
             amount_remaining=owed_item.amount_remaining,
         )
         self.repository.save_owed_item(owed_item)
+        self.repository.create_event(
+            self._build_event(
+                owed_item=owed_item,
+                event_type="payment",
+                effective_date=payment.payment_date,
+                owed_payment_id=payment.id,
+                notes="Owed payment allocated.",
+            )
+        )
 
         return remaining_to_allocate - amount
 
@@ -451,6 +563,62 @@ class OwedService:
             created_at=payment.created_at,
             updated_at=payment.updated_at,
         )
+
+    def _build_event(
+        self,
+        *,
+        owed_item: OwedItem,
+        event_type: str,
+        effective_date: date,
+        notes: str,
+        owed_payment_id: int | None = None,
+    ) -> OwedItemEvent:
+        return OwedItemEvent(
+            user_id=owed_item.user_id,
+            owed_item_id=owed_item.id,
+            owed_payment_id=owed_payment_id,
+            event_type=event_type,
+            effective_date=effective_date,
+            amount_total=owed_item.amount_total,
+            amount_paid=owed_item.amount_paid,
+            amount_remaining=owed_item.amount_remaining,
+            status=owed_item.status,
+            notes=notes,
+        )
+
+    def _get_owed_item_effective_date(
+        self,
+        owed_item: OwedItem,
+    ) -> date:
+        if (
+            owed_item.linked_transaction_id is not None
+            and self.transaction_repository is not None
+        ):
+            transaction = self.transaction_repository.get_by_id(
+                owed_item.linked_transaction_id,
+                user_id=owed_item.user_id,
+            )
+            if transaction is not None:
+                return transaction.date
+
+        if owed_item.due_date is not None:
+            return owed_item.due_date
+
+        return date.today()
+
+    def _get_update_event_type(
+        self,
+        *,
+        previous_status: str,
+        new_status: str,
+    ) -> str:
+        if previous_status != "cancelled" and new_status == "cancelled":
+            return "cancelled"
+
+        if previous_status == "cancelled" and new_status != "cancelled":
+            return "reopened"
+
+        return "adjusted"
 
     def _validate_linked_payment_transaction(
         self,

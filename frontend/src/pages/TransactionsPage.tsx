@@ -11,7 +11,7 @@ import { TransactionCreateOwedSection } from '../components/transactions/Transac
 import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
 import { TransactionEditDialog } from '../components/transactions/TransactionEditDialog'
 import { StatusMessage } from '../components/StatusMessage'
-import { usePeriod } from '../context/PeriodContext'
+import { usePeriod } from '../hooks/usePeriod'
 import type {
   Direction,
   OwedItem,
@@ -117,18 +117,36 @@ export function TransactionsPage() {
   }
 
   useEffect(() => {
-    const initialFilters = getInitialFilterState(direction)
+    const timeoutId = window.setTimeout(() => {
+      const initialFilters = getInitialFilterState(direction)
+      const monthDateRange = getMonthDateRange(monthKey)
 
-    setForm(getInitialFormState(direction, monthKey))
-    setEditForm(getInitialFormState(direction, monthKey))
-    setFilters(initialFilters)
-    setEditingTransaction(null)
-    setIsCreateFormOpen(false)
-    setIsCreateOwedEnabled(false)
-    setCreateOwedRows([])
-    resetCreateRepaymentState()
-    loadTransactions(initialFilters)
-    loadCategoryOptions()
+      setForm(getInitialFormState(direction, monthKey))
+      setEditForm(getInitialFormState(direction, monthKey))
+      setFilters(initialFilters)
+      setEditingTransaction(null)
+      setIsCreateFormOpen(false)
+      setIsCreateOwedEnabled(false)
+      setCreateOwedRows([])
+      resetCreateRepaymentState()
+
+      listTransactions({
+        direction,
+        date_from: monthDateRange.dateFrom || undefined,
+        date_to: monthDateRange.dateTo || undefined,
+        limit: 500,
+      })
+        .then(setTransactions)
+        .catch((caughtError: unknown) => {
+          setError(caughtError instanceof Error ? caughtError.message : 'Failed to load transactions')
+        })
+
+      listTransactionCategories({ active_only: true, limit: 500 })
+        .then(setCategoryOptions)
+        .catch(() => setCategoryOptions([]))
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [direction, monthKey])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -756,27 +774,21 @@ export function TransactionsPage() {
         const item = availableItems.find((candidate) => candidate.id === allocation.owed_item_id)
         return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
       })
-
       if (invalidAllocation) {
         setError('Leftover allocation cannot exceed the selected owed item remaining amount.')
         return
       }
     }
-
     setError(null)
     setMessage(null)
     setIsCreatingOwedItem(true)
-
     try {
       let createdCount = 0
       let paymentCount = 0
-
       const rowsByPerson = new Map<string, typeof parsedRows>()
-
       for (const row of parsedRows) {
         rowsByPerson.set(row.person, [...(rowsByPerson.get(row.person) ?? []), row])
       }
-
       for (const [person, personRows] of rowsByPerson.entries()) {
         const personAmount = personRows.reduce((total, row) => total + row.amount, 0)
         const owedItem = await createOwedItem({
@@ -789,16 +801,12 @@ export function TransactionsPage() {
           linked_transaction_id: owedDraftTransaction.id,
           notes: null,
         })
-
         createdCount += 1
-
         let remainingPersonAmount = personAmount
-
         for (const row of personRows) {
           if (!row.linkedPaymentTransaction || remainingPersonAmount <= 0) {
             continue
           }
-
           const paymentAmount = Number(owedPaymentAvailableAmounts[row.linkedPaymentTransaction.id] ?? row.linkedPaymentTransaction.amount)
           const allocationAmount = Math.min(paymentAmount, row.amount, remainingPersonAmount)
           const extraAllocations = Object.entries(row.leftoverAllocations)
@@ -813,7 +821,6 @@ export function TransactionsPage() {
               amount: allocation.amount.toFixed(2),
             })),
           ]
-
           await createOwedPayment({
             person,
             amount: paymentAmount.toFixed(2),
@@ -826,12 +833,10 @@ export function TransactionsPage() {
             unallocated_notes: leftoverAmount > 0 ? row.unallocatedNotes || null : null,
             allocations: allocations.length > 0 ? allocations : undefined,
           })
-
           remainingPersonAmount -= allocationAmount
           paymentCount += 1
         }
       }
-
       setMessage(
         paymentCount > 0
           ? `${createdCount} owed item${createdCount === 1 ? '' : 's'} created and ${paymentCount} payment${paymentCount === 1 ? '' : 's'} recorded.`
@@ -845,7 +850,6 @@ export function TransactionsPage() {
       setIsCreatingOwedItem(false)
     }
   }
-
   const selectedMonth = filters.month || monthKey
   const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth, filters.showFullyOwed)
   return (
@@ -870,7 +874,6 @@ export function TransactionsPage() {
             </button>
           </div>
         </div>
-
         <div className="action-group">
           <button className="desktop-only" type="button" onClick={handleExportCsv}>
             Export CSV
@@ -884,7 +887,6 @@ export function TransactionsPage() {
                 setIsCreateFormOpen(false)
                 return
               }
-
               setIsCreateFormOpen(true)
             }}
           >
@@ -893,7 +895,6 @@ export function TransactionsPage() {
         </div>
       </div>
       <StatusMessage error={error} message={message} />
-
       <TransactionFilters
         direction={direction}
         filters={filters}
@@ -902,7 +903,6 @@ export function TransactionsPage() {
         onApply={() => loadTransactions()}
         onClear={clearFilters}
       />
-
       {isCreateFormOpen ? (
         <TransactionForm
           title={`Add ${direction === 'in' ? 'Money In' : 'Money Out'}`}
@@ -947,14 +947,12 @@ export function TransactionsPage() {
           )}
         </TransactionForm>
       ) : null}
-
       <TransactionTable
         transactions={displayTransactions}
         onEdit={handleStartEdit}
         onDelete={handleDeleteTransaction}
         onMarkOwed={direction === 'out' ? openOwedDialog : undefined}
       />
-
       {editingTransaction && (
         <TransactionEditDialog
           transaction={editingTransaction}
@@ -966,7 +964,6 @@ export function TransactionsPage() {
           onCancel={cancelEdit}
         />
       )}
-
       {deleteDraftTransaction && (
         <TransactionDeleteDialog
           transaction={deleteDraftTransaction}
@@ -975,7 +972,6 @@ export function TransactionsPage() {
           onConfirm={confirmDeleteTransaction}
         />
       )}
-
       {owedDraftTransaction && (
         <TransactionOwedSplitDialog
           transaction={owedDraftTransaction}

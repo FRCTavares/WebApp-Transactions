@@ -206,6 +206,11 @@ def test_monthly_endpoint_groups_latest_snapshot_per_account_per_month(client):
             "total_wealth_eur": "5200.00",
             "investment_value_eur": "0.00",
         },
+        {
+            "month": date.today().strftime("%Y-%m"),
+            "total_wealth_eur": "5200.00",
+            "investment_value_eur": "0.00",
+        },
     ]
 
 
@@ -281,6 +286,11 @@ def test_wealth_monthly_totals_carry_forward_latest_account_balances(client):
             "total_wealth_eur": "170.00",
             "investment_value_eur": "0.00",
         },
+        {
+            "month": date.today().strftime("%Y-%m"),
+            "total_wealth_eur": "170.00",
+            "investment_value_eur": "0.00",
+        },
     ]
 
 
@@ -352,6 +362,11 @@ def test_wealth_monthly_totals_use_derived_investment_value_not_brokerage_snapsh
     assert response.json() == [
         {
             "month": "2026-06",
+            "total_wealth_eur": "1240.00",
+            "investment_value_eur": "240.00",
+        },
+        {
+            "month": date.today().strftime("%Y-%m"),
             "total_wealth_eur": "1240.00",
             "investment_value_eur": "240.00",
         },

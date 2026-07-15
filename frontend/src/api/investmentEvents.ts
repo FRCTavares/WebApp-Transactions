@@ -1,4 +1,5 @@
 import { apiGet, apiPostJson, buildQuery } from './client'
+import { invalidateHistoricalData } from '../utils/historicalDataCache'
 import type {
   InvestmentEvent,
   InvestmentEventFilters,
@@ -42,5 +43,8 @@ export function resolveManualFunding(
   return apiPostJson<ManualFundingResolutionResponse>(
     `/api/investment-events/${eventId}/resolve-manual-funding`,
     payload,
-  )
+  ).then((result) => {
+    invalidateHistoricalData()
+    return result
+  })
 }

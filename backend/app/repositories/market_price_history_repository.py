@@ -108,6 +108,21 @@ class MarketPriceHistoryRepository:
 
         return self.db.scalar(statement)
 
+    def list_until(
+        self,
+        end_date: date,
+    ) -> list[MarketPriceHistory]:
+        statement = (
+            select(MarketPriceHistory)
+            .where(MarketPriceHistory.price_date <= end_date)
+            .order_by(
+                MarketPriceHistory.price_date.asc(),
+                MarketPriceHistory.id.asc(),
+            )
+        )
+
+        return list(self.db.scalars(statement).all())
+
     def list_history(
         self,
         ticker: str | None = None,

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Page } from '../App'
-import { useTheme } from '../context/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
   {

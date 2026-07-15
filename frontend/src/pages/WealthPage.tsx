@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
 import { listInvestmentPositions } from '../api/investmentEvents'
 import { listOwedItems } from '../api/owed'
 import {
@@ -39,15 +40,32 @@ import type {
   WealthSnapshot,
 } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
+import {
+  buildHistoricalCacheKey,
+  invalidateHistoricalData,
+  loadHistoricalData,
+  readHistoricalData,
+} from '../utils/historicalDataCache'
 
 type WealthPageProps = {
   onOpenInvestments?: () => void
 }
 
 export function WealthPage(_props: WealthPageProps) {
+  void _props
+
+  const { user } = useAuth()
+  const cacheUserId = user?.id ?? 'local-default-user'
+  const monthlyCacheKey = buildHistoricalCacheKey(
+    'wealth-monthly',
+    cacheUserId,
+  )
+
   const [accounts, setAccounts] = useState<WealthAccount[]>([])
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
-  const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>([])
+  const [monthlyTotals, setMonthlyTotals] = useState<WealthMonthlyTotal[]>(
+    () => readHistoricalData<WealthMonthlyTotal[]>(monthlyCacheKey) ?? [],
+  )
   const [investmentPositions, setInvestmentPositions] = useState<InvestmentPosition[]>([])
   const [owedItems, setOwedItems] = useState<OwedItem[]>([])
   const [quickSnapshotBalances, setQuickSnapshotBalances] = useState<Record<number, string>>({})
@@ -62,37 +80,88 @@ export function WealthPage(_props: WealthPageProps) {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  function loadWealthData() {
+  const loadCurrentWealthData = useCallback(() => {
     setError(null)
 
-    Promise.all([
+    return Promise.all([
       listWealthAccounts({ active_only: !showInactiveAccounts, limit: 500 }),
       listWealthSnapshots({ limit: 500 }),
-      listWealthMonthlyTotals(),
       listInvestmentPositions(),
       listOwedItems({ status: 'active', limit: 500 }),
     ])
       .then(([
         loadedAccounts,
         loadedSnapshots,
-        loadedMonthlyTotals,
         loadedInvestmentPositions,
         loadedOwedItems,
       ]) => {
         setAccounts(loadedAccounts)
         setSnapshots(loadedSnapshots)
-        setMonthlyTotals(loadedMonthlyTotals)
         setInvestmentPositions(loadedInvestmentPositions)
         setOwedItems(loadedOwedItems)
       })
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load wealth data')
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Failed to load current wealth data',
+        )
       })
-  }
+  }, [showInactiveAccounts])
+
+  const loadWealthHistory = useCallback((force = false) => {
+    const cachedTotals = readHistoricalData<WealthMonthlyTotal[]>(
+      monthlyCacheKey,
+    )
+
+    if (cachedTotals !== undefined && !force) {
+      setMonthlyTotals(cachedTotals)
+      return Promise.resolve(cachedTotals)
+    }
+
+    return loadHistoricalData(
+      monthlyCacheKey,
+      listWealthMonthlyTotals,
+      { force },
+    )
+      .then((loadedMonthlyTotals) => {
+        setMonthlyTotals(loadedMonthlyTotals)
+        return loadedMonthlyTotals
+      })
+      .catch((caughtError: unknown) => {
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Failed to load wealth history',
+        )
+        return monthlyTotals
+      })
+  }, [monthlyCacheKey, monthlyTotals])
+
+  const refreshWealthData = useCallback((invalidateHistory = false) => {
+    if (invalidateHistory) {
+      invalidateHistoricalData()
+    }
+
+    void loadCurrentWealthData()
+    void loadWealthHistory(invalidateHistory)
+  }, [loadCurrentWealthData, loadWealthHistory])
 
   useEffect(() => {
-    loadWealthData()
-  }, [showInactiveAccounts])
+    const timeoutId = window.setTimeout(() => {
+      void loadCurrentWealthData()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadCurrentWealthData])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadWealthHistory()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadWealthHistory])
 
   function updateAccountForm(field: keyof AccountFormState, value: string) {
     setAccountForm((currentForm) => ({
@@ -161,7 +230,7 @@ export function WealthPage(_props: WealthPageProps) {
       }
 
       cancelAccountEdit()
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save wealth account')
     }
@@ -177,7 +246,7 @@ export function WealthPage(_props: WealthPageProps) {
       })
 
       setMessage(account.is_active ? 'Wealth account archived.' : 'Wealth account reactivated.')
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to update wealth account')
     }
@@ -196,7 +265,7 @@ export function WealthPage(_props: WealthPageProps) {
     try {
       await deleteWealthAccount(account.id)
       setMessage('Wealth account deleted.')
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete wealth account')
     }
@@ -279,7 +348,7 @@ export function WealthPage(_props: WealthPageProps) {
       }
 
       cancelSnapshotEdit()
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save wealth snapshot')
     }
@@ -300,7 +369,7 @@ export function WealthPage(_props: WealthPageProps) {
     try {
       await deleteWealthSnapshot(snapshot.id)
       setMessage('Wealth snapshot deleted.')
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete wealth snapshot')
     }
@@ -345,7 +414,7 @@ export function WealthPage(_props: WealthPageProps) {
       })
 
       setMessage(`Snapshot saved for ${account.name}.`)
-      loadWealthData()
+      refreshWealthData(true)
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to save quick snapshot')
     }
@@ -396,7 +465,7 @@ export function WealthPage(_props: WealthPageProps) {
         </div>
 
         <div className="action-group">
-          <button type="button" onClick={loadWealthData}>
+          <button type="button" onClick={() => refreshWealthData(true)}>
             Refresh
           </button>
           <button

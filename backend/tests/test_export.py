@@ -13,6 +13,7 @@ from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
 from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
+from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
@@ -74,6 +75,19 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
     )
     db_session.add(owed_item)
     db_session.flush()
+
+    db_session.add(
+        OwedItemEvent(
+            user_id=user_id,
+            owed_item_id=owed_item.id,
+            event_type="created",
+            effective_date=date(2026, 6, 1),
+            amount_total=Decimal("10.00"),
+            amount_paid=Decimal("0.00"),
+            amount_remaining=Decimal("10.00"),
+            status="open",
+        )
+    )
 
     owed_payment = OwedPayment(
         user_id=user_id,
@@ -199,7 +213,7 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
     body = response.json()
     tables = body["tables"]
 
-    assert body["format_version"] == 2
+    assert body["format_version"] == 3
     assert body["user_id"] == "local-default-user"
     assert body["email"] is None
 
@@ -210,6 +224,7 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
         "wealth_accounts",
         "owed_items",
         "owed_payments",
+        "owed_item_events",
         "owed_payment_allocations",
         "investment_events",
         "investment_funding_months",
@@ -333,6 +348,9 @@ def test_generated_export_restores_all_rows_and_relationships(
         owed_payment_id = connection.execute(
             "SELECT id FROM owed_payments"
         ).fetchone()[0]
+        event_item_id = connection.execute(
+            "SELECT owed_item_id FROM owed_item_events"
+        ).fetchone()[0]
         allocation_payment_id, allocation_item_id = connection.execute(
             "SELECT owed_payment_id, owed_item_id "
             "FROM owed_payment_allocations"
@@ -351,4 +369,5 @@ def test_generated_export_restores_all_rows_and_relationships(
     assert linked_transaction_id == transaction_id
     assert allocation_payment_id == owed_payment_id
     assert allocation_item_id == owed_item_id
+    assert event_item_id == owed_item_id
     assert snapshot_account_id == wealth_account_id

@@ -1,3 +1,4 @@
+from calendar import monthrange
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal
@@ -262,17 +263,48 @@ class WealthService:
             user_id=user_id,
         )
         derived_account_ids = self._get_derived_account_ids(user_id)
-        investment_values_by_month = self._get_monthly_investment_values(current_user=current_user)
+        investment_values_by_month = self._get_monthly_investment_values(
+            current_user=current_user
+        )
+        owed_events = self._get_owed_events(user_id)
+        owed_months = {
+            event.effective_date.strftime("%Y-%m")
+            for event in owed_events
+        }
         snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
             month = snapshot.snapshot_date.strftime("%Y-%m")
             snapshots_by_month[month].append(snapshot)
 
+        investment_months = self._get_investment_activity_months(
+            current_user=current_user,
+        )
+        all_months = (
+            set(snapshots_by_month)
+            | investment_months
+            | owed_months
+        )
+
+        if all_months:
+            all_months.add(date.today().strftime("%Y-%m"))
+
         latest_by_account: dict[int, WealthSnapshot] = {}
+        latest_owed_event_by_item = {}
+        owed_event_index = 0
         rows: list[WealthMonthlyRead] = []
 
-        for month in sorted(snapshots_by_month):
+        for month in sorted(all_months):
+            valuation_date = self._get_month_valuation_date(month)
+
+            while (
+                owed_event_index < len(owed_events)
+                and owed_events[owed_event_index].effective_date
+                <= valuation_date
+            ):
+                event = owed_events[owed_event_index]
+                latest_owed_event_by_item[event.owed_item_id] = event
+                owed_event_index += 1
             for snapshot in snapshots_by_month[month]:
                 latest_by_account[snapshot.account_id] = snapshot
 
@@ -285,23 +317,32 @@ class WealthService:
                 Decimal("0"),
             )
 
-            investment_value = investment_values_by_month.get(month, Decimal("0"))
+            investment_value = investment_values_by_month.get(
+                month,
+                Decimal("0"),
+            )
+            money_owed_to_me = sum(
+                (
+                    event.amount_remaining
+                    for event in latest_owed_event_by_item.values()
+                    if (
+                        event.event_type != "deleted"
+                        and event.status in ("open", "partially_paid")
+                    )
+                ),
+                Decimal("0"),
+            )
 
             rows.append(
                 WealthMonthlyRead(
                     month=month,
-                    total_wealth_eur=total + investment_value,
+                    total_wealth_eur=(
+                        total
+                        + investment_value
+                        + money_owed_to_me
+                    ),
                     investment_value_eur=investment_value,
                 )
-            )
-
-        if rows:
-            latest_row = rows[-1]
-            rows[-1] = WealthMonthlyRead(
-                month=latest_row.month,
-                total_wealth_eur=latest_row.total_wealth_eur
-                + self._get_money_owed_to_me(user_id),
-                investment_value_eur=latest_row.investment_value_eur,
             )
 
         return rows
@@ -330,6 +371,25 @@ class WealthService:
 
         return self.owed_repository.get_active_remaining_total(user_id)
 
+    def _get_owed_events(self, user_id: str):
+        if self.owed_repository is None:
+            return []
+
+        return self.owed_repository.list_all_events_ascending(user_id)
+
+    def _get_month_valuation_date(self, month: str) -> date:
+        year, month_number = map(int, month.split("-"))
+        today = date.today()
+
+        if year == today.year and month_number == today.month:
+            return today
+
+        return date(
+            year,
+            month_number,
+            monthrange(year, month_number)[1],
+        )
+
     def _get_current_investment_value(
         self,
         *,
@@ -351,6 +411,18 @@ class WealthService:
             total += Decimal(str(market_value))
 
         return total.quantize(Decimal("0.01"))
+
+    def _get_investment_activity_months(
+        self,
+        *,
+        current_user: CurrentUser,
+    ) -> set[str]:
+        if self.investment_event_service is None:
+            return set()
+
+        return self.investment_event_service.get_activity_months(
+            current_user=current_user,
+        )
 
     def _get_monthly_investment_values(
         self,

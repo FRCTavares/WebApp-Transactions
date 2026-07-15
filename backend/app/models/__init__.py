@@ -6,6 +6,7 @@ from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.market_price import MarketPrice
 from app.models.market_price_history import MarketPriceHistory
 from app.models.owed_item import OwedItem
+from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
@@ -21,6 +22,7 @@ __all__ = [
     "MarketPrice",
     "MarketPriceHistory",
     "OwedItem",
+    "OwedItemEvent",
     "OwedPayment",
     "OwedPaymentAllocation",
     "Transaction",

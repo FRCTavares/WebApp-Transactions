@@ -143,9 +143,18 @@ def test_data_integrity_audit_detects_broken_relationships(tmp_path):
 
     results = run_audit(engine)
 
-    assert get_result(results, "owed_allocations_payment_exists")["violations"] == 1
-    assert get_result(results, "owed_allocations_item_exists")["violations"] == 1
-    assert get_result(results, "wealth_snapshots_account_exists")["violations"] == 1
+    assert get_result(
+        results,
+        "owed_payment_allocations_owed_payment_id_not_orphaned",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "owed_payment_allocations_owed_item_id_not_orphaned",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "wealth_snapshots_account_id_not_orphaned",
+    )["violations"] == 1
 
 
 
@@ -681,5 +690,157 @@ def test_data_integrity_audit_detects_wealth_snapshot_consistency_issues(tmp_pat
     assert get_result(
         results,
         "wealth_snapshots_balance_eur_consistent",
+    )["violations"] == 1
+
+
+def test_data_integrity_audit_covers_all_high_005_relationships(
+    tmp_path,
+):
+    engine, _ = create_test_engine(tmp_path)
+    results = run_audit(engine)
+    result_names = {
+        result["name"]
+        for result in results
+    }
+
+    relationships = (
+        ("transactions", "import_batch_id"),
+        ("investment_events", "transaction_id"),
+        ("investment_events", "matched_transaction_id"),
+        ("investment_events", "import_batch_id"),
+        ("owed_items", "linked_transaction_id"),
+        ("owed_items", "import_batch_id"),
+        ("owed_payments", "linked_transaction_id"),
+        (
+            "owed_payment_allocations",
+            "owed_payment_id",
+        ),
+        (
+            "owed_payment_allocations",
+            "owed_item_id",
+        ),
+        ("wealth_snapshots", "account_id"),
+        ("wealth_snapshots", "import_batch_id"),
+    )
+
+    for table_name, column_name in relationships:
+        prefix = f"{table_name}_{column_name}"
+
+        assert f"{prefix}_not_orphaned" in result_names
+        assert f"{prefix}_same_user" in result_names
+
+
+def test_data_integrity_audit_detects_relationship_ownership(
+    tmp_path,
+):
+    engine, _ = create_test_engine(tmp_path)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO import_batches (
+                    id,
+                    user_id,
+                    source,
+                    filename,
+                    imported_at,
+                    rows_total,
+                    rows_inserted,
+                    rows_skipped,
+                    status
+                )
+                VALUES (
+                    101,
+                    'owner-user',
+                    'manual',
+                    'transactions.csv',
+                    CURRENT_TIMESTAMP,
+                    1,
+                    1,
+                    0,
+                    'completed'
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO transactions (
+                    id,
+                    user_id,
+                    date,
+                    description,
+                    raw_description,
+                    amount,
+                    direction,
+                    cashflow_type,
+                    source,
+                    currency,
+                    import_batch_id,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    202,
+                    'other-user',
+                    '2026-07-14',
+                    'Cross-user transaction',
+                    'Cross-user transaction',
+                    10,
+                    'out',
+                    'expense',
+                    'manual',
+                    'EUR',
+                    101,
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO investment_events (
+                    user_id,
+                    date,
+                    source,
+                    event_type,
+                    description,
+                    raw_description,
+                    amount,
+                    currency,
+                    transaction_id,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    'local-default-user',
+                    '2026-07-14',
+                    'manual',
+                    'deposit',
+                    'Missing transaction',
+                    'Missing transaction',
+                    10,
+                    'EUR',
+                    999999,
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP
+                )
+                """
+            )
+        )
+
+    results = run_audit(engine)
+
+    assert get_result(
+        results,
+        "transactions_import_batch_id_same_user",
+    )["violations"] == 1
+    assert get_result(
+        results,
+        "investment_events_transaction_id_not_orphaned",
     )["violations"] == 1
 

@@ -1,4 +1,5 @@
 import { apiGet, apiPostJson, buildQuery } from './client'
+import { invalidateHistoricalData } from '../utils/historicalDataCache'
 import type {
   InvestmentFundingMonth,
   InvestmentFundingMonthPayload,
@@ -15,5 +16,8 @@ export function upsertInvestmentFundingMonth(payload: InvestmentFundingMonthPayl
   return apiPostJson<InvestmentFundingMonth>(
     '/api/investment-funding-months',
     payload,
-  )
+  ).then((result) => {
+    invalidateHistoricalData()
+    return result
+  })
 }

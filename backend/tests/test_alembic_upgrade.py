@@ -27,6 +27,7 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
     assert "alembic_version" in table_names
     assert "transactions" in table_names
     assert "owed_items" in table_names
+    assert "owed_item_events" in table_names
     assert "import_batches" in table_names
     assert "investment_events" in table_names
     assert "wealth_accounts" in table_names
@@ -72,3 +73,78 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
 
     assert "unallocated_category" in owed_payment_columns
     assert "unallocated_notes" in owed_payment_columns
+
+    owed_item_columns = {
+        column["name"]
+        for column in inspector.get_columns("owed_items")
+    }
+    assert "deleted_at" in owed_item_columns
+
+    owed_event_columns = {
+        column["name"]
+        for column in inspector.get_columns("owed_item_events")
+    }
+    assert {
+        "user_id",
+        "owed_item_id",
+        "owed_payment_id",
+        "event_type",
+        "effective_date",
+        "amount_total",
+        "amount_paid",
+        "amount_remaining",
+        "status",
+    }.issubset(owed_event_columns)
+
+    owed_event_foreign_keys = inspector.get_foreign_keys(
+        "owed_item_events"
+    )
+    owed_event_foreign_key_columns = {
+        constrained_column
+        for foreign_key in owed_event_foreign_keys
+        for constrained_column in foreign_key["constrained_columns"]
+    }
+
+    assert "owed_item_id" in owed_event_foreign_key_columns
+    assert "owed_payment_id" not in owed_event_foreign_key_columns
+
+    expected_foreign_keys = {
+        "transactions": {
+            "import_batch_id": ("import_batches", "RESTRICT"),
+        },
+        "investment_events": {
+            "transaction_id": ("transactions", "SET NULL"),
+            "matched_transaction_id": ("transactions", "SET NULL"),
+            "import_batch_id": ("import_batches", "RESTRICT"),
+        },
+        "owed_items": {
+            "linked_transaction_id": ("transactions", "RESTRICT"),
+            "import_batch_id": ("import_batches", "RESTRICT"),
+        },
+        "owed_payments": {
+            "linked_transaction_id": ("transactions", "RESTRICT"),
+        },
+        "owed_payment_allocations": {
+            "owed_payment_id": ("owed_payments", "CASCADE"),
+            "owed_item_id": ("owed_items", "RESTRICT"),
+        },
+        "wealth_snapshots": {
+            "account_id": ("wealth_accounts", "RESTRICT"),
+            "import_batch_id": ("import_batches", "RESTRICT"),
+        },
+    }
+
+    for table_name, expected_columns in expected_foreign_keys.items():
+        actual_foreign_keys = {}
+
+        for foreign_key in inspector.get_foreign_keys(table_name):
+            constrained_column = foreign_key["constrained_columns"][0]
+            referred_table = foreign_key["referred_table"]
+            ondelete = (foreign_key.get("options") or {}).get("ondelete")
+
+            actual_foreign_keys[constrained_column] = (
+                referred_table,
+                ondelete,
+            )
+
+        assert actual_foreign_keys == expected_columns

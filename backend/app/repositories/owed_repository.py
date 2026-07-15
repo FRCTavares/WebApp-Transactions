@@ -1,9 +1,11 @@
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import delete as sqlalchemy_delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.models.owed_item import OwedItem
+from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.schemas.owed_item import OwedItemCreate, OwedItemUpdate
 
@@ -17,6 +19,8 @@ class OwedRepository:
         owed_data: OwedItemCreate,
         amount_remaining,
         user_id: str,
+        *,
+        commit: bool = True,
     ) -> OwedItem:
         owed_item = OwedItem(
             **owed_data.model_dump(),
@@ -24,8 +28,13 @@ class OwedRepository:
             user_id=user_id,
         )
         self.db.add(owed_item)
-        self.db.commit()
-        self.db.refresh(owed_item)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(owed_item)
+        else:
+            self.db.flush()
+
         return owed_item
 
     def list(
@@ -39,6 +48,7 @@ class OwedRepository:
         statement = (
             select(OwedItem)
             .where(OwedItem.user_id == user_id)
+            .where(OwedItem.deleted_at.is_(None))
             .order_by(OwedItem.created_at.desc(), OwedItem.id.desc())
         )
 
@@ -65,6 +75,7 @@ class OwedRepository:
             select(OwedItem)
             .where(OwedItem.id == owed_item_id)
             .where(OwedItem.user_id == user_id)
+            .where(OwedItem.deleted_at.is_(None))
             .limit(1)
         )
         return self.db.scalar(statement)
@@ -79,6 +90,7 @@ class OwedRepository:
             select(func.coalesce(func.sum(OwedItem.amount_total), 0))
             .where(OwedItem.user_id == user_id)
             .where(OwedItem.linked_transaction_id == linked_transaction_id)
+            .where(OwedItem.deleted_at.is_(None))
             .where(OwedItem.status != "cancelled")
         )
 
@@ -92,6 +104,8 @@ class OwedRepository:
         owed_item: OwedItem,
         owed_data: OwedItemUpdate,
         amount_remaining,
+        *,
+        commit: bool = True,
     ) -> OwedItem:
         update_data = owed_data.model_dump(exclude_unset=True)
 
@@ -99,15 +113,25 @@ class OwedRepository:
             setattr(owed_item, field, value)
 
         owed_item.amount_remaining = amount_remaining
-
         self.db.add(owed_item)
-        self.db.commit()
-        self.db.refresh(owed_item)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(owed_item)
+        else:
+            self.db.flush()
+
         return owed_item
 
-    def delete(self, owed_item: OwedItem) -> None:
-        self.db.delete(owed_item)
-        self.db.commit()
+    def soft_delete(
+        self,
+        owed_item: OwedItem,
+        deleted_at: datetime,
+    ) -> OwedItem:
+        owed_item.deleted_at = deleted_at
+        self.db.add(owed_item)
+        self.db.flush()
+        return owed_item
 
     def exists_by_dedupe_hash(
         self,
@@ -152,10 +176,49 @@ class OwedRepository:
             select(OwedItem)
             .where(OwedItem.user_id == user_id)
             .where(OwedItem.person == person)
+            .where(OwedItem.deleted_at.is_(None))
             .where(OwedItem.status.in_(["open", "partially_paid"]))
             .order_by(OwedItem.created_at.asc(), OwedItem.id.asc())
         )
 
+        return list(self.db.scalars(statement).all())
+
+    def create_event(
+        self,
+        event: OwedItemEvent,
+    ) -> OwedItemEvent:
+        self.db.add(event)
+        self.db.flush()
+        return event
+
+    def list_events_for_item(
+        self,
+        owed_item_id: int,
+        user_id: str,
+    ) -> list[OwedItemEvent]:
+        statement = (
+            select(OwedItemEvent)
+            .where(OwedItemEvent.user_id == user_id)
+            .where(OwedItemEvent.owed_item_id == owed_item_id)
+            .order_by(
+                OwedItemEvent.effective_date.asc(),
+                OwedItemEvent.id.asc(),
+            )
+        )
+        return list(self.db.scalars(statement).all())
+
+    def list_all_events_ascending(
+        self,
+        user_id: str,
+    ) -> list[OwedItemEvent]:
+        statement = (
+            select(OwedItemEvent)
+            .where(OwedItemEvent.user_id == user_id)
+            .order_by(
+                OwedItemEvent.effective_date.asc(),
+                OwedItemEvent.id.asc(),
+            )
+        )
         return list(self.db.scalars(statement).all())
 
     def create_payment(
@@ -243,6 +306,7 @@ class OwedRepository:
         statement = (
             select(func.coalesce(func.sum(OwedItem.amount_remaining), 0))
             .where(OwedItem.user_id == user_id)
+            .where(OwedItem.deleted_at.is_(None))
             .where(OwedItem.status.in_(["open", "partially_paid"]))
         )
 
@@ -324,6 +388,9 @@ class OwedRepository:
 
     def commit(self) -> None:
         self.db.commit()
+
+    def rollback(self) -> None:
+        self.db.rollback()
 
     def refresh(self, item) -> None:
         self.db.refresh(item)
