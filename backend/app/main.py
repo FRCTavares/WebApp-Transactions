@@ -19,6 +19,7 @@ from app.auth.local_network import (
 )
 from app.config import get_cors_origins, validate_production_config
 from app.database import initialise_database
+from app.middleware.upload_request import UploadRequestMiddleware
 from app.models import (
     CashflowRule,
     DescriptionRule,
@@ -70,6 +71,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(UploadRequestMiddleware)
 
 ACCESS_TOKEN_HEADER = "X-App-Access-Token"
 

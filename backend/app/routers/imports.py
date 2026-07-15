@@ -15,6 +15,10 @@ from app.schemas.investment_event import InvestmentEventRead
 from app.schemas.transaction import TransactionRead
 from app.services.fx_match_service import FxMatchService
 from app.services.import_service import ImportService
+from app.services.upload_validation import (
+    get_standard_upload_policy,
+    read_validated_upload,
+)
 
 
 router = APIRouter(prefix="/api/import", tags=["import"])
@@ -129,13 +133,15 @@ async def preview_import(
     service: ImportService = Depends(get_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "uploaded"
+    upload = await read_validated_upload(
+        file,
+        policy=get_standard_upload_policy(source),
+    )
 
     return service.preview_import_from_file(
         source=source,
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )
 
@@ -147,13 +153,15 @@ async def commit_import(
     service: ImportService = Depends(get_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "uploaded"
+    upload = await read_validated_upload(
+        file,
+        policy=get_standard_upload_policy(source),
+    )
 
     return service.commit_import_from_file(
         source=source,
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )
 
@@ -164,12 +172,14 @@ async def preview_fx_matches(
     service: FxMatchService = Depends(get_fx_match_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "uploaded"
+    upload = await read_validated_upload(
+        file,
+        policy=get_standard_upload_policy(source),
+    )
 
     return service.preview_matches_from_file(
         source=source,
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )

@@ -1,4 +1,7 @@
+from zipfile import BadZipFile
+
 from fastapi import HTTPException, status
+from openpyxl.utils.exceptions import InvalidFileException
 from sqlalchemy.exc import IntegrityError
 
 from app.auth.current_user import CurrentUser
@@ -135,11 +138,6 @@ class ImportService:
                 )
             )
 
-        deleted_transactions = self.transaction_repository.delete_by_import_batch(
-            import_batch_id=import_batch_id,
-            user_id=current_user.id,
-        )
-
         if self.owed_repository is not None:
             deleted_owed_items = self.owed_repository.delete_by_import_batch(
                 import_batch_id=import_batch_id,
@@ -151,6 +149,11 @@ class ImportService:
                 import_batch_id,
                 user_id=current_user.id,
             )
+
+        deleted_transactions = self.transaction_repository.delete_by_import_batch(
+            import_batch_id=import_batch_id,
+            user_id=current_user.id,
+        )
 
         deleted_total = (
             deleted_transactions
@@ -272,7 +275,14 @@ class ImportService:
             )
             return ImportParseResult(transactions=transactions)
 
-        csv_content = file_content.decode("utf-8-sig")
+        try:
+            csv_content = file_content.decode("utf-8-sig")
+        except UnicodeDecodeError as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded CSV is not valid UTF-8",
+            ) from error
+
         return self._parse_csv(source=source, csv_content=csv_content)
 
     def _parse_activobank_file(
@@ -288,10 +298,15 @@ class ImportService:
 
         try:
             return ActivoBankImporter().parse_excel(file_content)
-        except ValueError as error:
+        except (
+            BadZipFile,
+            InvalidFileException,
+            OSError,
+            ValueError,
+        ) as error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(error),
+                detail="Uploaded ActivoBank workbook is invalid",
             ) from error
 
     def _parse_csv(

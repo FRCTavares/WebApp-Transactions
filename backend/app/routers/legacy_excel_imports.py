@@ -14,6 +14,10 @@ from app.schemas.legacy_excel_import import (
     LegacyExcelWealthPreviewResponse,
 )
 from app.services.legacy_excel_import_service import LegacyExcelImportService
+from app.services.upload_validation import (
+    LEGACY_EXCEL_UPLOAD_POLICY,
+    read_validated_upload,
+)
 
 
 router = APIRouter(
@@ -44,12 +48,14 @@ async def preview_legacy_excel_import(
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "legacy_finance.xlsx"
+    upload = await read_validated_upload(
+        file,
+        policy=LEGACY_EXCEL_UPLOAD_POLICY,
+    )
 
     return service.preview_import_from_file(
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )
 
@@ -61,12 +67,14 @@ async def commit_legacy_excel_import(
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "legacy_finance.xlsx"
+    upload = await read_validated_upload(
+        file,
+        policy=LEGACY_EXCEL_UPLOAD_POLICY,
+    )
 
     return service.commit_import_from_file(
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )
 
@@ -77,12 +85,14 @@ async def preview_legacy_excel_wealth_import(
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "legacy_finance.xlsx"
+    upload = await read_validated_upload(
+        file,
+        policy=LEGACY_EXCEL_UPLOAD_POLICY,
+    )
 
     return service.preview_wealth_import_from_file(
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )
 
@@ -93,11 +103,13 @@ async def commit_legacy_excel_wealth_import(
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
     current_user: CurrentUser = Depends(get_current_user),
 ):
-    file_content = await file.read()
-    filename = file.filename or "legacy_finance.xlsx"
+    upload = await read_validated_upload(
+        file,
+        policy=LEGACY_EXCEL_UPLOAD_POLICY,
+    )
 
     return service.commit_wealth_import_from_file(
-        file_content=file_content,
-        filename=filename,
+        file_content=upload.content,
+        filename=upload.filename,
         current_user=current_user,
     )

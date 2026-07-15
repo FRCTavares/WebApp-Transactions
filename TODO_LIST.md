@@ -196,32 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-006: Add upload limits and safe file handling
-
-- Evidence:
-  - Upload endpoints call `await file.read()` without size checks.
-
-- Paths:
-  - `backend/app/routers/imports.py`
-  - `backend/app/routers/legacy_excel_imports.py`
-
-- Risk:
-  - Memory exhaustion and parsing abuse.
-
-- Proposed fix:
-  - Define per-import size limits.
-  - Reject oversized files early.
-  - Read in bounded chunks.
-  - Validate extension and expected format.
-  - Add request timeouts.
-
-- Acceptance criteria:
-  - Oversized files return `413`.
-  - Invalid files return controlled client errors.
-  - Boundaries are tested.
-- Effort: Medium
-- Paid plan required: No
-
 ### HIGH-007: Bind import confirmation to the exact previewed file
 
 - Evidence:

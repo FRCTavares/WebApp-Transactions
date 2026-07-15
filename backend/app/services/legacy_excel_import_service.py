@@ -1,6 +1,8 @@
 from decimal import Decimal
+from zipfile import BadZipFile
 
 from fastapi import HTTPException, status
+from openpyxl.utils.exceptions import InvalidFileException
 from sqlalchemy.exc import IntegrityError
 
 from app.auth.current_user import CurrentUser
@@ -52,7 +54,7 @@ class LegacyExcelImportService:
         current_user: CurrentUser,
     ) -> LegacyExcelPreviewResponse:
         user_id = current_user.id
-        parse_result = self.importer.parse_excel(file_content)
+        parse_result = self._parse_excel(file_content)
 
         transactions: list[LegacyExcelPreviewTransaction] = []
         owed_items: list[LegacyExcelPreviewOwedItem] = []
@@ -303,7 +305,7 @@ class LegacyExcelImportService:
         snapshots: list[LegacyExcelPreviewWealthSnapshot] = []
         seen_hashes: set[str] = set()
 
-        for snapshot in self.importer.parse_wealth_snapshots(file_content):
+        for snapshot in self._parse_wealth_snapshots(file_content):
             dedupe_hash = self._build_wealth_snapshot_dedupe_hash(
                 account_name=snapshot.account_name,
                 snapshot_date=snapshot.snapshot_date,
@@ -495,6 +497,36 @@ class LegacyExcelImportService:
             duplicate_snapshots_skipped=preview.rows_duplicates,
             status=import_batch.status,
         )
+
+    def _parse_excel(self, file_content: bytes):
+        try:
+            return self.importer.parse_excel(file_content)
+        except (
+            BadZipFile,
+            InvalidFileException,
+            OSError,
+            ValueError,
+        ) as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded legacy Excel workbook is invalid",
+            ) from error
+
+    def _parse_wealth_snapshots(self, file_content: bytes):
+        try:
+            return self.importer.parse_wealth_snapshots(
+                file_content
+            )
+        except (
+            BadZipFile,
+            InvalidFileException,
+            OSError,
+            ValueError,
+        ) as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Uploaded legacy Excel workbook is invalid",
+            ) from error
 
     def _build_wealth_snapshot_dedupe_hash(
         self,
