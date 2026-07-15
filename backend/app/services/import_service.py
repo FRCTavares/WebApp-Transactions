@@ -28,6 +28,11 @@ from app.schemas.import_preview import (
     ImportPreviewTransaction,
 )
 from app.services.dedupe_service import DedupeService
+from app.services.import_preview_binding_service import (
+    STANDARD_IMPORT_MODE,
+    ImportPreviewBindingService,
+    ImportPreviewCounts,
+)
 
 
 class ImportService:
@@ -38,12 +43,14 @@ class ImportService:
         wealth_repository: WealthRepository | None = None,
         investment_event_repository: InvestmentEventRepository | None = None,
         owed_repository: OwedRepository | None = None,
+        preview_binding_service: ImportPreviewBindingService | None = None,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_batch_repository = import_batch_repository
         self.wealth_repository = wealth_repository
         self.investment_event_repository = investment_event_repository
         self.owed_repository = owed_repository
+        self.preview_binding_service = preview_binding_service
         self.dedupe_service = DedupeService(
             transaction_repository=transaction_repository,
             investment_event_repository=investment_event_repository,
@@ -192,12 +199,26 @@ class ImportService:
             file_content=file_content,
             filename=filename,
         )
-
-        return self._build_preview_response(
+        preview = self._build_preview_response(
             source=source,
             parse_result=parse_result,
             current_user=current_user,
         )
+
+        if self.preview_binding_service is None:
+            return preview
+
+        binding = self.preview_binding_service.create_preview(
+            mode=STANDARD_IMPORT_MODE,
+            source=source,
+            filename=filename,
+            file_content=file_content,
+            counts=self._get_preview_counts(preview),
+            current_user=current_user,
+        )
+        preview.preview_id = binding.id
+        preview.expires_at = binding.expires_at
+        return preview
 
     def preview_import(
         self,
@@ -220,16 +241,36 @@ class ImportService:
     def commit_import_from_file(
         self,
         source: str,
+        preview_id: str,
         file_content: bytes,
         filename: str,
         *,
         current_user: CurrentUser,
     ) -> dict[str, int | str]:
-        preview = self.preview_import_from_file(
+        if self.preview_binding_service is None:
+            raise RuntimeError(
+                "Import preview binding is not configured"
+            )
+
+        parse_result = self._parse_file(
             source=source,
             file_content=file_content,
             filename=filename,
+        )
+        preview = self._build_preview_response(
+            source=source,
+            parse_result=parse_result,
             current_user=current_user,
+        )
+
+        self.preview_binding_service.validate_and_claim_commit(
+            preview_id=preview_id,
+            mode=STANDARD_IMPORT_MODE,
+            source=source,
+            file_content=file_content,
+            counts=self._get_preview_counts(preview),
+            current_user=current_user,
+            commit=False,
         )
 
         return self._commit_preview(
@@ -397,6 +438,27 @@ class ImportService:
             transactions=preview_transactions,
             investment_events=preview_investment_events,
             invalid_rows=invalid_rows,
+        )
+
+    @staticmethod
+    def _get_preview_counts(
+        preview: ImportPreviewResponse,
+    ) -> ImportPreviewCounts:
+        return ImportPreviewCounts(
+            rows_total=preview.rows_total,
+            rows_valid=preview.rows_valid,
+            rows_duplicates=preview.rows_duplicates,
+            rows_invalid=preview.rows_invalid,
+            transactions_pending=sum(
+                1
+                for transaction in preview.transactions
+                if not transaction.is_duplicate
+            ),
+            investment_events_pending=sum(
+                1
+                for event in preview.investment_events
+                if not event.is_duplicate
+            ),
         )
 
     def _commit_preview(

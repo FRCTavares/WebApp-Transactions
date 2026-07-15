@@ -37,6 +37,10 @@ EXPECTED_PRODUCTION_INDEXES = {
     "import_batches": {
         "ix_import_batches_user_imported_at": ["user_id", "imported_at"],
     },
+    "import_previews": {
+        "ix_import_previews_user_created_at": ["user_id", "created_at"],
+        "ix_import_previews_user_expires_at": ["user_id", "expires_at"],
+    },
 }
 
 

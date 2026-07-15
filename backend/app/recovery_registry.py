@@ -16,6 +16,10 @@ from app.models.wealth_snapshot import WealthSnapshot
 
 EXPORT_FORMAT_VERSION = 3
 
+NON_RECOVERABLE_USER_TABLE_NAMES = (
+    "import_previews",
+)
+
 
 @dataclass(frozen=True)
 class UserRecoveryTable:
@@ -57,6 +61,7 @@ USER_RECOVERY_MODEL_BY_TABLE = {
 
 MIGRATION_TABLE_ORDER = (
     'import_batches',
+    'import_previews',
     'transactions',
     'transaction_categories',
     'wealth_accounts',

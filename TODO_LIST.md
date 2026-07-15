@@ -196,26 +196,6 @@ The combined working tree must not be deployed before the remaining high-priorit
 
 ## 6. High Priority
 
-### HIGH-007: Bind import confirmation to the exact previewed file
-
-- Evidence:
-  - Preview and commit upload and parse the file separately.
-
-- Risk:
-  - Committed content can differ from previewed content.
-
-- Proposed fix:
-  - Return a preview ID and SHA-256 hash.
-  - Persist a short-lived preview or signed payload.
-  - Require commit to match the preview hash.
-
-- Acceptance criteria:
-  - A different file cannot be committed under an existing preview.
-  - Expired previews are rejected.
-  - Commit counts match preview counts.
-- Effort: Medium
-- Paid plan required: No
-
 ### HIGH-008: Resolve pending FX consistently
 
 - Evidence:

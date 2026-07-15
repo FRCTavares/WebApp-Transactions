@@ -8,6 +8,7 @@ from app.database import Base, enable_sqlite_foreign_keys, get_db
 from app.main import app
 from app.models import (
     ImportBatch,
+    ImportPreview,
     InvestmentEvent,
     OwedItem,
     OwedPayment,

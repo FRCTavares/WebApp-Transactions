@@ -29,6 +29,7 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
     assert "owed_items" in table_names
     assert "owed_item_events" in table_names
     assert "import_batches" in table_names
+    assert "import_previews" in table_names
     assert "investment_events" in table_names
     assert "wealth_accounts" in table_names
     assert "wealth_snapshots" in table_names

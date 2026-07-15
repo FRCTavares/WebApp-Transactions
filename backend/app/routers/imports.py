@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.import_batch_repository import ImportBatchRepository
+from app.repositories.import_preview_repository import ImportPreviewRepository
 from app.repositories.investment_event_repository import InvestmentEventRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -14,6 +15,9 @@ from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.investment_event import InvestmentEventRead
 from app.schemas.transaction import TransactionRead
 from app.services.fx_match_service import FxMatchService
+from app.services.import_preview_binding_service import (
+    ImportPreviewBindingService,
+)
 from app.services.import_service import ImportService
 from app.services.upload_validation import (
     get_standard_upload_policy,
@@ -30,12 +34,16 @@ def get_import_service(db: Session = Depends(get_db)) -> ImportService:
     wealth_repository = WealthRepository(db)
     investment_event_repository = InvestmentEventRepository(db)
     owed_repository = OwedRepository(db)
+    preview_binding_service = ImportPreviewBindingService(
+        ImportPreviewRepository(db)
+    )
     return ImportService(
         transaction_repository=transaction_repository,
         import_batch_repository=import_batch_repository,
         wealth_repository=wealth_repository,
         investment_event_repository=investment_event_repository,
         owed_repository=owed_repository,
+        preview_binding_service=preview_binding_service,
     )
 
 
@@ -149,6 +157,7 @@ async def preview_import(
 @router.post("/commit")
 async def commit_import(
     source: str = Form(...),
+    preview_id: str = Form(...),
     file: UploadFile = File(...),
     service: ImportService = Depends(get_import_service),
     current_user: CurrentUser = Depends(get_current_user),
@@ -160,6 +169,7 @@ async def commit_import(
 
     return service.commit_import_from_file(
         source=source,
+        preview_id=preview_id,
         file_content=upload.content,
         filename=upload.filename,
         current_user=current_user,

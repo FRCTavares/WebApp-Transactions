@@ -1,4 +1,4 @@
-from datetime import date as DateType
+from datetime import date as DateType, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel
@@ -71,3 +71,5 @@ class ImportPreviewResponse(BaseModel):
     transactions: list[ImportPreviewTransaction]
     investment_events: list[ImportPreviewInvestmentEvent] = []
     invalid_rows: list[ImportInvalidRow]
+    preview_id: str | None = None
+    expires_at: datetime | None = None

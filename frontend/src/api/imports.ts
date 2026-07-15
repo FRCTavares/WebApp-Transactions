@@ -22,10 +22,17 @@ export function previewImport(source: string, file: File) {
   )
 }
 
-export function commitImport(source: string, file: File) {
+export function commitImport(
+  source: string,
+  file: File,
+  previewId: string,
+) {
+  const formData = buildImportForm(source, file)
+  formData.append('preview_id', previewId)
+
   return apiPostForm<unknown>(
     '/api/import/commit',
-    buildImportForm(source, file),
+    formData,
   )
 }
 

@@ -22,6 +22,7 @@ class RecordingService:
     filename: str | None = None
     content: bytes | None = None
     source: str | None = None
+    preview_id: str | None = None
 
     def _record(
         self,
@@ -31,11 +32,11 @@ class RecordingService:
         source=None,
         **kwargs,
     ) -> None:
-        del kwargs
         self.called = True
         self.filename = filename
         self.content = file_content
         self.source = source
+        self.preview_id = kwargs.get("preview_id")
 
     def preview_import_from_file(
         self,
@@ -52,6 +53,8 @@ class RecordingService:
             **kwargs,
         )
         return {
+            "preview_id": "preview-test-id",
+            "expires_at": "2026-07-15T12:00:00Z",
             "source": source,
             "rows_total": 0,
             "rows_valid": 0,
@@ -198,7 +201,14 @@ def test_standard_upload_routes_reject_wrong_extension(
 ):
     response = client.post(
         route,
-        data={"source": source},
+        data={
+            "source": source,
+            **(
+                {"preview_id": "preview-test-id"}
+                if route == "/api/import/commit"
+                else {}
+            ),
+        },
         files={
             "file": (
                 filename,
@@ -282,7 +292,14 @@ def test_standard_upload_routes_reject_oversized_files(
 ):
     response = client.post(
         route,
-        data={"source": source},
+        data={
+            "source": source,
+            **(
+                {"preview_id": "preview-test-id"}
+                if route == "/api/import/commit"
+                else {}
+            ),
+        },
         files={
             "file": (
                 filename,
@@ -397,3 +414,42 @@ def test_fx_upload_route_uses_bounded_reader(
 
     assert response.status_code == 200
     assert service.called is True
+
+def test_standard_commit_route_requires_preview_id(client):
+    response = client.post(
+        "/api/import/commit",
+        data={"source": "revolut"},
+        files={
+            "file": (
+                "data.csv",
+                b"header\n",
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_standard_commit_route_forwards_preview_id(client):
+    service = RecordingService()
+    client.app.dependency_overrides[get_import_service] = lambda: service
+
+    response = client.post(
+        "/api/import/commit",
+        data={
+            "source": "revolut",
+            "preview_id": "preview-test-id",
+        },
+        files={
+            "file": (
+                "data.csv",
+                b"header\n",
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert service.called is True
+    assert service.preview_id == "preview-test-id"

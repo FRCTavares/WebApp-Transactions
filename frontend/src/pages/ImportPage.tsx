@@ -335,7 +335,7 @@ export function ImportPage() {
   const hasPendingFxEventRows = pendingFxEventRows.length > 0
   const canCommit = Boolean(
     file &&
-    preview &&
+    preview?.preview_id &&
     rowsToImportCount > 0 &&
     !hasBlockingPendingFxRows &&
     !isCommitting,
@@ -386,7 +386,7 @@ export function ImportPage() {
       return
     }
 
-    if (!preview) {
+    if (!preview?.preview_id) {
       setError('Preview the file before committing it.')
       return
     }
@@ -406,7 +406,7 @@ export function ImportPage() {
     setIsCommitting(true)
 
     try {
-      await commitImport(source, file)
+      await commitImport(source, file, preview.preview_id)
       setMessage('Import committed.')
       setPreview(null)
       setSelectedBatch(null)
@@ -500,7 +500,15 @@ export function ImportPage() {
         <div className="form-row">
           <label>
             Source
-            <select value={source} onChange={(event) => setSource(event.target.value)}>
+            <select
+              value={source}
+              onChange={(event) => {
+                setSource(event.target.value)
+                setPreview(null)
+                setMessage(null)
+                setError(null)
+              }}
+            >
               {SOURCES.map((item) => (
                 <option key={item} value={item}>
                   {item}

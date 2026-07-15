@@ -23,6 +23,7 @@ def test_initialise_database_creates_sqlite_schema():
     assert "transactions" in table_names
     assert "owed_items" in table_names
     assert "import_batches" in table_names
+    assert "import_previews" in table_names
 
 
 def test_initialise_database_keeps_user_scoped_dedupe_index():

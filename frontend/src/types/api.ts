@@ -482,6 +482,8 @@ export type ImportInvalidRow = {
 }
 
 export type ImportPreviewResponse = {
+  preview_id: string | null
+  expires_at: string | null
   source: string
   rows_total: number
   rows_valid: number

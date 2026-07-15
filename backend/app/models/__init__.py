@@ -1,6 +1,7 @@
 from app.models.cashflow_rule import CashflowRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
+from app.models.import_preview import ImportPreview
 from app.models.investment_event import InvestmentEvent
 from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.market_price import MarketPrice
@@ -17,6 +18,7 @@ __all__ = [
     "CashflowRule",
     "DescriptionRule",
     "ImportBatch",
+    "ImportPreview",
     "InvestmentEvent",
     "InvestmentFundingMonth",
     "MarketPrice",
