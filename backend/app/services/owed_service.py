@@ -38,6 +38,7 @@ class OwedService:
         owed_data: OwedItemCreate,
         *,
         current_user: CurrentUser,
+        commit: bool = True,
     ) -> OwedItem:
         user_id = current_user.id
         owed_data = self._with_dedupe_hash(owed_data, user_id)
@@ -87,11 +88,14 @@ class OwedService:
                     notes="Owed item created.",
                 )
             )
-            self.repository.commit()
-            self.repository.refresh(owed_item)
+            if commit:
+                self.repository.commit()
+                self.repository.refresh(owed_item)
+
             return owed_item
         except Exception:
-            self.repository.rollback()
+            if commit:
+                self.repository.rollback()
             raise
 
     def list_owed_items(
@@ -239,6 +243,7 @@ class OwedService:
         payment_data: OwedPaymentCreate,
         *,
         current_user: CurrentUser,
+        commit: bool = True,
     ) -> OwedPaymentRead:
         user_id = current_user.id
         payment = OwedPayment(
@@ -296,11 +301,14 @@ class OwedService:
                         remaining_to_allocate=remaining_to_allocate,
                     )
 
-            self.repository.commit()
-            self.repository.refresh(payment)
+            if commit:
+                self.repository.commit()
+                self.repository.refresh(payment)
+
             return self._build_payment_read(payment, user_id)
         except Exception:
-            self.repository.rollback()
+            if commit:
+                self.repository.rollback()
             raise
 
     def list_payments(

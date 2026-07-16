@@ -13,10 +13,12 @@
 @import './styles/owed-desktop.css';
 @import './styles/owed-mobile.css';
 @import './styles/wealth.css';
+@import './styles/wealth-mobile-spacing.css';
 @import './styles/wealth-chart.css';
 @import './styles/wealth-mobile.css';
 @import './styles/wealth-modal.css';
 @import './styles/dashboard.css';
+@import './styles/dashboard-mobile-summary.css';
 @import './styles/transactions.css';
 @import './styles/transactions-mobile.css';
 @import './styles/transaction-repayment.css';

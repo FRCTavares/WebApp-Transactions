@@ -21,14 +21,20 @@ class TransactionRepository:
         transaction_data: TransactionCreate,
         *,
         user_id: str,
+        commit: bool = True,
     ) -> Transaction:
         transaction = Transaction(
             user_id=user_id,
             **transaction_data.model_dump(),
         )
         self.db.add(transaction)
-        self.db.commit()
-        self.db.refresh(transaction)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(transaction)
+        else:
+            self.db.flush()
+
         return transaction
 
     def list(

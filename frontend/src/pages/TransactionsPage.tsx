@@ -1,16 +1,19 @@
+import { TransactionsPageView } from '../components/transactions/TransactionsPageView'
 import { useEffect, useState, type FormEvent } from 'react'
-import { createOwedItem, createOwedPayment, listOwedItems, listOwedPayments } from '../api/owed'
-import { createTransaction, deleteTransaction, exportTransactionsCsv, listTransactions, updateTransaction } from '../api/transactions'
-import { TransactionFilters, type TransactionFilterState } from '../components/TransactionFilters'
-import { TransactionForm, type TransactionFormState } from '../components/TransactionForm'
+import { listOwedItems, listOwedPayments } from '../api/owed'
+import {
+  createOwedSplitForTransaction,
+  createTransactionWithOwed,
+  deleteTransaction,
+  exportTransactionsCsv,
+  listTransactions,
+  updateTransaction,
+} from '../api/transactions'
+import type { TransactionFilterState } from '../components/TransactionFilters'
+import type { TransactionFormState } from '../components/TransactionForm'
 import { listTransactionCategories } from '../api/transactionCategories'
-import { TransactionTable, type TransactionTableRow } from '../components/TransactionTable'
-import { TransactionDeleteDialog } from '../components/transactions/TransactionDeleteDialog'
-import { TransactionOwedSplitDialog, type OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
-import { TransactionCreateOwedSection } from '../components/transactions/TransactionCreateOwedSection'
-import { TransactionCreateRepaymentSection } from '../components/transactions/TransactionCreateRepaymentSection'
-import { TransactionEditDialog } from '../components/transactions/TransactionEditDialog'
-import { StatusMessage } from '../components/StatusMessage'
+import type { TransactionTableRow } from '../components/TransactionTable'
+import type { OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
 import { usePeriod } from '../hooks/usePeriod'
 import type {
   Direction,
@@ -19,6 +22,10 @@ import type {
   TransactionCategory,
 } from '../types/api'
 import { formatMoney } from '../utils/format'
+import {
+  buildCreateTransactionWithOwedPayload,
+  buildExistingTransactionOwedSplitPayload,
+} from '../utils/transactionFinancialCommandPayloads'
 import {
   createOwedSplitRow,
   downloadBlob,
@@ -424,57 +431,18 @@ export function TransactionsPage() {
     }
 
     try {
-      const createdTransaction = await createTransaction({
-        date: form.date,
-        description: form.description,
-        raw_description: form.description,
-        amount: amount.toFixed(2),
-        direction,
-        cashflow_type: form.cashflow_type,
-        source: 'manual',
-        account: null,
-        category: form.category || null,
-        currency: 'EUR',
-        merchant: null,
-        notes: form.notes || null,
-      })
-
-      for (const row of parsedCreateOwedRows) {
-        await createOwedItem({
-          person: row.person,
-          amount_total: row.amount.toFixed(2),
-          amount_paid: '0.00',
-          reason: form.description,
-          status: 'open',
-          due_date: null,
-          linked_transaction_id: createdTransaction.id,
-          notes: null,
-        })
-      }
-
-      if (direction === 'in' && isCreateRepaymentEnabled) {
-        const allocatedAmount = parsedRepaymentAllocations.reduce(
-          (total, allocation) => total + allocation.amount,
-          0,
-        )
-        const leftoverAmount = Math.max(amount - allocatedAmount, 0)
-
-        await createOwedPayment({
-          person: repaymentPerson.trim(),
-          amount: amount.toFixed(2),
-          payment_date: form.date,
-          method: 'bank_transfer',
-          currency: 'EUR',
-          notes: form.notes || null,
-          linked_transaction_id: createdTransaction.id,
-          unallocated_category: leftoverAmount > 0 ? repaymentUnallocatedCategory || null : null,
-          unallocated_notes: null,
-          allocations: parsedRepaymentAllocations.map((allocation) => ({
-            owed_item_id: allocation.owed_item_id,
-            amount: allocation.amount.toFixed(2),
-          })),
-        })
-      }
+      await createTransactionWithOwed(
+        buildCreateTransactionWithOwedPayload({
+          form,
+          direction,
+          amount,
+          owedRows: parsedCreateOwedRows,
+          isRepaymentEnabled: isCreateRepaymentEnabled,
+          repaymentPerson,
+          repaymentAllocations: parsedRepaymentAllocations,
+          repaymentUnallocatedCategory,
+        }),
+      )
 
       resetCreateFormState()
       setIsCreateFormOpen(false)
@@ -783,64 +751,24 @@ export function TransactionsPage() {
     setMessage(null)
     setIsCreatingOwedItem(true)
     try {
-      let createdCount = 0
-      let paymentCount = 0
-      const rowsByPerson = new Map<string, typeof parsedRows>()
-      for (const row of parsedRows) {
-        rowsByPerson.set(row.person, [...(rowsByPerson.get(row.person) ?? []), row])
-      }
-      for (const [person, personRows] of rowsByPerson.entries()) {
-        const personAmount = personRows.reduce((total, row) => total + row.amount, 0)
-        const owedItem = await createOwedItem({
-          person,
-          amount_total: personAmount.toFixed(2),
-          amount_paid: '0.00',
-          reason: owedDraftTransaction.description,
-          status: 'open',
-          due_date: null,
-          linked_transaction_id: owedDraftTransaction.id,
-          notes: null,
-        })
-        createdCount += 1
-        let remainingPersonAmount = personAmount
-        for (const row of personRows) {
-          if (!row.linkedPaymentTransaction || remainingPersonAmount <= 0) {
-            continue
-          }
-          const paymentAmount = Number(owedPaymentAvailableAmounts[row.linkedPaymentTransaction.id] ?? row.linkedPaymentTransaction.amount)
-          const allocationAmount = Math.min(paymentAmount, row.amount, remainingPersonAmount)
-          const extraAllocations = Object.entries(row.leftoverAllocations)
-            .map(([owedItemId, amount]) => ({ owed_item_id: Number(owedItemId), amount: parseMoneyInput(amount) }))
-            .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
-          const extraAllocationAmount = extraAllocations.reduce((total, allocation) => total + allocation.amount, 0)
-          const leftoverAmount = Math.max(paymentAmount - allocationAmount - extraAllocationAmount, 0)
-          const allocations = [
-            ...(allocationAmount > 0 ? [{ owed_item_id: owedItem.id, amount: allocationAmount.toFixed(2) }] : []),
-            ...extraAllocations.map((allocation) => ({
-              owed_item_id: allocation.owed_item_id,
-              amount: allocation.amount.toFixed(2),
-            })),
-          ]
-          await createOwedPayment({
-            person,
-            amount: paymentAmount.toFixed(2),
-            payment_date: row.linkedPaymentTransaction.date,
-            method: 'bank_transfer',
-            currency: row.linkedPaymentTransaction.currency || 'EUR',
-            notes: null,
-            linked_transaction_id: row.linkedPaymentTransaction.id,
-            unallocated_category: leftoverAmount > 0 ? row.unallocatedCategory || null : null,
-            unallocated_notes: leftoverAmount > 0 ? row.unallocatedNotes || null : null,
-            allocations: allocations.length > 0 ? allocations : undefined,
-          })
-          remainingPersonAmount -= allocationAmount
-          paymentCount += 1
-        }
-      }
+      const result = await createOwedSplitForTransaction(
+        owedDraftTransaction.id,
+        buildExistingTransactionOwedSplitPayload({
+          rows: parsedRows,
+          paymentAvailableAmounts: owedPaymentAvailableAmounts,
+        }),
+      )
+
       setMessage(
-        paymentCount > 0
-          ? `${createdCount} owed item${createdCount === 1 ? '' : 's'} created and ${paymentCount} payment${paymentCount === 1 ? '' : 's'} recorded.`
-          : `${createdCount} owed item${createdCount === 1 ? '' : 's'} created.`,
+        result.payments_created > 0
+          ? `${result.owed_items_created} owed item${
+              result.owed_items_created === 1 ? '' : 's'
+            } created and ${result.payments_created} payment${
+              result.payments_created === 1 ? '' : 's'
+            } recorded.`
+          : `${result.owed_items_created} owed item${
+              result.owed_items_created === 1 ? '' : 's'
+            } created.`,
       )
       closeOwedDialog()
       loadTransactions()
@@ -851,145 +779,51 @@ export function TransactionsPage() {
     }
   }
   const selectedMonth = filters.month || monthKey
-  const displayTransactions = getTransactionsForDisplay(transactions, selectedMonth, filters.showFullyOwed)
-  return (
-    <section className={`app-page transactions-page transactions-page-${direction}`}>
-      <div className="page-header transactions-page-header">
-        <div className="page-title-block">
-          <h1>{direction === 'in' ? 'Money In' : 'Money Out'}</h1>
-          <div className="transaction-direction-switch" aria-label="Transaction direction">
-            <button
-              type="button"
-              className={direction === 'out' ? 'active' : undefined}
-              onClick={() => setDirection('out')}
-            >
-              Money Out
-            </button>
-            <button
-              type="button"
-              className={direction === 'in' ? 'active' : undefined}
-              onClick={() => setDirection('in')}
-            >
-              Money In
-            </button>
-          </div>
-        </div>
-        <div className="action-group">
-          <button className="desktop-only" type="button" onClick={handleExportCsv}>
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              if (isCreateFormOpen) {
-                resetCreateFormState()
-                setIsCreateFormOpen(false)
-                return
-              }
-              setIsCreateFormOpen(true)
-            }}
-          >
-            {isCreateFormOpen ? 'Close' : '+ Add'}
-          </button>
-        </div>
-      </div>
-      <StatusMessage error={error} message={message} />
-      <TransactionFilters
-        direction={direction}
-        filters={filters}
-        categoryOptions={categoryOptions}
-        onChange={updateFilters}
-        onApply={() => loadTransactions()}
-        onClear={clearFilters}
-      />
-      {isCreateFormOpen ? (
-        <TransactionForm
-          title={`Add ${direction === 'in' ? 'Money In' : 'Money Out'}`}
-          form={form}
-          submitLabel="Save"
-          direction={direction}
-          onSubmit={handleCreateTransactionSubmit}
-          onChange={updateForm}
-          categoryOptions={categoryOptions}
-          onCancel={() => {
-            resetCreateFormState()
-            setIsCreateFormOpen(false)
-          }}
-        >
-          {direction === 'out' ? (
-            <TransactionCreateOwedSection
-              isEnabled={isCreateOwedEnabled}
-              rows={createOwedRows}
-              transactionAmount={form.amount}
-              personOptions={owedPersonOptions}
-              currency="EUR"
-              onToggle={toggleCreateOwedEnabled}
-              onAddRow={addCreateOwedRow}
-              onRemoveRow={removeCreateOwedRow}
-              onUpdateRow={updateCreateOwedRow}
-            />
-          ) : (
-            <TransactionCreateRepaymentSection
-              isEnabled={isCreateRepaymentEnabled}
-              person={repaymentPerson}
-              personOptions={repaymentPersonOptions}
-              items={repaymentItems}
-              allocations={repaymentAllocations}
-              transactionAmount={form.amount}
-              unallocatedCategory={repaymentUnallocatedCategory}
-              currency="EUR"
-              onToggle={toggleCreateRepaymentEnabled}
-              onPersonChange={updateRepaymentPerson}
-              onAllocationChange={updateRepaymentAllocation}
-              onUnallocatedCategoryChange={setRepaymentUnallocatedCategory}
-            />
-          )}
-        </TransactionForm>
-      ) : null}
-      <TransactionTable
-        transactions={displayTransactions}
-        onEdit={handleStartEdit}
-        onDelete={handleDeleteTransaction}
-        onMarkOwed={direction === 'out' ? openOwedDialog : undefined}
-      />
-      {editingTransaction && (
-        <TransactionEditDialog
-          transaction={editingTransaction}
-          form={editForm}
-          categoryOptions={categoryOptions}
-          isSaving={isSavingEdit}
-          onChange={updateEditForm}
-          onSave={saveEditFromForm}
-          onCancel={cancelEdit}
-        />
-      )}
-      {deleteDraftTransaction && (
-        <TransactionDeleteDialog
-          transaction={deleteDraftTransaction}
-          isDeleting={isDeletingTransaction}
-          onCancel={() => setDeleteDraftTransaction(null)}
-          onConfirm={confirmDeleteTransaction}
-        />
-      )}
-      {owedDraftTransaction && (
-        <TransactionOwedSplitDialog
-          transaction={owedDraftTransaction}
-          rows={owedRows}
-          paymentTransactions={owedPaymentTransactions}
-          paymentAvailableAmounts={owedPaymentAvailableAmounts}
-          isCreating={isCreatingOwedItem}
-          onClose={closeOwedDialog}
-          onAddRow={addOwedRow}
-          onRemoveRow={removeOwedRow}
-          onUpdateRow={updateOwedRow}
-          onLeftoverAllocationChange={updateOwedLeftoverAllocation}
-          leftoverItemsByPerson={owedLeftoverItemsByPerson}
-          onCreate={createOwedItemsFromDialog}
-          getRemainingOwedAmount={getRemainingOwedAmount}
-          getSelectedPaymentTransaction={getSelectedOwedPaymentTransaction}
-        />
-      )}
-    </section>
+  const displayTransactions = getTransactionsForDisplay(
+    transactions, selectedMonth, filters.showFullyOwed,
   )
+
+  const viewProps = {
+    direction, error, message, filters, categoryOptions, form, editForm,
+    transactions: displayTransactions,
+    editingTransaction, deleteDraftTransaction, owedDraftTransaction,
+    isCreateFormOpen, isCreateOwedEnabled, createOwedRows, owedPersonOptions,
+    isCreateRepaymentEnabled, repaymentPerson, repaymentPersonOptions,
+    repaymentItems, repaymentAllocations, repaymentUnallocatedCategory,
+    isSavingEdit, isDeletingTransaction, owedRows, owedPaymentTransactions,
+    owedPaymentAvailableAmounts, owedLeftoverItemsByPerson, isCreatingOwedItem,
+    onDirectionChange: setDirection,
+    onExportCsv: handleExportCsv,
+    onResetCreateForm: resetCreateFormState,
+    onSetCreateFormOpen: setIsCreateFormOpen,
+    onSetDeleteDraftTransaction: setDeleteDraftTransaction,
+    onFilterChange: updateFilters,
+    onApplyFilters: () => loadTransactions(),
+    onClearFilters: clearFilters,
+    onCreateSubmit: handleCreateTransactionSubmit,
+    onFormChange: updateForm,
+    onToggleCreateOwed: toggleCreateOwedEnabled,
+    onAddCreateOwedRow: addCreateOwedRow,
+    onRemoveCreateOwedRow: removeCreateOwedRow, onUpdateCreateOwedRow: updateCreateOwedRow,
+    onToggleCreateRepayment: toggleCreateRepaymentEnabled,
+    onRepaymentPersonChange: updateRepaymentPerson,
+    onRepaymentAllocationChange: updateRepaymentAllocation,
+    onRepaymentUnallocatedCategoryChange: setRepaymentUnallocatedCategory,
+    onStartEdit: handleStartEdit, onDelete: handleDeleteTransaction,
+    onMarkOwed: openOwedDialog,
+    onEditFormChange: updateEditForm,
+    onSaveEdit: saveEditFromForm,
+    onCancelEdit: cancelEdit,
+    onCancelDelete: () => setDeleteDraftTransaction(null),
+    onConfirmDelete: confirmDeleteTransaction,
+    onCloseOwedDialog: closeOwedDialog,
+    onAddOwedRow: addOwedRow, onRemoveOwedRow: removeOwedRow,
+    onUpdateOwedRow: updateOwedRow,
+    onOwedLeftoverAllocationChange: updateOwedLeftoverAllocation,
+    onCreateOwedItems: createOwedItemsFromDialog,
+    getRemainingOwedAmount,
+    getSelectedOwedPaymentTransaction,
+  }
+
+  return <TransactionsPageView {...viewProps} />
 }
