@@ -55,6 +55,8 @@ export function TransactionsPage() {
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dataWarning, setDataWarning] = useState<string | null>(null)
+  const [isTransactionsLoading, setIsTransactionsLoading] = useState(true)
   const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
   const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
   const [owedPaymentAvailableAmounts, setOwedPaymentAvailableAmounts] = useState<Record<number, string>>({})
@@ -77,6 +79,7 @@ export function TransactionsPage() {
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
+    setIsTransactionsLoading(true)
 
     const selectedMonth = activeFilters.month || monthKey
     const monthDateRange = getMonthDateRange(selectedMonth)
@@ -94,6 +97,9 @@ export function TransactionsPage() {
       .then(setTransactions)
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load transactions')
+      })
+      .finally(() => {
+        setIsTransactionsLoading(false)
       })
   }
 
@@ -131,6 +137,9 @@ export function TransactionsPage() {
       setForm(getInitialFormState(direction, monthKey))
       setEditForm(getInitialFormState(direction, monthKey))
       setFilters(initialFilters)
+      setError(null)
+      setDataWarning(null)
+      setIsTransactionsLoading(true)
       setEditingTransaction(null)
       setIsCreateFormOpen(false)
       setIsCreateOwedEnabled(false)
@@ -147,10 +156,15 @@ export function TransactionsPage() {
         .catch((caughtError: unknown) => {
           setError(caughtError instanceof Error ? caughtError.message : 'Failed to load transactions')
         })
+        .finally(() => {
+          setIsTransactionsLoading(false)
+        })
 
       listTransactionCategories({ active_only: true, limit: 500 })
         .then(setCategoryOptions)
-        .catch(() => setCategoryOptions([]))
+        .catch(() => {
+          setDataWarning('Category options could not be refreshed.')
+        })
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
@@ -182,7 +196,9 @@ export function TransactionsPage() {
   function loadCategoryOptions() {
     listTransactionCategories({ active_only: true, limit: 500 })
       .then(setCategoryOptions)
-      .catch(() => setCategoryOptions([]))
+      .catch(() => {
+        setDataWarning('Category options could not be refreshed.')
+      })
   }
 
   function loadOwedPersonOptions() {
@@ -191,7 +207,7 @@ export function TransactionsPage() {
         setOwedPersonOptions(getRankedOwedPeople(items))
       })
       .catch(() => {
-        setOwedPersonOptions([])
+        setDataWarning('Owed-person suggestions could not be refreshed.')
       })
   }
 
@@ -256,7 +272,7 @@ export function TransactionsPage() {
         setRepaymentPersonOptions(people)
       })
       .catch(() => {
-        setRepaymentPersonOptions([])
+        setDataWarning('Repayment-person suggestions could not be refreshed.')
       })
   }
 
@@ -784,7 +800,8 @@ export function TransactionsPage() {
   )
 
   const viewProps = {
-    direction, error, message, filters, categoryOptions, form, editForm,
+    direction, error, message, dataWarning, isTransactionsLoading,
+    filters, categoryOptions, form, editForm,
     transactions: displayTransactions,
     editingTransaction, deleteDraftTransaction, owedDraftTransaction,
     isCreateFormOpen, isCreateOwedEnabled, createOwedRows, owedPersonOptions,

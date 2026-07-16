@@ -195,14 +195,13 @@ Completed and validated through `MED-005`.
 
 Open work is tracked in GitHub Issues and must be completed in this order:
 
-1. [MED-006: Improve loading and partial-failure states](https://github.com/FRCTavares/WebApp-Transactions/issues/6)
-2. [MED-007: Remove personal hard-coded frontend defaults](https://github.com/FRCTavares/WebApp-Transactions/issues/7)
-3. [MED-008: Replace the hard-coded FX match rate](https://github.com/FRCTavares/WebApp-Transactions/issues/8)
-4. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
-5. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
-6. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
-7. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
-8. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
+1. [MED-007: Remove personal hard-coded frontend defaults](https://github.com/FRCTavares/WebApp-Transactions/issues/7)
+2. [MED-008: Replace the hard-coded FX match rate](https://github.com/FRCTavares/WebApp-Transactions/issues/8)
+3. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
+4. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
+5. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
+6. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
+7. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
 Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority

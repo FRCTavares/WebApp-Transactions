@@ -234,6 +234,7 @@ export function InvestmentsPage() {
   const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dataWarning, setDataWarning] = useState<string | null>(null)
   const [isEventsOpen, setIsEventsOpen] = useState(false)
   const [eventSort, setEventSort] = useState<InvestmentEventSort>('date_desc')
   const [eventPage, setEventPage] = useState(1)
@@ -258,11 +259,13 @@ export function InvestmentsPage() {
     eventType,
     events,
     fundingMonths,
+    isInitialDataLoading,
     isMonthlySeriesLoading,
     loadEvents,
     marketPrices,
     month,
     monthlySeries,
+    monthlySeriesError,
     positions,
     reloadAfterMutation,
     setDateFrom,
@@ -279,6 +282,7 @@ export function InvestmentsPage() {
       setMessage(null)
     },
     onError: setError,
+    onWarning: setDataWarning,
     onEventsReloaded: () => {
       setEventPage(1)
     },
@@ -595,6 +599,24 @@ export function InvestmentsPage() {
       </div>
 
       <StatusMessage error={error} message={message} />
+
+      {dataWarning && (
+        <p className="status status-info" role="status">
+          {dataWarning}
+        </p>
+      )}
+
+      {monthlySeriesError && (
+        <p className="status status-info" role="status">
+          Investment trend could not be refreshed: {monthlySeriesError}
+        </p>
+      )}
+
+      {isInitialDataLoading && events.length === 0 && positions.length === 0 && (
+        <p className="status status-info" role="status" aria-live="polite">
+          Loading investment data...
+        </p>
+      )}
 
       <InvestmentPortfolioTrendChart
         months={chartMonths}

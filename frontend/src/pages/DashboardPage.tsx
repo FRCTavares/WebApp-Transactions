@@ -188,6 +188,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [categoryDetailsLoading, setCategoryDetailsLoading] = useState(false)
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dataWarning, setDataWarning] = useState<string | null>(null)
 
   const sortedCategoryRollups = useMemo(
     () => sortCategoryRollups(buildCategoryRollups(categories?.items ?? [])),
@@ -203,6 +204,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       const { startDate, endDate } = getDateRange(year, month)
 
       setError(null)
+      setDataWarning(null)
       setSelectedCategory(null)
       setCategoryTransactions([])
       setSummary(null)
@@ -211,7 +213,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       setRecentTransactions([])
       setIsDashboardLoading(true)
 
-      Promise.all([
+      void Promise.allSettled([
         getMonthlySummary(year, month),
         getInvestmentMonthlyChange(year, month),
         getCategorySummary('out', year, month),
@@ -221,24 +223,58 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
           date_to: endDate,
           limit: 5,
         }),
-      ])
-        .then(([
-          summaryData,
-          investmentMonthlyChangeData,
-          categoryData,
-          recentTransactionData,
-        ]) => {
-          setSummary(summaryData)
-          setInvestmentMonthlyChange(investmentMonthlyChangeData)
-          setCategories(categoryData)
-          setRecentTransactions(recentTransactionData)
-        })
-        .catch((caughtError: unknown) => {
-          setError(caughtError instanceof Error ? caughtError.message : 'Failed to load dashboard')
-        })
-        .finally(() => {
-          setIsDashboardLoading(false)
-        })
+      ]).then(([
+        summaryResult,
+        investmentMonthlyChangeResult,
+        categoryResult,
+        recentTransactionsResult,
+      ]) => {
+        const requiredErrors: string[] = []
+
+        if (summaryResult.status === 'fulfilled') {
+          setSummary(summaryResult.value)
+        } else {
+          requiredErrors.push(
+            summaryResult.reason instanceof Error
+              ? summaryResult.reason.message
+              : 'Failed to load monthly summary',
+          )
+        }
+
+        if (investmentMonthlyChangeResult.status === 'fulfilled') {
+          setInvestmentMonthlyChange(investmentMonthlyChangeResult.value)
+        } else {
+          setDataWarning(
+            'Investment monthly change could not be loaded. Other dashboard data remains available.',
+          )
+        }
+
+        if (categoryResult.status === 'fulfilled') {
+          setCategories(categoryResult.value)
+        } else {
+          requiredErrors.push(
+            categoryResult.reason instanceof Error
+              ? categoryResult.reason.message
+              : 'Failed to load category summary',
+          )
+        }
+
+        if (recentTransactionsResult.status === 'fulfilled') {
+          setRecentTransactions(recentTransactionsResult.value)
+        } else {
+          requiredErrors.push(
+            recentTransactionsResult.reason instanceof Error
+              ? recentTransactionsResult.reason.message
+              : 'Failed to load recent transactions',
+          )
+        }
+
+        if (requiredErrors.length > 0) {
+          setError(requiredErrors.join(' '))
+        }
+
+        setIsDashboardLoading(false)
+      })
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
@@ -295,6 +331,12 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       </div>
 
       <StatusMessage error={error} />
+
+      {dataWarning && (
+        <p className="status status-info" role="status">
+          {dataWarning}
+        </p>
+      )}
 
       {isDashboardLoading && summary === null && (
         <section className="dashboard-loading-panel" role="status" aria-live="polite">

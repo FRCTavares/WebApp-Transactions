@@ -79,34 +79,74 @@ export function WealthPage(_props: WealthPageProps) {
   const [showInactiveAccounts, setShowInactiveAccounts] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dataWarning, setDataWarning] = useState<string | null>(null)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [isCurrentDataLoading, setIsCurrentDataLoading] = useState(true)
+  const [isHistoryLoading, setIsHistoryLoading] = useState(
+    () => readHistoricalData<WealthMonthlyTotal[]>(monthlyCacheKey) === undefined,
+  )
 
-  const loadCurrentWealthData = useCallback(() => {
+  const loadCurrentWealthData = useCallback(async () => {
     setError(null)
+    setDataWarning(null)
+    setIsCurrentDataLoading(true)
 
-    return Promise.all([
+    const [
+      accountsResult,
+      snapshotsResult,
+      investmentPositionsResult,
+      owedItemsResult,
+    ] = await Promise.allSettled([
       listWealthAccounts({ active_only: !showInactiveAccounts, limit: 500 }),
       listWealthSnapshots({ limit: 500 }),
       listInvestmentPositions(),
       listOwedItems({ status: 'active', limit: 500 }),
     ])
-      .then(([
-        loadedAccounts,
-        loadedSnapshots,
-        loadedInvestmentPositions,
-        loadedOwedItems,
-      ]) => {
-        setAccounts(loadedAccounts)
-        setSnapshots(loadedSnapshots)
-        setInvestmentPositions(loadedInvestmentPositions)
-        setOwedItems(loadedOwedItems)
-      })
-      .catch((caughtError: unknown) => {
-        setError(
-          caughtError instanceof Error
-            ? caughtError.message
-            : 'Failed to load current wealth data',
-        )
-      })
+
+    const requiredErrors: string[] = []
+    const optionalErrors: string[] = []
+
+    if (accountsResult.status === 'fulfilled') {
+      setAccounts(accountsResult.value)
+    } else {
+      requiredErrors.push(
+        accountsResult.reason instanceof Error
+          ? accountsResult.reason.message
+          : 'Failed to load wealth accounts',
+      )
+    }
+
+    if (snapshotsResult.status === 'fulfilled') {
+      setSnapshots(snapshotsResult.value)
+    } else {
+      requiredErrors.push(
+        snapshotsResult.reason instanceof Error
+          ? snapshotsResult.reason.message
+          : 'Failed to load wealth snapshots',
+      )
+    }
+
+    if (investmentPositionsResult.status === 'fulfilled') {
+      setInvestmentPositions(investmentPositionsResult.value)
+    } else {
+      optionalErrors.push('Investment values could not be refreshed.')
+    }
+
+    if (owedItemsResult.status === 'fulfilled') {
+      setOwedItems(owedItemsResult.value)
+    } else {
+      optionalErrors.push('Owed receivables could not be refreshed.')
+    }
+
+    if (requiredErrors.length > 0) {
+      setError(requiredErrors.join(' '))
+    }
+
+    if (optionalErrors.length > 0) {
+      setDataWarning(optionalErrors.join(' '))
+    }
+
+    setIsCurrentDataLoading(false)
   }, [showInactiveAccounts])
 
   const loadWealthHistory = useCallback((force = false) => {
@@ -114,9 +154,16 @@ export function WealthPage(_props: WealthPageProps) {
       monthlyCacheKey,
     )
 
+    setHistoryError(null)
+
     if (cachedTotals !== undefined && !force) {
       setMonthlyTotals(cachedTotals)
+      setIsHistoryLoading(false)
       return Promise.resolve(cachedTotals)
+    }
+
+    if (monthlyTotals.length === 0) {
+      setIsHistoryLoading(true)
     }
 
     return loadHistoricalData(
@@ -129,12 +176,15 @@ export function WealthPage(_props: WealthPageProps) {
         return loadedMonthlyTotals
       })
       .catch((caughtError: unknown) => {
-        setError(
+        setHistoryError(
           caughtError instanceof Error
             ? caughtError.message
             : 'Failed to load wealth history',
         )
         return monthlyTotals
+      })
+      .finally(() => {
+        setIsHistoryLoading(false)
       })
   }, [monthlyCacheKey, monthlyTotals])
 
@@ -494,12 +544,30 @@ export function WealthPage(_props: WealthPageProps) {
 
       <StatusMessage error={error} message={message} />
 
-      <WealthMobileAccounts
-        accountGroups={accountGroups}
-        latestByAccount={latestByAccount}
-        investmentPositions={investmentPositions}
-        owedItems={owedItems}
-      />
+      {dataWarning && (
+        <p className="status status-info" role="status">
+          {dataWarning}
+        </p>
+      )}
+
+      {historyError && (
+        <p className="status status-info" role="status">
+          Wealth history could not be refreshed: {historyError}
+        </p>
+      )}
+
+      {isCurrentDataLoading && accounts.length === 0 && snapshots.length === 0 ? (
+        <p className="status status-info" role="status" aria-live="polite">
+          Loading wealth data...
+        </p>
+      ) : (
+        <WealthMobileAccounts
+          accountGroups={accountGroups}
+          latestByAccount={latestByAccount}
+          investmentPositions={investmentPositions}
+          owedItems={owedItems}
+        />
+      )}
 
       {isAccountFormOpen ? (
         <section className="content-card panel-card">
@@ -694,20 +762,30 @@ export function WealthPage(_props: WealthPageProps) {
 
 
       <section className="content-card panel-card wealth-monthly-panel wealth-trend-panel">
-        <WealthMonthlyChart monthlyTotals={monthlyTotals} />
+        {isHistoryLoading && monthlyTotals.length === 0 ? (
+          <p className="status status-info" role="status" aria-live="polite">
+            Loading wealth history...
+          </p>
+        ) : historyError && monthlyTotals.length === 0 ? (
+          <p className="muted">Wealth history is currently unavailable.</p>
+        ) : (
+          <WealthMonthlyChart monthlyTotals={monthlyTotals} />
+        )}
       </section>
 
-      <WealthAccountsPanel
-        accountGroups={accountGroups}
-        latestByAccount={latestByAccount}
-        investmentPositions={investmentPositions}
-        showInactiveAccounts={showInactiveAccounts}
-        onShowInactiveAccountsChange={setShowInactiveAccounts}
-        onStartAccountEdit={startAccountEdit}
-        onToggleAccountActive={toggleAccountActive}
-        onRemoveAccount={removeAccount}
-        renderAccountBalanceCell={renderAccountBalanceCell}
-      />
+      {isCurrentDataLoading && accounts.length === 0 && snapshots.length === 0 ? null : (
+        <WealthAccountsPanel
+          accountGroups={accountGroups}
+          latestByAccount={latestByAccount}
+          investmentPositions={investmentPositions}
+          showInactiveAccounts={showInactiveAccounts}
+          onShowInactiveAccountsChange={setShowInactiveAccounts}
+          onStartAccountEdit={startAccountEdit}
+          onToggleAccountActive={toggleAccountActive}
+          onRemoveAccount={removeAccount}
+          renderAccountBalanceCell={renderAccountBalanceCell}
+        />
+      )}
 
       <section className="content-card panel-card wealth-snapshots-panel">
         <div className="section-header">

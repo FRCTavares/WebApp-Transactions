@@ -71,6 +71,7 @@ type UseInvestmentDataOptions = {
   onFundingMonthsLoaded: (fundingMonths: InvestmentFundingMonth[]) => void
   onEventsReloaded: () => void
   onError: (message: string) => void
+  onWarning: (message: string | null) => void
   onBeforeLoad: () => void
 }
 
@@ -78,6 +79,7 @@ export function useInvestmentData({
   chartMonths,
   onBeforeLoad,
   onError,
+  onWarning,
   onEventsReloaded,
   onFundingMonthsLoaded,
 }: UseInvestmentDataOptions) {
@@ -107,6 +109,8 @@ export function useInvestmentData({
   )
   const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
   const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
+  const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
+  const [monthlySeriesError, setMonthlySeriesError] = useState<string | null>(null)
   const [eventType, setEventType] = useState('')
   const [source, setSource] = useState('')
   const [month, setMonth] = useState('')
@@ -120,6 +124,7 @@ export function useInvestmentData({
 
     if (cachedSeries !== undefined && !force) {
       setMonthlySeries(cachedSeries)
+      setMonthlySeriesError(null)
       setIsMonthlySeriesLoading(false)
       return Promise.resolve(cachedSeries)
     }
@@ -127,6 +132,8 @@ export function useInvestmentData({
     if (monthlySeries.length === 0) {
       setIsMonthlySeriesLoading(true)
     }
+
+    setMonthlySeriesError(null)
 
     return loadHistoricalData(
       monthlySeriesCacheKey,
@@ -137,7 +144,14 @@ export function useInvestmentData({
         setMonthlySeries(loadedSeries)
         return loadedSeries
       })
-      .catch(() => monthlySeries)
+      .catch((caughtError: unknown) => {
+        setMonthlySeriesError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Failed to load investment trend',
+        )
+        return monthlySeries
+      })
       .finally(() => {
         setIsMonthlySeriesLoading(false)
       })
@@ -147,12 +161,17 @@ export function useInvestmentData({
     monthlySeriesCacheKey,
   ])
 
-  function loadEvents() {
+  async function loadEvents() {
     onBeforeLoad()
+    onWarning(null)
 
     const monthDateRange = getMonthDateRange(month)
-
-    Promise.all([
+    const [
+      eventsResult,
+      positionsResult,
+      marketPricesResult,
+      fundingMonthsResult,
+    ] = await Promise.allSettled([
       listAllInvestmentEvents({
         source: source || undefined,
         event_type: eventType || undefined,
@@ -166,18 +185,53 @@ export function useInvestmentData({
         source: source || 'trading212',
       }),
     ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
-        setEvents(loadedEvents)
-        setPositions(loadedPositions)
-        setMarketPrices(loadedMarketPrices)
-        setFundingMonths(loadedFundingMonths)
-        onEventsReloaded()
-        onFundingMonthsLoaded(loadedFundingMonths)
-      })
-      .catch((caughtError: unknown) => {
-        onError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
-      })
 
+    const requiredErrors: string[] = []
+    const optionalErrors: string[] = []
+
+    if (eventsResult.status === 'fulfilled') {
+      setEvents(eventsResult.value)
+      onEventsReloaded()
+    } else {
+      requiredErrors.push(
+        eventsResult.reason instanceof Error
+          ? eventsResult.reason.message
+          : 'Failed to load investment events',
+      )
+    }
+
+    if (positionsResult.status === 'fulfilled') {
+      setPositions(positionsResult.value)
+    } else {
+      requiredErrors.push(
+        positionsResult.reason instanceof Error
+          ? positionsResult.reason.message
+          : 'Failed to load investment positions',
+      )
+    }
+
+    if (marketPricesResult.status === 'fulfilled') {
+      setMarketPrices(marketPricesResult.value)
+    } else {
+      optionalErrors.push('Market prices could not be refreshed.')
+    }
+
+    if (fundingMonthsResult.status === 'fulfilled') {
+      setFundingMonths(fundingMonthsResult.value)
+      onFundingMonthsLoaded(fundingMonthsResult.value)
+    } else {
+      optionalErrors.push('Funding breakdown could not be refreshed.')
+    }
+
+    if (requiredErrors.length > 0) {
+      onError(requiredErrors.join(' '))
+    }
+
+    if (optionalErrors.length > 0) {
+      onWarning(optionalErrors.join(' '))
+    }
+
+    setIsInitialDataLoading(false)
   }
 
   useEffect(() => {
@@ -205,7 +259,10 @@ export function useInvestmentData({
     setDateFrom('')
     setDateTo('')
 
-    Promise.all([
+    onBeforeLoad()
+    onWarning(null)
+
+    void Promise.allSettled([
       listAllInvestmentEvents(),
       listInvestmentPositions(),
       listMarketPrices(),
@@ -213,17 +270,57 @@ export function useInvestmentData({
         month: '2026-06',
         source: 'trading212',
       }),
-    ])
-      .then(([loadedEvents, loadedPositions, loadedMarketPrices, loadedFundingMonths]) => {
-        setEvents(loadedEvents)
-        setPositions(loadedPositions)
-        setMarketPrices(loadedMarketPrices)
-        setFundingMonths(loadedFundingMonths)
-        onFundingMonthsLoaded(loadedFundingMonths)
-      })
-      .catch((caughtError: unknown) => {
-        onError(caughtError instanceof Error ? caughtError.message : 'Failed to load investment data')
-      })
+    ]).then(([
+      eventsResult,
+      positionsResult,
+      marketPricesResult,
+      fundingMonthsResult,
+    ]) => {
+      const requiredErrors: string[] = []
+      const optionalErrors: string[] = []
+
+      if (eventsResult.status === 'fulfilled') {
+        setEvents(eventsResult.value)
+        onEventsReloaded()
+      } else {
+        requiredErrors.push(
+          eventsResult.reason instanceof Error
+            ? eventsResult.reason.message
+            : 'Failed to load investment events',
+        )
+      }
+
+      if (positionsResult.status === 'fulfilled') {
+        setPositions(positionsResult.value)
+      } else {
+        requiredErrors.push(
+          positionsResult.reason instanceof Error
+            ? positionsResult.reason.message
+            : 'Failed to load investment positions',
+        )
+      }
+
+      if (marketPricesResult.status === 'fulfilled') {
+        setMarketPrices(marketPricesResult.value)
+      } else {
+        optionalErrors.push('Market prices could not be refreshed.')
+      }
+
+      if (fundingMonthsResult.status === 'fulfilled') {
+        setFundingMonths(fundingMonthsResult.value)
+        onFundingMonthsLoaded(fundingMonthsResult.value)
+      } else {
+        optionalErrors.push('Funding breakdown could not be refreshed.')
+      }
+
+      if (requiredErrors.length > 0) {
+        onError(requiredErrors.join(' '))
+      }
+
+      if (optionalErrors.length > 0) {
+        onWarning(optionalErrors.join(' '))
+      }
+    })
 
   }
 
@@ -240,11 +337,13 @@ export function useInvestmentData({
     eventType,
     events,
     fundingMonths,
+    isInitialDataLoading,
     isMonthlySeriesLoading,
     loadEvents,
     marketPrices,
     month,
     monthlySeries,
+    monthlySeriesError,
     positions,
     reloadAfterMutation,
     setDateFrom,

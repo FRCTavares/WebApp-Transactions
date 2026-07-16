@@ -31,6 +31,8 @@ export type TransactionsPageViewProps = {
   direction: Direction
   error: string | null
   message: string | null
+  dataWarning: string | null
+  isTransactionsLoading: boolean
   filters: TransactionFilterState
   categoryOptions: TransactionCategory[]
   form: TransactionFormState
@@ -164,6 +166,13 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
         </div>
       </div>
       <StatusMessage error={props.error} message={props.message} />
+
+      {props.dataWarning && (
+        <p className="status status-info" role="status">
+          {props.dataWarning}
+        </p>
+      )}
+
       <TransactionFilters
         direction={props.direction}
         filters={props.filters}
@@ -216,12 +225,18 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
           )}
         </TransactionForm>
       ) : null}
-      <TransactionTable
-        transactions={props.transactions}
-        onEdit={props.onStartEdit}
-        onDelete={props.onDelete}
-        onMarkOwed={props.direction === 'out' ? props.onMarkOwed : undefined}
-      />
+      {props.isTransactionsLoading && props.transactions.length === 0 ? (
+        <p className="status status-info" role="status" aria-live="polite">
+          Loading transactions...
+        </p>
+      ) : (
+        <TransactionTable
+          transactions={props.transactions}
+          onEdit={props.onStartEdit}
+          onDelete={props.onDelete}
+          onMarkOwed={props.direction === 'out' ? props.onMarkOwed : undefined}
+        />
+      )}
       {props.editingTransaction && (
         <TransactionEditDialog
           transaction={props.editingTransaction}
