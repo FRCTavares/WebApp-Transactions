@@ -11,7 +11,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Page } from '../App'
+import type { Page } from '../routing/appRoutes'
 import { useTheme } from '../hooks/useTheme'
 
 const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
@@ -41,15 +41,21 @@ const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: Lucid
 
 const SETTINGS_RELATED_PAGES = new Set<Page>(['categories', 'export'])
 
-function getSidebarButtonClass(currentPage: Page, itemId: Page) {
-  const isSettingsActive = itemId === 'settings' && SETTINGS_RELATED_PAGES.has(currentPage)
+function getSidebarButtonClass(
+  currentPage: Page | null,
+  itemId: Page,
+) {
+  const isSettingsActive =
+    currentPage !== null
+    && itemId === 'settings'
+    && SETTINGS_RELATED_PAGES.has(currentPage)
 
   return currentPage === itemId || isSettingsActive ? 'active' : ''
 }
 
 type AppSidebarProps = {
   authError: string | null
-  currentPage: Page
+  currentPage: Page | null
   displayName: string
   isAuthEnabled: boolean
   profileAvatarUrl: string | null

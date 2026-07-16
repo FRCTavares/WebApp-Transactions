@@ -6,7 +6,7 @@ import {
   ReceiptText,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { Page } from '../App'
+import type { Page } from '../routing/appRoutes'
 
 const MOBILE_NAV_ITEMS: { id: Page; label: string; icon: LucideIcon }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
@@ -25,14 +25,20 @@ const MORE_RELATED_PAGES = new Set<Page>([
   'investments',
 ])
 
-function getMobileButtonClass(currentPage: Page, itemId: Page) {
-  const isMoreActive = itemId === 'more' && MORE_RELATED_PAGES.has(currentPage)
+function getMobileButtonClass(
+  currentPage: Page | null,
+  itemId: Page,
+) {
+  const isMoreActive =
+    currentPage !== null
+    && itemId === 'more'
+    && MORE_RELATED_PAGES.has(currentPage)
 
   return currentPage === itemId || isMoreActive ? 'active' : ''
 }
 
 type AppMobileNavProps = {
-  currentPage: Page
+  currentPage: Page | null
   onPageChange: (page: Page) => void
 }
 

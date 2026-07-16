@@ -7,8 +7,16 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
+from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.schemas.financial_command import (
+    ExistingTransactionOwedSplitCommand,
+    ExistingTransactionOwedSplitRead,
+    TransactionCreateWithOwedCommand,
+)
 from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
+from app.services.financial_command_service import FinancialCommandService
+from app.services.owed_service import OwedService
 from app.services.transaction_service import TransactionService
 
 
@@ -62,6 +70,19 @@ def build_transactions_csv(transactions: list[TransactionRead]) -> str:
 def get_transaction_service(db: Session = Depends(get_db)) -> TransactionService:
     repository = TransactionRepository(db)
     return TransactionService(repository)
+
+
+def get_financial_command_service(
+    db: Session = Depends(get_db),
+) -> FinancialCommandService:
+    transaction_repository = TransactionRepository(db)
+    owed_repository = OwedRepository(db)
+    owed_service = OwedService(owed_repository, transaction_repository)
+    return FinancialCommandService(
+        db=db,
+        transaction_repository=transaction_repository,
+        owed_service=owed_service,
+    )
 
 
 @router.post(
@@ -163,6 +184,40 @@ def list_uncategorised_transactions(
         direction=direction,
         source=source,
         limit=limit,
+    )
+
+
+@router.post(
+    "/commands/create-with-owed",
+    response_model=TransactionRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_transaction_with_owed(
+    command: TransactionCreateWithOwedCommand,
+    service: FinancialCommandService = Depends(get_financial_command_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.create_transaction_with_owed(
+        command,
+        current_user=current_user,
+    )
+
+
+@router.post(
+    "/{transaction_id}/commands/create-owed-split",
+    response_model=ExistingTransactionOwedSplitRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_owed_split_for_transaction(
+    transaction_id: int,
+    command: ExistingTransactionOwedSplitCommand,
+    service: FinancialCommandService = Depends(get_financial_command_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.create_owed_split_for_transaction(
+        transaction_id,
+        command,
+        current_user=current_user,
     )
 
 

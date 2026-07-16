@@ -88,6 +88,40 @@ export type TransactionUpdatePayload = {
   notes?: string | null
 }
 
+export type TransactionCreateWithOwedCommandPayload = {
+  transaction: TransactionCreatePayload
+  owed_items?: OwedItemCreatePayload[]
+  owed_payment?: OwedPaymentCreatePayload | null
+}
+
+export type ExistingTransactionPaymentCommandPayload = {
+  linked_transaction_id: number
+  payment_date: string
+  amount: string
+  currency?: string
+  method?: OwedPaymentMethod
+  notes?: string | null
+  unallocated_category?: string | null
+  unallocated_notes?: string | null
+  extra_allocations?: OwedPaymentAllocationCreatePayload[]
+}
+
+export type ExistingTransactionOwedRowCommandPayload = {
+  person: string
+  amount: string
+  payment?: ExistingTransactionPaymentCommandPayload | null
+}
+
+export type ExistingTransactionOwedSplitCommandPayload = {
+  rows: ExistingTransactionOwedRowCommandPayload[]
+}
+
+export type ExistingTransactionOwedSplitResponse = {
+  transaction: Transaction
+  owed_items_created: number
+  payments_created: number
+}
+
 export type MatchedTransaction = {
   id: number
   date: string

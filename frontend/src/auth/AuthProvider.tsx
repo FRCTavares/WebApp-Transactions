@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { setAccessTokenProvider } from '../api/client'
+import {
+  setAccessTokenProvider,
+  setUnauthorizedHandler,
+} from '../api/client'
 import { AuthContext, type AuthContextValue } from './authContext'
 import { isSupabaseAuthConfigured, isSupabaseAuthEnabled, supabase } from './supabaseClient'
 
@@ -23,9 +26,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return data.session?.access_token ?? null
     })
 
+    setUnauthorizedHandler(async () => {
+      setSession(null)
+
+      if (!supabase) {
+        return
+      }
+
+      await supabase.auth.signOut({ scope: 'local' })
+    })
+
     if (!supabase) {
       return () => {
         setAccessTokenProvider(null)
+        setUnauthorizedHandler(null)
       }
     }
 
@@ -51,6 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isMounted = false
       listener.subscription.unsubscribe()
       setAccessTokenProvider(null)
+      setUnauthorizedHandler(null)
     }
   }, [])
 

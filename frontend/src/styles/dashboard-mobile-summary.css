@@ -1,0 +1,67 @@
+/* Mobile dashboard compact summary cards. */
+@media (max-width: 800px) {
+  .dashboard-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .dashboard-metric-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: center;
+    min-height: 4.35rem;
+    padding: 0.7rem;
+    border-radius: 1rem;
+  }
+
+  .dashboard-metric-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.9rem;
+  }
+
+  .dashboard-metric-card div {
+    gap: 0.12rem;
+  }
+
+  .dashboard-metric-card p {
+    overflow: hidden;
+    color: #8b92a0;
+    font-size: 0.76rem;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-metric-card strong {
+    overflow: hidden;
+    font-size: 1.18rem;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-metric-card small {
+    display: none;
+  }
+}
+
+@media (max-width: 370px) {
+  .dashboard-metric-card {
+    padding: 0.62rem;
+  }
+
+  .dashboard-metric-icon {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+
+  .dashboard-metric-card p {
+    font-size: 0.7rem;
+  }
+
+  .dashboard-metric-card strong {
+    font-size: 1.02rem;
+  }
+}

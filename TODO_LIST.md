@@ -191,139 +191,20 @@ No open `HIGH` items remain in the root task list.
 
 ## 7. Medium Priority
 
-### MED-002: Split oversized frontend files
+Completed and validated through `MED-005`.
 
-- Evidence:
-  - `TransactionsPage.tsx`: 995 lines.
-  - `dashboard.css`: 922 lines.
-  - `wealth.css`: 915 lines.
+Open work is tracked in GitHub Issues and must be completed in this order:
 
-- Proposed fix:
-  - Extract focused hooks, modals, sections, and CSS files.
+1. [MED-006: Improve loading and partial-failure states](https://github.com/FRCTavares/WebApp-Transactions/issues/6)
+2. [MED-007: Remove personal hard-coded frontend defaults](https://github.com/FRCTavares/WebApp-Transactions/issues/7)
+3. [MED-008: Replace the hard-coded FX match rate](https://github.com/FRCTavares/WebApp-Transactions/issues/8)
+4. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
+5. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
+6. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
+7. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
+8. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
-- Acceptance criteria:
-  - No production source file exceeds 900 lines.
-- Effort: Medium
-
-### MED-003: Replace frontend multi-request financial workflows with backend commands
-
-- Risk:
-  - Partial success can leave inconsistent records.
-
-- Proposed fix:
-  - Add atomic backend command endpoints.
-
-- Acceptance criteria:
-  - One request performs the complete operation.
-  - Failure rolls back all changes.
-- Effort: Medium
-
-### MED-004: Add URL routing
-
-- Evidence:
-  - Navigation uses state and localStorage.
-
-- Risk:
-  - No deep links, browser history, or refresh-safe routes.
-
-- Proposed fix:
-  - Add minimal React routing.
-
-- Acceptance criteria:
-  - Every major screen has a stable URL.
-  - Back, forward, and not-found behavior work.
-- Effort: Medium
-
-### MED-005: Add request cancellation, timeouts, and auth recovery
-
-- Evidence:
-  - Frontend client lacks bounded timeouts, abort support, and centralized `401` handling.
-
-- Proposed fix:
-  - Use `AbortController`.
-  - Normalize errors.
-  - Handle expired sessions centrally.
-  - Never automatically retry financial writes.
-- Effort: Medium
-
-### MED-006: Improve loading and partial-failure states
-
-- Evidence:
-  - Some screens show empty states while loading.
-  - Some optional request failures blank whole screens.
-  - Some failures are swallowed.
-
-- Proposed fix:
-  - Separate loading, empty, error, and partial-data states.
-  - Use independent optional widget failures.
-- Effort: Medium
-
-### MED-007: Remove personal hard-coded frontend defaults
-
-- Evidence:
-  - Investment flows contain personal dates, amounts, sources, and notes.
-  - App fallback name includes `Francisco`.
-
-- Acceptance criteria:
-  - New users see only neutral defaults.
-- Effort: Small
-
-### MED-008: Replace the hard-coded FX match rate
-
-- Evidence:
-  - FX ranking contains a fixed USD-to-EUR rate of `0.92`.
-
-- Proposed fix:
-  - Use a supplied or stored date-appropriate rate.
-- Effort: Small
-
-### MED-009: Make rule application atomic and efficient
-
-- Evidence:
-  - Rule services update and commit transactions individually.
-
-- Proposed fix:
-  - Apply changes in one transaction and batch where safe.
-- Effort: Medium
-
-### MED-010: Add production readiness health checks
-
-- Evidence:
-  - `/api/health` only returns `{"status":"ok"}`.
-
-- Proposed fix:
-  - Keep liveness.
-  - Add readiness for database connectivity and migration revision.
-- Effort: Small
-
-### MED-011: Add structured application logging
-
-- Proposed fix:
-  - Log request ID, route, method, status, duration, and safe user identifier.
-  - Never log tokens or uploaded finance contents.
-- Effort: Medium
-
-### MED-012: Add rate limiting and abuse controls
-
-- Apply to:
-  - market-data fetches
-  - uploads
-  - exports
-  - expensive rule operations
-
-- Acceptance criteria:
-  - Excess requests receive `429`.
-- Effort: Medium
-
-### MED-013: Decide production API documentation policy
-
-- Evidence:
-  - `/docs`, `/redoc`, and `/openapi.json` are public.
-
-- Proposed fix:
-  - Disable or protect them in production.
-- Effort: Small
-
+Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
 
 - Remove dead local-auth compatibility code after the ownership migration.
@@ -637,7 +518,7 @@ Document:
 - [x] Make import commits atomic.
 - [x] Correct investment cost basis.
 - [x] Correct historical FX valuation.
-- [ ] Convert multi-request financial workflows.
+- [x] Convert multi-request financial workflows.
 - [ ] Make rules atomic.
 
 ### Phase 2: Recovery and ownership
@@ -666,7 +547,7 @@ Document:
 - Add live regions.
 - Make charts keyboard accessible.
 - Add reduced-motion support.
-- Add URL routing.
+- [x] Add URL routing.
 - Improve loading and errors.
 
 ### Phase 5: Public release preparation

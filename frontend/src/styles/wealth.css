@@ -891,25 +891,3 @@
     padding: 0 0.6rem;
   }
 }
-
-/* Wealth mobile section spacing refinement. */
-@media (max-width: 800px) {
-  .wealth-page {
-    gap: 0.52rem !important;
-  }
-
-  .wealth-mobile-accounts {
-    gap: 0.54rem !important;
-    margin-top: -0.08rem !important;
-  }
-
-  .wealth-mobile-accounts h2 {
-    margin-top: 0.28rem !important;
-    margin-bottom: 0.28rem !important;
-  }
-
-  .wealth-mobile-account-group,
-  .wealth-mobile-empty {
-    min-height: 4.65rem !important;
-  }
-}

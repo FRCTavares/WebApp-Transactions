@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
@@ -15,39 +16,11 @@ import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './hooks/useAuth'
 import type { User } from '@supabase/supabase-js'
-
-export type Page =
-  | 'dashboard'
-  | 'transactions'
-  | 'wealth'
-  | 'investments'
-  | 'owed'
-  | 'more'
-  | 'import'
-  | 'categories'
-  | 'export'
-  | 'settings'
-
-const PAGE_STORAGE_KEY = 'finance-current-page'
-
-const APP_PAGES: Page[] = [
-  'dashboard',
-  'transactions',
-  'wealth',
-  'investments',
-  'owed',
-  'more',
-  'import',
-  'categories',
-  'export',
-  'settings',
-]
-
-function getInitialPage(): Page {
-  const storedPage = window.localStorage.getItem(PAGE_STORAGE_KEY)
-
-  return APP_PAGES.includes(storedPage as Page) ? storedPage as Page : 'dashboard'
-}
+import {
+  getPageFromPath,
+  getPathForPage,
+  type Page,
+} from './routing/appRoutes'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -107,7 +80,9 @@ function getUserAvatarUrl(user: User | null) {
 }
 
 function App() {
-  const [page, setPage] = useState<Page>(getInitialPage)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const page = getPageFromPath(location.pathname)
   const [authError, setAuthError] = useState<string | null>(null)
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
@@ -120,10 +95,11 @@ function App() {
     user,
   } = useAuth()
   const shouldShowGlobalPeriodSelector =
-    page !== 'import' &&
-    page !== 'categories' &&
-    page !== 'export' &&
-    page !== 'settings'
+    page !== null
+    && page !== 'import'
+    && page !== 'categories'
+    && page !== 'export'
+    && page !== 'settings'
   const displayName = getUserDisplayName(user)
   const profileAvatarUrl = getUserAvatarUrl(user)
   const greeting = getGreeting()
@@ -141,9 +117,14 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (location.pathname === '/') {
+      navigate(getPathForPage('dashboard'), { replace: true })
+    }
+  }, [location.pathname, navigate])
+
   function handlePageChange(nextPage: Page) {
-    setPage(nextPage)
-    window.localStorage.setItem(PAGE_STORAGE_KEY, nextPage)
+    navigate(getPathForPage(nextPage))
   }
 
   async function handleLogin() {
@@ -225,7 +206,7 @@ function App() {
           onSignOut={handleLogout}
         />
 
-        <main className={`app-main app-main-${page}`}>
+        <main className={`app-main app-main-${page ?? 'not-found'}`}>
           {shouldShowGlobalPeriodSelector && (
             <div className="global-topbar">
               <GlobalPeriodSelector />
@@ -239,6 +220,24 @@ function App() {
             </div>
           )}
 
+          {page === null && location.pathname !== '/' && (
+            <section className="app-page">
+              <div className="page-header">
+                <div className="page-title-block">
+                  <p className="eyebrow">404</p>
+                  <h1>Page not found</h1>
+                  <p>The requested finance screen does not exist.</p>
+                </div>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => handlePageChange('dashboard')}
+                >
+                  Return to dashboard
+                </button>
+              </div>
+            </section>
+          )}
           {page === 'dashboard' && <DashboardPage greeting={greeting} displayName={displayName} />}
           {page === 'transactions' && <TransactionsPage />}
           {page === 'wealth' && <WealthPage onOpenInvestments={() => handlePageChange('investments')} />}
