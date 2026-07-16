@@ -320,8 +320,11 @@ export function ImportPage() {
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch | null>(null)
   const [batchTransactions, setBatchTransactions] = useState<Transaction[]>([])
   const [batchInvestmentEvents, setBatchInvestmentEvents] = useState<InvestmentEvent[]>([])
+  const [isBatchesLoading, setIsBatchesLoading] = useState(true)
   const [isLoadingBatchRows, setIsLoadingBatchRows] = useState(false)
   const [isCommitting, setIsCommitting] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const [batchRowsError, setBatchRowsError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -377,12 +380,29 @@ export function ImportPage() {
     { rowsTotal: 0, rowsInserted: 0, rowsSkipped: 0 },
   )
 
-  function loadBatches() {
-    listImportBatches().then(setBatches).catch(() => undefined)
+  async function loadBatches() {
+    setHistoryError(null)
+    setIsBatchesLoading(true)
+
+    try {
+      setBatches(await listImportBatches())
+    } catch (caughtError: unknown) {
+      setHistoryError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to load import history',
+      )
+    } finally {
+      setIsBatchesLoading(false)
+    }
   }
 
   useEffect(() => {
-    loadBatches()
+    const timeoutId = window.setTimeout(() => {
+      void loadBatches()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   async function handlePreview() {
@@ -452,21 +472,33 @@ export function ImportPage() {
     setSelectedBatch(batch)
     setBatchTransactions([])
     setBatchInvestmentEvents([])
+    setBatchRowsError(null)
     setIsLoadingBatchRows(true)
 
-    try {
-      const [transactions, investmentEvents] = await Promise.all([
-        listImportBatchTransactions(batch.id),
-        listImportBatchInvestmentEvents(batch.id),
-      ])
+    const [transactionsResult, investmentEventsResult] = await Promise.allSettled([
+      listImportBatchTransactions(batch.id),
+      listImportBatchInvestmentEvents(batch.id),
+    ])
 
-      setBatchTransactions(transactions)
-      setBatchInvestmentEvents(investmentEvents)
-    } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to load batch rows')
-    } finally {
-      setIsLoadingBatchRows(false)
+    const rowErrors: string[] = []
+
+    if (transactionsResult.status === 'fulfilled') {
+      setBatchTransactions(transactionsResult.value)
+    } else {
+      rowErrors.push('Transaction rows could not be loaded.')
     }
+
+    if (investmentEventsResult.status === 'fulfilled') {
+      setBatchInvestmentEvents(investmentEventsResult.value)
+    } else {
+      rowErrors.push('Investment event rows could not be loaded.')
+    }
+
+    if (rowErrors.length > 0) {
+      setBatchRowsError(rowErrors.join(' '))
+    }
+
+    setIsLoadingBatchRows(false)
   }
 
   async function handleDeleteBatch(batch: ImportBatch) {
@@ -704,10 +736,20 @@ export function ImportPage() {
               Review committed imports, inspect their transactions, or rollback a batch if needed.
             </p>
           </div>
-          <button type="button" onClick={loadBatches}>
-            Refresh history
+          <button
+            type="button"
+            onClick={loadBatches}
+            disabled={isBatchesLoading}
+          >
+            {isBatchesLoading ? 'Loading history...' : 'Refresh history'}
           </button>
         </div>
+
+        {historyError && (
+          <p className="status status-error" role="alert">
+            Import history could not be refreshed: {historyError}
+          </p>
+        )}
 
         <div className="summary-grid import-history-summary-grid">
           <article className="summary-card">
@@ -744,7 +786,15 @@ export function ImportPage() {
               </tr>
             </thead>
             <tbody>
-              {visibleBatches.length === 0 && (
+              {isBatchesLoading && visibleBatches.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="empty-state">
+                    Loading import history...
+                  </td>
+                </tr>
+              )}
+
+              {!isBatchesLoading && !historyError && visibleBatches.length === 0 && (
                 <tr>
                   <td colSpan={9}>
                     <div className="import-history-empty">
@@ -805,8 +855,16 @@ export function ImportPage() {
             </div>
           </div>
 
+          {batchRowsError && (
+            <p className="status status-error" role="alert">
+              {batchRowsError}
+            </p>
+          )}
+
           {isLoadingBatchRows ? (
-            <p className="muted">Loading batch rows...</p>
+            <p className="muted" role="status">
+              Loading batch rows...
+            </p>
           ) : (
             <div className="import-batch-detail-grid">
               <section>

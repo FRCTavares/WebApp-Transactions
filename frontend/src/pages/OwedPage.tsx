@@ -204,9 +204,12 @@ export function OwedPage() {
   const [paymentForm, setPaymentForm] = useState<PaymentFormState>(getInitialPaymentFormState)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [dataWarning, setDataWarning] = useState<string | null>(null)
+  const [isItemsLoading, setIsItemsLoading] = useState(true)
 
   const loadItems = useCallback((status = statusFilter) => {
     setError(null)
+    setIsItemsLoading(true)
 
     listOwedItems({
       status: status || undefined,
@@ -215,6 +218,9 @@ export function OwedPage() {
       .then(setItems)
       .catch((caughtError: unknown) => {
         setError(caughtError instanceof Error ? caughtError.message : 'Failed to load owed items')
+      })
+      .finally(() => {
+        setIsItemsLoading(false)
       })
   }, [statusFilter])
 
@@ -225,8 +231,11 @@ export function OwedPage() {
       limit: 100,
     })
       .then(setLinkedTransactions)
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load linked transaction options')
+      .catch(() => {
+        setDataWarning((currentWarning) => {
+          const warning = 'Linked money-out options could not be refreshed.'
+          return currentWarning ? `${currentWarning} ${warning}` : warning
+        })
       })
   }
 
@@ -236,8 +245,11 @@ export function OwedPage() {
       limit: 100,
     })
       .then(setPaymentLinkedTransactions)
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load money in transaction options')
+      .catch(() => {
+        setDataWarning((currentWarning) => {
+          const warning = 'Money-in payment options could not be refreshed.'
+          return currentWarning ? `${currentWarning} ${warning}` : warning
+        })
       })
   }
 
@@ -251,6 +263,7 @@ export function OwedPage() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
+      setDataWarning(null)
       loadLinkedTransactions()
       loadPaymentLinkedTransactions()
     }, 0)
@@ -575,10 +588,17 @@ export function OwedPage() {
 
       <StatusMessage error={error} message={message} />
 
+      {dataWarning && (
+        <p className="status status-info" role="status">
+          {dataWarning}
+        </p>
+      )}
+
       <OwedStatusToolbar
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         onRefresh={() => {
+          setDataWarning(null)
           loadItems()
           loadLinkedTransactions()
           loadPaymentLinkedTransactions()
@@ -815,32 +835,38 @@ export function OwedPage() {
         </div>
       )}
 
-      <OwedItemsTable
-        items={visibleItems}
-        linkedTransactions={linkedTransactions}
-        isCreateRowOpen={isCreateRowOpen}
-        form={form}
-        editForm={editForm}
-        editingItem={editingItem}
-        onCreateItem={createItemFromForm}
-        onStartEdit={handleStartEdit}
-        onSaveEdit={saveEditFromForm}
-        onMarkPaid={handleMarkPaid}
-        onDelete={handleDelete}
-        onFormChange={updateForm}
-        onEditFormChange={updateEditForm}
-        onLinkedTransactionChange={updateFormLinkedTransactionId}
-        onEditLinkedTransactionChange={updateEditFormLinkedTransactionId}
-        onCancelCreate={() => {
-          setForm(getInitialFormState())
-          setIsCreateRowOpen(false)
-        }}
-        onCancelEdit={() => {
-          setEditingItem(null)
-          setEditForm(getInitialFormState())
-        }}
-        formatLinkedTransactionOption={formatLinkedTransactionOption}
-      />
+      {isItemsLoading && items.length === 0 ? (
+        <p className="status status-info" role="status" aria-live="polite">
+          Loading owed items...
+        </p>
+      ) : (
+        <OwedItemsTable
+          items={visibleItems}
+          linkedTransactions={linkedTransactions}
+          isCreateRowOpen={isCreateRowOpen}
+          form={form}
+          editForm={editForm}
+          editingItem={editingItem}
+          onCreateItem={createItemFromForm}
+          onStartEdit={handleStartEdit}
+          onSaveEdit={saveEditFromForm}
+          onMarkPaid={handleMarkPaid}
+          onDelete={handleDelete}
+          onFormChange={updateForm}
+          onEditFormChange={updateEditForm}
+          onLinkedTransactionChange={updateFormLinkedTransactionId}
+          onEditLinkedTransactionChange={updateEditFormLinkedTransactionId}
+          onCancelCreate={() => {
+            setForm(getInitialFormState())
+            setIsCreateRowOpen(false)
+          }}
+          onCancelEdit={() => {
+            setEditingItem(null)
+            setEditForm(getInitialFormState())
+          }}
+          formatLinkedTransactionOption={formatLinkedTransactionOption}
+        />
+      )}
     </section>
   )
 }
