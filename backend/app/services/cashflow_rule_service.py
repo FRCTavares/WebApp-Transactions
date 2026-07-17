@@ -94,31 +94,39 @@ class CashflowRuleService:
                 detail="Transaction repository is required to apply cashflow rules",
             )
 
-        transactions = self.transaction_repository.list_for_description_rule_application(
-            limit=limit,
-            user_id=current_user.id,
-        )
-        rules = self.cashflow_rule_repository.list(
-            user_id=current_user.id,
-            active_only=True,
-            limit=1000,
-        )
-        updated_count = 0
-
-        for transaction in transactions:
-            cashflow_type = self._get_cashflow_type(transaction, rules)
-
-            if cashflow_type is None:
-                continue
-
-            if transaction.cashflow_type == cashflow_type:
-                continue
-
-            self.transaction_repository.update_cashflow_type(
-                transaction=transaction,
-                cashflow_type=cashflow_type,
+        try:
+            transactions = (
+                self.transaction_repository.list_for_description_rule_application(
+                    limit=limit,
+                    user_id=current_user.id,
+                )
             )
-            updated_count += 1
+            rules = self.cashflow_rule_repository.list(
+                user_id=current_user.id,
+                active_only=True,
+                limit=1000,
+            )
+            updated_count = 0
+
+            for transaction in transactions:
+                cashflow_type = self._get_cashflow_type(transaction, rules)
+
+                if cashflow_type is None:
+                    continue
+
+                if transaction.cashflow_type == cashflow_type:
+                    continue
+
+                self.transaction_repository.update_cashflow_type(
+                    transaction=transaction,
+                    cashflow_type=cashflow_type,
+                )
+                updated_count += 1
+
+            self.transaction_repository.db.commit()
+        except Exception:
+            self.transaction_repository.db.rollback()
+            raise
 
         return {
             "checked": len(transactions),

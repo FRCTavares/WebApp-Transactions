@@ -2,7 +2,7 @@
 
 Last audited: 2026-07-16
 Original audit baseline: commit `96c3f0c`
-Current verification: 427 backend tests pass; frontend lint and build pass; required CI checks pass
+Current verification: 443 backend tests pass; frontend lint and build pass; required CI checks pass
 Current deployment: Vercel frontend, Render backend, Supabase Postgres and Auth, Google OAuth
 
 ## 1. Executive Summary
@@ -16,7 +16,7 @@ F - Transactions has a solid personal-use foundation:
 - Supabase Auth with Google OAuth.
 - Explicit user ownership is enforced across repositories, services, and ORM constructors.
 - Alembic migrations successfully build a clean database through revision `f7a3c9e2d814`.
-- 427 passing backend tests.
+- 443 passing backend tests.
 - Successful frontend production build.
 - Working production CORS, bearer-token enforcement, and security headers.
 - Current local database passes the existing integrity audit.
@@ -163,7 +163,7 @@ A paid plan will eventually be justified by:
 | UI/UX | 3/5 | Functional and responsive, but navigation, loading, consistency, and personal defaults need work |
 | Accessibility | 1/5 | Dialog, combobox, chart, zoom, focus, and motion issues remain |
 | Internationalization | 1/5 | Hard-coded English, EUR, locales, and personal assumptions |
-| Testing | 4/5 | 427 backend tests, frontend lint and build, migrations, and recovery checks pass; broader frontend and end-to-end coverage remains limited |
+| Testing | 4/5 | 443 backend tests, frontend lint and build, migrations, and recovery checks pass; broader frontend and end-to-end coverage remains limited |
 | CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene |
 | Observability | 1/5 | No structured logging, metrics, monitoring, or alerting |
 | Performance | 2/5 | Free-host cold starts, remaining composed workflows, and limited production observability |
@@ -191,15 +191,14 @@ No open `HIGH` items remain in the root task list.
 
 ## 7. Medium Priority
 
-Completed and validated through `MED-008`.
+Completed and validated through `MED-009`.
 
 Open work is tracked in GitHub Issues and must be completed in this order:
 
-1. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
-2. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
-3. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
-4. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
-5. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
+1. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
+2. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
+3. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
+4. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
 Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
@@ -516,7 +515,7 @@ Document:
 - [x] Correct investment cost basis.
 - [x] Correct historical FX valuation.
 - [x] Convert multi-request financial workflows.
-- [ ] Make rules atomic.
+- [x] Make rules atomic.
 
 ### Phase 2: Recovery and ownership
 
@@ -673,7 +672,7 @@ Current repository evidence on 2026-07-16:
 - Branch: `main`.
 - Verified code baseline before this documentation refresh: `fb56cb5`.
 - Original audit baseline: commit `96c3f0c`.
-- Full backend suite: 427 tests passed with 4 short test-key warnings.
+- Full backend suite: 443 tests passed with 4 short test-key warnings.
 - Frontend lint passed.
 - Frontend production build passed.
 - Required GitHub Actions checks passed.

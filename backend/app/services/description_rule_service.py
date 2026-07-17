@@ -98,31 +98,39 @@ class DescriptionRuleService:
                 detail="Transaction repository is required to apply description rules",
             )
 
-        transactions = self.transaction_repository.list_for_description_rule_application(
-            limit=limit,
-            user_id=current_user.id,
-        )
-        rules = self.description_rule_repository.list(
-            user_id=current_user.id,
-            active_only=True,
-            limit=1000,
-        )
-        updated_count = 0
-
-        for transaction in transactions:
-            cleaned_description = self._get_cleaned_description(transaction, rules)
-
-            if cleaned_description is None:
-                continue
-
-            if transaction.description == cleaned_description:
-                continue
-
-            self.transaction_repository.update_description(
-                transaction=transaction,
-                description=cleaned_description,
+        try:
+            transactions = (
+                self.transaction_repository.list_for_description_rule_application(
+                    limit=limit,
+                    user_id=current_user.id,
+                )
             )
-            updated_count += 1
+            rules = self.description_rule_repository.list(
+                user_id=current_user.id,
+                active_only=True,
+                limit=1000,
+            )
+            updated_count = 0
+
+            for transaction in transactions:
+                cleaned_description = self._get_cleaned_description(transaction, rules)
+
+                if cleaned_description is None:
+                    continue
+
+                if transaction.description == cleaned_description:
+                    continue
+
+                self.transaction_repository.update_description(
+                    transaction=transaction,
+                    description=cleaned_description,
+                )
+                updated_count += 1
+
+            self.transaction_repository.db.commit()
+        except Exception:
+            self.transaction_repository.db.rollback()
+            raise
 
         return {
             "checked": len(transactions),

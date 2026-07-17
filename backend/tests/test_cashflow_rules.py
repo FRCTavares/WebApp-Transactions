@@ -1,6 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
@@ -127,6 +129,140 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
     assert result["updated"] == 1
     assert matching_transaction.cashflow_type == "transfer"
     assert non_matching_transaction.cashflow_type == "expense"
+
+
+def test_cashflow_rule_application_commits_once(db_session, monkeypatch):
+    transaction_repository = TransactionRepository(db_session)
+    rule_repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(
+        cashflow_rule_repository=rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    for day in (1, 2):
+        transaction_repository.create(
+            TransactionCreate(
+                date=date(2026, 5, day),
+                description=f"Trading 212 transaction {day}",
+                raw_description=f"Trading 212 transaction {day}",
+                amount=Decimal("100.00"),
+                direction="out",
+                source="activobank",
+                currency="EUR",
+            ),
+            user_id=LOCAL_DEFAULT_USER_ID,
+        )
+
+    service.create_rule(
+        CashflowRuleCreate(
+            name="Trading 212 investment",
+            cashflow_type="transfer",
+            match_text="Trading 212",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        ),
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    commit_count = 0
+    original_commit = db_session.commit
+
+    def count_commit():
+        nonlocal commit_count
+        commit_count += 1
+        original_commit()
+
+    monkeypatch.setattr(db_session, "commit", count_commit)
+
+    result = service.apply_rules_to_existing_transactions(
+        current_user=LOCAL_CURRENT_USER
+    )
+
+    transactions = transaction_repository.list(
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    assert result == {"checked": 2, "updated": 2}
+    assert commit_count == 1
+    assert {transaction.cashflow_type for transaction in transactions} == {
+        "transfer"
+    }
+
+
+def test_cashflow_rule_application_rolls_back_all_updates(
+    db_session,
+    monkeypatch,
+):
+    transaction_repository = TransactionRepository(db_session)
+    rule_repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(
+        cashflow_rule_repository=rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    for day in (1, 2):
+        transaction_repository.create(
+            TransactionCreate(
+                date=date(2026, 5, day),
+                description=f"Trading 212 transaction {day}",
+                raw_description=f"Trading 212 transaction {day}",
+                amount=Decimal("100.00"),
+                direction="out",
+                source="activobank",
+                currency="EUR",
+            ),
+            user_id=LOCAL_DEFAULT_USER_ID,
+        )
+
+    service.create_rule(
+        CashflowRuleCreate(
+            name="Trading 212 investment",
+            cashflow_type="transfer",
+            match_text="Trading 212",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        ),
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    original_update = transaction_repository.update_cashflow_type
+    update_count = 0
+
+    def fail_after_first_update(*, transaction, cashflow_type):
+        nonlocal update_count
+        update_count += 1
+
+        if update_count == 2:
+            raise RuntimeError("forced cashflow rule failure")
+
+        return original_update(
+            transaction=transaction,
+            cashflow_type=cashflow_type,
+        )
+
+    monkeypatch.setattr(
+        transaction_repository,
+        "update_cashflow_type",
+        fail_after_first_update,
+    )
+
+    with pytest.raises(RuntimeError, match="forced cashflow rule failure"):
+        service.apply_rules_to_existing_transactions(
+            current_user=LOCAL_CURRENT_USER
+        )
+
+    db_session.expire_all()
+
+    transactions = transaction_repository.list(
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    assert update_count == 2
+    assert {transaction.cashflow_type for transaction in transactions} == {
+        "expense"
+    }
 
 
 def test_cashflow_rules_endpoint_create_and_apply(client):
