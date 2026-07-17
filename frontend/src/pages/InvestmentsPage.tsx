@@ -155,7 +155,7 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
   return {
     eurAmount: '',
     date: event.date,
-    description: 'Trading 212 deposit funding',
+    description: 'Investment deposit funding',
     notes: `Manual EUR funding resolution for ${event.amount} ${event.currency} deposit`,
   }
 }
