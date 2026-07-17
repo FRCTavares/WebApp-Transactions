@@ -84,6 +84,22 @@ class ImportFxResolutionService:
             fx_rate_source=source,
         )
 
+    def resolve_rate_to_eur(
+        self,
+        *,
+        currency: str,
+        value_date,
+    ) -> tuple[Decimal, str] | None:
+        currency = currency.upper()
+
+        if currency == "EUR":
+            return Decimal("1.00000000"), "source_currency"
+
+        return self._get_rate(
+            currency=currency,
+            value_date=value_date,
+        )
+
     def _get_rate(
         self,
         *,

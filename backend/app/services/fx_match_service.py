@@ -12,6 +12,9 @@ from app.schemas.fx_match import (
     PendingFxDepositMatch,
 )
 from app.schemas.import_preview import ImportPreviewInvestmentEvent
+from app.services.import_fx_resolution_service import (
+    ImportFxResolutionService,
+)
 from app.services.import_service import ImportService
 
 
@@ -20,9 +23,11 @@ class FxMatchService:
         self,
         transaction_repository: TransactionRepository,
         import_service: ImportService,
+        fx_resolution_service: ImportFxResolutionService,
     ) -> None:
         self.transaction_repository = transaction_repository
         self.import_service = import_service
+        self.fx_resolution_service = fx_resolution_service
 
     def preview_matches_from_file(
         self,
@@ -79,6 +84,22 @@ class FxMatchService:
         pending_deposit: ImportPreviewInvestmentEvent,
         user_id: str,
     ) -> PendingFxDepositMatch:
+        resolved_rate = self.fx_resolution_service.resolve_rate_to_eur(
+            currency=pending_deposit.currency,
+            value_date=pending_deposit.date,
+        )
+
+        if resolved_rate is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Historical FX rate is unavailable for "
+                    f"{pending_deposit.currency.upper()} on "
+                    f"{pending_deposit.date.isoformat()}"
+                ),
+            )
+
+        fx_rate_to_eur, _ = resolved_rate
         candidates = self.transaction_repository.list_fx_match_candidates(
             target_date=pending_deposit.date,
             source="activobank",
@@ -92,6 +113,7 @@ class FxMatchService:
                 self._build_candidate(
                     pending_deposit=pending_deposit,
                     transaction=transaction,
+                    fx_rate_to_eur=fx_rate_to_eur,
                 )
                 for transaction in candidates
             ],
@@ -114,12 +136,14 @@ class FxMatchService:
         self,
         pending_deposit: ImportPreviewInvestmentEvent,
         transaction: Transaction,
+        fx_rate_to_eur: Decimal,
     ) -> FxMatchCandidate:
         date_distance_days = abs((transaction.date - pending_deposit.date).days)
         score = self._score_candidate(
             pending_deposit=pending_deposit,
             transaction=transaction,
             date_distance_days=date_distance_days,
+            fx_rate_to_eur=fx_rate_to_eur,
         )
 
         return FxMatchCandidate(
@@ -141,11 +165,12 @@ class FxMatchService:
         pending_deposit: ImportPreviewInvestmentEvent,
         transaction: Transaction,
         date_distance_days: int,
+        fx_rate_to_eur: Decimal,
     ) -> Decimal:
         score = Decimal(date_distance_days * 10)
 
         if pending_deposit.currency.upper() == "USD" and transaction.currency.upper() == "EUR":
-            expected_eur = pending_deposit.amount * Decimal("0.92")
+            expected_eur = pending_deposit.amount * fx_rate_to_eur
 
             if expected_eur > 0:
                 amount_distance = abs(transaction.amount - expected_eur) / expected_eur
