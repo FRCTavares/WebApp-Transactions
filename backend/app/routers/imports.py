@@ -63,7 +63,12 @@ def get_import_service(
     )
 
 
-def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
+def get_fx_match_service(
+    db: Session = Depends(get_db),
+    provider: YFinanceMarketDataProvider = Depends(
+        get_import_market_data_provider
+    ),
+) -> FxMatchService:
     transaction_repository = TransactionRepository(db)
     import_batch_repository = ImportBatchRepository(db)
     wealth_repository = WealthRepository(db)
@@ -80,6 +85,7 @@ def get_fx_match_service(db: Session = Depends(get_db)) -> FxMatchService:
     return FxMatchService(
         transaction_repository=transaction_repository,
         import_service=import_service,
+        fx_resolution_service=ImportFxResolutionService(provider),
     )
 
 

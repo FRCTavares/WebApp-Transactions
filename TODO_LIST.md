@@ -191,16 +191,15 @@ No open `HIGH` items remain in the root task list.
 
 ## 7. Medium Priority
 
-Completed and validated through `MED-007`.
+Completed and validated through `MED-008`.
 
 Open work is tracked in GitHub Issues and must be completed in this order:
 
-1. [MED-008: Replace the hard-coded FX match rate](https://github.com/FRCTavares/WebApp-Transactions/issues/8)
-2. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
-3. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
-4. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
-5. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
-6. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
+1. [MED-009: Make rule application atomic and efficient](https://github.com/FRCTavares/WebApp-Transactions/issues/9)
+2. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
+3. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
+4. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
+5. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
 Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
