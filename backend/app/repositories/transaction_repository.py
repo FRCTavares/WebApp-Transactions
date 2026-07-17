@@ -261,10 +261,7 @@ class TransactionRepository:
         description: str,
     ) -> Transaction:
         transaction.description = description
-
         self.db.add(transaction)
-        self.db.commit()
-        self.db.refresh(transaction)
         return transaction
 
     def update_cashflow_type(
@@ -273,10 +270,7 @@ class TransactionRepository:
         cashflow_type: str,
     ) -> Transaction:
         transaction.cashflow_type = cashflow_type
-
         self.db.add(transaction)
-        self.db.commit()
-        self.db.refresh(transaction)
         return transaction
 
     def delete(self, transaction: Transaction) -> None:
