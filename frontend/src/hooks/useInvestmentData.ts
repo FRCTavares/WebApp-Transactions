@@ -181,8 +181,8 @@ export function useInvestmentData({
       listInvestmentPositions(source || undefined),
       listMarketPrices(),
       listInvestmentFundingMonths({
-        month: month || '2026-06',
-        source: source || 'trading212',
+        month: month || undefined,
+        source: source || undefined,
       }),
     ])
 
@@ -266,10 +266,7 @@ export function useInvestmentData({
       listAllInvestmentEvents(),
       listInvestmentPositions(),
       listMarketPrices(),
-      listInvestmentFundingMonths({
-        month: '2026-06',
-        source: 'trading212',
-      }),
+      listInvestmentFundingMonths(),
     ]).then(([
       eventsResult,
       positionsResult,

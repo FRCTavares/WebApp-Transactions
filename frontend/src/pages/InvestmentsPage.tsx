@@ -162,12 +162,12 @@ function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormStat
 
 function createDefaultMonthlyFundingForm(): MonthlyFundingFormState {
   return {
-    month: '2026-06',
-    source: 'trading212',
-    manualAmount: '100.00',
-    cashbackRoundingAmount: '9.77',
+    month: '',
+    source: '',
+    manualAmount: '',
+    cashbackRoundingAmount: '',
     currency: 'EUR',
-    notes: '100 EUR manual investment. Extra 9.77 EUR from cashback, rounding, and residual Trading 212 cash.',
+    notes: '',
   }
 }
 

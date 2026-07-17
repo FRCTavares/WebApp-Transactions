@@ -58,7 +58,7 @@ function getUserDisplayName(user: User | null) {
     return metadataName.trim().split(/\s+/)[0]
   }
 
-  const emailName = user?.email?.split('@')[0] ?? 'Francisco'
+  const emailName = user?.email?.split('@')[0] ?? ''
   const fallbackName = titleCaseName(emailName).split(/\s+/)[0]
 
   return fallbackName || 'there'
