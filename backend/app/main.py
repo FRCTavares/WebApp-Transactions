@@ -17,7 +17,11 @@ from app.auth.local_network import (
     is_local_network_client,
     is_local_network_only_enabled,
 )
-from app.config import get_cors_origins, validate_production_config
+from app.config import (
+    get_api_docs_enabled,
+    get_cors_origins,
+    validate_production_config,
+)
 from app.database import initialise_database
 from app.middleware.request_logging import (
     RequestLoggingMiddleware,
@@ -65,7 +69,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="F - Transactions API", lifespan=lifespan)
+api_docs_enabled = get_api_docs_enabled()
+
+app = FastAPI(
+    title="F - Transactions API",
+    lifespan=lifespan,
+    docs_url="/docs" if api_docs_enabled else None,
+    redoc_url="/redoc" if api_docs_enabled else None,
+    openapi_url="/openapi.json" if api_docs_enabled else None,
+)
 
 cors_origins = get_cors_origins()
 

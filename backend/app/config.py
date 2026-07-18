@@ -24,6 +24,15 @@ def get_bool_env(name: str) -> bool:
     return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def get_api_docs_enabled() -> bool:
+    configured_value = os.getenv("API_DOCS_ENABLED")
+
+    if configured_value is None:
+        return not is_production()
+
+    return configured_value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def validate_production_config() -> None:
     if not is_production():
         return

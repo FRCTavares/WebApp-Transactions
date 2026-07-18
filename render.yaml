@@ -12,6 +12,8 @@ services:
     envVars:
       - key: APP_ENV
         value: "production"
+      - key: API_DOCS_ENABLED
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
