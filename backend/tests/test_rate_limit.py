@@ -176,12 +176,28 @@ def test_health_route_remains_available_after_limit_is_exhausted():
             assert response.json() == {"status": "ok"}
 
 
+def iter_effective_routes(routes):
+    for route in routes:
+        effective_contexts = getattr(
+            route,
+            "effective_route_contexts",
+            None,
+        )
+
+        if effective_contexts is None:
+            yield route
+            continue
+
+        for route_context in effective_contexts():
+            yield route_context.original_route
+
+
 def get_route_dependency_calls(
     *,
     path: str,
     method: str,
 ) -> set[object]:
-    for route in production_app.routes:
+    for route in iter_effective_routes(production_app.routes):
         route_methods = getattr(route, "methods", set()) or set()
 
         if getattr(route, "path", None) != path:
