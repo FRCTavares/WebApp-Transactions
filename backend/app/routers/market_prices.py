@@ -12,6 +12,7 @@ from app.database import get_db
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.schemas.market_price import MarketPriceCreate, MarketPriceRead, MarketPriceUpdate
+from app.security.rate_limit import enforce_market_fetch_rate_limit
 from app.schemas.market_price_history import (
     MarketPriceFetchHistoryRequest,
     MarketPriceFetchLatestRequest,
@@ -81,7 +82,11 @@ def list_market_price_history(
     )
 
 
-@router.post("/fetch/latest", response_model=MarketPriceRead)
+@router.post(
+    "/fetch/latest",
+    response_model=MarketPriceRead,
+    dependencies=[Depends(enforce_market_fetch_rate_limit)],
+)
 def fetch_latest_market_price(
     request: MarketPriceFetchLatestRequest,
     service: MarketPriceService = Depends(get_market_price_service),
@@ -90,7 +95,11 @@ def fetch_latest_market_price(
     return service.fetch_latest(request)
 
 
-@router.post("/fetch/history", response_model=list[MarketPriceHistoryRead])
+@router.post(
+    "/fetch/history",
+    response_model=list[MarketPriceHistoryRead],
+    dependencies=[Depends(enforce_market_fetch_rate_limit)],
+)
 def fetch_market_price_history(
     request: MarketPriceFetchHistoryRequest,
     service: MarketPriceService = Depends(get_market_price_service),

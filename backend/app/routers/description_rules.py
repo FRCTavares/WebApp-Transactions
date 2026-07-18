@@ -5,6 +5,7 @@ from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.description_rule_repository import DescriptionRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.security.rate_limit import enforce_rule_application_rate_limit
 from app.schemas.description_rule import (
     DescriptionRuleCreate,
     DescriptionRuleRead,
@@ -54,7 +55,10 @@ def list_description_rules(
     )
 
 
-@router.post("/apply")
+@router.post(
+    "/apply",
+    dependencies=[Depends(enforce_rule_application_rate_limit)],
+)
 def apply_description_rules(
     limit: int = Query(default=1000, ge=1, le=5000),
     service: DescriptionRuleService = Depends(get_description_rule_service),
