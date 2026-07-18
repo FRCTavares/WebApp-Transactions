@@ -19,6 +19,10 @@ from app.auth.local_network import (
 )
 from app.config import get_cors_origins, validate_production_config
 from app.database import initialise_database
+from app.middleware.request_logging import (
+    RequestLoggingMiddleware,
+    set_request_log_user_id,
+)
 from app.middleware.upload_request import UploadRequestMiddleware
 from app.models import (
     CashflowRule,
@@ -161,8 +165,15 @@ async def require_app_access_token(request: Request, call_next):
                 content={"detail": "User email is not allowed"},
             )
 
+        set_request_log_user_id(
+            request.scope,
+            provided_email,
+        )
+
     return await call_next(request)
 
+
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(admin_router)
 app.include_router(health_router)

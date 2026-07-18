@@ -8,6 +8,8 @@ from fastapi import Depends, HTTPException, Request, status
 from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError, PyJWKClientError
 
+from app.middleware.request_logging import set_request_log_user_id
+
 
 LOCAL_DEFAULT_USER_ID = "local-default-user"
 USER_EMAIL_HEADER = "X-App-User-Email"
@@ -252,14 +254,20 @@ def get_current_user(request: Request) -> CurrentUser:
     """
 
     if is_supabase_auth_enabled():
-        return get_supabase_user_from_request(request)
+        current_user = get_supabase_user_from_request(request)
+    else:
+        allowed_emails = get_allowed_user_emails()
 
-    allowed_emails = get_allowed_user_emails()
+        if not allowed_emails:
+            current_user = get_local_default_user()
+        else:
+            current_user = get_header_bridge_user_from_request(request)
 
-    if not allowed_emails:
-        return get_local_default_user()
-
-    return get_header_bridge_user_from_request(request)
+    set_request_log_user_id(
+        request.scope,
+        current_user.id,
+    )
+    return current_user
 
 
 def get_admin_user_emails() -> set[str]:
