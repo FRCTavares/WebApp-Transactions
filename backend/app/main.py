@@ -40,6 +40,7 @@ from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.description_rules import router as description_rules_router
 from app.routers.export import router as export_router
+from app.routers.health import router as health_router
 from app.routers.imports import router as imports_router
 from app.routers.investment_events import router as investment_events_router
 from app.routers.investment_funding_months import router as investment_funding_months_router
@@ -74,7 +75,7 @@ app.add_middleware(
 app.add_middleware(UploadRequestMiddleware)
 
 ACCESS_TOKEN_HEADER = "X-App-Access-Token"
-
+PUBLIC_HEALTH_PATHS = {"/api/health", "/api/ready"}
 
 
 @app.middleware("http")
@@ -100,7 +101,7 @@ async def require_local_network_client(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
 
-    if request.url.path == "/api/health":
+    if request.url.path in PUBLIC_HEALTH_PATHS:
         return await call_next(request)
 
     client_host = request.client.host if request.client else None
@@ -130,7 +131,7 @@ async def require_app_access_token(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
 
-    if request.url.path == "/api/health":
+    if request.url.path in PUBLIC_HEALTH_PATHS:
         return await call_next(request)
 
     provided_token = request.headers.get(ACCESS_TOKEN_HEADER, "")
@@ -164,6 +165,7 @@ async def require_app_access_token(request: Request, call_next):
 
 
 app.include_router(admin_router)
+app.include_router(health_router)
 app.include_router(transactions_router)
 app.include_router(transaction_categories_router)
 app.include_router(owed_router)
@@ -178,8 +180,3 @@ app.include_router(cashflow_rules_router)
 app.include_router(description_rules_router)
 app.include_router(export_router)
 app.include_router(wealth_router)
-
-
-@app.get("/api/health")
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}

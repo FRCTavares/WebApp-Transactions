@@ -195,10 +195,9 @@ Completed and validated through `MED-009`.
 
 Open work is tracked in GitHub Issues and must be completed in this order:
 
-1. [MED-010: Add production readiness health checks](https://github.com/FRCTavares/WebApp-Transactions/issues/10)
-2. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
-3. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
-4. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
+1. [MED-011: Add structured application logging](https://github.com/FRCTavares/WebApp-Transactions/issues/11)
+2. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
+3. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
 Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
