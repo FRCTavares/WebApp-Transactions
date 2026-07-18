@@ -5,6 +5,7 @@ from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.security.rate_limit import enforce_rule_application_rate_limit
 from app.schemas.cashflow_rule import (
     CashflowRuleCreate,
     CashflowRuleRead,
@@ -53,7 +54,10 @@ def list_cashflow_rules(
     )
 
 
-@router.post("/apply")
+@router.post(
+    "/apply",
+    dependencies=[Depends(enforce_rule_application_rate_limit)],
+)
 def apply_cashflow_rules(
     limit: int = Query(default=1000, ge=1, le=5000),
     service: CashflowRuleService = Depends(get_cashflow_rule_service),

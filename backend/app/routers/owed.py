@@ -8,6 +8,7 @@ from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.security.rate_limit import enforce_export_rate_limit
 from app.schemas.owed_item import (
     OwedItemCreate,
     OwedItemRead,
@@ -98,7 +99,10 @@ def list_owed_items(
     )
 
 
-@router.get("/export")
+@router.get(
+    "/export",
+    dependencies=[Depends(enforce_export_rate_limit)],
+)
 def export_owed_items(
     status: str | None = Query(default=None),
     person: str | None = Query(default=None),

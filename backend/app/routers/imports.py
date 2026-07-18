@@ -10,6 +10,7 @@ from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.wealth_repository import WealthRepository
 from app.schemas.fx_match import FxMatchPreviewResponse
+from app.security.rate_limit import enforce_upload_rate_limit
 from app.schemas.import_batch import ImportBatchDeleteResponse, ImportBatchRead
 from app.schemas.import_preview import ImportPreviewResponse
 from app.schemas.investment_event import InvestmentEventRead
@@ -156,7 +157,11 @@ def delete_import_batch(
     return service.delete_import_batch(batch_id, current_user=current_user)
 
 
-@router.post("/preview", response_model=ImportPreviewResponse)
+@router.post(
+    "/preview",
+    response_model=ImportPreviewResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def preview_import(
     source: str = Form(...),
     file: UploadFile = File(...),
@@ -176,7 +181,10 @@ async def preview_import(
     )
 
 
-@router.post("/commit")
+@router.post(
+    "/commit",
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def commit_import(
     source: str = Form(...),
     preview_id: str = Form(...),
@@ -197,7 +205,11 @@ async def commit_import(
         current_user=current_user,
     )
 
-@router.post("/fx-matches/preview", response_model=FxMatchPreviewResponse)
+@router.post(
+    "/fx-matches/preview",
+    response_model=FxMatchPreviewResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def preview_fx_matches(
     source: str = Form(...),
     file: UploadFile = File(...),

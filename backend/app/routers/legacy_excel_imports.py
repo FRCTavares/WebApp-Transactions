@@ -7,6 +7,7 @@ from app.repositories.import_batch_repository import ImportBatchRepository
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.wealth_repository import WealthRepository
+from app.security.rate_limit import enforce_upload_rate_limit
 from app.schemas.legacy_excel_import import (
     LegacyExcelCommitResponse,
     LegacyExcelPreviewResponse,
@@ -42,7 +43,11 @@ def get_legacy_excel_import_service(
     )
 
 
-@router.post("/preview", response_model=LegacyExcelPreviewResponse)
+@router.post(
+    "/preview",
+    response_model=LegacyExcelPreviewResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def preview_legacy_excel_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
@@ -61,7 +66,11 @@ async def preview_legacy_excel_import(
 
 
 
-@router.post("/commit", response_model=LegacyExcelCommitResponse)
+@router.post(
+    "/commit",
+    response_model=LegacyExcelCommitResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def commit_legacy_excel_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
@@ -79,7 +88,11 @@ async def commit_legacy_excel_import(
     )
 
 
-@router.post("/wealth-preview", response_model=LegacyExcelWealthPreviewResponse)
+@router.post(
+    "/wealth-preview",
+    response_model=LegacyExcelWealthPreviewResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def preview_legacy_excel_wealth_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),
@@ -97,7 +110,11 @@ async def preview_legacy_excel_wealth_import(
     )
 
 
-@router.post("/wealth-commit", response_model=LegacyExcelWealthCommitResponse)
+@router.post(
+    "/wealth-commit",
+    response_model=LegacyExcelWealthCommitResponse,
+    dependencies=[Depends(enforce_upload_rate_limit)],
+)
 async def commit_legacy_excel_wealth_import(
     file: UploadFile = File(...),
     service: LegacyExcelImportService = Depends(get_legacy_excel_import_service),

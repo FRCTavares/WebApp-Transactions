@@ -31,7 +31,7 @@ The application is not ready for unrestricted global release.
 All critical and high-priority tasks in this audit are complete. The most important remaining work is:
 
 1. Replace composed frontend financial workflows with atomic backend commands.
-2. Add readiness checks, structured logging, rate limits, and request timeouts.
+2. Add readiness checks and request timeouts.
 3. Resolve accessibility and keyboard-support defects.
 4. Improve navigation, loading, error, and partial-failure behavior.
 5. Complete privacy, account deletion, internationalization, monitoring, and incident response.
@@ -126,7 +126,7 @@ The following remaining work does not require a paid plan:
 - Add atomic backend commands for composed financial workflows
 - Add readiness checks
 - Add request IDs and structured logs
-- Add rate limits and request timeouts
+- Add request timeouts
 - Fix accessibility defects
 - Add privacy documentation
 - Add account-deletion logic
@@ -158,7 +158,7 @@ A paid plan will eventually be justified by:
 | Authorization | 4/5 | Market routes are protected and user-owned operations require explicit ownership |
 | Import reliability | 4/5 | Atomic commits, bounded uploads, deduplication, and preview-to-commit binding are implemented |
 | Recovery | 4/5 | PostgreSQL and JSON restore drills pass; RPO, RTO, retention, encryption, and ownership are documented |
-| Security | 3/5 | Auth, ownership, upload limits, dependency checks, and secure backups exist; rate limiting, monitoring, and privacy remain |
+| Security | 3/5 | Auth, ownership, upload limits, dependency checks, rate limiting, and secure backups exist; monitoring and privacy remain |
 | Frontend architecture | 3/5 | API separation exists, but several pages are oversized and workflow logic is duplicated |
 | UI/UX | 3/5 | Functional and responsive, but navigation, loading, consistency, and personal defaults need work |
 | Accessibility | 1/5 | Dialog, combobox, chart, zoom, focus, and motion issues remain |
@@ -191,12 +191,11 @@ No open `HIGH` items remain in the root task list.
 
 ## 7. Medium Priority
 
-Completed and validated through `MED-011`.
+Completed and validated through `MED-012`.
 
 Open work is tracked in GitHub Issues and must be completed in this order:
 
-1. [MED-012: Add rate limiting and abuse controls](https://github.com/FRCTavares/WebApp-Transactions/issues/12)
-2. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
+1. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
 
 Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
@@ -325,7 +324,6 @@ Standardize supported values across:
 
 ### Security
 
-- Add rate limits.
 - Add request and database timeouts.
 - Add a Content Security Policy where practical.
 - Restore browser zoom.
@@ -430,7 +428,7 @@ Improvements:
 
 - Add readiness
 - Add structured logs
-- Add rate limits and request timeouts
+- Add request timeouts
 - Document all environment variables
 - Verify Supabase redirects
 - Verify Google authorized domains
@@ -530,7 +528,8 @@ Document:
 - [x] Define and test backup recovery objectives.
 - [ ] Add readiness.
 - [x] Add logging.
-- [ ] Add rate limits and timeouts.
+- [x] Add rate limits.
+- [ ] Add request and database timeouts.
 - [ ] Define release and rollback.
 
 ### Phase 4: Accessibility and UX
