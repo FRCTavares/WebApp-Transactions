@@ -191,13 +191,10 @@ No open `HIGH` items remain in the root task list.
 
 ## 7. Medium Priority
 
-Completed and validated through `MED-012`.
+Completed and validated through `MED-013`.
 
-Open work is tracked in GitHub Issues and must be completed in this order:
+No open `MED` items remain in the root task list.
 
-1. [MED-013: Decide production API documentation policy](https://github.com/FRCTavares/WebApp-Transactions/issues/13)
-
-Close an issue only after implementation, focused and broader verification, full diff review, and repository-status review succeed.
 ## 8. Low Priority
 
 - Remove dead local-auth compatibility code after the ownership migration.
