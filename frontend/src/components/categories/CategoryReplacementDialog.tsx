@@ -3,6 +3,7 @@ import type { TransactionCategory } from '../../types/api'
 import type {
   TransactionCategoryUsage,
 } from '../../api/transactionCategories'
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 type CategoryReplacementDialogProps = {
   category: TransactionCategory
@@ -45,6 +46,10 @@ export function CategoryReplacementDialog({
     useState<number | null>(
       replacementOptions[0]?.id ?? null,
     )
+  const dialogRef = useDialogAccessibility<HTMLElement>({
+    onClose: onCancel,
+    isCloseDisabled: isSubmitting,
+  })
 
   return (
     <div
@@ -57,10 +62,12 @@ export function CategoryReplacementDialog({
       }}
     >
       <section
+        ref={dialogRef}
         className="category-replacement-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="category-replacement-title"
+        tabIndex={-1}
       >
         <header className="category-replacement-header">
           <div>

@@ -8,6 +8,7 @@ import type {
   Transaction,
   TransactionCategory,
 } from '../../types/api'
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 type TransactionEditDialogProps = {
   transaction: Transaction
@@ -28,6 +29,11 @@ export function TransactionEditDialog({
   onSave,
   onCancel,
 }: TransactionEditDialogProps) {
+  const dialogRef = useDialogAccessibility<HTMLFormElement>({
+    onClose: onCancel,
+    isCloseDisabled: isSaving,
+  })
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onSave()
@@ -36,8 +42,12 @@ export function TransactionEditDialog({
   return (
     <div className="transaction-edit-dialog-backdrop" role="presentation">
       <form
+        ref={dialogRef}
         className="transaction-edit-dialog"
+        role="dialog"
+        aria-modal="true"
         aria-label={`Edit transaction ${transaction.description}`}
+        tabIndex={-1}
         onSubmit={handleSubmit}
       >
         <div className="transaction-edit-dialog-header">

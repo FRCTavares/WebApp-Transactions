@@ -297,7 +297,36 @@ export function InvestmentPortfolioTrendChart({
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           role="img"
-          aria-label="Investment portfolio trend"
+          aria-label={`Investment portfolio trend. ${formatMonth(activePoint.month)}: portfolio ${
+            activePoint.marketValue === null
+              ? 'unavailable'
+              : formatMoney(activePoint.marketValue.toFixed(2))
+          }, allocated ${
+            activePoint.allocated === null
+              ? 'unavailable'
+              : formatMoney(activePoint.allocated.toFixed(2))
+          }${activePoint.isEstimated ? ', estimated' : ''}. Use Left and Right arrows to explore.`}
+          tabIndex={0}
+          onFocus={() => setHoveredPoint(latestPoint)}
+          onBlur={() => setHoveredPoint(null)}
+          onKeyDown={(event) => {
+            let nextIndex: number
+
+            if (event.key === 'ArrowLeft') {
+              nextIndex = Math.max(activeIndex - 1, 0)
+            } else if (event.key === 'ArrowRight') {
+              nextIndex = Math.min(activeIndex + 1, points.length - 1)
+            } else if (event.key === 'Home') {
+              nextIndex = 0
+            } else if (event.key === 'End') {
+              nextIndex = points.length - 1
+            } else {
+              return
+            }
+
+            event.preventDefault()
+            setHoveredPoint(points[nextIndex])
+          }}
           onMouseMove={(event) => setHoveredPoint(getNearestPointFromMouse(event, points))}
           onMouseLeave={() => setHoveredPoint(null)}
         >
