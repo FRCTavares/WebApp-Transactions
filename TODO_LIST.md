@@ -35,9 +35,23 @@ verification, and UI/codebase maintainability.
 
 ## 9. Testing
 
-- [ ] #32 — Fix the `React.act is not a function` failure in `frontend/tests/ImportPage.test.tsx` (React 19 / `@testing-library/react` version mismatch) on the in-progress `agent/issue-32` branch before opening its PR.
-- [ ] #32 — Add remaining frontend coverage: auth enabled/disabled/misconfigured, expired-session handling, transaction create/edit, import preview/commit, pending FX, active-category selection, owed split/payment, keyboard dialog/combobox operation, loading/empty/error/partial-data states.
-- [ ] #32 — Add end-to-end coverage: authenticated entry, manual transaction creation, CSV preview/commit and duplicate import, category replacement, export download, mobile navigation.
+Progress on `agent/issue-32` (not yet merged): 10 unit test files / 27 tests
+covering auth enabled/disabled/misconfigured, expired sessions, transaction
+create/edit, import preview/commit/pending-FX, category combobox keyboard
+behavior, owed payments, dashboard loading/empty/error/partial-data states,
+and Escape-to-close for the transaction edit/delete/owed-split and category
+replacement dialogs. A real accessibility bug was found and fixed along the
+way: `useDialogAccessibility`'s focus-trap effect re-ran on every parent
+re-render, stealing focus away from whatever the user was typing into.
+
+A working Playwright e2e suite now runs with genuine (locally-minted)
+Supabase session authentication, in CI and locally: authenticated dashboard
+load, and desktop/mobile navigation.
+
+- [ ] #32 — Add keyboard/dialog tests for the remaining `useDialogAccessibility` consumers: `CategoryMigrationReviewDialog`, `WealthAccountDetailsModal`.
+- [ ] #32 — Add e2e coverage: CSV preview/commit and duplicate import, category replacement, export download.
+- [ ] #32 — Promote the "Frontend e2e" CI job to a required check once it has proven stable across a few more runs.
+- [ ] #32 — Merge `agent/issue-32` once the above are addressed.
 
 ## 10. UI and Codebase Maintainability
 
@@ -48,6 +62,7 @@ verification, and UI/codebase maintainability.
 - [ ] Split `frontend/src/pages/InvestmentsPage.tsx` (879 lines) into smaller components/hooks.
 - [ ] Split `frontend/src/pages/TransactionsPage.tsx` (868 lines) into smaller components/hooks.
 - [ ] Split `frontend/src/components/categories/TransactionCategoriesPanel.tsx` (807 lines) into smaller, focused components.
+- [ ] Add a distinguishing `aria-label` (e.g. `Mark ${description} as owed`) to the mobile "Owed" row action in `TransactionTable.tsx`, matching the pattern already used for its Edit/Delete siblings — currently both desktop and mobile buttons share the plain accessible name "Owed".
 - [ ] Normalize remaining formatting and naming inconsistencies flagged in earlier audits.
 
 ## 11. Open Decisions (#35)
