@@ -124,10 +124,7 @@ def test_list_positions_groups_same_ticker_across_cost_currencies(client, db_ses
     assert data[0]["unrealised_gain"] is None
     assert data[0]["unrealised_gain_percent"] is None
 
-    costs_by_currency = {
-        cost["currency"]: cost
-        for cost in data[0]["costs"]
-    }
+    costs_by_currency = {cost["currency"]: cost for cost in data[0]["costs"]}
 
     assert set(costs_by_currency) == {"USD", "EUR"}
     assert costs_by_currency["USD"]["total_cost"] == "2239.00"
@@ -136,7 +133,39 @@ def test_list_positions_groups_same_ticker_across_cost_currencies(client, db_ses
     assert costs_by_currency["EUR"]["average_price"] == "629.03085859"
 
 
-def test_list_positions_keeps_single_currency_position_as_one_cost_bucket(client, db_session):
+def test_realised_gains_include_fully_closed_positions(client, db_session):
+    create_market_event(
+        db_session,
+        event_type="market_buy",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        quantity="10",
+        amount="1000.00",
+        currency="EUR",
+    )
+    create_market_event(
+        db_session,
+        event_type="market_sell",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        quantity="10",
+        amount="1250.00",
+        price="125.00",
+        currency="EUR",
+    )
+
+    assert client.get("/api/investment-events/positions").json() == []
+    response = client.get("/api/investment-events/realised-gains")
+
+    assert response.status_code == 200
+    assert response.json() == [{"currency": "EUR", "amount": "250.00"}]
+
+
+def test_list_positions_keeps_single_currency_position_as_one_cost_bucket(
+    client, db_session
+):
     create_market_event(
         db_session,
         event_type="market_buy",
@@ -262,9 +291,7 @@ def test_average_cost_tracks_multiple_buys_and_realised_gain(
         currency="EUR",
     )
 
-    positions = build_average_cost_positions(
-        [first_buy, second_buy, sell]
-    )
+    positions = build_average_cost_positions([first_buy, second_buy, sell])
     position = next(iter(positions.values()))
     bucket = position["cost_buckets"]["EUR"]
 
@@ -384,9 +411,7 @@ def test_average_cost_keeps_currency_buckets_separate(
         currency="USD",
     )
 
-    positions = build_average_cost_positions(
-        [eur_buy, usd_buy, usd_sell]
-    )
+    positions = build_average_cost_positions([eur_buy, usd_buy, usd_sell])
     position = next(iter(positions.values()))
     eur_bucket = position["cost_buckets"]["EUR"]
     usd_bucket = position["cost_buckets"]["USD"]
@@ -499,9 +524,7 @@ def test_update_market_sell_rejects_change_to_unfunded_currency(
         currency="EUR",
     )
 
-    service = InvestmentEventService(
-        InvestmentEventRepository(db_session)
-    )
+    service = InvestmentEventService(InvestmentEventRepository(db_session))
 
     with pytest.raises(HTTPException) as error:
         service.update_event(

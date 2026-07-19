@@ -86,7 +86,9 @@ def test_wealth_summary_includes_active_owed_remaining_total(db_session):
     assert summary.current_total_wealth_eur == Decimal("1150.00")
 
 
-def test_wealth_summary_derives_investments_without_counting_investment_snapshots(db_session):
+def test_wealth_summary_derives_investments_without_counting_investment_snapshots(
+    db_session,
+):
     savings_account = WealthAccount(
         user_id=LOCAL_DEFAULT_USER_ID,
         name="Savings",
@@ -101,6 +103,8 @@ def test_wealth_summary_derives_investments_without_counting_investment_snapshot
         currency="EUR",
         institution="Trading 212",
         is_active=True,
+        value_source="investment",
+        value_reference="CSPX",
     )
     db_session.add_all([savings_account, investment_account])
     db_session.flush()

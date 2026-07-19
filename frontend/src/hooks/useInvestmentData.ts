@@ -4,6 +4,7 @@ import {
   listInvestmentEvents,
   listInvestmentMonthlySeries,
   listInvestmentPositions,
+  listInvestmentRealisedGains,
 } from '../api/investmentEvents'
 import { listInvestmentFundingMonths } from '../api/investmentFundingMonths'
 import { listMarketPrices } from '../api/marketPrices'
@@ -18,6 +19,7 @@ import type {
   InvestmentFundingMonth,
   InvestmentMonthlySeriesPoint,
   InvestmentPosition,
+  InvestmentRealisedGain,
   MarketPrice,
 } from '../types/api'
 
@@ -93,6 +95,7 @@ export function useInvestmentData({
 
   const [events, setEvents] = useState<InvestmentEvent[]>([])
   const [positions, setPositions] = useState<InvestmentPosition[]>([])
+  const [realisedGains, setRealisedGains] = useState<InvestmentRealisedGain[]>([])
   const [monthlySeries, setMonthlySeries] = useState<InvestmentMonthlySeriesPoint[]>(
     () => (
       readHistoricalData<InvestmentMonthlySeriesPoint[]>(
@@ -169,6 +172,7 @@ export function useInvestmentData({
     const [
       eventsResult,
       positionsResult,
+      realisedGainsResult,
       marketPricesResult,
       fundingMonthsResult,
     ] = await Promise.allSettled([
@@ -179,6 +183,7 @@ export function useInvestmentData({
         date_to: dateTo || monthDateRange.dateTo || undefined,
       }),
       listInvestmentPositions(source || undefined),
+      listInvestmentRealisedGains(source || undefined),
       listMarketPrices(),
       listInvestmentFundingMonths({
         month: month || undefined,
@@ -208,6 +213,12 @@ export function useInvestmentData({
           ? positionsResult.reason.message
           : 'Failed to load investment positions',
       )
+    }
+
+    if (realisedGainsResult.status === 'fulfilled') {
+      setRealisedGains(realisedGainsResult.value)
+    } else {
+      optionalErrors.push('Realised gains could not be refreshed.')
     }
 
     if (marketPricesResult.status === 'fulfilled') {
@@ -265,11 +276,13 @@ export function useInvestmentData({
     void Promise.allSettled([
       listAllInvestmentEvents(),
       listInvestmentPositions(),
+      listInvestmentRealisedGains(),
       listMarketPrices(),
       listInvestmentFundingMonths(),
     ]).then(([
       eventsResult,
       positionsResult,
+      realisedGainsResult,
       marketPricesResult,
       fundingMonthsResult,
     ]) => {
@@ -295,6 +308,12 @@ export function useInvestmentData({
             ? positionsResult.reason.message
             : 'Failed to load investment positions',
         )
+      }
+
+      if (realisedGainsResult.status === 'fulfilled') {
+        setRealisedGains(realisedGainsResult.value)
+      } else {
+        optionalErrors.push('Realised gains could not be refreshed.')
       }
 
       if (marketPricesResult.status === 'fulfilled') {
@@ -342,6 +361,7 @@ export function useInvestmentData({
     monthlySeries,
     monthlySeriesError,
     positions,
+    realisedGains,
     reloadAfterMutation,
     setDateFrom,
     setDateTo,

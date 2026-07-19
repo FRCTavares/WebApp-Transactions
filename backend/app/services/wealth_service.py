@@ -197,7 +197,9 @@ class WealthService:
             snapshot_data=snapshot_data,
         )
         effective_account_id = normalised_data.account_id or snapshot.account_id
-        effective_snapshot_date = normalised_data.snapshot_date or snapshot.snapshot_date
+        effective_snapshot_date = (
+            normalised_data.snapshot_date or snapshot.snapshot_date
+        )
 
         self._raise_if_duplicate_snapshot(
             account_id=effective_account_id,
@@ -241,7 +243,9 @@ class WealthService:
         investment_value = self._get_current_investment_value(current_user=current_user)
 
         return WealthSummaryRead(
-            current_total_wealth_eur=snapshot_total + money_owed_to_me + investment_value,
+            current_total_wealth_eur=snapshot_total
+            + money_owed_to_me
+            + investment_value,
             account_count=self._count_active_manual_accounts(user_id),
             latest_snapshot_date=self.repository.get_latest_snapshot_date(
                 user_id=user_id,
@@ -267,10 +271,7 @@ class WealthService:
             current_user=current_user
         )
         owed_events = self._get_owed_events(user_id)
-        owed_months = {
-            event.effective_date.strftime("%Y-%m")
-            for event in owed_events
-        }
+        owed_months = {event.effective_date.strftime("%Y-%m") for event in owed_events}
         snapshots_by_month: dict[str, list[WealthSnapshot]] = defaultdict(list)
 
         for snapshot in snapshots:
@@ -280,11 +281,7 @@ class WealthService:
         investment_months = self._get_investment_activity_months(
             current_user=current_user,
         )
-        all_months = (
-            set(snapshots_by_month)
-            | investment_months
-            | owed_months
-        )
+        all_months = set(snapshots_by_month) | investment_months | owed_months
 
         if all_months:
             all_months.add(date.today().strftime("%Y-%m"))
@@ -299,8 +296,7 @@ class WealthService:
 
             while (
                 owed_event_index < len(owed_events)
-                and owed_events[owed_event_index].effective_date
-                <= valuation_date
+                and owed_events[owed_event_index].effective_date <= valuation_date
             ):
                 event = owed_events[owed_event_index]
                 latest_owed_event_by_item[event.owed_item_id] = event
@@ -336,11 +332,7 @@ class WealthService:
             rows.append(
                 WealthMonthlyRead(
                     month=month,
-                    total_wealth_eur=(
-                        total
-                        + investment_value
-                        + money_owed_to_me
-                    ),
+                    total_wealth_eur=(total + investment_value + money_owed_to_me),
                     investment_value_eur=investment_value,
                 )
             )
@@ -455,11 +447,7 @@ class WealthService:
             user_id=user_id,
         )
 
-        return {
-            account.id
-            for account in accounts
-            if self._is_money_owed_account(account) or self._is_derived_investment_account(account)
-        }
+        return {account.id for account in accounts if account.value_source != "manual"}
 
     def _count_active_manual_accounts(self, user_id: str) -> int:
         accounts = self.repository.list_accounts(
@@ -472,42 +460,7 @@ class WealthService:
         return sum(
             1
             for account in accounts
-            if (
-                account.is_active
-                and not self._is_money_owed_account(account)
-                and not self._is_derived_investment_account(account)
-            )
-        )
-
-    def _is_money_owed_account(self, account: WealthAccount) -> bool:
-        values = [
-            account.name,
-            account.institution,
-            account.notes,
-        ]
-        text = " ".join(value or "" for value in values).lower()
-
-        return (
-            "money owed" in text
-            or "owed to me" in text
-            or "dívidas" in text
-            or "dividas" in text
-        )
-
-    def _is_derived_investment_account(self, account: WealthAccount) -> bool:
-        values = [
-            account.name,
-            account.institution,
-            account.notes,
-        ]
-        text = " ".join(value or "" for value in values).lower()
-
-        return (
-            "derived investment" in text
-            or "cspx" in text
-            or "vwce" in text
-            or "btc" in text
-            or "bitcoin" in text
+            if (account.is_active and account.value_source == "manual")
         )
 
     def _normalise_snapshot_create(
@@ -584,10 +537,9 @@ class WealthService:
         )
         calculated_balance_eur = balance * fx_rate
 
-        if (
-            balance_eur is not None
-            and abs(balance_eur - calculated_balance_eur) > Decimal("0.01")
-        ):
+        if balance_eur is not None and abs(
+            balance_eur - calculated_balance_eur
+        ) > Decimal("0.01"):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="balance_eur must match balance multiplied by fx_rate_to_eur",

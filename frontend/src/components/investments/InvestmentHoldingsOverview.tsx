@@ -109,6 +109,12 @@ export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOver
                       ? formatMoney(position.market_price, position.market_price_currency)
                       : '-'}
                   </dd>
+                  <small className="muted">
+                    {position.market_price_source ?? 'No valuation source'}
+                    {position.market_price_fetched_at
+                      ? ` · ${new Date(position.market_price_fetched_at).toLocaleDateString()}`
+                      : ''}
+                  </small>
                 </div>
                 <div>
                   <dt>Cost</dt>
@@ -119,6 +125,10 @@ export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOver
                       </span>
                     ))}
                   </dd>
+                </div>
+                <div>
+                  <dt>FX source</dt>
+                  <dd>{position.market_fx_rate_source ?? 'Not required / unavailable'}</dd>
                 </div>
               </dl>
             </article>

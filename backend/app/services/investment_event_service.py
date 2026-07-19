@@ -7,7 +7,9 @@ from app.auth.current_user import CurrentUser
 from app.models.investment_event import InvestmentEvent
 from app.models.market_price_history import MarketPriceHistory
 from app.repositories.investment_event_repository import InvestmentEventRepository
-from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
+from app.repositories.market_price_history_repository import (
+    MarketPriceHistoryRepository,
+)
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.services.investment_market_validation import (
@@ -99,8 +101,7 @@ class InvestmentEventService:
         )
 
         return [
-            self._attach_matched_transaction(event, user_id=user_id)
-            for event in events
+            self._attach_matched_transaction(event, user_id=user_id) for event in events
         ]
 
     def list_positions(
@@ -136,7 +137,9 @@ class InvestmentEventService:
                     {
                         "currency": currency,
                         "total_cost": total_cost.quantize(Decimal("0.01")),
-                        "average_price": (total_cost / bucket_quantity).quantize(Decimal("0.00000001")),
+                        "average_price": (total_cost / bucket_quantity).quantize(
+                            Decimal("0.00000001")
+                        ),
                     }
                 )
 
@@ -171,6 +174,26 @@ class InvestmentEventService:
                 str(position["instrument_name"] or ""),
             ),
         )
+
+    def list_realised_gains(
+        self,
+        source: str | None = None,
+        *,
+        current_user: CurrentUser,
+    ) -> list[dict[str, object]]:
+        positions = build_average_cost_positions(
+            self.repository.list_all(source=source, user_id=current_user.id)
+        )
+        totals: dict[str, Decimal] = {}
+        for position in positions.values():
+            for currency, bucket in position["cost_buckets"].items():
+                realised_gain = bucket["realised_gain"]
+                totals[currency] = totals.get(currency, Decimal("0")) + realised_gain
+
+        return [
+            {"currency": currency, "amount": amount.quantize(Decimal("0.01"))}
+            for currency, amount in sorted(totals.items())
+        ]
 
     def get_monthly_change(
         self,
@@ -249,9 +272,7 @@ class InvestmentEventService:
                 month_start.year,
                 month_start.month,
             )
-            month_end = next_month_start.fromordinal(
-                next_month_start.toordinal() - 1
-            )
+            month_end = next_month_start.fromordinal(next_month_start.toordinal() - 1)
             effective_date = min(month_end, today)
 
             allocated, allocated_estimated = self._get_total_cost_basis_on(
@@ -276,9 +297,7 @@ class InvestmentEventService:
                     "allocated_eur": allocated,
                     "market_value_eur": market_value,
                     "gain_eur": gain,
-                    "is_estimated": (
-                        allocated_estimated or market_value_estimated
-                    ),
+                    "is_estimated": (allocated_estimated or market_value_estimated),
                 }
             )
 
@@ -310,15 +329,13 @@ class InvestmentEventService:
                 if quantity <= 0 or total_cost <= 0:
                     continue
 
-                fx_rate_to_eur, fx_is_estimated = (
-                    self._get_historical_fx_rate_to_eur(
-                        currency=currency,
-                        value_date=value_date,
-                        ticker=ticker,
-                        isin=isin,
-                        current_user=current_user,
-                        events=events,
-                    )
+                fx_rate_to_eur, fx_is_estimated = self._get_historical_fx_rate_to_eur(
+                    currency=currency,
+                    value_date=value_date,
+                    ticker=ticker,
+                    isin=isin,
+                    current_user=current_user,
+                    events=events,
                 )
 
                 if fx_rate_to_eur is None:
@@ -342,11 +359,7 @@ class InvestmentEventService:
                 user_id=current_user.id,
             )
             if events is None
-            else [
-                event
-                for event in events
-                if event.date <= value_date
-            ]
+            else [event for event in events if event.date <= value_date]
         )
 
         return build_average_cost_positions(relevant_events)
@@ -396,26 +409,20 @@ class InvestmentEventService:
                 return None, False
 
             price_value, price_currency, price_is_estimated = valuation_price
-            fx_rate_to_eur, fx_is_estimated = (
-                self._get_historical_fx_rate_to_eur(
-                    currency=price_currency,
-                    value_date=value_date,
-                    ticker=holding["ticker"],
-                    isin=holding["isin"],
-                    current_user=current_user,
-                    events=events,
-                )
+            fx_rate_to_eur, fx_is_estimated = self._get_historical_fx_rate_to_eur(
+                currency=price_currency,
+                value_date=value_date,
+                ticker=holding["ticker"],
+                isin=holding["isin"],
+                current_user=current_user,
+                events=events,
             )
 
             if fx_rate_to_eur is None:
                 return None, False
 
             total_value += quantity * price_value * fx_rate_to_eur
-            is_estimated = (
-                is_estimated
-                or price_is_estimated
-                or fx_is_estimated
-            )
+            is_estimated = is_estimated or price_is_estimated or fx_is_estimated
 
         return total_value.quantize(Decimal("0.01")), is_estimated
 
@@ -469,11 +476,7 @@ class InvestmentEventService:
                 user_id=current_user.id,
             )
             if events is None
-            else [
-                event
-                for event in events
-                if event.date <= value_date
-            ]
+            else [event for event in events if event.date <= value_date]
         )
 
         for event in sorted(
@@ -515,11 +518,7 @@ class InvestmentEventService:
                 user_id=current_user.id,
             )
             if events is None
-            else [
-                event
-                for event in events
-                if event.date <= value_date
-            ]
+            else [event for event in events if event.date <= value_date]
         )
 
         for event in relevant_events:
@@ -608,9 +607,12 @@ class InvestmentEventService:
         empty_fields = {
             "market_price": None,
             "market_price_currency": None,
+            "market_price_source": None,
+            "market_price_fetched_at": None,
             "market_value": None,
             "market_value_currency": None,
             "market_fx_rate_to_eur": None,
+            "market_fx_rate_source": None,
             "unrealised_gain": None,
             "unrealised_gain_percent": None,
         }
@@ -627,7 +629,7 @@ class InvestmentEventService:
             return empty_fields
 
         market_value_native = quantity * market_price.price
-        market_fx_rate_to_eur = self._get_latest_fx_rate_to_eur(
+        market_fx_rate_to_eur, market_fx_rate_source = self._get_latest_fx_rate_details(
             market_price.currency,
             ticker=ticker,
             isin=isin,
@@ -638,8 +640,11 @@ class InvestmentEventService:
             market_value = market_value_native.quantize(Decimal("0.01"))
             market_value_currency = "EUR"
             market_fx_rate_to_eur = Decimal("1")
+            market_fx_rate_source = "source_currency"
         elif market_fx_rate_to_eur is not None:
-            market_value = (market_value_native * market_fx_rate_to_eur).quantize(Decimal("0.01"))
+            market_value = (market_value_native * market_fx_rate_to_eur).quantize(
+                Decimal("0.01")
+            )
             market_value_currency = "EUR"
         else:
             market_value = None
@@ -657,7 +662,9 @@ class InvestmentEventService:
             )
 
             if total_cost_eur is not None and total_cost_eur > 0:
-                unrealised_gain = (market_value - total_cost_eur).quantize(Decimal("0.01"))
+                unrealised_gain = (market_value - total_cost_eur).quantize(
+                    Decimal("0.01")
+                )
                 unrealised_gain_percent = (
                     unrealised_gain / total_cost_eur * Decimal("100")
                 ).quantize(Decimal("0.01"))
@@ -665,9 +672,12 @@ class InvestmentEventService:
         return {
             "market_price": market_price.price.quantize(Decimal("0.00000001")),
             "market_price_currency": market_price.currency,
+            "market_price_source": market_price.source,
+            "market_price_fetched_at": market_price.fetched_at,
             "market_value": market_value,
             "market_value_currency": market_value_currency,
             "market_fx_rate_to_eur": market_fx_rate_to_eur,
+            "market_fx_rate_source": market_fx_rate_source,
             "unrealised_gain": unrealised_gain,
             "unrealised_gain_percent": unrealised_gain_percent,
         }
@@ -691,11 +701,7 @@ class InvestmentEventService:
                 user_id=current_user.id,
             )
             if events is None
-            else [
-                event
-                for event in events
-                if event.date <= value_date
-            ]
+            else [event for event in events if event.date <= value_date]
         )
         ordered_events = sorted(
             relevant_events,
@@ -707,10 +713,7 @@ class InvestmentEventService:
             if (
                 event.fx_rate_to_eur is not None
                 and event.fx_rate_to_eur > 0
-                and (
-                    event.currency == currency
-                    or event.original_currency == currency
-                )
+                and (event.currency == currency or event.original_currency == currency)
             ):
                 return event.fx_rate_to_eur, event.date < value_date
 
@@ -741,9 +744,7 @@ class InvestmentEventService:
             if native_value <= 0:
                 continue
 
-            return (
-                event.amount / native_value
-            ).quantize(Decimal("0.00000008")), True
+            return (event.amount / native_value).quantize(Decimal("0.00000008")), True
 
         return None, False
 
@@ -755,8 +756,23 @@ class InvestmentEventService:
         *,
         current_user: CurrentUser,
     ) -> Decimal | None:
+        return self._get_latest_fx_rate_details(
+            currency,
+            ticker=ticker,
+            isin=isin,
+            current_user=current_user,
+        )[0]
+
+    def _get_latest_fx_rate_details(
+        self,
+        currency: str,
+        ticker: str | None = None,
+        isin: str | None = None,
+        *,
+        current_user: CurrentUser,
+    ) -> tuple[Decimal | None, str | None]:
         if currency == "EUR":
-            return Decimal("1")
+            return Decimal("1"), "source_currency"
 
         events = sorted(
             self.repository.list_all(user_id=current_user.id),
@@ -768,12 +784,9 @@ class InvestmentEventService:
             if (
                 event.fx_rate_to_eur is not None
                 and event.fx_rate_to_eur > 0
-                and (
-                    event.currency == currency
-                    or event.original_currency == currency
-                )
+                and (event.currency == currency or event.original_currency == currency)
             ):
-                return event.fx_rate_to_eur
+                return event.fx_rate_to_eur, event.fx_rate_source or "investment_event"
 
         for event in events:
             if event.event_type not in {"market_buy", "market_sell"}:
@@ -802,9 +815,12 @@ class InvestmentEventService:
             if native_value <= 0:
                 continue
 
-            return (event.amount / native_value).quantize(Decimal("0.00000008"))
+            return (
+                (event.amount / native_value).quantize(Decimal("0.00000008")),
+                "derived_from_eur_trade",
+            )
 
-        return None
+        return None, None
 
     def _get_total_cost_in_eur(
         self,
@@ -889,7 +905,6 @@ class InvestmentEventService:
     ) -> None:
         event = self.get_event(event_id, current_user=current_user)
         self.repository.delete(event)
-
 
     def _attach_matched_transaction(
         self,

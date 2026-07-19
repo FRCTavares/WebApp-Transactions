@@ -7,13 +7,22 @@ from app.models.market_price_history import MarketPriceHistory
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 
-def create_account(client, name="ActivoBank Savings", account_type="savings_account"):
+
+def create_account(
+    client,
+    name="ActivoBank Savings",
+    account_type="savings_account",
+    value_source="manual",
+    value_reference=None,
+):
     response = client.post(
         "/api/wealth/accounts",
         json={
             "name": name,
             "account_type": account_type,
             "currency": "EUR",
+            "value_source": value_source,
+            "value_reference": value_reference,
         },
     )
     assert response.status_code == 201
@@ -107,7 +116,9 @@ def test_reject_non_eur_snapshot_without_fx_rate(client):
 
 def test_summary_returns_latest_total(client):
     savings = create_account(client, name="ActivoBank Savings")
-    portfolio = create_account(client, name="Trading 212 Portfolio", account_type="brokerage")
+    portfolio = create_account(
+        client, name="Trading 212 Portfolio", account_type="brokerage"
+    )
 
     client.post(
         "/api/wealth/snapshots",
@@ -151,7 +162,9 @@ def test_summary_returns_latest_total(client):
 
 def test_monthly_endpoint_groups_latest_snapshot_per_account_per_month(client):
     savings = create_account(client, name="ActivoBank Savings")
-    portfolio = create_account(client, name="Trading 212 Portfolio", account_type="brokerage")
+    portfolio = create_account(
+        client, name="Trading 212 Portfolio", account_type="brokerage"
+    )
 
     client.post(
         "/api/wealth/snapshots",
@@ -294,7 +307,6 @@ def test_wealth_monthly_totals_carry_forward_latest_account_balances(client):
     ]
 
 
-
 def test_wealth_monthly_totals_use_derived_investment_value_not_brokerage_snapshots(
     client,
     db_session,
@@ -304,6 +316,8 @@ def test_wealth_monthly_totals_use_derived_investment_value_not_brokerage_snapsh
         client,
         name="Trading 212 CSPX",
         account_type="brokerage",
+        value_source="investment",
+        value_reference="CSPX",
     )
 
     client.post(
@@ -432,7 +446,6 @@ def test_wealth_snapshots_and_summary_are_isolated_by_current_user(client, db_se
     assert summary["account_count"] == 1
 
 
-
 def test_create_wealth_snapshot_allows_zero_eur_balance(client, db_session):
     account_response = client.post(
         "/api/wealth/accounts",
@@ -461,6 +474,7 @@ def test_create_wealth_snapshot_allows_zero_eur_balance(client, db_session):
     assert data["balance"] == "0.00"
     assert data["balance_eur"] == "0.00"
     assert data["fx_rate_to_eur"] == "1.00000000"
+
 
 def test_reject_duplicate_wealth_snapshot_for_same_account_and_date(client):
     account = create_account(client)
@@ -528,6 +542,7 @@ def test_reject_wealth_snapshot_update_that_would_duplicate_account_date(client)
     assert update_response.json()["detail"] == (
         "Wealth snapshot already exists for this account and date"
     )
+
 
 def test_reject_wealth_snapshot_create_with_inconsistent_balance_eur(client):
     account = create_account(client, name="USD Cash", account_type="cash")

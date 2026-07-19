@@ -186,6 +186,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
 
   const sortedCategoryRollups = useMemo(
     () => sortCategoryRollups(buildCategoryRollups(categories?.items ?? [])),
@@ -271,6 +272,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         }
 
         setIsDashboardLoading(false)
+        setLastUpdatedAt(new Date())
       })
     }, 0)
 
@@ -325,6 +327,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       <div className="page-title-block dashboard-hero">
         <p>{greeting}, {displayName}</p>
         <h1>Dashboard</h1>
+        {lastUpdatedAt && (
+          <p className="muted small" role="status">
+            Data refreshed at {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+          </p>
+        )}
       </div>
 
       <StatusMessage error={error} />
@@ -349,7 +356,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       {summary && (
         <>
           <div className="dashboard-summary-grid" role="list" aria-label="Monthly key metrics">
-            <article className="dashboard-metric-card dashboard-metric-income" role="listitem">
+            <article
+              className="dashboard-metric-card dashboard-metric-income"
+              role="listitem"
+              aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}
+            >
               <span className="dashboard-metric-icon" aria-hidden="true">↓</span>
               <div>
                 <p>Money In</p>
@@ -358,7 +369,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               </div>
             </article>
 
-            <article className="dashboard-metric-card dashboard-metric-spent" role="listitem">
+            <article
+              className="dashboard-metric-card dashboard-metric-spent"
+              role="listitem"
+              aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}
+            >
               <span className="dashboard-metric-icon" aria-hidden="true">↑</span>
               <div>
                 <p>Money Out</p>
@@ -368,6 +383,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
             </article>
 
             <article
+              aria-label={`Investment change: ${investmentChange ? formatMoney(investmentChange) : 'unavailable'}. ${investmentMonthlyChange?.is_estimated ? 'Estimated from the nearest available historical market and foreign exchange prices.' : 'Calculated from available market and foreign exchange prices.'}`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(
                 investmentChange,
               )}`}
@@ -379,13 +395,14 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 <strong>{investmentChange ? formatMoney(investmentChange) : '-'}</strong>
                 <small>
                   {investmentMonthlyChange?.is_estimated
-                    ? 'Estimated unrealised monthly gain/loss'
+                    ? 'Estimated using nearest available historical market/FX prices'
                     : 'Unrealised monthly gain/loss'}
                 </small>
               </div>
             </article>
 
             <article
+              aria-label={`Net: ${formatMoney(netAmount)}. Income minus personal spending plus investment change.`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
               role="listitem"
             >

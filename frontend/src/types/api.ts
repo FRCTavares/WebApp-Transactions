@@ -181,11 +181,19 @@ export type InvestmentPosition = {
   costs: InvestmentPositionCost[]
   market_price: string | null
   market_price_currency: string | null
+  market_price_source: string | null
+  market_price_fetched_at: string | null
   market_value: string | null
   market_value_currency: string | null
   market_fx_rate_to_eur: string | null
+  market_fx_rate_source: string | null
   unrealised_gain: string | null
   unrealised_gain_percent: string | null
+}
+
+export type InvestmentRealisedGain = {
+  currency: string
+  amount: string
 }
 
 export type InvestmentMonthlyChange = {
@@ -590,6 +598,8 @@ export type WealthAccount = {
   currency: string
   institution: string | null
   is_active: boolean
+  value_source: 'manual' | 'investment' | 'owed'
+  value_reference: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -601,6 +611,8 @@ export type WealthAccountCreatePayload = {
   currency: string
   institution?: string | null
   is_active: boolean
+  value_source: 'manual' | 'investment' | 'owed'
+  value_reference?: string | null
   notes?: string | null
 }
 
@@ -610,6 +622,8 @@ export type WealthAccountUpdatePayload = {
   currency?: string
   institution?: string | null
   is_active?: boolean
+  value_source?: 'manual' | 'investment' | 'owed'
+  value_reference?: string | null
   notes?: string | null
 }
 

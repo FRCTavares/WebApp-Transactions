@@ -97,11 +97,19 @@ class InvestmentPositionRead(BaseModel):
     costs: list[InvestmentPositionCostRead]
     market_price: Decimal | None = None
     market_price_currency: str | None = None
+    market_price_source: str | None = None
+    market_price_fetched_at: DateTimeType | None = None
     market_value: Decimal | None = None
     market_value_currency: str | None = None
     market_fx_rate_to_eur: Decimal | None = None
+    market_fx_rate_source: str | None = None
     unrealised_gain: Decimal | None = None
     unrealised_gain_percent: Decimal | None = None
+
+
+class InvestmentRealisedGainRead(BaseModel):
+    currency: str
+    amount: Decimal
 
 
 class InvestmentMonthlyChangeRead(BaseModel):

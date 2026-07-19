@@ -4,6 +4,7 @@ import {
   PiggyBank,
   ReceiptText,
   Moon,
+  Monitor,
   Settings,
   Sun,
   TrendingUp,
@@ -72,7 +73,7 @@ export function AppSidebar({
   onPageChange,
   onSignOut,
 }: AppSidebarProps) {
-  const { resolvedTheme, setThemePreference } = useTheme()
+  const { themePreference, setThemePreference } = useTheme()
 
   return (
     <aside className="sidebar">
@@ -117,9 +118,9 @@ export function AppSidebar({
           <div className="sidebar-theme-switch" role="group" aria-label="Theme">
             <button
               type="button"
-              className={resolvedTheme === 'light' ? 'theme-option-active' : ''}
+              className={themePreference === 'light' ? 'theme-option-active' : ''}
               aria-label="Use light mode"
-              aria-pressed={resolvedTheme === 'light'}
+              aria-pressed={themePreference === 'light'}
               title="Light mode"
               onClick={() => setThemePreference('light')}
             >
@@ -128,9 +129,20 @@ export function AppSidebar({
 
             <button
               type="button"
-              className={resolvedTheme === 'dark' ? 'theme-option-active' : ''}
+              className={themePreference === 'system' ? 'theme-option-active' : ''}
+              aria-label="Use system theme"
+              aria-pressed={themePreference === 'system'}
+              title="System theme"
+              onClick={() => setThemePreference('system')}
+            >
+              <Monitor className="sidebar-theme-switch-icon" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              className={themePreference === 'dark' ? 'theme-option-active' : ''}
               aria-label="Use dark mode"
-              aria-pressed={resolvedTheme === 'dark'}
+              aria-pressed={themePreference === 'dark'}
               title="Dark mode"
               onClick={() => setThemePreference('dark')}
             >

@@ -356,7 +356,10 @@ export function OwedPage() {
     const manualAllocationTotal = getManualAllocationTotal(paymentForm)
 
     if (manualAllocationTotal > amount) {
-      setError('Allocated amount cannot exceed payment amount.')
+      setError(
+        `Reduce allocations by ${formatMoney((manualAllocationTotal - amount).toFixed(2))}. `
+        + `The payment is ${formatMoney(amount.toFixed(2))}, but allocations total ${formatMoney(manualAllocationTotal.toFixed(2))}.`,
+      )
       return
     }
 

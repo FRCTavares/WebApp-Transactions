@@ -267,6 +267,7 @@ export function InvestmentsPage() {
     monthlySeries,
     monthlySeriesError,
     positions,
+    realisedGains,
     reloadAfterMutation,
     setDateFrom,
     setDateTo,
@@ -634,6 +635,10 @@ export function InvestmentsPage() {
         costTotals={investmentTotals.costTotals}
         marketValueTotals={investmentTotals.marketValueTotals}
         unrealisedGainTotals={investmentTotals.unrealisedGainTotals}
+        realisedGainTotals={realisedGains.map((gain) => ({
+          currency: gain.currency,
+          amount: Number(gain.amount),
+        }))}
       />
 
       <InvestmentHoldingsOverview positions={positions} />

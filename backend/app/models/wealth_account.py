@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, String, Text
+from sqlalchemy import CheckConstraint, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -13,6 +13,12 @@ def utc_now() -> datetime:
 
 class WealthAccount(Base):
     __tablename__ = "wealth_accounts"
+    __table_args__ = (
+        CheckConstraint(
+            "value_source IN ('manual', 'investment', 'owed')",
+            name="ck_wealth_accounts_value_source_known",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[str] = mapped_column(
@@ -25,9 +31,15 @@ class WealthAccount(Base):
     currency: Mapped[str] = mapped_column(String(3), default="EUR", index=True)
     institution: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True, index=True)
+    value_source: Mapped[str] = mapped_column(
+        String(20), default="manual", server_default="manual", index=True
+    )
+    value_reference: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utc_now,

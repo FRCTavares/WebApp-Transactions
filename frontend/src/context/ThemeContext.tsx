@@ -6,15 +6,14 @@ import {
 } from 'react'
 import {
   ThemeContext,
+  type ResolvedTheme,
   type ThemePreference,
 } from './themeContextValue'
-
-type StoredThemePreference = ThemePreference | 'system'
 
 const THEME_STORAGE_KEY = 'finance-theme-preference'
 
 
-function getSystemTheme(): ThemePreference {
+function getSystemTheme(): ResolvedTheme {
   if (
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -30,17 +29,12 @@ function getStoredThemePreference(): ThemePreference {
     return 'light'
   }
 
-  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY) as StoredThemePreference | null
+  const storedValue = window.localStorage.getItem(THEME_STORAGE_KEY)
 
-  if (storedValue === 'light' || storedValue === 'dark') {
+  if (storedValue === 'light' || storedValue === 'dark' || storedValue === 'system') {
     return storedValue
   }
-
-  if (storedValue === 'system') {
-    return getSystemTheme()
-  }
-
-  return 'light'
+  return 'system'
 }
 
 type ThemeProviderProps = {
@@ -51,8 +45,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(
     getStoredThemePreference,
   )
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme)
 
-  const resolvedTheme = themePreference
+  const resolvedTheme = themePreference === 'system' ? systemTheme : themePreference
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => setSystemTheme(media.matches ? 'dark' : 'light')
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme
