@@ -14,6 +14,7 @@ export type ApiErrorCode =
   | 'timeout'
 
 export type ApiRequestOptions = {
+  headers?: HeadersInit
   signal?: AbortSignal
   timeoutMs?: number
 }

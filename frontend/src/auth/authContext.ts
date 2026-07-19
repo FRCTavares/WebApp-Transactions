@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js'
 
 export type AuthContextValue = {
   accessToken: string | null
+  clearLocalSession: () => Promise<void>
   isAuthConfigured: boolean
   isAuthEnabled: boolean
   isLoading: boolean
