@@ -1,0 +1,2 @@
+# Development-only tooling validated with Python 3.13.
+ruff==0.15.22
