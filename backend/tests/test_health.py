@@ -94,7 +94,6 @@ def test_readiness_is_public_and_suitable_for_render(
     monkeypatch,
 ):
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
-    monkeypatch.setenv("APP_ACCESS_TOKEN", "secret-token")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setattr(
         health_router,

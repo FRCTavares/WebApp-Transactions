@@ -1,5 +1,4 @@
 import os
-import secrets
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
@@ -7,12 +6,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.auth.current_user import (
-    USER_EMAIL_HEADER,
-    get_allowed_user_emails,
-    is_supabase_auth_enabled,
-    normalise_user_email,
-)
 from app.auth.local_network import (
     is_local_network_client,
     is_local_network_only_enabled,
@@ -90,7 +83,6 @@ app.add_middleware(
 )
 app.add_middleware(UploadRequestMiddleware)
 
-ACCESS_TOKEN_HEADER = "X-App-Access-Token"
 PUBLIC_HEALTH_PATHS = {"/api/health", "/api/ready"}
 
 
@@ -130,59 +122,6 @@ async def require_local_network_client(request: Request, call_next):
 
     return await call_next(request)
 
-
-@app.middleware("http")
-async def require_app_access_token(request: Request, call_next):
-    if is_supabase_auth_enabled():
-        return await call_next(request)
-
-    expected_token = os.getenv("APP_ACCESS_TOKEN", "").strip()
-
-    if not expected_token:
-        return await call_next(request)
-
-    if not request.url.path.startswith("/api/"):
-        return await call_next(request)
-
-    if request.method == "OPTIONS":
-        return await call_next(request)
-
-    if request.url.path in PUBLIC_HEALTH_PATHS:
-        return await call_next(request)
-
-    provided_token = request.headers.get(ACCESS_TOKEN_HEADER, "")
-
-    if not secrets.compare_digest(provided_token, expected_token):
-        return JSONResponse(
-            status_code=401,
-            content={"detail": "Invalid or missing app access token"},
-        )
-
-    allowed_emails = get_allowed_user_emails()
-
-    if allowed_emails:
-        provided_email = normalise_user_email(
-            request.headers.get(USER_EMAIL_HEADER, "")
-        )
-
-        if not provided_email:
-            return JSONResponse(
-                status_code=401,
-                content={"detail": "Missing user email"},
-            )
-
-        if provided_email not in allowed_emails:
-            return JSONResponse(
-                status_code=403,
-                content={"detail": "User email is not allowed"},
-            )
-
-        set_request_log_user_id(
-            request.scope,
-            provided_email,
-        )
-
-    return await call_next(request)
 
 
 app.add_middleware(RequestLoggingMiddleware)

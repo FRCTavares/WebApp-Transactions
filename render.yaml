@@ -20,8 +20,6 @@ services:
         sync: false
       - key: SUPABASE_URL
         sync: false
-      - key: APP_ACCESS_TOKEN
-        sync: false
       - key: ALLOWED_USER_EMAILS
         sync: false
       - key: ADMIN_USER_EMAILS

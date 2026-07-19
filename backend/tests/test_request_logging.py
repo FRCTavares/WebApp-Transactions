@@ -1,6 +1,9 @@
 import json
 import logging
 import re
+import time
+
+import jwt
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.testclient import TestClient
@@ -90,9 +93,20 @@ def test_authenticated_user_log_identifier_is_safe(
     monkeypatch,
     caplog,
 ):
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    secret = "test-secret"
+    subject = "00000000-0000-0000-0000-000000000123"
+    token = jwt.encode(
+        {
+            "sub": subject,
+            "email": "person@example.com",
+            "aud": "authenticated",
+            "exp": int(time.time()) + 300,
+        },
+        secret,
+        algorithm="HS256",
+    )
+
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "person@example.com")
 
     app = FastAPI()
@@ -109,10 +123,7 @@ def test_authenticated_user_log_identifier_is_safe(
     with TestClient(app) as client:
         response = client.get(
             "/whoami",
-            headers={
-                "X-App-User-Email": "PERSON@example.com",
-                "X-App-Access-Token": "application-secret",
-            },
+            headers={"Authorization": f"Bearer {token}"},
         )
 
     assert response.status_code == 200
@@ -120,14 +131,13 @@ def test_authenticated_user_log_identifier_is_safe(
     events = get_request_events(caplog)
     event = events[-1]
 
-    assert event["user_id"] == build_safe_user_identifier(
-        "person@example.com"
-    )
+    assert event["user_id"] == build_safe_user_identifier(subject)
 
     rendered_log = caplog.records[-1].getMessage()
 
+    assert subject not in rendered_log
     assert "person@example.com" not in rendered_log
-    assert "application-secret" not in rendered_log
+    assert token not in rendered_log
 
 
 def test_request_body_and_upload_contents_are_not_logged(caplog):
@@ -199,10 +209,7 @@ def test_real_app_logs_access_control_rejection(
     monkeypatch,
     caplog,
 ):
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
-    monkeypatch.setenv("APP_ACCESS_TOKEN", "expected-secret")
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "person@example.com")
 
     caplog.set_level(logging.INFO, logger=REQUEST_LOGGER_NAME)
@@ -210,11 +217,7 @@ def test_real_app_logs_access_control_rejection(
     with TestClient(production_app) as client:
         response = client.get(
             "/api/summary",
-            headers={
-                "X-Request-ID": "access-rejection-123",
-                "X-App-Access-Token": "wrong-secret",
-                "X-App-User-Email": "person@example.com",
-            },
+            headers={"X-Request-ID": "access-rejection-123"},
         )
 
     assert response.status_code == 401
@@ -233,8 +236,7 @@ def test_real_app_logs_access_control_rejection(
 
     rendered_log = caplog.records[-1].getMessage()
 
-    assert "expected-secret" not in rendered_log
-    assert "wrong-secret" not in rendered_log
+    assert "test-secret" not in rendered_log
     assert "person@example.com" not in rendered_log
 
 
@@ -242,7 +244,6 @@ def test_real_app_logs_upload_rejection_without_body(
     monkeypatch,
     caplog,
 ):
-    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
     monkeypatch.delenv("SUPABASE_URL", raising=False)
     monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)

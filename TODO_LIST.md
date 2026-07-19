@@ -197,7 +197,6 @@ No open `MED` items remain in the root task list.
 
 ## 8. Low Priority
 
-- Remove dead local-auth compatibility code after the ownership migration.
 - Normalize formatting and naming.
 - Add a supported-browser matrix.
 - Decide whether the PWA is installable-only or truly offline-capable.
@@ -661,12 +660,12 @@ Global release readiness requires:
 
 ## 24. Verification Evidence
 
-Current repository evidence on 2026-07-16:
+Current repository evidence on 2026-07-19:
 
 - Branch: `main`.
 - Verified code baseline before this documentation refresh: `fb56cb5`.
 - Original audit baseline: commit `96c3f0c`.
-- Full backend suite: 443 tests passed with 4 short test-key warnings.
+- Full backend suite: 454 tests passed with 6 short test-key warnings.
 - Frontend lint passed.
 - Frontend production build passed.
 - Required GitHub Actions checks passed.
@@ -690,7 +689,8 @@ Current repository evidence on 2026-07-16:
 - SQLite backup output uses owner-only permissions and CLI failures are written to stderr.
 - Owed-item system event dates consistently use the UTC calendar date.
 - No production source file exceeds 1,000 lines.
-- No open `CRIT` or `HIGH` items remain in this task list.
+- No open `CRIT`, `HIGH`, or `MED` items remain in this task list.
+- Dead runtime local-auth compatibility paths have been removed; protected routes require authenticated Supabase users.
 
 ---
 

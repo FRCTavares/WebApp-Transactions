@@ -4,6 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.auth.current_user import (
+    CurrentUser,
+    LOCAL_DEFAULT_USER_ID,
+    get_current_user,
+)
 from app.database import Base, enable_sqlite_foreign_keys, get_db
 from app.main import app
 from app.models import (
@@ -52,6 +57,9 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: CurrentUser(
+        id=LOCAL_DEFAULT_USER_ID
+    )
 
     try:
         with TestClient(app) as test_client:
