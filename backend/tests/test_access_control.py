@@ -13,7 +13,7 @@ def test_health_check_does_not_require_local_network_client(monkeypatch):
         response = client.get("/api/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json()["status"] == "ok"
 
 
 def test_options_request_does_not_require_local_network_client(monkeypatch):

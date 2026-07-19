@@ -22,8 +22,6 @@ verification, and UI/codebase maintainability.
 - [ ] #33 — Define and test release and rollback procedures; confirm migration failures block deployment.
 - [ ] #33 — Verify Supabase redirects, Google authorized domains, app branding, exact redirect URLs, and minimum OAuth scopes; complete Google OAuth verification if required.
 - [ ] #33 — Reassess Render keep-warm/cold-start policy against the upgrade triggers in `docs/production-roadmap.md`.
-- [ ] #26 — Define a build/version identifier and expose it in an appropriate diagnostic or user-facing location.
-- [ ] #26 — Establish a maintainable release-notes format and update workflow.
 - [ ] Add a CI check that fails if any Alembic migration adds/renames a
   column or table without an equivalent update to the legacy SQLite startup
   migrations in `backend/app/database_migrations.py` — this exact gap caused

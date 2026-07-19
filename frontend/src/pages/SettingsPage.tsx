@@ -234,6 +234,27 @@ export function SettingsPage({
             onClick={onOpenExport}
           />
         </section>
+        <section className="settings-group">
+          <header className="settings-group-header">
+            <h2>Build</h2>
+          </header>
+          <div className="settings-list-row settings-build-summary">
+            <span>
+              <strong>Version {__APP_BUILD_COMMIT__}</strong>
+              <small>
+                Built {new Date(__APP_BUILD_TIME__).toLocaleString()}. See{' '}
+                <a
+                  href="https://github.com/FRCTavares/WebApp-Transactions/blob/main/CHANGELOG.md"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  CHANGELOG.md
+                </a>{' '}
+                for release notes.
+              </small>
+            </span>
+          </div>
+        </section>
       </div>
     </section>
   )

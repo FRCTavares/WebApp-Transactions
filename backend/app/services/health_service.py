@@ -1,4 +1,7 @@
+from functools import lru_cache
 from pathlib import Path
+import os
+import subprocess
 
 from alembic.config import Config
 from alembic.migration import MigrationContext
@@ -10,6 +13,34 @@ from app.database import engine
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+
+@lru_cache(maxsize=1)
+def get_build_commit() -> str:
+    """Return a short commit identifier for the running deployment.
+
+    Prefers the hosting platform's own git info over running git locally,
+    since a production runtime environment may not have full git history
+    (or git at all).
+    """
+
+    render_commit = os.getenv("RENDER_GIT_COMMIT", "").strip()
+
+    if render_commit:
+        return render_commit[:7]
+
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=BACKEND_DIR,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        )
+        return result.stdout.strip()
+    except Exception:
+        return "unknown"
 
 
 def get_expected_revision_heads() -> set[str]:

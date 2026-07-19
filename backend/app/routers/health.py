@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.services.health_service import is_database_ready
+from app.services.health_service import get_build_commit, is_database_ready
 
 
 router = APIRouter(prefix="/api", tags=["health"])
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["health"])
 
 @router.get("/health")
 def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "version": get_build_commit()}
 
 
 @router.get("/ready")
