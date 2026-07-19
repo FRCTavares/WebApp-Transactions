@@ -15,15 +15,33 @@ export function usePresentationPreferences(isActive: boolean) {
     if (!isActive) {
       return
     }
+
+    let isCancelled = false
+
     apiGet<PresentationPreferences>('/api/preferences')
       .then((loaded) => {
+        if (isCancelled) {
+          return
+        }
         configureFormatters(loaded)
         setPreferences(loaded)
       })
       .catch((reason: unknown) => {
+        if (isCancelled) {
+          return
+        }
         setError(reason instanceof Error ? reason.message : 'Could not load preferences.')
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        if (isCancelled) {
+          return
+        }
+        setIsLoading(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
   }, [isActive])
 
   const save = useCallback(async (next: PresentationPreferences) => {
