@@ -3,7 +3,7 @@ import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { listTransactions } from '../api/transactions'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
 import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary, Transaction } from '../types/api'
-import { formatMoney } from '../utils/format'
+import { formatMoney, formatMonthLabel } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
 import { useAuth } from '../hooks/useAuth'
@@ -60,10 +60,7 @@ function getDateRange(year: number, month: number) {
 }
 
 function getMonthLabel(year: number, month: number) {
-  return new Date(year, month - 1, 1).toLocaleDateString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-  })
+  return formatMonthLabel(`${year}-${String(month).padStart(2, '0')}`, 'long')
 }
 
 function getTransactionOwedAmount(transaction: Transaction) {

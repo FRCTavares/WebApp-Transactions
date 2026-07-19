@@ -1,13 +1,8 @@
 import { usePeriod } from '../hooks/usePeriod'
+import { formatMonthLabel } from '../utils/format'
 
 function getMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split('-').map(Number)
-  const date = new Date(year, month - 1, 1)
-
-  return date.toLocaleDateString('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatMonthLabel(monthKey)
 }
 
 export function GlobalPeriodSelector() {

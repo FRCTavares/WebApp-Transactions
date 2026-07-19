@@ -53,6 +53,7 @@ from app.routers.summary import router as summary_router
 from app.routers.transactions import router as transactions_router
 from app.routers.transaction_categories import router as transaction_categories_router
 from app.routers.wealth import router as wealth_router
+from app.routers.user_preferences import router as user_preferences_router
 
 
 @asynccontextmanager
@@ -142,3 +143,4 @@ app.include_router(cashflow_rules_router)
 app.include_router(description_rules_router)
 app.include_router(export_router)
 app.include_router(wealth_router)
+app.include_router(user_preferences_router)
