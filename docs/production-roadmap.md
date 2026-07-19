@@ -126,7 +126,7 @@ consequential implementation work tracked as its own task.
 7. Is local SQLite a first-class deployment? **Undecided.**
 8. Deleted-account retention outside the backup schedule? **1 week.**
 9. Should transaction categories become foreign-key references? **Undecided.**
-10. Is offline use real or only installability? **Real offline use is required, not just installability** — not expected to be exercised often, but must work when it is.
+10. Is offline use real or only installability? **Real offline use is required, not just installability** — not expected to be exercised often, but must work when it is. **Implemented**: see `docs/pwa-offline.md`.
 11. When does availability justify paid Render? **Undecided** — see Upgrade Triggers above.
 12. Are users outside Portugal targeted immediately? **No.**
 13. Are market-data terms compatible with public release? **Undecided.**
@@ -136,4 +136,6 @@ consequential implementation work tracked as its own task.
 Complex charts, budget prediction, expanded investment analytics, automatic
 bank synchronization, Open Banking, OCR, PDF imports, advanced animations,
 complex mobile polish, multi-region deployment, microservices, event-driven
-architecture, Kubernetes, premature caching, stack replacement without evidence.
+architecture, Kubernetes, premature caching, stack replacement without evidence,
+offline write queuing/sync (writes fail naturally offline instead; see
+`docs/pwa-offline.md`).

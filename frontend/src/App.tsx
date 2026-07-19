@@ -15,6 +15,7 @@ import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './hooks/useAuth'
+import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { usePresentationPreferences } from './hooks/usePresentationPreferences'
 import { deleteCurrentAccount } from './api/account'
 import type { User } from '@supabase/supabase-js'
@@ -98,6 +99,7 @@ function App() {
     user,
   } = useAuth()
   const presentation = usePresentationPreferences(!isAuthEnabled || Boolean(session))
+  const isOnline = useOnlineStatus()
   const shouldShowGlobalPeriodSelector =
     page !== null
     && page !== 'import'
@@ -220,6 +222,13 @@ function App() {
           {shouldShowGlobalPeriodSelector && (
             <div className="global-topbar">
               <GlobalPeriodSelector />
+            </div>
+          )}
+
+          {!isOnline && (
+            <div className="backend-wake-notice offline-notice" role="status">
+              <strong>You're offline</strong>
+              <span>Showing the last data loaded on this device. New changes can't be saved until you're back online.</span>
             </div>
           )}
 

@@ -110,6 +110,26 @@ main {
   font-size: 0.9rem;
 }
 
+.backend-wake-notice.offline-notice {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.backend-wake-notice.offline-notice span {
+  color: #b45309;
+}
+
+:root[data-theme='dark'] .backend-wake-notice.offline-notice {
+  border-color: rgb(251 191 36 / 0.35);
+  background: #201c14;
+  color: #fbbf24;
+}
+
+:root[data-theme='dark'] .backend-wake-notice.offline-notice span {
+  color: #d1a35c;
+}
+
 @media (max-width: 800px) {
   .investments-page .panel-card > .section-header p {
     display: none;

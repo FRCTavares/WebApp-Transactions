@@ -75,5 +75,6 @@ free-tier fix list, likely paid-tier triggers, and the readiness scorecard.
 - [`docs/internationalization.md`](docs/internationalization.md) — locale, currency, and translation support
 - [`docs/security-and-timeouts.md`](docs/security-and-timeouts.md) — request/database timeouts and security hardening
 - [`docs/browser-support.md`](docs/browser-support.md) — supported browser matrix and how it's verified in CI
+- [`docs/pwa-offline.md`](docs/pwa-offline.md) — offline support decision and how the service worker works
 - [`frontend/README.md`](frontend/README.md) — frontend-specific notes
 - [`TODO_LIST.md`](TODO_LIST.md) — open, actionable tasks only

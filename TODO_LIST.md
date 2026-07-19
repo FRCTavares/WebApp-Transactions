@@ -35,7 +35,6 @@ verification, and UI/codebase maintainability.
 - [ ] #34 — Review and refresh `README.md`, `frontend/README.md`, `docs/deployment.md`, `docs/backups-supabase.md`, `docs/production-roadmap.md`, and add `docs/auth-options.md` and `docs/multi-user-data-model.md` (currently missing).
 - [ ] #34 — Document `VITE_SUPABASE_AUTH_ENABLED` and all other environment variables, including local and production setup steps.
 - [ ] #34 — Verify documentation matches the deployed architecture and current code paths after the 2026-07-19 merges (#36–#40).
-- [ ] #25 — Decide and document whether the PWA is installable-only or genuinely offline-capable; the resolved decision in `docs/production-roadmap.md` says real offline use is required — audit the current manifest/service worker/caching against that and implement or correct as needed.
 
 ## 9. Testing
 
@@ -44,10 +43,11 @@ auth enabled/disabled/misconfigured, expired sessions, transaction
 create/edit, import preview/commit/pending-FX, category combobox keyboard
 behavior, owed payments, dashboard loading/empty/error/partial-data states,
 and Escape-to-close for every `useDialogAccessibility` consumer. A Playwright
-e2e suite (5 tests × 5 browser projects, 25 total) runs with genuine
-locally-minted Supabase session authentication against a live backend, across
-Chromium, Firefox, and WebKit (desktop and mobile viewports) — see
-`docs/browser-support.md`.
+e2e suite (7 specs across 5 browser projects: Chromium, Firefox, and WebKit,
+desktop and mobile) — 28 passing, 7 skipped by device or driver limitation —
+see `docs/browser-support.md`. Also implemented real offline support
+(service worker, cache-on-visit, offline notice) per the resolved #35
+decision — see `docs/pwa-offline.md`.
 
 Four real bugs were found and fixed along the way:
 - `useDialogAccessibility`'s focus-trap effect re-ran on every parent
