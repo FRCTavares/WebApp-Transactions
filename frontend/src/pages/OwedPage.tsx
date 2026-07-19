@@ -13,7 +13,7 @@ import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { StatusMessage } from '../components/StatusMessage'
 import { useDialogAccessibility } from '../hooks/useDialogAccessibility'
 import type { OwedItem, OwedPaymentMethod, OwedStatusFilter, Transaction } from '../types/api'
-import { formatMoney } from '../utils/format'
+import { formatMoney, formatMonthLabel } from '../utils/format'
 
 
 type PaymentFormState = {
@@ -47,13 +47,7 @@ function getCurrentMonthKey() {
 }
 
 function getMonthLabel(monthKey: string) {
-  const [year, month] = monthKey.split('-').map(Number)
-  const date = new Date(year, month - 1, 1)
-
-  return date.toLocaleDateString('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatMonthLabel(monthKey)
 }
 
 function isItemInMonth(item: OwedItem, monthKey: string) {

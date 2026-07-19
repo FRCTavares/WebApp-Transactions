@@ -3,6 +3,7 @@ import type { TransactionFormState } from '../components/TransactionForm'
 import type { TransactionTableRow } from '../components/TransactionTable'
 import type { OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
 import type { CashflowType, Direction, OwedItem, OwedPayment, Transaction } from '../types/api'
+import { formatMonthLabel } from './format'
 
 export function getTodayDate() {
   return new Date().toISOString().slice(0, 10)
@@ -26,13 +27,7 @@ export function getDefaultDateForMonth(monthKey: string) {
 }
 
 export function getMonthLabel(month: string) {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const date = new Date(year, monthNumber - 1, 1)
-
-  return date.toLocaleDateString('en-GB', {
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatMonthLabel(month)
 }
 
 export function getDefaultCashflowType(direction: Direction): CashflowType {
@@ -519,4 +514,3 @@ export function getAvailablePaymentTransactions(
     availableAmountsById,
   }
 }
-

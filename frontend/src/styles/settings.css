@@ -33,6 +33,11 @@
   align-items: start;
 }
 
+.settings-group-presentation { grid-column: 1 / -1; }
+.settings-preferences-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; padding: 1rem; }
+.settings-preferences-form label { display: grid; gap: .4rem; font-size: .82rem; font-weight: 700; }
+.settings-preferences-form button, .settings-preferences-form p { align-self: end; margin: 0; }
+
 .settings-group {
   overflow: hidden;
   border: 1px solid #e5e7eb;

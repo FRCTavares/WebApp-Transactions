@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react'
 import type { InvestmentMonthlySeriesPoint } from '../../types/api'
-import { formatMoney } from '../../utils/format'
+import { formatMoney, formatMonthLabel } from '../../utils/format'
 
 type InvestmentPortfolioTrendChartProps = {
   months: number
@@ -57,13 +57,7 @@ function toNullableNumber(value: string | null) {
 }
 
 function formatMonth(month: string) {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const date = new Date(year, monthNumber - 1, 1)
-
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    year: 'numeric',
-  })
+  return formatMonthLabel(month)
 }
 
 function buildPoints(series: InvestmentMonthlySeriesPoint[]): ChartPoint[] {

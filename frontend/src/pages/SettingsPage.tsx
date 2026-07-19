@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
+import type { PresentationPreferences } from '../utils/format'
+import { translate } from '../i18n/messages'
 
 const PRIVACY_CONTACT =
   import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
@@ -11,6 +13,10 @@ type SettingsPageProps = {
   onOpenExport: () => void
   onOpenCategories: () => void
   onSignOut: () => void | Promise<void>
+  preferences: PresentationPreferences
+  preferencesError: string | null
+  preferencesLoading: boolean
+  onSavePreferences: (preferences: PresentationPreferences) => Promise<PresentationPreferences>
   onDeleteAccount: (confirmation: string) => Promise<void>
 }
 
@@ -46,12 +52,30 @@ export function SettingsPage({
   onOpenExport,
   onOpenCategories,
   onSignOut,
+  preferences,
+  preferencesError,
+  preferencesLoading,
+  onSavePreferences,
   onDeleteAccount,
 }: SettingsPageProps) {
+  const [draft, setDraft] = useState(preferences)
+  const [saveState, setSaveState] = useState<string | null>(null)
+  const t = (key: Parameters<typeof translate>[1]) => translate(draft.language, key)
   const [isDeletePanelOpen, setIsDeletePanelOpen] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function handleSavePreferences(event: FormEvent) {
+    event.preventDefault()
+    setSaveState(t('saving'))
+    try {
+      await onSavePreferences(draft)
+      setSaveState(t('preferencesSaved'))
+    } catch (error) {
+      setSaveState(error instanceof Error ? error.message : t('preferencesSaveFailed'))
+    }
+  }
 
   async function handleDeleteAccount() {
     setDeleteError(null)
@@ -68,35 +92,46 @@ export function SettingsPage({
   return (
     <section className="settings-page settings-page-redesigned">
       <header className="settings-hero">
-        <p className="eyebrow">Settings</p>
-        <h1>Settings</h1>
-        <p className="page-subtitle">
-          Manage data tools, rules, and access mode.
-        </p>
+        <p className="eyebrow">{t('settings')}</p>
+        <h1>{t('settings')}</h1>
+        <p className="page-subtitle">{t('settingsSubtitle')}</p>
       </header>
 
       <div className="settings-balanced-grid">
+        <section className="settings-group settings-group-presentation">
+          <header className="settings-group-header"><h2>{t('languageRegion')}</h2></header>
+          <form className="settings-preferences-form" onSubmit={handleSavePreferences}>
+            <label>{t('language')}<select value={draft.language} onChange={(event) => setDraft({ ...draft, language: event.target.value as 'en' | 'pt' })}><option value="en">English</option><option value="pt">Português</option></select></label>
+            <label>{t('locale')}<select value={draft.locale} onChange={(event) => setDraft({ ...draft, locale: event.target.value as 'en-GB' | 'pt-PT' })}><option value="en-GB">English (United Kingdom)</option><option value="pt-PT">Português (Portugal)</option></select></label>
+            <label>{t('defaultCurrency')}<input value={draft.currency} maxLength={3} onChange={(event) => setDraft({ ...draft, currency: event.target.value.toUpperCase() })} /></label>
+            <label>{t('timeZone')}<select value={draft.time_zone} onChange={(event) => setDraft({ ...draft, time_zone: event.target.value })}><option value="Europe/Lisbon">Europe/Lisbon</option><option value="Atlantic/Azores">Atlantic/Azores</option><option value="UTC">UTC</option></select></label>
+            <label>{t('dateFormat')}<select value={draft.date_format} onChange={(event) => setDraft({ ...draft, date_format: event.target.value as PresentationPreferences['date_format'] })}><option value="short">{t('short')}</option><option value="medium">{t('medium')}</option><option value="long">{t('long')}</option></select></label>
+            {(preferencesError || saveState) && <p className={preferencesError ? 'error-text' : 'muted'} role="status">{preferencesError ?? saveState}</p>}
+            <button type="submit" disabled={preferencesLoading || draft.currency.length !== 3}>{t('savePreferences')}</button>
+          </form>
+        </section>
+
         <section className="settings-group settings-group-access">
           <header className="settings-group-header">
-            <h2>Access</h2>
+            <h2>{t('access')}</h2>
           </header>
 
           <div className="settings-list-row settings-account-row">
             <span>
-              <strong>{isAuthEnabled ? displayName : 'Local mode'}</strong>
+              <strong>{isAuthEnabled ? displayName : t('localMode')}</strong>
               <small>
                 {isAuthEnabled
-                  ? 'Signed in with account access enabled.'
-                  : 'No account controls are active on this local setup.'}
+                  ? t('signedIn')
+                  : t('localDescription')}
               </small>
             </span>
 
             {isAuthEnabled ? (
               <button type="button" className="danger-button" onClick={() => void onSignOut()}>
-                Sign out
+                {t('signOut')}
               </button>
             ) : (
-              <em>Local only</em>
+              <em>{t('localOnly')}</em>
             )}
           </div>
 
@@ -169,33 +204,33 @@ export function SettingsPage({
 
         <section className="settings-group">
           <header className="settings-group-header">
-            <h2>Organisation</h2>
+            <h2>{t('organisation')}</h2>
           </header>
 
           <SettingsAction
-            title="Categories"
-            description="Choose the categories available in transactions."
-            actionLabel="Open"
+            title={t('categories')}
+            description={t('categoriesDescription')}
+            actionLabel={t('open')}
             onClick={onOpenCategories}
           />
         </section>
 
         <section className="settings-group">
           <header className="settings-group-header">
-            <h2>Data</h2>
+            <h2>{t('data')}</h2>
           </header>
 
           <SettingsAction
-            title="Import"
-            description="Preview CSV/XLSX files before committing rows."
-            actionLabel="Open"
+            title={t('import')}
+            description={t('importDescription')}
+            actionLabel={t('open')}
             onClick={onOpenImport}
           />
 
           <SettingsAction
-            title="Export / Backup"
-            description="Export records for backup or manual inspection."
-            actionLabel="Open"
+            title={t('exportBackup')}
+            description={t('exportDescription')}
+            actionLabel={t('open')}
             onClick={onOpenExport}
           />
         </section>

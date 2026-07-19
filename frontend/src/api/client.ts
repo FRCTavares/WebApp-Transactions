@@ -427,6 +427,23 @@ export async function apiPatchJson<T>(
   return response.json() as Promise<T>
 }
 
+export async function apiPutJson<T>(
+  path: string,
+  payload: unknown,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  const response = await apiFetch(path, {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  await raiseForBadResponse(response, 'PUT', path)
+
+  return response.json() as Promise<T>
+}
+
 export async function apiDelete(
   path: string,
   options: ApiRequestOptions = {},
