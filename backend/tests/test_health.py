@@ -5,6 +5,7 @@ from sqlalchemy.pool import StaticPool
 import app.routers.health as health_router
 from app.main import app
 from app.services.health_service import (
+    get_build_commit,
     get_expected_revision_heads,
     is_database_ready,
 )
@@ -49,7 +50,33 @@ def test_liveness_remains_independent_of_readiness(monkeypatch):
         response = client.get("/api/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "ok"
+    assert isinstance(body["version"], str)
+    assert body["version"]
+
+
+def test_build_commit_prefers_render_git_commit_env_var(monkeypatch):
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "abcdef1234567890")
+    get_build_commit.cache_clear()
+
+    try:
+        assert get_build_commit() == "abcdef1"
+    finally:
+        get_build_commit.cache_clear()
+
+
+def test_build_commit_falls_back_to_local_git(monkeypatch):
+    monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
+    get_build_commit.cache_clear()
+
+    try:
+        commit = get_build_commit()
+    finally:
+        get_build_commit.cache_clear()
+
+    assert commit != "unknown"
+    assert len(commit) == 7
 
 
 def test_database_readiness_accepts_current_revision():
