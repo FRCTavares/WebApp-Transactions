@@ -110,6 +110,9 @@ See [`CHANGELOG.md`](CHANGELOG.md) for release notes and how to maintain them.
 - [`docs/security-and-timeouts.md`](docs/security-and-timeouts.md) — request/database timeouts and security hardening
 - [`docs/browser-support.md`](docs/browser-support.md) — supported browser matrix and how it's verified in CI
 - [`docs/pwa-offline.md`](docs/pwa-offline.md) — offline support decision and how the service worker works
+- [`docs/incident-response.md`](docs/incident-response.md) — detection, triage, communication, and recovery for production incidents
+- [`docs/release-and-rollback.md`](docs/release-and-rollback.md) — how releases and rollbacks actually work on Render and Vercel
+- [`docs/production-operations-checklist.md`](docs/production-operations-checklist.md) — dashboard-only items (OAuth, notifications, Supabase capacity) that can't be verified from this repo
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes
 - [`frontend/README.md`](frontend/README.md) — frontend-specific notes
 - [`TODO_LIST.md`](TODO_LIST.md) — open, actionable tasks only

@@ -1,4 +1,4 @@
-name: Keep backend warm
+name: Keep backend warm and monitor availability
 
 on:
   schedule:
@@ -14,13 +14,35 @@ jobs:
     timeout-minutes: 3
 
     steps:
-      - name: Ping backend health endpoint
+      - name: Ping backend liveness
         run: |
           set -euo pipefail
 
           BACKEND_URL="https://f-transactions-api.onrender.com"
 
-          echo "Pinging backend health endpoint..."
+          echo "Pinging backend liveness endpoint..."
           curl --fail --silent --show-error --location --max-time 120 \
             --write-out "\nHTTP status: %{http_code}\nTotal time: %{time_total}s\n" \
             "$BACKEND_URL/api/health"
+
+      - name: Check backend readiness (database connectivity)
+        run: |
+          set -euo pipefail
+
+          BACKEND_URL="https://f-transactions-api.onrender.com"
+
+          echo "Checking backend readiness endpoint..."
+          curl --fail --silent --show-error --location --max-time 30 \
+            --write-out "\nHTTP status: %{http_code}\nTotal time: %{time_total}s\n" \
+            "$BACKEND_URL/api/ready"
+
+      - name: Check frontend availability
+        run: |
+          set -euo pipefail
+
+          FRONTEND_URL="https://web-app-transactions.vercel.app"
+
+          echo "Checking frontend availability..."
+          curl --fail --silent --show-error --location --max-time 30 \
+            --write-out "\nHTTP status: %{http_code}\nTotal time: %{time_total}s\n" \
+            "$FRONTEND_URL/" > /dev/null
