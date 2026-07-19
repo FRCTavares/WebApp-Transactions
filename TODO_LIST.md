@@ -27,28 +27,27 @@ verification, and UI/codebase maintainability.
 - [ ] Add a CI check that fails if any Alembic migration adds/renames a
   column or table without an equivalent update to the legacy SQLite startup
   migrations in `backend/app/database_migrations.py` — this exact gap caused
-  two real local-only 500 errors found via #32's e2e work (see #9).
+  two real local-only 500 errors found via #32's e2e work (see the Testing
+  section below).
 
 ## 8. Documentation
 
 - [ ] #34 — Review and refresh `README.md`, `frontend/README.md`, `docs/deployment.md`, `docs/backups-supabase.md`, `docs/production-roadmap.md`, and add `docs/auth-options.md` and `docs/multi-user-data-model.md` (currently missing).
 - [ ] #34 — Document `VITE_SUPABASE_AUTH_ENABLED` and all other environment variables, including local and production setup steps.
 - [ ] #34 — Verify documentation matches the deployed architecture and current code paths after the 2026-07-19 merges (#36–#40).
-- [ ] #24 — Define and document a supported desktop/mobile browser matrix with minimum versions and a lightweight verification approach.
 - [ ] #25 — Decide and document whether the PWA is installable-only or genuinely offline-capable; the resolved decision in `docs/production-roadmap.md` says real offline use is required — audit the current manifest/service worker/caching against that and implement or correct as needed.
 
 ## 9. Testing
 
-`agent/issue-32` (PR #42, draft, fully green in CI): 11 unit test files / 31
-tests covering auth enabled/disabled/misconfigured, expired sessions,
-transaction create/edit, import preview/commit/pending-FX, category combobox
-keyboard behavior, owed payments, dashboard loading/empty/error/partial-data
-states, and Escape-to-close for every `useDialogAccessibility` consumer
-(transaction edit/delete/owed-split, category replacement/migration, wealth
-account details). A working Playwright e2e suite (10 tests) runs with genuine
-locally-minted Supabase session authentication against a live backend:
-authenticated dashboard load, desktop/mobile navigation, CSV import-and-commit,
-category replacement, and JSON export download.
+#32 is complete and merged (PR #42): 11 unit test files / 31 tests covering
+auth enabled/disabled/misconfigured, expired sessions, transaction
+create/edit, import preview/commit/pending-FX, category combobox keyboard
+behavior, owed payments, dashboard loading/empty/error/partial-data states,
+and Escape-to-close for every `useDialogAccessibility` consumer. A Playwright
+e2e suite (5 tests × 5 browser projects, 25 total) runs with genuine
+locally-minted Supabase session authentication against a live backend, across
+Chromium, Firefox, and WebKit (desktop and mobile viewports) — see
+`docs/browser-support.md`.
 
 Four real bugs were found and fixed along the way:
 - `useDialogAccessibility`'s focus-trap effect re-ran on every parent
@@ -61,13 +60,11 @@ Four real bugs were found and fixed along the way:
   equivalent `ALTER TABLE`. Any local SQLite database predating those
   migrations 500'd on every CSV/XLSX import and on export/wealth reads. Fixed
   for both; a full audit of every `add_column` in `migrations/versions/`
-  confirmed no other instances remain today (see #7 for a CI safeguard against
-  this recurring).
+  confirmed no other instances remain today (see the CI safeguard task above).
 - `usePresentationPreferences` had no unmount cleanup guard, causing a
   CI-only (not locally reproducible) unhandled rejection after test teardown.
 
-- [ ] #32 — Review and merge PR #42.
-- [ ] #32 — Promote the "Frontend e2e" CI job to a required check once it has proven stable across a few more runs.
+- [ ] Promote the "Frontend e2e" CI job to a required check once it has proven stable across a few more runs.
 
 ## 10. UI and Codebase Maintainability
 
