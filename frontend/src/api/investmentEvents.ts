@@ -6,6 +6,7 @@ import type {
   InvestmentMonthlyChange,
   InvestmentMonthlySeriesPoint,
   InvestmentPosition,
+  InvestmentRealisedGain,
   ManualFundingResolutionPayload,
   ManualFundingResolutionResponse,
 } from '../types/api'
@@ -21,6 +22,12 @@ export function getInvestmentEvent(eventId: number) {
 export function listInvestmentPositions(source?: string) {
   return apiGet<InvestmentPosition[]>(
     `/api/investment-events/positions${buildQuery({ source })}`,
+  )
+}
+
+export function listInvestmentRealisedGains(source?: string) {
+  return apiGet<InvestmentRealisedGain[]>(
+    `/api/investment-events/realised-gains${buildQuery({ source })}`,
   )
 }
 

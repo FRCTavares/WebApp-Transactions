@@ -13,6 +13,7 @@ WealthAccountType = Literal[
     "cash",
     "other",
 ]
+WealthValueSource = Literal["manual", "investment", "owed"]
 
 
 class WealthAccountBase(BaseModel):
@@ -21,6 +22,8 @@ class WealthAccountBase(BaseModel):
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     institution: str | None = Field(default=None, max_length=100)
     is_active: bool = True
+    value_source: WealthValueSource = "manual"
+    value_reference: str | None = Field(default=None, max_length=100)
     notes: str | None = None
 
 
@@ -34,6 +37,8 @@ class WealthAccountUpdate(BaseModel):
     currency: str | None = Field(default=None, min_length=3, max_length=3)
     institution: str | None = Field(default=None, max_length=100)
     is_active: bool | None = None
+    value_source: WealthValueSource | None = None
+    value_reference: str | None = Field(default=None, max_length=100)
     notes: str | None = None
 
 

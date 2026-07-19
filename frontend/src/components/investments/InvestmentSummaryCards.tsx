@@ -14,6 +14,7 @@ type InvestmentSummaryCardsProps = {
   costTotals: InvestmentCurrencyTotal[]
   marketValueTotals: InvestmentCurrencyTotal[]
   unrealisedGainTotals: InvestmentCurrencyTotal[]
+  realisedGainTotals: InvestmentCurrencyTotal[]
 }
 
 function formatCurrencyTotals(totals: InvestmentCurrencyTotal[]) {
@@ -55,6 +56,7 @@ export function InvestmentSummaryCards({
   costTotals,
   marketValueTotals,
   unrealisedGainTotals,
+  realisedGainTotals,
 }: InvestmentSummaryCardsProps) {
   const primaryMarketValue = getFirstMoneyValue(marketValueTotals)
   const primaryCostBasis = getFirstMoneyValue(costTotals)
@@ -95,6 +97,11 @@ export function InvestmentSummaryCards({
         <article className="investment-summary-gain">
           <span>Unrealised gain</span>
           <strong className={gainClassName}>{formatCurrencyTotals(unrealisedGainTotals)}</strong>
+        </article>
+
+        <article>
+          <span>Realised gain</span>
+          <strong>{formatCurrencyTotals(realisedGainTotals)}</strong>
         </article>
 
         <article>

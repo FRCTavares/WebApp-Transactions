@@ -234,6 +234,8 @@ export function WealthPage(_props: WealthPageProps) {
       accountType: account.account_type,
       currency: account.currency,
       institution: account.institution ?? '',
+      valueSource: account.value_source,
+      valueReference: account.value_reference ?? '',
       notes: account.notes ?? '',
     })
     setIsAccountFormOpen(true)
@@ -267,6 +269,11 @@ export function WealthPage(_props: WealthPageProps) {
         account_type: accountForm.accountType,
         currency: accountForm.currency.trim().toUpperCase(),
         institution: accountForm.institution.trim() || null,
+        value_source: accountForm.valueSource,
+        value_reference:
+          accountForm.valueSource === 'investment'
+            ? accountForm.valueReference.trim().toUpperCase() || null
+            : null,
         is_active: true,
         notes: accountForm.notes.trim() || null,
       }
@@ -615,6 +622,30 @@ export function WealthPage(_props: WealthPageProps) {
           </div>
 
           <div className="form-row">
+            <label>
+              Value source
+              <select
+                value={accountForm.valueSource}
+                onChange={(event) => updateAccountForm('valueSource', event.target.value)}
+              >
+                <option value="manual">Manual snapshots</option>
+                <option value="investment">Derived investment value</option>
+                <option value="owed">Derived money owed</option>
+              </select>
+            </label>
+
+            {accountForm.valueSource === 'investment' && (
+              <label>
+                Investment ticker or reference
+                <input
+                  value={accountForm.valueReference}
+                  onChange={(event) => updateAccountForm('valueReference', event.target.value)}
+                  placeholder="CSPX"
+                  required
+                />
+              </label>
+            )}
+
             <label>
               Institution
               <input

@@ -1,5 +1,6 @@
 import { TransactionsPageView } from '../components/transactions/TransactionsPageView'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { listOwedItems, listOwedPayments } from '../api/owed'
 import {
   createOwedSplitForTransaction,
@@ -42,12 +43,18 @@ import {
   type ParsedCreateOwedRow,
   type ParsedRepaymentAllocation,
 } from '../utils/transactionPageHelpers'
+import { buildTransactionFilterUrl, getFiltersFromUrl } from '../utils/transactionFilterUrl'
+
 export function TransactionsPage() {
   const { monthKey } = usePeriod()
-  const [direction, setDirection] = useState<Direction>('out')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialSearchParamsRef = useRef(searchParams)
+  const [direction, setDirection] = useState<Direction>(() =>
+    searchParams.get('direction') === 'in' ? 'in' : 'out',
+  )
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
-    getInitialFilterState(direction),
+    getFiltersFromUrl(searchParams),
   )
   const [form, setForm] = useState<TransactionFormState>(() => getInitialFormState(direction, monthKey))
   const [editForm, setEditForm] = useState<TransactionFormState>(() => getInitialFormState(direction, monthKey))
@@ -131,7 +138,7 @@ export function TransactionsPage() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const initialFilters = getInitialFilterState(direction)
+      const initialFilters = getFiltersFromUrl(initialSearchParamsRef.current)
       const monthDateRange = getMonthDateRange(monthKey)
 
       setForm(getInitialFormState(direction, monthKey))
@@ -413,7 +420,22 @@ export function TransactionsPage() {
   function clearFilters() {
     const initialFilters = getInitialFilterState(direction)
     setFilters(initialFilters)
+    setSearchParams(direction === 'in' ? { direction: 'in' } : {}, { replace: true })
     loadTransactions(initialFilters)
+  }
+
+  function applyFilters() {
+    const nextParams = buildTransactionFilterUrl(filters, direction)
+    setSearchParams(nextParams, { replace: true })
+    loadTransactions(filters)
+  }
+
+  function changeDirection(nextDirection: Direction) {
+    setDirection(nextDirection)
+    const nextParams = new URLSearchParams(searchParams)
+    if (nextDirection === 'in') nextParams.set('direction', 'in')
+    else nextParams.delete('direction')
+    setSearchParams(nextParams, { replace: true })
   }
 
   function updateEditForm(field: keyof TransactionFormState, value: string) {
@@ -809,13 +831,13 @@ export function TransactionsPage() {
     repaymentItems, repaymentAllocations, repaymentUnallocatedCategory,
     isSavingEdit, isDeletingTransaction, owedRows, owedPaymentTransactions,
     owedPaymentAvailableAmounts, owedLeftoverItemsByPerson, isCreatingOwedItem,
-    onDirectionChange: setDirection,
+    onDirectionChange: changeDirection,
     onExportCsv: handleExportCsv,
     onResetCreateForm: resetCreateFormState,
     onSetCreateFormOpen: setIsCreateFormOpen,
     onSetDeleteDraftTransaction: setDeleteDraftTransaction,
     onFilterChange: updateFilters,
-    onApplyFilters: () => loadTransactions(),
+    onApplyFilters: applyFilters,
     onClearFilters: clearFilters,
     onCreateSubmit: handleCreateTransactionSubmit,
     onFormChange: updateForm,

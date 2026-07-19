@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
 from app.repositories.investment_event_repository import InvestmentEventRepository
-from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
+from app.repositories.market_price_history_repository import (
+    MarketPriceHistoryRepository,
+)
 from app.repositories.market_price_repository import MarketPriceRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
@@ -15,6 +17,7 @@ from app.schemas.investment_event import (
     InvestmentMonthlyChangeRead,
     InvestmentMonthlySeriesPointRead,
     InvestmentPositionRead,
+    InvestmentRealisedGainRead,
     ManualFundingResolutionCreate,
     ManualFundingResolutionRead,
 )
@@ -40,7 +43,9 @@ def get_investment_event_service(
     )
 
 
-@router.post("", response_model=InvestmentEventRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=InvestmentEventRead, status_code=status.HTTP_201_CREATED
+)
 def create_investment_event(
     event_data: InvestmentEventCreate,
     service: InvestmentEventService = Depends(get_investment_event_service),
@@ -95,6 +100,15 @@ def get_investment_monthly_change(
         month=month,
         current_user=current_user,
     )
+
+
+@router.get("/realised-gains", response_model=list[InvestmentRealisedGainRead])
+def list_investment_realised_gains(
+    source: str | None = Query(default=None),
+    service: InvestmentEventService = Depends(get_investment_event_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.list_realised_gains(source=source, current_user=current_user)
 
 
 @router.get("/monthly-series", response_model=list[InvestmentMonthlySeriesPointRead])

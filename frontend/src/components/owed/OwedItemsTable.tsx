@@ -41,6 +41,15 @@ function getPersonGroups(items: OwedItem[]) {
 }
 
 function getStatusLabel(item: OwedItem) {
+  if (
+    item.due_date
+    && item.due_date < new Date().toISOString().slice(0, 10)
+    && item.status !== 'paid'
+    && item.status !== 'cancelled'
+  ) {
+    return item.status === 'partially_paid' ? 'overdue · part paid' : 'overdue'
+  }
+
   if (item.status === 'partially_paid') {
     return 'part paid'
   }

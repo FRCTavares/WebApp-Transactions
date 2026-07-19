@@ -11,6 +11,8 @@ export type AccountFormState = {
   accountType: WealthAccountType
   currency: string
   institution: string
+  valueSource: 'manual' | 'investment' | 'owed'
+  valueReference: string
   notes: string
 }
 
@@ -44,6 +46,8 @@ export function getInitialAccountForm(): AccountFormState {
     accountType: 'current_account',
     currency: 'EUR',
     institution: '',
+    valueSource: 'manual',
+    valueReference: '',
     notes: '',
   }
 }
@@ -97,20 +101,7 @@ function getNormalisedText(value: string | null | undefined) {
 }
 
 export function isMoneyOwedAccount(account: WealthAccount) {
-  const text = [
-    account.name,
-    account.institution,
-    account.notes,
-  ]
-    .map(getNormalisedText)
-    .join(' ')
-
-  return (
-    text.includes('money owed') ||
-    text.includes('owed to me') ||
-    text.includes('dívidas') ||
-    text.includes('dividas')
-  )
+  return account.value_source === 'owed'
 }
 
 function getGroupSortRank(groupLabel: string) {
@@ -281,18 +272,10 @@ export function getDerivedInvestmentValue(
   account: WealthAccount,
   positions: InvestmentPosition[],
 ) {
-  if (account.institution !== 'Trading 212') {
+  if (account.value_source !== 'investment' || !account.value_reference) {
     return null
   }
-
-  const accountName = account.name.toUpperCase()
-
-  const supportedSymbols = ['BTC', 'CSPX', 'VWCE']
-  const targetSymbol = supportedSymbols.find((symbol) => accountName.includes(symbol))
-
-  if (!targetSymbol) {
-    return null
-  }
+  const targetSymbol = account.value_reference.toUpperCase()
   const matchingPosition = positions.find((position) => {
     return getInvestmentPositionSymbol(position).includes(targetSymbol)
   })

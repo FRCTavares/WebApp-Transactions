@@ -145,9 +145,12 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                     ? (
                       <>
                         {formatMoney(position.market_value, position.market_value_currency)}
+                        <span className="table-subtext muted">
+                          Valuation: {position.market_price_source ?? 'unknown'}
+                        </span>
                         {position.market_fx_rate_to_eur && position.market_price_currency !== position.market_value_currency && (
                           <span className="table-subtext muted">
-                            FX {position.market_price_currency}/EUR {position.market_fx_rate_to_eur}
+                            FX {position.market_price_currency}/EUR {position.market_fx_rate_to_eur} · {position.market_fx_rate_source ?? 'unknown source'}
                           </span>
                         )}
                       </>

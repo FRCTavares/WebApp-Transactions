@@ -1,6 +1,7 @@
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.wealth_account import WealthAccount
 
+
 def test_create_list_update_delete_wealth_account(client):
     create_response = client.post(
         "/api/wealth/accounts",
@@ -20,10 +21,23 @@ def test_create_list_update_delete_wealth_account(client):
     assert created["account_type"] == "current_account"
     assert created["currency"] == "EUR"
     assert created["is_active"] is True
+    assert created["value_source"] == "manual"
+
+    explicit_response = client.post(
+        "/api/wealth/accounts",
+        json={
+            "name": "CSPX savings goal",
+            "account_type": "savings_account",
+            "currency": "EUR",
+            "value_source": "manual",
+        },
+    )
+    assert explicit_response.status_code == 201
+    assert explicit_response.json()["value_source"] == "manual"
 
     list_response = client.get("/api/wealth/accounts")
     assert list_response.status_code == 200
-    assert len(list_response.json()) == 1
+    assert len(list_response.json()) == 2
 
     get_response = client.get(f"/api/wealth/accounts/{created['id']}")
     assert get_response.status_code == 200
@@ -47,7 +61,9 @@ def test_create_list_update_delete_wealth_account(client):
 
     list_after_delete_response = client.get("/api/wealth/accounts")
     assert list_after_delete_response.status_code == 200
-    assert list_after_delete_response.json() == []
+    assert [row["name"] for row in list_after_delete_response.json()] == [
+        "CSPX savings goal"
+    ]
 
 
 def test_cannot_delete_wealth_account_with_snapshots(client):
@@ -74,7 +90,10 @@ def test_cannot_delete_wealth_account_with_snapshots(client):
 
     delete_response = client.delete(f"/api/wealth/accounts/{account_id}")
     assert delete_response.status_code == 400
-    assert delete_response.json()["detail"] == "Cannot delete a wealth account with snapshots"
+    assert (
+        delete_response.json()["detail"]
+        == "Cannot delete a wealth account with snapshots"
+    )
 
 
 def test_wealth_accounts_are_isolated_by_current_user(client, db_session):

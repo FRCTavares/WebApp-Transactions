@@ -23,6 +23,12 @@ import { formatDate, formatMoney } from '../utils/format'
 const SOURCES = ['revolut', 'activobank', 'trading212']
 const HIDDEN_BATCH_SOURCES = ['legacy_excel', 'legacy_excel_wealth']
 
+const SOURCE_UPLOAD_HELP: Record<string, { accept: string; description: string }> = {
+  revolut: { accept: '.csv', description: 'Revolut CSV, maximum 5 MB' },
+  activobank: { accept: '.xlsx', description: 'ActivoBank XLSX, maximum 10 MB' },
+  trading212: { accept: '.csv', description: 'Trading 212 CSV, maximum 5 MB' },
+}
+
 function getStatusBadgeClass(status: string) {
   return `badge badge-status-${status.replaceAll('_', '-')}`
 }
@@ -323,6 +329,7 @@ export function ImportPage() {
   const [isBatchesLoading, setIsBatchesLoading] = useState(true)
   const [isLoadingBatchRows, setIsLoadingBatchRows] = useState(false)
   const [isCommitting, setIsCommitting] = useState(false)
+  const [isCommitConfirmed, setIsCommitConfirmed] = useState(false)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [batchRowsError, setBatchRowsError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -366,6 +373,7 @@ export function ImportPage() {
     preview?.preview_id &&
     rowsToImportCount > 0 &&
     !hasBlockingPendingFxRows &&
+    isCommitConfirmed &&
     !isCommitting,
   )
   const visibleBatches = batches.filter(
@@ -413,6 +421,7 @@ export function ImportPage() {
 
     setError(null)
     setMessage(null)
+    setIsCommitConfirmed(false)
 
     try {
       setPreview(await previewImport(source, file))
@@ -446,6 +455,11 @@ export function ImportPage() {
       return
     }
 
+    if (!isCommitConfirmed) {
+      setError('Confirm that you reviewed the exact preview before committing.')
+      return
+    }
+
     setError(null)
     setMessage(null)
     setIsCommitting(true)
@@ -454,6 +468,7 @@ export function ImportPage() {
       await commitImport(source, file, preview.preview_id)
       setMessage('Import committed.')
       setPreview(null)
+      setIsCommitConfirmed(false)
       setSelectedBatch(null)
       setBatchTransactions([])
       setBatchInvestmentEvents([])
@@ -562,6 +577,7 @@ export function ImportPage() {
               onChange={(event) => {
                 setSource(event.target.value)
                 setPreview(null)
+                setIsCommitConfirmed(false)
                 setMessage(null)
                 setError(null)
               }}
@@ -578,10 +594,11 @@ export function ImportPage() {
             File
             <input
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept={SOURCE_UPLOAD_HELP[source].accept}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null)
                 setPreview(null)
+                setIsCommitConfirmed(false)
                 setMessage(null)
                 setError(null)
               }}
@@ -594,6 +611,9 @@ export function ImportPage() {
             Selected file: <strong>{file.name}</strong>
           </p>
         )}
+        <p className="muted small">
+          Accepted file: {SOURCE_UPLOAD_HELP[source].description}. Files are validated before preview.
+        </p>
 
         <div className="action-group">
           <button
@@ -716,6 +736,14 @@ export function ImportPage() {
                 This will save only the non-duplicate rows shown above.
               </p>
             </div>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={isCommitConfirmed}
+                onChange={(event) => setIsCommitConfirmed(event.target.checked)}
+              />
+              I reviewed this exact preview and understand that {rowsToImportCount} new rows will be saved.
+            </label>
             <button
               type="button"
               className="primary-button"
