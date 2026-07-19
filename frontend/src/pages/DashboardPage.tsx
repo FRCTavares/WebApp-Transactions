@@ -348,8 +348,8 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {summary && (
         <>
-          <div className="dashboard-summary-grid">
-            <article className="dashboard-metric-card dashboard-metric-income">
+          <div className="dashboard-summary-grid" role="list" aria-label="Monthly key metrics">
+            <article className="dashboard-metric-card dashboard-metric-income" role="listitem">
               <span className="dashboard-metric-icon" aria-hidden="true">↓</span>
               <div>
                 <p>Money In</p>
@@ -358,7 +358,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               </div>
             </article>
 
-            <article className="dashboard-metric-card dashboard-metric-spent">
+            <article className="dashboard-metric-card dashboard-metric-spent" role="listitem">
               <span className="dashboard-metric-icon" aria-hidden="true">↑</span>
               <div>
                 <p>Money Out</p>
@@ -371,6 +371,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(
                 investmentChange,
               )}`}
+              role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">↗</span>
               <div>
@@ -386,6 +387,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
             <article
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
+              role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">=</span>
               <div>

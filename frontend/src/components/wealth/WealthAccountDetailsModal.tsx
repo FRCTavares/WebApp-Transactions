@@ -6,6 +6,7 @@ import {
   getDerivedInvestmentValue,
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 type WealthAccountDetailsModalProps = {
   group: WealthAccountGroup
@@ -112,15 +113,23 @@ export function WealthAccountDetailsModal({
   onRemoveAccount,
   renderAccountBalanceCell,
 }: WealthAccountDetailsModalProps) {
+  const dialogRef = useDialogAccessibility<HTMLElement>({ onClose })
   const groupLatestDate = getGroupLatestDate(group, latestByAccount)
 
   return (
-    <div className="wealth-modal-backdrop" role="dialog" aria-modal="true">
-      <section className="wealth-modal-card">
+    <div className="wealth-modal-backdrop" role="presentation">
+      <section
+        ref={dialogRef}
+        className="wealth-modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="wealth-account-details-title"
+        tabIndex={-1}
+      >
         <header className="wealth-modal-header">
           <div>
             <p className="eyebrow">Group details</p>
-            <h2>{group.label}</h2>
+            <h2 id="wealth-account-details-title">{group.label}</h2>
             <p>
               {group.accounts.length} sub-accounts
               {groupLatestDate ? ` · latest ${formatDate(groupLatestDate)}` : ''}

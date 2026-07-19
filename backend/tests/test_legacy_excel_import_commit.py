@@ -263,7 +263,7 @@ def test_legacy_excel_commit_rolls_back_all_records_on_owed_failure(
         user_id,
         commit=True,
     ):
-        result = original_bulk_insert(
+        original_bulk_insert(
             owed_items,
             user_id=user_id,
             commit=commit,

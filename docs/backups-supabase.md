@@ -97,7 +97,7 @@ Keep at least the two most recent successful JSON exports.
 
 Delete expired backups securely after confirming that newer valid backups and restore evidence exist.
 
-Backups related to an account-deletion request must follow the documented deletion and legal-retention policy when that policy is implemented. Until then, public multi-user release remains blocked.
+Account deletion removes active application data immediately. Existing encrypted backups are not selectively rewritten and expire under this retention schedule: seven daily, four weekly, and twelve monthly backups. Deleted data must not be restored into the active service except for a documented legal or security requirement. See `docs/privacy.md`.
 
 ## Encryption and secret handling
 

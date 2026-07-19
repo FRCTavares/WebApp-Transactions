@@ -1,6 +1,5 @@
-import os
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -16,27 +15,8 @@ from app.config import (
     validate_production_config,
 )
 from app.database import initialise_database
-from app.middleware.request_logging import (
-    RequestLoggingMiddleware,
-    set_request_log_user_id,
-)
+from app.middleware.request_logging import RequestLoggingMiddleware
 from app.middleware.upload_request import UploadRequestMiddleware
-from app.models import (
-    CashflowRule,
-    DescriptionRule,
-    ImportBatch,
-    InvestmentEvent,
-    InvestmentFundingMonth,
-    MarketPrice,
-    MarketPriceHistory,
-    OwedItem,
-    OwedPayment,
-    OwedPaymentAllocation,
-    Transaction,
-    TransactionCategory,
-    WealthAccount,
-    WealthSnapshot,
-)
 from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.description_rules import router as description_rules_router

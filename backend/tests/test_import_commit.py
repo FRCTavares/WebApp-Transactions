@@ -77,7 +77,7 @@ def test_import_commit_rolls_back_batch_and_transactions_on_late_failure(
         user_id,
         commit=True,
     ):
-        result = original_bulk_insert(
+        original_bulk_insert(
             transactions,
             user_id=user_id,
             commit=commit,

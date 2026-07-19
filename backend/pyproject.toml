@@ -1,0 +1,22 @@
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["F", "N"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/schemas/cashflow_rule.py" = ["N812"]
+"app/schemas/description_rule.py" = ["N812"]
+"app/schemas/financial_command.py" = ["N812"]
+"app/schemas/fx_match.py" = ["N812"]
+"app/schemas/import_batch.py" = ["N812"]
+"app/schemas/import_preview.py" = ["N812"]
+"app/schemas/investment_event.py" = ["N812"]
+"app/schemas/legacy_excel_import.py" = ["N812"]
+"app/schemas/market_price.py" = ["N812"]
+"app/schemas/market_price_history.py" = ["N812"]
+"app/schemas/owed_item.py" = ["N812"]
+"app/schemas/transaction.py" = ["N812"]
+"app/schemas/transaction_category.py" = ["N812"]
+"app/schemas/wealth.py" = ["N812"]
+"tests/test_import_upload_endpoints.py" = ["F811"]
