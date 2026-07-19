@@ -5,7 +5,12 @@ from decimal import Decimal
 import jwt
 import pytest
 
-from app.auth.current_user import LOCAL_DEFAULT_USER_ID
+from app.auth.current_user import (
+    CurrentUser,
+    LOCAL_DEFAULT_USER_ID,
+    get_current_user,
+    get_privileged_user,
+)
 from app.models.investment_event import InvestmentEvent
 
 
@@ -27,6 +32,23 @@ def make_market_price_token(
         secret,
         algorithm="HS256",
     )
+
+
+@pytest.fixture(autouse=True)
+def privileged_market_price_user(client):
+    client.app.dependency_overrides[get_privileged_user] = lambda: CurrentUser(
+        id=LOCAL_DEFAULT_USER_ID,
+        email="admin@example.com",
+    )
+
+    yield
+
+    client.app.dependency_overrides.pop(get_privileged_user, None)
+
+
+def use_real_market_price_auth(client) -> None:
+    client.app.dependency_overrides.pop(get_current_user, None)
+    client.app.dependency_overrides.pop(get_privileged_user, None)
 
 
 def create_market_buy(db_session, *, ticker="VWCE", isin="IE00BK5BQT80"):
@@ -440,6 +462,7 @@ def test_market_price_routes_require_authentication_when_supabase_is_enabled(
 ):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    use_real_market_price_auth(client)
 
     request_kwargs = {}
 
@@ -473,6 +496,7 @@ def test_market_price_mutations_reject_authenticated_non_admin(
     monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+    use_real_market_price_auth(client)
 
     token = make_market_price_token("me@example.com", secret)
     request_kwargs = {
@@ -496,6 +520,7 @@ def test_market_price_create_accepts_configured_admin(
     monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+    use_real_market_price_auth(client)
 
     token = make_market_price_token("admin@example.com", secret)
 
@@ -526,6 +551,7 @@ def test_market_price_reads_accept_authenticated_non_admin(
         "admin@example.com,me@example.com",
     )
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
+    use_real_market_price_auth(client)
 
     admin_token = make_market_price_token("admin@example.com", secret)
     user_token = make_market_price_token("me@example.com", secret)

@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from fastapi.testclient import TestClient
 
+from app.auth.current_user import CurrentUser, get_current_user
 from app.main import app
 from app.database import get_db
 from app.models.cashflow_rule import CashflowRule
@@ -22,8 +23,12 @@ from app.models.wealth_snapshot import WealthSnapshot
 from scripts.restore_json_export_dry_run import run_restore_dry_run
 
 
-def get_test_client(db_session):
+def get_test_client(
+    db_session,
+    current_user: CurrentUser,
+):
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_current_user] = lambda: current_user
     return TestClient(app)
 
 
@@ -192,18 +197,13 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
     db_session.commit()
 
 
-def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
-    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
-    monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
-
-    add_export_fixture_rows(db_session, "local-default-user")
+def test_export_json_returns_current_user_data_only(db_session):
+    current_user = CurrentUser(id="test-user")
+    add_export_fixture_rows(db_session, current_user.id)
     add_export_fixture_rows(db_session, "other-user")
 
     try:
-        with get_test_client(db_session) as client:
+        with get_test_client(db_session, current_user) as client:
             response = client.get("/api/export/json")
     finally:
         clear_test_client_overrides()
@@ -214,7 +214,7 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
     tables = body["tables"]
 
     assert body["format_version"] == 3
-    assert body["user_id"] == "local-default-user"
+    assert body["user_id"] == current_user.id
     assert body["email"] is None
 
     expected_tables = {
@@ -237,34 +237,25 @@ def test_export_json_returns_current_user_data_only(db_session, monkeypatch):
 
     for table_rows in tables.values():
         assert len(table_rows) == 1
-        assert table_rows[0]["user_id"] == "local-default-user"
+        assert table_rows[0]["user_id"] == current_user.id
 
     assert tables["transactions"][0]["amount"] == "12.34"
     assert tables["transactions"][0]["date"] == "2026-06-01"
     assert tables["transactions"][0]["raw_description"] == (
-        "local-default-user raw transaction"
+        "test-user raw transaction"
     )
 
-
-def test_export_json_uses_header_bridge_user_when_allowlist_enabled(
-    db_session,
-    monkeypatch,
-):
-    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
-    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
-
-    add_export_fixture_rows(db_session, "me@example.com")
-    add_export_fixture_rows(db_session, "other@example.com")
+def test_export_json_uses_explicit_authenticated_user(db_session):
+    current_user = CurrentUser(
+        id="authenticated-user-id",
+        email="me@example.com",
+    )
+    add_export_fixture_rows(db_session, current_user.id)
+    add_export_fixture_rows(db_session, "other-user")
 
     try:
-        with get_test_client(db_session) as client:
-            response = client.get(
-                "/api/export/json",
-                headers={"X-App-User-Email": "ME@example.com"},
-            )
+        with get_test_client(db_session, current_user) as client:
+            response = client.get("/api/export/json")
     finally:
         clear_test_client_overrides()
 
@@ -272,19 +263,17 @@ def test_export_json_uses_header_bridge_user_when_allowlist_enabled(
 
     body = response.json()
 
-    assert body["user_id"] == "me@example.com"
-    assert body["email"] == "me@example.com"
+    assert body["user_id"] == current_user.id
+    assert body["email"] == current_user.email
 
     for table_rows in body["tables"].values():
         assert len(table_rows) == 1
-        assert table_rows[0]["user_id"] == "me@example.com"
-
+        assert table_rows[0]["user_id"] == current_user.id
 
 def test_export_json_requires_auth_when_supabase_auth_is_enabled(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
     monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
-    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
 
     with TestClient(app) as client:
@@ -296,20 +285,14 @@ def test_export_json_requires_auth_when_supabase_auth_is_enabled(monkeypatch):
 
 def test_generated_export_restores_all_rows_and_relationships(
     db_session,
-    monkeypatch,
     tmp_path,
 ):
-    monkeypatch.delenv("APP_ACCESS_TOKEN", raising=False)
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
-    monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
-
-    add_export_fixture_rows(db_session, "local-default-user")
+    current_user = CurrentUser(id="test-user")
+    add_export_fixture_rows(db_session, current_user.id)
     add_export_fixture_rows(db_session, "other-user")
 
     try:
-        with get_test_client(db_session) as client:
+        with get_test_client(db_session, current_user) as client:
             response = client.get("/api/export/json")
     finally:
         clear_test_client_overrides()

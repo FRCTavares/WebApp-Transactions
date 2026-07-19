@@ -12,7 +12,6 @@ from app.middleware.request_logging import set_request_log_user_id
 
 
 LOCAL_DEFAULT_USER_ID = "local-default-user"
-USER_EMAIL_HEADER = "X-App-User-Email"
 
 
 @dataclass(frozen=True)
@@ -45,9 +44,6 @@ def is_allowed_user_email(email: str) -> bool:
 
     return normalise_user_email(email) in allowed_emails
 
-
-def get_local_default_user() -> CurrentUser:
-    return CurrentUser(id=LOCAL_DEFAULT_USER_ID)
 
 
 def get_supabase_jwt_secret() -> str:
@@ -228,41 +224,11 @@ def get_supabase_user_from_request(request: Request) -> CurrentUser:
     return CurrentUser(id=subject, email=email)
 
 
-def get_header_bridge_user_from_request(request: Request) -> CurrentUser:
-    email = normalise_user_email(request.headers.get(USER_EMAIL_HEADER, ""))
-
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing user email",
-        )
-
-    if not is_allowed_user_email(email):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User email is not allowed",
-        )
-
-    return CurrentUser(id=email, email=email)
-
 
 def get_current_user(request: Request) -> CurrentUser:
-    """Return the current user for FastAPI dependency injection.
+    """Return the authenticated Supabase user."""
 
-    Local development keeps the stable local default user when no auth config is
-    present. Production should set SUPABASE_URL and ALLOWED_USER_EMAILS.
-    """
-
-    if is_supabase_auth_enabled():
-        current_user = get_supabase_user_from_request(request)
-    else:
-        allowed_emails = get_allowed_user_emails()
-
-        if not allowed_emails:
-            current_user = get_local_default_user()
-        else:
-            current_user = get_header_bridge_user_from_request(request)
-
+    current_user = get_supabase_user_from_request(request)
     set_request_log_user_id(
         request.scope,
         current_user.id,
@@ -283,9 +249,6 @@ def get_admin_user_emails() -> set[str]:
 def get_privileged_user(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> CurrentUser:
-    if current_user.id == LOCAL_DEFAULT_USER_ID and not is_supabase_auth_enabled():
-        return current_user
-
     if current_user.email and current_user.email in get_admin_user_emails():
         return current_user
 
