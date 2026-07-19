@@ -34,6 +34,7 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_cashflow_type_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
     _run_wealth_user_migrations(engine=engine)
+    _run_import_preview_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
     run_sqlite_foreign_key_migrations(engine)
 
@@ -727,6 +728,21 @@ def _run_owed_payment_migrations(engine: Engine) -> None:
             column_name=column_name,
             sql=sql,
         )
+
+
+def _run_import_preview_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="import_previews"):
+        return
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="import_previews",
+        column_name="resolved_payload_sha256",
+        sql=(
+            "ALTER TABLE import_previews "
+            "ADD COLUMN resolved_payload_sha256 VARCHAR(64)"
+        ),
+    )
 
 
 

@@ -101,6 +101,50 @@ def test_startup_migrations_add_owed_payment_unallocated_classification_columns(
     assert "unallocated_notes" in column_names
 
 
+def test_startup_migrations_add_import_preview_resolved_payload_column():
+    engine = create_sqlite_memory_engine()
+
+    Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE import_previews"))
+        connection.execute(
+            text(
+                "CREATE TABLE import_previews ("
+                "id VARCHAR(36) NOT NULL, "
+                "user_id VARCHAR(100) NOT NULL, "
+                "mode VARCHAR(40) NOT NULL, "
+                "source VARCHAR(50) NOT NULL, "
+                "filename VARCHAR(255) NOT NULL, "
+                "file_sha256 VARCHAR(64) NOT NULL, "
+                "rows_total INTEGER NOT NULL DEFAULT 0, "
+                "rows_valid INTEGER NOT NULL DEFAULT 0, "
+                "rows_duplicates INTEGER NOT NULL DEFAULT 0, "
+                "rows_invalid INTEGER NOT NULL DEFAULT 0, "
+                "transactions_pending INTEGER NOT NULL DEFAULT 0, "
+                "investment_events_pending INTEGER NOT NULL DEFAULT 0, "
+                "owed_items_pending INTEGER NOT NULL DEFAULT 0, "
+                "wealth_snapshots_pending INTEGER NOT NULL DEFAULT 0, "
+                "created_at DATETIME NOT NULL, "
+                "expires_at DATETIME NOT NULL, "
+                "consumed_at DATETIME, "
+                "PRIMARY KEY (id)"
+                ")"
+            )
+        )
+
+    run_startup_migrations(engine)
+    run_startup_migrations(engine)
+
+    inspector = inspect(engine)
+    column_names = {
+        column["name"]
+        for column in inspector.get_columns("import_previews")
+    }
+
+    assert "resolved_payload_sha256" in column_names
+
+
 
 def test_startup_migrations_add_owed_item_event_ledger_and_backfill():
     engine = create_sqlite_memory_engine()
