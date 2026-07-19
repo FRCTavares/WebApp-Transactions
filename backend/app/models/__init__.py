@@ -13,6 +13,7 @@ from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
+from app.models.user_preferences import UserPreferences
 
 __all__ = [
     "CashflowRule",
@@ -31,4 +32,5 @@ __all__ = [
     "TransactionCategory",
     "WealthAccount",
     "WealthSnapshot",
+    "UserPreferences",
 ]

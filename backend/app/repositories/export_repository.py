@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from app.recovery_registry import (
@@ -16,10 +16,11 @@ class ExportRepository:
         model: type[object],
         user_id: str,
     ) -> list[object]:
+        primary_key = inspect(model).primary_key[0]
         statement = (
             select(model)
             .where(model.user_id == user_id)
-            .order_by(model.id.asc())
+            .order_by(primary_key.asc())
         )
 
         return list(self.db.scalars(statement).all())

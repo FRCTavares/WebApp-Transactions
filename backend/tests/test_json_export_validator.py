@@ -1,11 +1,12 @@
 import json
 
 from scripts.validate_json_export import REQUIRED_TABLES, load_json_file, validate_export
+from app.recovery_registry import EXPORT_FORMAT_VERSION
 
 
 def build_valid_export():
     return {
-        "format_version": 3,
+        "format_version": EXPORT_FORMAT_VERSION,
         "user_id": "user@example.com",
         "email": "user@example.com",
         "tables": {table_name: [] for table_name in REQUIRED_TABLES},
@@ -30,7 +31,9 @@ def test_validate_export_requires_current_format_version():
 
     issues = validate_export(data)
 
-    assert "format_version must be 3." in [issue.message for issue in issues]
+    assert f"format_version must be {EXPORT_FORMAT_VERSION}." in [
+        issue.message for issue in issues
+    ]
 
 
 def test_validate_export_requires_user_id():
@@ -95,4 +98,4 @@ def test_load_json_file_reads_valid_json(tmp_path):
 
     data = load_json_file(path)
 
-    assert data["format_version"] == 3
+    assert data["format_version"] == EXPORT_FORMAT_VERSION

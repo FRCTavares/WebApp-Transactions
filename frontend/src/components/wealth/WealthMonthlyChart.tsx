@@ -176,7 +176,31 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           role="img"
-          aria-label="Monthly wealth trend"
+          aria-label={`Monthly wealth trend. ${formatMonthLabel(activePoint.month)}: ${formatMoney(
+            activePoint.value.toFixed(2),
+          )}. Use Left and Right arrows to explore.`}
+          tabIndex={0}
+          onFocus={() => setHoveredPoint(lastPoint)}
+          onBlur={() => setHoveredPoint(null)}
+          onKeyDown={(event) => {
+            const activeIndex = points.findIndex((point) => point.month === activePoint.month)
+            let nextIndex: number
+
+            if (event.key === 'ArrowLeft') {
+              nextIndex = Math.max(activeIndex - 1, 0)
+            } else if (event.key === 'ArrowRight') {
+              nextIndex = Math.min(activeIndex + 1, points.length - 1)
+            } else if (event.key === 'Home') {
+              nextIndex = 0
+            } else if (event.key === 'End') {
+              nextIndex = points.length - 1
+            } else {
+              return
+            }
+
+            event.preventDefault()
+            setHoveredPoint(points[nextIndex])
+          }}
           onMouseMove={(event) => setHoveredPoint(getNearestPointFromMouse(event, points))}
           onMouseLeave={() => setHoveredPoint(null)}
         >

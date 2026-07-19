@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -17,9 +17,7 @@ from app.config import (
 )
 from sqlalchemy.exc import OperationalError, TimeoutError as SqlAlchemyTimeoutError
 from app.database import initialise_database
-from app.middleware.request_logging import (
-    RequestLoggingMiddleware,
-)
+from app.middleware.request_logging import RequestLoggingMiddleware
 from app.middleware.upload_request import UploadRequestMiddleware
 from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
@@ -39,6 +37,7 @@ from app.routers.summary import router as summary_router
 from app.routers.transactions import router as transactions_router
 from app.routers.transaction_categories import router as transaction_categories_router
 from app.routers.wealth import router as wealth_router
+from app.routers.user_preferences import router as user_preferences_router
 
 
 @asynccontextmanager
@@ -157,3 +156,4 @@ app.include_router(cashflow_rules_router)
 app.include_router(description_rules_router)
 app.include_router(export_router)
 app.include_router(wealth_router)
+app.include_router(user_preferences_router)
