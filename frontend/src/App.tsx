@@ -15,6 +15,7 @@ import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './hooks/useAuth'
+import { deleteCurrentAccount } from './api/account'
 import type { User } from '@supabase/supabase-js'
 import {
   getPageFromPath,
@@ -86,6 +87,7 @@ function App() {
   const [authError, setAuthError] = useState<string | null>(null)
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
+    clearLocalSession,
     isAuthConfigured,
     isAuthEnabled,
     isLoading,
@@ -145,6 +147,12 @@ function App() {
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Logout failed.')
     }
+  }
+
+  async function handleDeleteAccount(confirmation: string) {
+    setAuthError(null)
+    await deleteCurrentAccount(confirmation)
+    await clearLocalSession()
   }
 
   if (isLoading) {
@@ -261,10 +269,12 @@ function App() {
             <SettingsPage
               isAuthEnabled={isAuthEnabled}
               displayName={displayName}
+              accountEmail={user?.email ?? ''}
               onOpenImport={() => handlePageChange('import')}
               onOpenExport={() => handlePageChange('export')}
               onOpenCategories={() => handlePageChange('categories')}
               onSignOut={handleLogout}
+              onDeleteAccount={handleDeleteAccount}
             />
           )}
         </main>
