@@ -1,4 +1,3 @@
-import os
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
@@ -14,29 +13,14 @@ from app.config import (
     get_api_docs_enabled,
     get_cors_origins,
     validate_production_config,
+    is_production,
 )
+from sqlalchemy.exc import OperationalError, TimeoutError as SqlAlchemyTimeoutError
 from app.database import initialise_database
 from app.middleware.request_logging import (
     RequestLoggingMiddleware,
-    set_request_log_user_id,
 )
 from app.middleware.upload_request import UploadRequestMiddleware
-from app.models import (
-    CashflowRule,
-    DescriptionRule,
-    ImportBatch,
-    InvestmentEvent,
-    InvestmentFundingMonth,
-    MarketPrice,
-    MarketPriceHistory,
-    OwedItem,
-    OwedPayment,
-    OwedPaymentAllocation,
-    Transaction,
-    TransactionCategory,
-    WealthAccount,
-    WealthSnapshot,
-)
 from app.routers.admin import router as admin_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.description_rules import router as description_rules_router
@@ -44,7 +28,9 @@ from app.routers.export import router as export_router
 from app.routers.health import router as health_router
 from app.routers.imports import router as imports_router
 from app.routers.investment_events import router as investment_events_router
-from app.routers.investment_funding_months import router as investment_funding_months_router
+from app.routers.investment_funding_months import (
+    router as investment_funding_months_router,
+)
 from app.routers.legacy_excel_imports import router as legacy_excel_imports_router
 from app.routers.market_prices import router as market_prices_router
 from app.routers.me import router as me_router
@@ -93,12 +79,42 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Permissions-Policy"] = (
-        "camera=(), microphone=(), geolocation=()"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'none'; base-uri 'none'; form-action 'none'; "
+        "frame-ancestors 'none'"
     )
+    if is_production():
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
 
     return response
 
+
+def is_database_timeout(error: Exception) -> bool:
+    if isinstance(error, SqlAlchemyTimeoutError):
+        return True
+    message = str(error).lower()
+    return isinstance(error, OperationalError) and any(
+        marker in message
+        for marker in ("timeout", "timed out", "statement timeout", "lock timeout")
+    )
+
+
+@app.exception_handler(OperationalError)
+@app.exception_handler(SqlAlchemyTimeoutError)
+async def handle_database_timeout(request: Request, error: Exception):
+    del request
+    if not is_database_timeout(error):
+        return JSONResponse(
+            status_code=500, content={"detail": "Database operation failed"}
+        )
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database operation timed out. Try again later."},
+        headers={"Retry-After": "1"},
+    )
 
 
 @app.middleware("http")
@@ -121,7 +137,6 @@ async def require_local_network_client(request: Request, call_next):
         )
 
     return await call_next(request)
-
 
 
 app.add_middleware(RequestLoggingMiddleware)

@@ -1,6 +1,33 @@
 import os
 
 
+def get_positive_int_env(name: str, default: int) -> int:
+    raw_value = os.getenv(name, "").strip()
+    if not raw_value:
+        return default
+
+    try:
+        value = int(raw_value)
+    except ValueError as error:
+        raise RuntimeError(f"{name} must be a positive integer") from error
+
+    if value <= 0:
+        raise RuntimeError(f"{name} must be a positive integer")
+    return value
+
+
+def get_market_data_timeout_seconds() -> int:
+    return get_positive_int_env("MARKET_DATA_TIMEOUT_SECONDS", 15)
+
+
+def get_database_connect_timeout_seconds() -> int:
+    return get_positive_int_env("DATABASE_CONNECT_TIMEOUT_SECONDS", 10)
+
+
+def get_database_statement_timeout_ms() -> int:
+    return get_positive_int_env("DATABASE_STATEMENT_TIMEOUT_MS", 30000)
+
+
 def get_app_env() -> str:
     return os.getenv("APP_ENV", "development").strip().lower()
 
