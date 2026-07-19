@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TransactionsPage } from '../src/pages/TransactionsPage'
 
 const mocks = vi.hoisted(() => ({
+  createOwedSplitForTransaction: vi.fn(),
   createTransactionWithOwed: vi.fn(),
   deleteTransaction: vi.fn(),
   listTransactionCategories: vi.fn(),
@@ -16,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('../src/api/transactions', () => ({
-  createOwedSplitForTransaction: vi.fn(),
+  createOwedSplitForTransaction: mocks.createOwedSplitForTransaction,
   createTransactionWithOwed: mocks.createTransactionWithOwed,
   deleteTransaction: mocks.deleteTransaction,
   exportTransactionsCsv: vi.fn(),
@@ -63,6 +64,7 @@ describe('transactions page workflows', () => {
   }
 
   beforeEach(() => {
+    mocks.createOwedSplitForTransaction.mockReset()
     mocks.createTransactionWithOwed.mockReset()
     mocks.deleteTransaction.mockReset()
     mocks.updateTransaction.mockReset()
@@ -150,5 +152,36 @@ describe('transactions page workflows', () => {
 
     expect(dialog).not.toBeInTheDocument()
     expect(mocks.updateTransaction).not.toHaveBeenCalled()
+  })
+
+  it('closes the delete dialog on Escape without deleting', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Delete transaction?',
+    })
+
+    await user.keyboard('{Escape}')
+
+    expect(dialog).not.toBeInTheDocument()
+    expect(mocks.deleteTransaction).not.toHaveBeenCalled()
+  })
+
+  it('closes the owed split dialog on Escape without creating a split', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const [owedButton] = await screen.findAllByRole('button', { name: 'Owed' })
+    await user.click(owedButton)
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Split owed expense',
+    })
+
+    await user.keyboard('{Escape}')
+
+    expect(dialog).not.toBeInTheDocument()
+    expect(mocks.createOwedSplitForTransaction).not.toHaveBeenCalled()
   })
 })
