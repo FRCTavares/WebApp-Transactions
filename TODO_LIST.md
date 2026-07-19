@@ -24,6 +24,10 @@ verification, and UI/codebase maintainability.
 - [ ] #33 — Reassess Render keep-warm/cold-start policy against the upgrade triggers in `docs/production-roadmap.md`.
 - [ ] #26 — Define a build/version identifier and expose it in an appropriate diagnostic or user-facing location.
 - [ ] #26 — Establish a maintainable release-notes format and update workflow.
+- [ ] Add a CI check that fails if any Alembic migration adds/renames a
+  column or table without an equivalent update to the legacy SQLite startup
+  migrations in `backend/app/database_migrations.py` — this exact gap caused
+  two real local-only 500 errors found via #32's e2e work (see #9).
 
 ## 8. Documentation
 
@@ -35,23 +39,35 @@ verification, and UI/codebase maintainability.
 
 ## 9. Testing
 
-Progress on `agent/issue-32` (not yet merged): 10 unit test files / 27 tests
-covering auth enabled/disabled/misconfigured, expired sessions, transaction
-create/edit, import preview/commit/pending-FX, category combobox keyboard
-behavior, owed payments, dashboard loading/empty/error/partial-data states,
-and Escape-to-close for the transaction edit/delete/owed-split and category
-replacement dialogs. A real accessibility bug was found and fixed along the
-way: `useDialogAccessibility`'s focus-trap effect re-ran on every parent
-re-render, stealing focus away from whatever the user was typing into.
+`agent/issue-32` (PR #42, draft, fully green in CI): 11 unit test files / 31
+tests covering auth enabled/disabled/misconfigured, expired sessions,
+transaction create/edit, import preview/commit/pending-FX, category combobox
+keyboard behavior, owed payments, dashboard loading/empty/error/partial-data
+states, and Escape-to-close for every `useDialogAccessibility` consumer
+(transaction edit/delete/owed-split, category replacement/migration, wealth
+account details). A working Playwright e2e suite (10 tests) runs with genuine
+locally-minted Supabase session authentication against a live backend:
+authenticated dashboard load, desktop/mobile navigation, CSV import-and-commit,
+category replacement, and JSON export download.
 
-A working Playwright e2e suite now runs with genuine (locally-minted)
-Supabase session authentication, in CI and locally: authenticated dashboard
-load, and desktop/mobile navigation.
+Four real bugs were found and fixed along the way:
+- `useDialogAccessibility`'s focus-trap effect re-ran on every parent
+  re-render, stealing focus away from whatever the user was typing into —
+  affected 6+ dialogs app-wide.
+- `import_previews.resolved_payload_sha256` and
+  `wealth_accounts.value_source`/`value_reference` were added only via
+  Alembic migrations, which never run against local SQLite — the separate
+  legacy startup migration system in `database_migrations.py` never got the
+  equivalent `ALTER TABLE`. Any local SQLite database predating those
+  migrations 500'd on every CSV/XLSX import and on export/wealth reads. Fixed
+  for both; a full audit of every `add_column` in `migrations/versions/`
+  confirmed no other instances remain today (see #7 for a CI safeguard against
+  this recurring).
+- `usePresentationPreferences` had no unmount cleanup guard, causing a
+  CI-only (not locally reproducible) unhandled rejection after test teardown.
 
-- [ ] #32 — Add keyboard/dialog tests for the remaining `useDialogAccessibility` consumers: `CategoryMigrationReviewDialog`, `WealthAccountDetailsModal`.
-- [ ] #32 — Add e2e coverage: CSV preview/commit and duplicate import, category replacement, export download.
+- [ ] #32 — Review and merge PR #42.
 - [ ] #32 — Promote the "Frontend e2e" CI job to a required check once it has proven stable across a few more runs.
-- [ ] #32 — Merge `agent/issue-32` once the above are addressed.
 
 ## 10. UI and Codebase Maintainability
 
