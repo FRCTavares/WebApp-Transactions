@@ -23,3 +23,16 @@ createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </StrictMode>,
 )
+
+// The caching strategy is network-first (falling back to cache only when a
+// fetch fails), so this is safe to register in dev too - normal edits are
+// served fresh over the network; only a genuine offline scenario reads from
+// cache. That keeps local offline testing consistent with production.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Offline support is a progressive enhancement; failing to register
+      // should never block the app from working online.
+    })
+  })
+}

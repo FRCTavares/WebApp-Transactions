@@ -12,6 +12,11 @@ type AuthProviderProps = {
   children: ReactNode
 }
 
+async function clearOfflineApiCache() {
+  const registration = await navigator.serviceWorker?.getRegistration().catch(() => null)
+  registration?.active?.postMessage({ type: 'CLEAR_API_CACHE' })
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(Boolean(supabase))
@@ -28,6 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setUnauthorizedHandler(async () => {
       setSession(null)
+      void clearOfflineApiCache()
 
       if (!supabase) {
         return
@@ -74,6 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       accessToken: session?.access_token ?? null,
       clearLocalSession: async () => {
         setSession(null)
+        await clearOfflineApiCache()
 
         if (supabase) {
           await supabase.auth.signOut({ scope: 'local' })
@@ -108,6 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return
         }
 
+        await clearOfflineApiCache()
         const { error } = await supabase.auth.signOut()
 
         if (error) {
