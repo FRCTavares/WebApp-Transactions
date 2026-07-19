@@ -33,5 +33,11 @@ backups/
 *.local.env
 backend/.env
 frontend/.env
+frontend/e2e/.env.e2e.local
+
+# Playwright
+frontend/e2e/.auth/
+frontend/playwright-report/
+frontend/test-results/
 
 backend/data/

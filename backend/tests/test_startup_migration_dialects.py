@@ -101,6 +101,114 @@ def test_startup_migrations_add_owed_payment_unallocated_classification_columns(
     assert "unallocated_notes" in column_names
 
 
+def test_startup_migrations_add_import_preview_resolved_payload_column():
+    engine = create_sqlite_memory_engine()
+
+    Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE import_previews"))
+        connection.execute(
+            text(
+                "CREATE TABLE import_previews ("
+                "id VARCHAR(36) NOT NULL, "
+                "user_id VARCHAR(100) NOT NULL, "
+                "mode VARCHAR(40) NOT NULL, "
+                "source VARCHAR(50) NOT NULL, "
+                "filename VARCHAR(255) NOT NULL, "
+                "file_sha256 VARCHAR(64) NOT NULL, "
+                "rows_total INTEGER NOT NULL DEFAULT 0, "
+                "rows_valid INTEGER NOT NULL DEFAULT 0, "
+                "rows_duplicates INTEGER NOT NULL DEFAULT 0, "
+                "rows_invalid INTEGER NOT NULL DEFAULT 0, "
+                "transactions_pending INTEGER NOT NULL DEFAULT 0, "
+                "investment_events_pending INTEGER NOT NULL DEFAULT 0, "
+                "owed_items_pending INTEGER NOT NULL DEFAULT 0, "
+                "wealth_snapshots_pending INTEGER NOT NULL DEFAULT 0, "
+                "created_at DATETIME NOT NULL, "
+                "expires_at DATETIME NOT NULL, "
+                "consumed_at DATETIME, "
+                "PRIMARY KEY (id)"
+                ")"
+            )
+        )
+
+    run_startup_migrations(engine)
+    run_startup_migrations(engine)
+
+    inspector = inspect(engine)
+    column_names = {
+        column["name"]
+        for column in inspector.get_columns("import_previews")
+    }
+
+    assert "resolved_payload_sha256" in column_names
+
+
+def test_startup_migrations_add_wealth_value_source_and_backfill():
+    engine = create_sqlite_memory_engine()
+
+    Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE wealth_accounts"))
+        connection.execute(
+            text(
+                "CREATE TABLE wealth_accounts ("
+                "id INTEGER NOT NULL, "
+                "user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user', "
+                "name VARCHAR(100) NOT NULL, "
+                "account_type VARCHAR(50) NOT NULL, "
+                "currency VARCHAR(3) NOT NULL DEFAULT 'EUR', "
+                "institution VARCHAR(100), "
+                "is_active BOOLEAN NOT NULL DEFAULT 1, "
+                "notes TEXT, "
+                "created_at DATETIME NOT NULL, "
+                "updated_at DATETIME NOT NULL, "
+                "PRIMARY KEY (id)"
+                ")"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO wealth_accounts "
+                "(name, account_type, institution, notes, created_at, updated_at) "
+                "VALUES "
+                "('CSPX holding', 'brokerage_account', 'Trading212', NULL, "
+                "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), "
+                "('Money owed to me', 'other', NULL, NULL, "
+                "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP), "
+                "('Checking account', 'checking_account', 'Bank', NULL, "
+                "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+            )
+        )
+
+    run_startup_migrations(engine)
+    run_startup_migrations(engine)
+
+    inspector = inspect(engine)
+    column_names = {
+        column["name"]
+        for column in inspector.get_columns("wealth_accounts")
+    }
+    assert "value_source" in column_names
+    assert "value_reference" in column_names
+
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                "SELECT name, value_source, value_reference "
+                "FROM wealth_accounts ORDER BY id"
+            )
+        ).all()
+
+    by_name = {row.name: row for row in rows}
+    assert by_name["CSPX holding"].value_source == "investment"
+    assert by_name["CSPX holding"].value_reference == "CSPX"
+    assert by_name["Money owed to me"].value_source == "owed"
+    assert by_name["Checking account"].value_source == "manual"
+
+
 
 def test_startup_migrations_add_owed_item_event_ledger_and_backfill():
     engine = create_sqlite_memory_engine()

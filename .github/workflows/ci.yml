@@ -134,8 +134,88 @@ jobs:
       - name: Run frontend lint
         run: npm run lint
 
+      - name: Run frontend unit tests
+        run: npm run test
+
       - name: Build frontend
         run: npm run build
+
+  e2e-tests:
+    name: Frontend e2e (not required yet)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # New infrastructure - kept out of required-checks until proven stable
+    # across several CI runs. See TODO_LIST.md.
+    continue-on-error: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Start backend
+        working-directory: backend
+        env:
+          SUPABASE_JWT_SECRET: ${{ secrets.E2E_SUPABASE_JWT_SECRET }}
+          ALLOWED_USER_EMAILS: ${{ secrets.E2E_TEST_EMAIL }}
+          CORS_ORIGINS: http://127.0.0.1:4173
+          DATABASE_URL: sqlite:///${{ runner.temp }}/e2e-tests.db
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 \
+            > "${{ runner.temp }}/e2e-backend.log" 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/api/health && exit 0
+            sleep 1
+          done
+          echo "Backend did not become healthy in time" >&2
+          cat "${{ runner.temp }}/e2e-backend.log" >&2
+          exit 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        working-directory: frontend
+        env:
+          SUPABASE_JWT_SECRET: ${{ secrets.E2E_SUPABASE_JWT_SECRET }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
 
   dependency-audit:
     name: Dependency audit

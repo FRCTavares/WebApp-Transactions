@@ -21,6 +21,13 @@ export function useDialogAccessibility<T extends HTMLElement>({
   isOpen = true,
 }: DialogAccessibilityOptions) {
   const dialogRef = useRef<T>(null)
+  const onCloseRef = useRef(onClose)
+  const isCloseDisabledRef = useRef(isCloseDisabled)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+    isCloseDisabledRef.current = isCloseDisabled
+  }, [onClose, isCloseDisabled])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -38,9 +45,9 @@ export function useDialogAccessibility<T extends HTMLElement>({
     ;(firstFocusable ?? dialogElement).focus()
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !isCloseDisabled) {
+      if (event.key === 'Escape' && !isCloseDisabledRef.current) {
         event.preventDefault()
-        onClose()
+        onCloseRef.current()
         return
       }
 
@@ -74,7 +81,7 @@ export function useDialogAccessibility<T extends HTMLElement>({
       document.removeEventListener('keydown', handleKeyDown)
       previouslyFocused?.focus()
     }
-  }, [isCloseDisabled, isOpen, onClose])
+  }, [isOpen])
 
   return dialogRef
 }

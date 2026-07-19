@@ -34,6 +34,8 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_cashflow_type_migrations(engine=engine)
     _run_wealth_migrations(engine=engine)
     _run_wealth_user_migrations(engine=engine)
+    _run_wealth_value_source_migrations(engine=engine)
+    _run_import_preview_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
     run_sqlite_foreign_key_migrations(engine)
 
@@ -729,6 +731,21 @@ def _run_owed_payment_migrations(engine: Engine) -> None:
         )
 
 
+def _run_import_preview_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="import_previews"):
+        return
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="import_previews",
+        column_name="resolved_payload_sha256",
+        sql=(
+            "ALTER TABLE import_previews "
+            "ADD COLUMN resolved_payload_sha256 VARCHAR(64)"
+        ),
+    )
+
+
 
 def _run_wealth_user_migrations(engine: Engine) -> None:
     wealth_tables = [
@@ -749,6 +766,59 @@ def _run_wealth_user_migrations(engine: Engine) -> None:
                 "ADD COLUMN user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user'"
             ),
         )
+
+
+def _run_wealth_value_source_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="wealth_accounts"):
+        return
+
+    column_already_existed = _column_exists(
+        engine=engine,
+        table_name="wealth_accounts",
+        column_name="value_source",
+    )
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="wealth_accounts",
+        column_name="value_source",
+        sql=(
+            "ALTER TABLE wealth_accounts "
+            "ADD COLUMN value_source VARCHAR(20) NOT NULL DEFAULT 'manual'"
+        ),
+    )
+    _add_column_if_missing(
+        engine=engine,
+        table_name="wealth_accounts",
+        column_name="value_reference",
+        sql="ALTER TABLE wealth_accounts ADD COLUMN value_reference VARCHAR(100)",
+    )
+
+    if column_already_existed:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE wealth_accounts SET value_source = 'owed' "
+                "WHERE lower(coalesce(name, '') || ' ' || "
+                "coalesce(institution, '') || ' ' || coalesce(notes, '')) "
+                "LIKE '%owed%'"
+            )
+        )
+
+        for symbol in ("CSPX", "VWCE", "BTC"):
+            connection.execute(
+                text(
+                    "UPDATE wealth_accounts "
+                    "SET value_source = 'investment', value_reference = :symbol "
+                    "WHERE value_source = 'manual' "
+                    "AND upper(coalesce(name, '') || ' ' || "
+                    "coalesce(institution, '') || ' ' || coalesce(notes, '')) "
+                    "LIKE :pattern"
+                ),
+                {"symbol": symbol, "pattern": f"%{symbol}%"},
+            )
 
 
 def _run_wealth_migrations(engine: Engine) -> None:
