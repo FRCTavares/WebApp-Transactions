@@ -5,13 +5,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
-
-
-
-
-
-
-
 def test_health_check_does_not_require_local_network_client(monkeypatch):
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
@@ -39,8 +32,6 @@ def test_options_request_does_not_require_local_network_client(monkeypatch):
     assert response.status_code == 200
 
 
-
-
 def test_me_route_requires_bearer_token_when_supabase_auth_is_enabled(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
@@ -52,7 +43,6 @@ def test_me_route_requires_bearer_token_when_supabase_auth_is_enabled(monkeypatc
 
     assert response.status_code == 401
     assert response.json() == {"detail": "Missing bearer token"}
-
 
 
 def test_security_headers_are_set(monkeypatch):
@@ -71,6 +61,28 @@ def test_security_headers_are_set(monkeypatch):
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Permissions-Policy"] == (
         "camera=(), microphone=(), geolocation=()"
+    )
+    assert response.headers["Content-Security-Policy"] == (
+        "default-src 'none'; base-uri 'none'; form-action 'none'; "
+        "frame-ancestors 'none'"
+    )
+    assert "Strict-Transport-Security" not in response.headers
+
+
+def test_production_responses_enable_hsts(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/database")
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com")
+    monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
+
+    with TestClient(app) as client:
+        response = client.get("/api/health")
+
+    assert response.headers["Strict-Transport-Security"] == (
+        "max-age=31536000; includeSubDomains"
     )
 
 

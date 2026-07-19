@@ -14,6 +14,7 @@ export type ApiErrorCode =
   | 'timeout'
 
 export type ApiRequestOptions = {
+  headers?: HeadersInit
   signal?: AbortSignal
   timeoutMs?: number
 }
@@ -422,6 +423,23 @@ export async function apiPatchJson<T>(
   })
 
   await raiseForBadResponse(response, 'PATCH', path)
+
+  return response.json() as Promise<T>
+}
+
+export async function apiPutJson<T>(
+  path: string,
+  payload: unknown,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  const response = await apiFetch(path, {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  await raiseForBadResponse(response, 'PUT', path)
 
   return response.json() as Promise<T>
 }

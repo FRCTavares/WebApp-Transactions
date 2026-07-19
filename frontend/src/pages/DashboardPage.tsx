@@ -3,7 +3,7 @@ import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { listTransactions } from '../api/transactions'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
 import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary, Transaction } from '../types/api'
-import { formatMoney } from '../utils/format'
+import { formatMoney, formatMonthLabel } from '../utils/format'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
 import { useAuth } from '../hooks/useAuth'
@@ -60,10 +60,7 @@ function getDateRange(year: number, month: number) {
 }
 
 function getMonthLabel(year: number, month: number) {
-  return new Date(year, month - 1, 1).toLocaleDateString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-  })
+  return formatMonthLabel(`${year}-${String(month).padStart(2, '0')}`, 'long')
 }
 
 function getTransactionOwedAmount(transaction: Transaction) {
@@ -358,8 +355,12 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {summary && (
         <>
-          <div className="dashboard-summary-grid">
-            <article className="dashboard-metric-card dashboard-metric-income" aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}>
+          <div className="dashboard-summary-grid" role="list" aria-label="Monthly key metrics">
+            <article
+              className="dashboard-metric-card dashboard-metric-income"
+              role="listitem"
+              aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}
+            >
               <span className="dashboard-metric-icon" aria-hidden="true">↓</span>
               <div>
                 <p>Money In</p>
@@ -368,7 +369,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               </div>
             </article>
 
-            <article className="dashboard-metric-card dashboard-metric-spent" aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}>
+            <article
+              className="dashboard-metric-card dashboard-metric-spent"
+              role="listitem"
+              aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}
+            >
               <span className="dashboard-metric-icon" aria-hidden="true">↑</span>
               <div>
                 <p>Money Out</p>
@@ -382,6 +387,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(
                 investmentChange,
               )}`}
+              role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">↗</span>
               <div>
@@ -398,6 +404,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
             <article
               aria-label={`Net: ${formatMoney(netAmount)}. Income minus personal spending plus investment change.`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
+              role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">=</span>
               <div>

@@ -7,6 +7,11 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from app.config import (
+    get_database_connect_timeout_seconds,
+    get_database_statement_timeout_ms,
+)
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -51,7 +56,23 @@ def is_sqlite_database_url(database_url: str) -> bool:
 
 def get_engine_kwargs(database_url: str) -> dict[str, Any]:
     if is_sqlite_database_url(database_url):
-        return {"connect_args": {"check_same_thread": False}}
+        return {
+            "connect_args": {
+                "check_same_thread": False,
+                "timeout": get_database_connect_timeout_seconds(),
+            }
+        }
+
+    if get_database_dialect(database_url).startswith("postgresql"):
+        statement_timeout = get_database_statement_timeout_ms()
+        return {
+            "connect_args": {
+                "connect_timeout": get_database_connect_timeout_seconds(),
+                "options": f"-c statement_timeout={statement_timeout}",
+            },
+            "pool_timeout": get_database_connect_timeout_seconds(),
+            "pool_pre_ping": True,
+        }
 
     return {}
 

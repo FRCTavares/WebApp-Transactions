@@ -351,7 +351,7 @@ def test_existing_transaction_owed_split_rolls_back_late_payment_failure(
         current_user,
         commit=True,
     ):
-        result = original_record_payment(
+        original_record_payment(
             payment_data,
             current_user=current_user,
             commit=commit,

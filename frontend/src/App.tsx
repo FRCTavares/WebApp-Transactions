@@ -15,6 +15,8 @@ import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAuth } from './hooks/useAuth'
+import { usePresentationPreferences } from './hooks/usePresentationPreferences'
+import { deleteCurrentAccount } from './api/account'
 import type { User } from '@supabase/supabase-js'
 import {
   getPageFromPath,
@@ -86,6 +88,7 @@ function App() {
   const [authError, setAuthError] = useState<string | null>(null)
   const [isBackendWakeNoticeVisible, setIsBackendWakeNoticeVisible] = useState(false)
   const {
+    clearLocalSession,
     isAuthConfigured,
     isAuthEnabled,
     isLoading,
@@ -94,6 +97,7 @@ function App() {
     signOut,
     user,
   } = useAuth()
+  const presentation = usePresentationPreferences(!isAuthEnabled || Boolean(session))
   const shouldShowGlobalPeriodSelector =
     page !== null
     && page !== 'import'
@@ -145,6 +149,12 @@ function App() {
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Logout failed.')
     }
+  }
+
+  async function handleDeleteAccount(confirmation: string) {
+    setAuthError(null)
+    await deleteCurrentAccount(confirmation)
+    await clearLocalSession()
   }
 
   if (isLoading) {
@@ -259,12 +269,19 @@ function App() {
           {page === 'export' && <ExportPage />}
           {page === 'settings' && (
             <SettingsPage
+              key={`${presentation.preferences.language}-${presentation.preferences.locale}-${presentation.preferences.currency}-${presentation.preferences.time_zone}-${presentation.preferences.date_format}`}
               isAuthEnabled={isAuthEnabled}
               displayName={displayName}
+              accountEmail={user?.email ?? ''}
               onOpenImport={() => handlePageChange('import')}
               onOpenExport={() => handlePageChange('export')}
               onOpenCategories={() => handlePageChange('categories')}
               onSignOut={handleLogout}
+              preferences={presentation.preferences}
+              preferencesError={presentation.error}
+              preferencesLoading={presentation.isLoading}
+              onSavePreferences={presentation.save}
+              onDeleteAccount={handleDeleteAccount}
             />
           )}
         </main>

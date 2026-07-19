@@ -72,6 +72,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = useMemo<AuthContextValue>(
     () => ({
       accessToken: session?.access_token ?? null,
+      clearLocalSession: async () => {
+        setSession(null)
+
+        if (supabase) {
+          await supabase.auth.signOut({ scope: 'local' })
+        }
+      },
       isAuthConfigured: isSupabaseAuthConfigured,
       isAuthEnabled: isSupabaseAuthEnabled,
       isLoading,

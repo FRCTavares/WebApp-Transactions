@@ -20,9 +20,17 @@ services:
         sync: false
       - key: SUPABASE_URL
         sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
       - key: ALLOWED_USER_EMAILS
         sync: false
       - key: ADMIN_USER_EMAILS
         sync: false
       - key: LOCAL_NETWORK_ONLY
         value: "false"
+      - key: MARKET_DATA_TIMEOUT_SECONDS
+        value: "15"
+      - key: DATABASE_CONNECT_TIMEOUT_SECONDS
+        value: "10"
+      - key: DATABASE_STATEMENT_TIMEOUT_MS
+        value: "30000"

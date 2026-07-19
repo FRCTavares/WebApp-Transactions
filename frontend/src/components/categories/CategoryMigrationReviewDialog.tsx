@@ -3,6 +3,7 @@ import type {
   TransactionCategoryMigrationApplyPayload,
   TransactionCategoryMigrationPreview,
 } from '../../api/transactionCategories'
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 type CategoryMigrationReviewDialogProps = {
   preview: TransactionCategoryMigrationPreview
@@ -19,6 +20,10 @@ export function CategoryMigrationReviewDialog({
   onCancel,
   onSubmit,
 }: CategoryMigrationReviewDialogProps) {
+  const dialogRef = useDialogAccessibility<HTMLElement>({
+    onClose: onCancel,
+    isCloseDisabled: isSubmitting,
+  })
   const [transactionAssignments, setTransactionAssignments] =
     useState<Record<number, number | null>>(
       Object.fromEntries(
@@ -76,10 +81,12 @@ export function CategoryMigrationReviewDialog({
       }}
     >
       <section
+        ref={dialogRef}
         className="category-migration-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="category-migration-title"
+        tabIndex={-1}
       >
         <header className="category-migration-header">
           <div>
