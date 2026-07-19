@@ -64,11 +64,22 @@ def test_sqlite_database_url_detection():
     )
 
 
-def test_sqlite_engine_kwargs_include_check_same_thread():
+def test_sqlite_engine_kwargs_include_bounded_lock_timeout(monkeypatch):
+    monkeypatch.setenv("DATABASE_CONNECT_TIMEOUT_SECONDS", "7")
     assert get_engine_kwargs("sqlite:///local.db") == {
-        "connect_args": {"check_same_thread": False}
+        "connect_args": {"check_same_thread": False, "timeout": 7}
     }
 
 
-def test_postgres_engine_kwargs_do_not_include_sqlite_connect_args():
-    assert get_engine_kwargs("postgresql+psycopg://user:password@example.com/db") == {}
+def test_postgres_engine_kwargs_define_connection_and_query_timeouts(monkeypatch):
+    monkeypatch.setenv("DATABASE_CONNECT_TIMEOUT_SECONDS", "8")
+    monkeypatch.setenv("DATABASE_STATEMENT_TIMEOUT_MS", "25000")
+
+    assert get_engine_kwargs("postgresql+psycopg://user:password@example.com/db") == {
+        "connect_args": {
+            "connect_timeout": 8,
+            "options": "-c statement_timeout=25000",
+        },
+        "pool_timeout": 8,
+        "pool_pre_ping": True,
+    }
