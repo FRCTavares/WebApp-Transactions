@@ -24,7 +24,7 @@ Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 | Internationalization | 4/5 | Locale, currency, date/time-zone preferences, and an English/Portuguese translation layer are implemented |
 | Testing | 4/5 | 465 backend tests, frontend lint and build, migrations, and recovery checks pass; broader end-to-end coverage is in progress (#32) |
 | CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene |
-| Observability | 3/5 | Structured logging and readiness checks exist; alerting and incident response remain (#33) |
+| Observability | 4/5 | Structured logging, readiness checks, a monitoring ping covering liveness/readiness/frontend, and a documented incident runbook exist (#33). Dashboard-side alert configuration (Render/Vercel/GitHub notification settings) still needs manual confirmation — see `docs/production-operations-checklist.md`. |
 | Performance | 3/5 | Free-host cold starts remain; request/database timeouts are now enforced |
 | Documentation | 3/5 | Core docs (privacy, i18n, security/timeouts, deployment) exist; broader refresh in progress (#34) |
 | Global release readiness | 3/5 | Suitable for controlled use; monitoring, OAuth production checks, and remaining decisions block public launch |
@@ -100,6 +100,18 @@ Files approaching the project's 1,000-line hard limit / 900-line soft limit
 
 Upgrade when: cold starts are unacceptable; users expect reliable access; the
 app is publicly promoted; support commitments exist; free hours are exhausted.
+
+**Policy decision (2026-07-19, resolving #33's cold-start reassessment):**
+accepted for now. The ~53-second cold start is a known, documented
+limitation (`docs/production-roadmap.md` free-tier viability section) that
+the resolved decisions above explicitly accept the app must tolerate
+(decision #6: "must work during backend cold starts? Yes" — meaning the
+frontend's own loading states handle it, not that the cold start itself is
+eliminated). The keep-warm ping in
+`.github/workflows/keep-backend-warm.yml` reduces how often a cold start is
+actually hit, but Render's own docs are explicit that this doesn't
+guarantee uptime the way a paid always-on instance would. Revisit this
+decision, not the ping, when any of the triggers above are met.
 
 ### Supabase
 

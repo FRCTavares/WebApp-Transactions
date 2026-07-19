@@ -16,17 +16,23 @@ verification, and UI/codebase maintainability.
 ## 7. CI and Deployment Reliability
 
 - [ ] Merge or close dependabot PR #3 (`pydantic-core` 2.46.4 → 2.47.0) and rerun CI.
-- [ ] #33 — Establish production monitoring and alerting for application health and critical failures.
-- [ ] #33 — Monitor relevant Supabase capacity and backup signals.
-- [ ] #33 — Document incident ownership, triage, communication, and recovery steps.
-- [ ] #33 — Define and test release and rollback procedures; confirm migration failures block deployment.
-- [ ] #33 — Verify Supabase redirects, Google authorized domains, app branding, exact redirect URLs, and minimum OAuth scopes; complete Google OAuth verification if required.
-- [ ] #33 — Reassess Render keep-warm/cold-start policy against the upgrade triggers in `docs/production-roadmap.md`.
 - [ ] Add a CI check that fails if any Alembic migration adds/renames a
   column or table without an equivalent update to the legacy SQLite startup
   migrations in `backend/app/database_migrations.py` — this exact gap caused
   two real local-only 500 errors found via #32's e2e work (see the Testing
   section below).
+
+#33 is complete: production monitoring (extended `keep-backend-warm.yml` to
+also check readiness and frontend availability), an incident runbook
+(`docs/incident-response.md`), a documented and partially-tested
+release/rollback procedure (`docs/release-and-rollback.md` — the migration-
+failure-blocks-deploy claim has a real regression test; the dashboard
+rollback steps themselves are documented, not test-automatable), the Render
+cold-start policy explicitly reaffirmed in `docs/production-roadmap.md`,
+and a dashboard-only checklist for the parts that need real Google/Supabase/
+Render/GitHub-notification access to verify (`docs/production-operations-checklist.md`)
+— walk through and tick that off when convenient; nothing in this repo can
+verify those items for you.
 
 ## 8. Documentation
 
