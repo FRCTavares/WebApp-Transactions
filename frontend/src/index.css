@@ -285,7 +285,9 @@ main {
   text-align: left;
 }
 
-.category-combobox-menu button:hover {
+.category-combobox-menu button:hover,
+.category-combobox-menu button.active,
+.category-combobox-menu button[aria-selected='true'] {
   background: #eff6ff;
 }
 
@@ -830,4 +832,3 @@ main {
     gap: 0.85rem;
   }
 }
-

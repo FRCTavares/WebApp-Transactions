@@ -197,7 +197,6 @@ No open `MED` items remain in the root task list.
 
 ## 8. Low Priority
 
-- Normalize formatting and naming.
 - Add a supported-browser matrix.
 - Decide whether the PWA is installable-only or truly offline-capable.
 - Add build version and release notes.

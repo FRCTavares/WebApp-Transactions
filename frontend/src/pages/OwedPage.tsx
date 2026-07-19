@@ -11,6 +11,7 @@ import { listTransactions } from '../api/transactions'
 import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItemsTable'
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { StatusMessage } from '../components/StatusMessage'
+import { useDialogAccessibility } from '../hooks/useDialogAccessibility'
 import type { OwedItem, OwedPaymentMethod, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney } from '../utils/format'
 
@@ -206,6 +207,11 @@ export function OwedPage() {
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
   const [isItemsLoading, setIsItemsLoading] = useState(true)
+  const closePaymentModal = useCallback(() => setIsPaymentModalOpen(false), [])
+  const paymentDialogRef = useDialogAccessibility<HTMLDivElement>({
+    onClose: closePaymentModal,
+    isOpen: isPaymentModalOpen,
+  })
 
   const loadItems = useCallback((status = statusFilter) => {
     setError(null)
@@ -632,16 +638,23 @@ export function OwedPage() {
       </div>
 
       {isPaymentModalOpen && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true">
-          <div className="modal-card">
+        <div className="modal-backdrop" role="presentation">
+          <div
+            ref={paymentDialogRef}
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="record-payment-title"
+            tabIndex={-1}
+          >
             <div className="modal-header">
               <div>
-                <h2>Record payment</h2>
+                <h2 id="record-payment-title">Record payment</h2>
                 <p className="muted small">
                   Record cash, bank transfer, MB WAY, or other repayments.
                 </p>
               </div>
-              <button type="button" onClick={() => setIsPaymentModalOpen(false)}>
+              <button type="button" onClick={closePaymentModal}>
                 Close
               </button>
             </div>
@@ -820,7 +833,7 @@ export function OwedPage() {
             )}
 
             <div className="modal-actions">
-              <button type="button" onClick={() => setIsPaymentModalOpen(false)}>
+              <button type="button" onClick={closePaymentModal}>
                 Cancel
               </button>
               <button

@@ -1,6 +1,7 @@
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import type { TransactionTableRow } from '../TransactionTable'
+import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 export type OwedSplitRowState = {
   id: string
@@ -74,12 +75,24 @@ export function TransactionOwedSplitDialog({
   getRemainingOwedAmount,
   getSelectedPaymentTransaction,
 }: TransactionOwedSplitDialogProps) {
+  const dialogRef = useDialogAccessibility<HTMLDivElement>({
+    onClose,
+    isCloseDisabled: isCreating,
+  })
+
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card transaction-owed-split-dialog">
+    <div className="modal-backdrop" role="presentation">
+      <div
+        ref={dialogRef}
+        className="modal-card transaction-owed-split-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="transaction-owed-split-title"
+        tabIndex={-1}
+      >
         <div className="modal-header">
           <div>
-            <h2>Split owed expense</h2>
+            <h2 id="transaction-owed-split-title">Split owed expense</h2>
             <p className="muted small">
               Add who owes part of this expense. Optionally link matching Money In repayments now.
             </p>

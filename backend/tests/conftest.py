@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import models as _models  # noqa: F401 - register SQLAlchemy models
 from app.auth.current_user import (
     CurrentUser,
     LOCAL_DEFAULT_USER_ID,
@@ -11,15 +12,6 @@ from app.auth.current_user import (
 )
 from app.database import Base, enable_sqlite_foreign_keys, get_db
 from app.main import app
-from app.models import (
-    ImportBatch,
-    ImportPreview,
-    InvestmentEvent,
-    OwedItem,
-    OwedPayment,
-    OwedPaymentAllocation,
-    Transaction,
-)
 
 
 @pytest.fixture
@@ -33,13 +25,13 @@ def db_session():
 
     Base.metadata.create_all(bind=engine)
 
-    TestingSessionLocal = sessionmaker(
+    testing_session_local = sessionmaker(
         bind=engine,
         autoflush=False,
         autocommit=False,
     )
 
-    session: Session = TestingSessionLocal()
+    session: Session = testing_session_local()
 
     try:
         yield session
