@@ -1,0 +1,98 @@
+.ui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--color-scrim);
+}
+
+.ui-modal {
+  display: grid;
+  gap: var(--space-6);
+  width: 100%;
+  max-height: calc(100vh - var(--space-9));
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  box-shadow: var(--elevation-lg);
+}
+
+.ui-modal:focus {
+  outline: none;
+}
+
+.ui-modal-sm {
+  max-width: 26rem;
+}
+
+.ui-modal-md {
+  max-width: 35rem;
+}
+
+.ui-modal-lg {
+  max-width: 46rem;
+}
+
+.ui-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.ui-modal-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.ui-modal-body {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.ui-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+@media (max-width: 800px) {
+  /* Sheet-style on phones: anchored to the bottom, clear of the fixed nav
+     and the home indicator. */
+  .ui-modal-backdrop {
+    align-items: flex-end;
+    padding:
+      max(var(--space-5), env(safe-area-inset-top))
+      max(var(--space-5), env(safe-area-inset-right))
+      calc(5.75rem + env(safe-area-inset-bottom))
+      max(var(--space-5), env(safe-area-inset-left));
+  }
+
+  .ui-modal {
+    max-width: 100%;
+    max-height: calc(
+      100dvh - 7.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
+    overscroll-behavior: contain;
+  }
+
+  .ui-modal-footer {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    background: inherit;
+  }
+}

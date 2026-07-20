@@ -1,0 +1,64 @@
+.ui-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.ui-page-header-titles {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Deliberately sentence case, not the uppercase micro-label a design system
+   usually reaches for here. The eyebrow on this app's pages carries a personal
+   greeting ("Good evening, Francisco"), and shouting it reads as a system
+   label rather than an address to the person. */
+.ui-page-header-eyebrow {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-page-header-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+.ui-page-header-description {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+}
+
+.ui-page-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 800px) {
+  .ui-page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .ui-page-header-title {
+    font-size: var(--text-xl);
+  }
+
+  /* Descriptions are supporting copy; on a phone they push the actual content
+     below the fold. Every page sheet was already hiding them individually. */
+  .ui-page-header-description {
+    display: none;
+  }
+}

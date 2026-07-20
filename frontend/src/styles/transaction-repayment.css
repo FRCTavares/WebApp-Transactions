@@ -72,9 +72,9 @@
   gap: 0.75rem;
   align-items: center;
   padding: 0.8rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--theme-border);
   border-radius: 1rem;
-  background: var(--surface-elevated);
+  background: var(--theme-surface);
 }
 
 .transaction-repayment-allocation-copy {
@@ -92,7 +92,7 @@
 }
 
 .transaction-repayment-allocation-copy span {
-  color: var(--text-muted);
+  color: var(--theme-muted);
   font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.2;
@@ -130,9 +130,9 @@
   display: grid;
   gap: 0.95rem;
   padding: 1rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--theme-border);
   border-radius: 1.25rem;
-  background: var(--surface-elevated);
+  background: var(--theme-surface);
 }
 
 .transaction-repayment-toggle {
@@ -160,7 +160,7 @@
 }
 
 .transaction-repayment-toggle small {
-  color: var(--text-muted);
+  color: var(--theme-muted);
   font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.25;
@@ -182,13 +182,13 @@
   gap: 0.15rem;
   padding: 0.7rem;
   border-radius: 1rem;
-  background: var(--surface);
+  background: var(--theme-surface-muted);
 }
 
 .transaction-repayment-totals span,
 .transaction-repayment-section-label {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--theme-muted);
   font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.01em;
@@ -226,9 +226,9 @@
   gap: 0.65rem;
   align-items: center;
   padding: 0.7rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--theme-border);
   border-radius: 1rem;
-  background: var(--surface);
+  background: var(--theme-surface-muted);
 }
 
 .transaction-repayment-expense-copy {
@@ -246,7 +246,7 @@
 }
 
 .transaction-repayment-expense-copy span {
-  color: var(--text-muted);
+  color: var(--theme-muted);
   font-size: 0.78rem;
   font-weight: 750;
   line-height: 1.2;
@@ -335,9 +335,9 @@
   min-height: 2.25rem;
   padding: 0 0.8rem;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
-  color: var(--text);
+  border: 1px solid var(--theme-border);
+  background: color-mix(in srgb, var(--theme-surface) 92%, transparent);
+  color: var(--theme-text);
   font-size: 0.86rem;
   font-weight: 700;
   white-space: nowrap;

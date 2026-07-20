@@ -1,0 +1,118 @@
+.ui-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.ui-table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.ui-table-sticky {
+  overflow-y: auto;
+}
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-base);
+}
+
+.ui-table-th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-strong);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ui-table-td {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ui-table tbody tr:last-child .ui-table-td {
+  border-bottom: 0;
+}
+
+.ui-table-left {
+  text-align: left;
+}
+
+.ui-table-right {
+  text-align: right;
+}
+
+.ui-table-numeric {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Row striping is deliberately absent. The old table striped with #fdfdfd on
+   a #ffffff surface - a one-step difference that is invisible on most
+   displays, so it cost a rule and bought nothing. Hover is the affordance. */
+.ui-table tbody tr:hover .ui-table-td {
+  background: var(--color-surface-hover);
+}
+
+.ui-table-row-clickable {
+  cursor: pointer;
+}
+
+.ui-table-row-clickable:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.ui-table tbody tr.is-muted .ui-table-td {
+  color: var(--color-text-muted);
+}
+
+.ui-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.ui-table-sort:hover {
+  color: var(--color-accent);
+}
+
+.ui-table-sort:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.ui-table-message {
+  padding: var(--space-8) var(--space-5);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .ui-table-th,
+  .ui-table-td {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+  }
+}

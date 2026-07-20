@@ -229,8 +229,9 @@ td[colspan] {
 
 @media (max-width: 800px) {
   .table-wrap {
-    margin-right: -14px;
-    margin-left: -14px;
+    margin-right: -12px;
+    margin-bottom: 16px;
+    margin-left: -12px;
     border-right: 0;
     border-left: 0;
     border-radius: 0;
@@ -238,19 +239,12 @@ td[colspan] {
     -webkit-overflow-scrolling: touch;
   }
 
-  .table-wrap table {
-    min-width: 760px;
-  }
-
-  th,
-  td {
-    padding: 8px;
-    font-size: 13px;
-  }
-
   .badge {
-    font-size: 11px;
+    /* TODO(design-system phase 7): 10.5px is a sub-pixel type size and below the
+       legibility floor. Kept as-is here so this consolidation is a pure
+       no-visual-change refactor. */
     padding: 3px 7px;
+    font-size: 10.5px;
   }
 
   .transaction-description-line {
@@ -293,14 +287,6 @@ td[colspan] {
   .modal-actions button {
     width: 100%;
   }
-}
-
-@media (max-width: 800px) {
-  .table-wrap {
-    margin-right: -12px;
-    margin-left: -12px;
-    margin-bottom: 16px;
-  }
 
   .table-wrap table {
     min-width: 680px;
@@ -322,10 +308,6 @@ td[colspan] {
 
   .table-sort-button {
     font-size: 12px;
-  }
-
-  .badge {
-    font-size: 10.5px;
   }
 
   .month-navigator {

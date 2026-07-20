@@ -1,0 +1,230 @@
+/* ---------------------------------------------------------------------------
+   PRIMITIVES - raw scales. The only file in the codebase allowed to contain a
+   colour literal.
+
+   Do NOT reference these from components. Components reference semantic.css,
+   which maps roles onto these values. If you find yourself writing
+   var(--gray-200) in a component, the role you need is missing from
+   semantic.css - add it there instead.
+
+   Provenance: the app already used Tailwind's default palette, applied by hand
+   as 139 distinct hex literals across 37 stylesheets. Every ramp below is that
+   palette, so adopting these tokens does not change a single rendered colour.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* -- Neutral (light UI) ---------------------------------------------------
+     The dominant family in the codebase: #111827 text (90 uses), #e5e7eb
+     borders (71), #6b7280 muted text (58). */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  /* -- Neutral (dark UI) ----------------------------------------------------
+     The dark theme is built on zinc: #09090b, #18181b, #f4f4f5, #a1a1aa. */
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-800: #27272a;
+  --zinc-900: #18181b;
+  --zinc-950: #09090b;
+
+  /* -- Accent / informational ----------------------------------------------- */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+  --blue-900: #1e3a8a;
+
+  /* -- Positive / money in --------------------------------------------------- */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+
+  /* -- Warning / pending ----------------------------------------------------- */
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+  --amber-800: #92400e;
+  --amber-900: #78350f;
+
+  /* -- Expense / money out --------------------------------------------------- */
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-300: #fdba74;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+  --orange-800: #9a3412;
+  --orange-900: #7c2d12;
+
+  /* -- Negative / destructive ------------------------------------------------ */
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+
+  /* -- Investment ------------------------------------------------------------ */
+  --violet-50: #f5f3ff;
+  --violet-100: #ede9fe;
+  --violet-200: #ddd6fe;
+  --violet-300: #c4b5fd;
+  --violet-400: #a78bfa;
+  --violet-500: #8b5cf6;
+  --violet-600: #7c3aed;
+  --violet-700: #6d28d9;
+  --violet-800: #5b21b6;
+  --violet-900: #4c1d95;
+
+  --white: #ffffff;
+  --black: #000000;
+}
+
+/* ---------------------------------------------------------------------------
+   NON-COLOUR SCALES
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* -- Spacing, 4px base ----------------------------------------------------
+     Replaces the ad hoc set currently in use: 4, 5, 6, 7, 8, 10, 11, 12, 14,
+     16, 18, 20, 24px plus ~16 distinct rem values. Migration rule: round to the
+     nearest step; never introduce a value that is not on this scale. */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-1: 0.125rem; /*  2px */
+  --space-2: 0.25rem;  /*  4px */
+  --space-3: 0.375rem; /*  6px */
+  --space-4: 0.5rem;   /*  8px */
+  --space-5: 0.75rem;  /* 12px */
+  --space-6: 1rem;     /* 16px */
+  --space-7: 1.25rem;  /* 20px */
+  --space-8: 1.5rem;   /* 24px */
+  --space-9: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-11: 3rem;    /* 48px */
+  --space-12: 4rem;    /* 64px */
+
+  /* -- Radius ---------------------------------------------------------------
+     Five steps, replacing the fifteen currently in use. */
+  --radius-sm: 0.375rem; /*  6px - inputs inside table cells, badges */
+  --radius-md: 0.625rem; /* 10px - buttons, inputs */
+  --radius-lg: 0.875rem; /* 14px - cards, panels */
+  --radius-xl: 1.25rem;  /* 20px - modals, hero cards */
+  --radius-full: 999px;  /*        pills, avatars, segmented controls */
+
+  /* -- Elevation ------------------------------------------------------------
+     Shadow colour is themed in semantic.css, so these are shape-only and are
+     composed there. Four steps, replacing the current per-file ad hoc shadows. */
+  --shadow-xs: 0 1px 2px;
+  --shadow-sm: 0 2px 6px;
+  --shadow-md: 0 8px 20px;
+  --shadow-lg: 0 20px 48px;
+
+  /* -- Typography -----------------------------------------------------------
+     Sizes are px because the existing scale in typography.css is px and mixing
+     units mid-migration is how the current inconsistency started. */
+  --font-sans:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 19px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+  --text-3xl: 38px;
+
+  /* Four weights. The codebase currently uses 500, 600, 700, 750, 760, 800,
+     850, 900 - the intermediate values were guesses against a font that was
+     never loaded and render as duplicates. */
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;
+
+  --tracking-tight: -0.03em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+
+  /* -- Motion ---------------------------------------------------------------
+     The app currently has no transitions at all. base.css already honours
+     prefers-reduced-motion globally, so these need no per-use guard. */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* -- Z-index --------------------------------------------------------------
+     Replaces the ad hoc 1 / 20 / 40 / 50 / 60 / 80 currently in use, which
+     already collide (the category combobox at 80 outranks the modal at 50). */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-nav: 200;
+  --z-modal: 300;
+  --z-dropdown: 400;
+  --z-toast: 500;
+}
+
+/* ---------------------------------------------------------------------------
+   BREAKPOINTS - reference only.
+
+   CSS cannot use custom properties inside media queries, so these cannot be
+   consumed programmatically. They are recorded here as the single source of
+   truth; use the literal px values and keep them consistent with this list.
+
+     --bp-sm:  520px   narrow phone
+     --bp-md:  800px   phone / tablet boundary (the app's primary breakpoint)
+     --bp-lg:  1100px  tablet / small desktop
+     --bp-xl:  1400px  wide desktop
+
+   Existing stylesheets also use 420px and 900px. Both should be folded into
+   the scale above during the Phase 4 page migration.
+   --------------------------------------------------------------------------- */

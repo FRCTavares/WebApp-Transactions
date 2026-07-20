@@ -1,0 +1,51 @@
+.ui-field {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ui-field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-field-required {
+  color: var(--color-negative);
+}
+
+.ui-field > input,
+.ui-field > select,
+.ui-field > textarea {
+  width: 100%;
+}
+
+.ui-field-hint,
+.ui-field-error {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+.ui-field-hint {
+  color: var(--color-text-muted);
+}
+
+.ui-field-error {
+  color: var(--color-negative-text);
+}
+
+.ui-field-invalid > input,
+.ui-field-invalid > select,
+.ui-field-invalid > textarea {
+  border-color: var(--color-negative);
+}
+
+.ui-field-invalid > input:focus-visible,
+.ui-field-invalid > select:focus-visible,
+.ui-field-invalid > textarea:focus-visible {
+  outline-color: var(--color-negative);
+}

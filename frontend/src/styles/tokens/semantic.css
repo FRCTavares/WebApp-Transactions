@@ -1,0 +1,150 @@
+/* ---------------------------------------------------------------------------
+   SEMANTIC TOKENS - the only layer components may reference.
+
+   Every value here is a role ("the colour of a raised surface"), not an
+   appearance ("light grey"). Roles are what let dark.css re-point the whole
+   app by redefining ~40 names instead of maintaining an 800-line override
+   shadow copy of every component.
+
+   Rules:
+     - Components use var(--color-*), var(--space-*), var(--radius-*) only.
+     - Never write a hex literal outside primitives.css.
+     - Never write a [data-theme='dark'] selector in a component file. If a
+       component looks wrong in dark mode, a role is missing here.
+
+   Light theme is the default and lives on :root. dark.css overrides only the
+   --color-* and --shadow-* names below.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* -- Backgrounds ----------------------------------------------------------
+     bg          the page canvas behind everything
+     bg-subtle   a recessed area on the canvas (sunken wells, table stripes) */
+  --color-bg: #f5f5f7;
+  --color-bg-subtle: var(--gray-100);
+  /* The full page-canvas background, including its tint. A single token
+     because the light and dark canvases use different gradients, and a
+     gradient cannot be expressed by swapping a colour token alone. */
+  --bg-canvas:
+    radial-gradient(circle at top left, rgb(255 255 255 / 0.9), transparent 28rem),
+    var(--color-bg);
+
+  /* -- Surfaces -------------------------------------------------------------
+     surface        cards, panels, the sidebar - the default raised plane
+     surface-raised a surface above another surface (modals, dropdowns, popovers)
+     surface-sunken a tile inset into a surface (metric tiles inside a panel)
+     surface-hover  the hover wash for rows and list items */
+  --color-surface: var(--white);
+  --color-surface-raised: var(--white);
+  --color-surface-sunken: #fbfbfd;
+  --color-surface-hover: #f8fafc;
+  /* A faintly tinted surface that is not a hover: table headers, quiet toolbars. */
+  --color-surface-subtle: var(--gray-50);
+
+  /* -- Borders --------------------------------------------------------------
+     border        the default hairline
+     border-strong a deliberately heavier edge (table wraps, form panels)
+     border-focus  the focus ring colour */
+  --color-border: var(--gray-200);
+  --color-border-strong: var(--gray-300);
+  /* The edge of a control being hovered - one step darker than border-strong. */
+  --color-border-hover: var(--gray-400);
+  --color-border-focus: var(--blue-600);
+
+  /* -- Text -----------------------------------------------------------------
+     text         body and headings
+     text-muted   secondary copy, labels, table subtext
+     text-subtle  the quietest tier - placeholders, disabled captions
+     text-inverse text on a filled accent/positive/negative surface */
+  --color-text: var(--gray-900);
+  --color-text-muted: var(--gray-500);
+  --color-text-subtle: var(--gray-400);
+  --color-text-inverse: var(--white);
+
+  /* -- Accent (primary interactive, informational) -------------------------- */
+  --color-accent: var(--blue-600);
+  --color-accent-hover: var(--blue-700);
+  --color-accent-active: var(--blue-800);
+  --color-accent-subtle: var(--blue-50);
+  --color-accent-border: var(--blue-200);
+  --color-accent-text: var(--blue-700);
+
+  /* -- Positive (money in, success, confirmation) ---------------------------
+     Also the resting/hover/active ramp for .primary-button. */
+  --color-positive: var(--green-600);
+  --color-positive-hover: var(--green-700);
+  --color-positive-active: var(--green-800);
+  --color-positive-subtle: var(--green-50);
+  --color-positive-border: var(--green-200);
+  --color-positive-text: var(--green-800);
+
+  /* -- Negative (destructive, errors) --------------------------------------- */
+  --color-negative: var(--red-600);
+  --color-negative-hover: var(--red-700);
+  --color-negative-active: var(--red-800);
+  --color-negative-subtle: var(--red-50);
+  /* The pressed state of a tinted (not filled) destructive control. */
+  --color-negative-subtle-hover: var(--red-100);
+  --color-negative-border: var(--red-200);
+  --color-negative-text: var(--red-800);
+
+  /* -- Warning (pending, needs attention, unresolved FX) -------------------- */
+  --color-warning: var(--amber-500);
+  --color-warning-subtle: var(--amber-50);
+  --color-warning-border: var(--amber-200);
+  --color-warning-text: var(--amber-800);
+
+  /* -- Expense (money out) --------------------------------------------------
+     Distinct from negative: an expense is normal, not an error. */
+  --color-expense: var(--orange-500);
+  --color-expense-subtle: var(--orange-50);
+  --color-expense-border: var(--orange-200);
+  --color-expense-text: var(--orange-800);
+
+  /* -- Investment ----------------------------------------------------------- */
+  --color-investment: var(--violet-600);
+  --color-investment-subtle: var(--violet-50);
+  --color-investment-border: var(--violet-200);
+  --color-investment-text: var(--violet-700);
+
+  /* -- Elevation ------------------------------------------------------------
+     Composed here so the shadow colour is themeable. */
+  --shadow-color: rgb(15 23 42 / 0.06);
+  --shadow-color-strong: rgb(15 23 42 / 0.16);
+
+  --elevation-xs: var(--shadow-xs) var(--shadow-color);
+  --elevation-sm: var(--shadow-sm) var(--shadow-color);
+  --elevation-md: var(--shadow-md) var(--shadow-color-strong);
+  --elevation-lg: var(--shadow-lg) var(--shadow-color-strong);
+
+  /* -- Charts ---------------------------------------------------------------
+     Categorical series colours. These replace the hardcoded SLICE_COLOURS
+     array in ExpenseCategoryDonutChart.tsx, so that legend swatches and slices
+     are guaranteed to agree and both follow the theme.
+
+     Ordered for maximum adjacent contrast, not by hue family. */
+  --chart-1: var(--blue-600);
+  --chart-2: var(--green-600);
+  --chart-3: var(--orange-500);
+  --chart-4: var(--violet-600);
+  --chart-5: var(--blue-400);
+  --chart-6: var(--amber-500);
+  --chart-7: var(--red-500);
+  --chart-8: var(--green-400);
+
+  --chart-grid: var(--gray-200);
+  --chart-axis: var(--gray-400);
+  --chart-axis-text: var(--gray-500);
+  --chart-baseline: rgb(100 116 139 / 0.52);
+  --chart-track: var(--gray-100);
+
+  /* -- Scrim ----------------------------------------------------------------
+     The dimming layer behind a modal. Darker in dark mode, because a 35%
+     black veil over a near-black canvas separates nothing. */
+  --color-scrim: rgb(15 23 42 / 0.35);
+
+  /* -- Focus ring ----------------------------------------------------------- */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--color-border-focus);
+}

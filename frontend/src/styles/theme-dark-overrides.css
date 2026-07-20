@@ -1,8 +1,22 @@
+/* `:not(.ui-button,
+.ui-icon-button)` throughout this file: these legacy
+   element-level dark rules have specificity (0,
+2,
+1) and were overriding the
+   design-system variant classes (0,
+1,
+0),
+so in dark mode every migrated
+   button - primary,
+danger,
+disabled - collapsed to the same grey. Pages not
+   yet migrated still need these rules; migrated primitives opt out.
+   The whole file goes away in Phase 5,
+and this exclusion with it. */
+
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td {
   background: rgb(255 255 255 / 0.04);
-}
-
-:root[data-theme='dark'] .dashboard-summary-bar-track,
+}:root[data-theme='dark'] .dashboard-summary-bar-track,
 :root[data-theme='dark'] .investment-holding-track,
 :root[data-theme='dark'] .investment-trend-window-selector,
 :root[data-theme='dark'] .dashboard-chart-toggle,
@@ -10,68 +24,45 @@
 :root[data-theme='dark'] .segmented-control {
   border-color: rgb(255 255 255 / 0.09);
   background: rgb(255 255 255 / 0.045);
-}
-
-:root[data-theme='dark'] .expense-chart-track {
+}:root[data-theme='dark'] .expense-chart-track {
   stroke: rgb(255 255 255 / 0.1);
-}
-
-:root[data-theme='dark'] .expense-chart-centre span {
+}:root[data-theme='dark'] .expense-chart-centre span {
   color: #9ca3af;
-}
-
-:root[data-theme='dark'] .expense-chart-centre strong {
+}:root[data-theme='dark'] .expense-chart-centre strong {
   color: #f5f5f7;
-}
-
-:root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon,
+}:root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-income .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-positive .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-spent .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-negative .dashboard-metric-icon {
   border: 1px solid rgb(255 255 255 / 0.09);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
-}
-
-:root[data-theme='dark'] .dashboard-metric-income .dashboard-metric-icon {
+}:root[data-theme='dark'] .dashboard-metric-income .dashboard-metric-icon {
   background: rgb(34 197 94 / 0.14);
   color: #4ade80;
-}
-
-:root[data-theme='dark'] .dashboard-metric-spent .dashboard-metric-icon,
+}:root[data-theme='dark'] .dashboard-metric-spent .dashboard-metric-icon,
 :root[data-theme='dark'] .dashboard-metric-negative .dashboard-metric-icon {
   background: rgb(244 63 94 / 0.14);
   color: #fb7185;
-}
-
-:root[data-theme='dark'] .dashboard-metric-positive .dashboard-metric-icon {
+}:root[data-theme='dark'] .dashboard-metric-positive .dashboard-metric-icon {
   background: rgb(138 180 248 / 0.14);
   color: #8ab4f8;
-}
-
-:root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon {
+}:root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon {
   background: rgb(148 163 184 / 0.14);
   color: #cbd5e1;
 }
 
-@media (max-width: 800px) {
-  :root[data-theme='dark'] .mobile-bottom-nav {
+@media (max-width: 800px) {:root[data-theme='dark'] .mobile-bottom-nav {
     border-top-color: rgb(255 255 255 / 0.08);
     background: rgb(28 29 35 / 0.86);
-  }
-
-  :root[data-theme='dark'] .mobile-bottom-nav button {
+  }:root[data-theme='dark'] .mobile-bottom-nav button {
     background: transparent;
-  }
-
-  :root[data-theme='dark'] .mobile-bottom-nav button.active {
+  }:root[data-theme='dark'] .mobile-bottom-nav button.active {
     background: rgb(59 130 246 / 0.22);
     color: #d7eaff;
   }
-}
-
-/* Dark theme third pass: flat charcoal, no decorative gradients. */
-:root[data-theme='dark'] {
+}/* Dark theme third pass: flat charcoal,
+no decorative gradients. */ :root[data-theme='dark'] {
   --theme-bg: #111216;
   --theme-bg-soft: #15161a;
   --theme-surface: #1c1d21;
@@ -84,102 +75,60 @@
   --theme-primary: #8ab4f8;
   --theme-primary-soft: rgb(138 180 248 / 0.13);
   --theme-shadow: rgb(0 0 0 / 0.28);
-}
-
-:root[data-theme='dark'],
+}:root[data-theme='dark'],
 :root[data-theme='dark'] body,
 :root[data-theme='dark'] main {
   background: var(--theme-bg) !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .app-shell {
+}:root[data-theme='dark'] .app-shell {
   background: var(--theme-bg) !important;
-}
-
-/* Sidebar: flatter, quieter, still separate from content. */
-:root[data-theme='dark'] .sidebar {
+}/* Sidebar: flatter,
+quieter,
+still separate from content. */ :root[data-theme='dark'] .sidebar {
   border-right-color: rgb(255 255 255 / 0.08);
   background: rgb(24 25 29 / 0.96) !important;
   box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.035);
-}
-
-:root[data-theme='dark'] .sidebar button {
+}:root[data-theme='dark'] .sidebar button {
   border-color: transparent;
   background: transparent;
   color: #e8e9ed;
-}
-
-:root[data-theme='dark'] .sidebar button:hover {
+}:root[data-theme='dark'] .sidebar button:hover {
   border-color: rgb(255 255 255 / 0.105);
   background: rgb(255 255 255 / 0.045);
-}
-
-:root[data-theme='dark'] .sidebar button.active {
+}:root[data-theme='dark'] .sidebar button.active {
   border-color: rgb(138 180 248 / 0.48);
   background: rgb(138 180 248 / 0.14);
   color: #dbeafe;
   box-shadow: none;
-}
-
-:root[data-theme='dark'] .sidebar button.active::before {
+}:root[data-theme='dark'] .sidebar button.active::before {
   background: #8ab4f8;
   box-shadow: none;
-}
-
-/* Main cards: less glow,
-
-more native dark-panel feel. */
-:root[data-theme='dark'] .settings-card,
-
-:root[data-theme='dark'] .dashboard-panel,
-
-:root[data-theme='dark'] .dashboard-metric-card,
-
+}/* Main cards: less glow,
+more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .transaction-filter-card,
-
 :root[data-theme='dark'] .transaction-desktop-table-wrap,
-
 :root[data-theme='dark'] .owed-toolbar,
-
 :root[data-theme='dark'] .owed-table-filter-card,
-
 :root[data-theme='dark'] .owed-table-wrap,
-
 :root[data-theme='dark'] .wealth-page .panel-card,
-
 :root[data-theme='dark'] .wealth-summary-card,
-
 :root[data-theme='dark'] .wealth-chart-card,
-
 :root[data-theme='dark'] .investments-page-polished .portfolio-snapshot,
-
 :root[data-theme='dark'] .investments-page-polished .panel-card,
-
 :root[data-theme='dark'] .panel-card,
-
 :root[data-theme='dark'] .content-card,
-
 :root[data-theme='dark'] .card,
-
 :root[data-theme='dark'] .expense-chart-card,
-
 :root[data-theme='dark'] .portfolio-snapshot,
-
 :root[data-theme='dark'] .filter-panel,
-
 :root[data-theme='dark'] .manual-form,
-
 :root[data-theme='dark'] .table-wrap {
   border-color: rgb(255 255 255 / 0.105);
   background: #1c1d21 !important;
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.035) inset,
     0 18px 42px rgb(0 0 0 / 0.18);
-}
-
-/* Nested cards should not look like full panels. */
-:root[data-theme='dark'] .settings-action-button,
+}/* Nested cards should not look like full panels. */ :root[data-theme='dark'] .settings-action-button,
 :root[data-theme='dark'] .theme-option-button,
 :root[data-theme='dark'] .settings-status,
 :root[data-theme='dark'] .expense-chart-legend-row,
@@ -193,10 +142,7 @@ more native dark-panel feel. */
   border-color: rgb(255 255 255 / 0.095);
   background: #232429 !important;
   box-shadow: none;
-}
-
-/* Active controls: less electric blue. */
-:root[data-theme='dark'] .theme-option-button.active,
+}/* Active controls: less electric blue. */ :root[data-theme='dark'] .theme-option-button.active,
 :root[data-theme='dark'] .mobile-bottom-nav button.active,
 :root[data-theme='dark'] .transaction-direction-switch button.active,
 :root[data-theme='dark'] .dashboard-chart-toggle button.active,
@@ -206,57 +152,43 @@ more native dark-panel feel. */
   background: rgb(138 180 248 / 0.13) !important;
   color: #dbeafe;
   box-shadow: none;
-}
-
-:root[data-theme='dark'] .theme-option-button:focus-visible,
-:root[data-theme='dark'] button:focus-visible,
+}:root[data-theme='dark'] .theme-option-button:focus-visible,
+:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
+.ui-icon-button):focus-visible,
 :root[data-theme='dark'] input:focus-visible,
 :root[data-theme='dark'] select:focus-visible,
 :root[data-theme='dark'] textarea:focus-visible {
   outline-color: rgb(138 180 248 / 0.55);
-}
-
-/* Inputs and small controls. */
-:root[data-theme='dark'] button,
+}/* Inputs and small controls. */ :root[data-theme='dark'] button:not(.ui-button, .ui-icon-button),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] button:hover,
+}:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
+.ui-icon-button):hover,
 :root[data-theme='dark'] .settings-action-button:hover,
 :root[data-theme='dark'] .theme-option-button:hover {
   border-color: rgb(138 180 248 / 0.35);
   background: #292b31 !important;
-}
-
-/* Top period selector: panel, not floating glow. */
-:root[data-theme='dark'] .global-period-selector {
+}/* Top period selector: panel,
+not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   border-color: rgb(255 255 255 / 0.12);
   background: #1c1d21 !important;
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.035) inset,
     0 14px 30px rgb(0 0 0 / 0.18);
-}
-
-:root[data-theme='dark'] .global-period-selector strong {
+}:root[data-theme='dark'] .global-period-selector strong {
   border-color: rgb(255 255 255 / 0.12);
   background: rgb(255 255 255 / 0.055);
   color: var(--theme-text);
-}
-
-/* Dashboard bars and chart tracks. */
-:root[data-theme='dark'] .dashboard-summary-bar-track,
+}/* Dashboard bars and chart tracks. */ :root[data-theme='dark'] .dashboard-summary-bar-track,
 :root[data-theme='dark'] .investment-holding-track,
 :root[data-theme='dark'] .expense-chart-track {
   background: #2a2c32;
   stroke: #2a2c32;
-}
-
-:root[data-theme='dark'] .dashboard-summary-bar-track-net {
+}:root[data-theme='dark'] .dashboard-summary-bar-track-net {
   background:
     linear-gradient(
       90deg,
@@ -267,157 +199,109 @@ more native dark-panel feel. */
       #2a2c32 calc(50% + 1.5px),
       #2a2c32 100%
     );
-}
-
-/* Tables: slightly flatter and easier to scan. */
-:root[data-theme='dark'] th,
+}/* Tables: slightly flatter and easier to scan. */ :root[data-theme='dark'] th,
 :root[data-theme='dark'] thead th,
 :root[data-theme='dark'] .transactions-page thead th,
 :root[data-theme='dark'] .wealth-table-wrap th,
 :root[data-theme='dark'] .owed-page-polished .owed-table th {
   background: #232429 !important;
   color: #aeb3bd;
-}
-
-:root[data-theme='dark'] tbody tr:hover td,
+}:root[data-theme='dark'] tbody tr:hover td,
 :root[data-theme='dark'] .transactions-page tbody tr:hover td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr:hover td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td {
   background: #24262c !important;
-}
-
-/* Text hierarchy. */
-:root[data-theme='dark'] .page-subtitle,
+}/* Text hierarchy. */ :root[data-theme='dark'] .page-subtitle,
 :root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
 :root[data-theme='dark'] .settings-action-button small,
 :root[data-theme='dark'] .theme-option-button small,
-:root[data-theme='dark'] .dashboard-page .dashboard-hero p,
-:root[data-theme='dark'] .dashboard-panel-header p,
-:root[data-theme='dark'] .dashboard-metric-card p,
-:root[data-theme='dark'] .dashboard-metric-card small,
-:root[data-theme='dark'] .dashboard-recent-main span,
 :root[data-theme='dark'] .transactions-page td .muted.small {
   color: #aeb3bd;
-}
-
-:root[data-theme='dark'] .eyebrow,
+}:root[data-theme='dark'] .eyebrow,
 :root[data-theme='dark'] .nav-group h3 {
   color: #8f95a1;
-}
-
-/* Keep status/action text readable. */
-:root[data-theme='dark'] .settings-status span,
+}/* Keep status/action text readable. */ :root[data-theme='dark'] .settings-status span,
 :root[data-theme='dark'] .theme-option-button strong,
 :root[data-theme='dark'] .settings-action-button strong {
   color: var(--theme-text);
 }
 
 /* Mobile bottom nav should match the flat sidebar. */
-@media (max-width: 800px) {
-  :root[data-theme='dark'] .mobile-bottom-nav {
+@media (max-width: 800px) {:root[data-theme='dark'] .mobile-bottom-nav {
     border-top-color: rgb(255 255 255 / 0.08);
     background: rgb(24 25 29 / 0.96) !important;
     box-shadow: 0 -12px 28px rgb(0 0 0 / 0.22);
   }
-}
-
-/* Dark theme table/readability repair. */
-:root[data-theme='dark'] table {
+}/* Dark theme table/readability repair. */ :root[data-theme='dark'] table {
   background: transparent !important;
-}
-
-:root[data-theme='dark'] tr,
+}:root[data-theme='dark'] tr,
 :root[data-theme='dark'] td,
 :root[data-theme='dark'] th {
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] tbody tr,
+}:root[data-theme='dark'] tbody tr,
 :root[data-theme='dark'] .transactions-page tbody tr,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr,
 :root[data-theme='dark'] .investments-table tbody tr {
   background: transparent !important;
-}
-
-:root[data-theme='dark'] tbody tr td,
+}:root[data-theme='dark'] tbody tr td,
 :root[data-theme='dark'] .transactions-page tbody tr td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr td,
 :root[data-theme='dark'] .investments-table tbody tr td {
   background: transparent !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td,
+}:root[data-theme='dark'] .transactions-page tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td,
 :root[data-theme='dark'] .fully-reimbursed-row,
 :root[data-theme='dark'] .fully-reimbursed-row td,
 :root[data-theme='dark'] .clickable-row,
 :root[data-theme='dark'] .clickable-row td {
   background: #202126 !important;
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr:nth-child(odd):not(.inline-create-row):not(.inline-edit-row) td,
+}:root[data-theme='dark'] .transactions-page tbody tr:nth-child(odd):not(.inline-create-row):not(.inline-edit-row) td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:nth-child(odd) td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr:nth-child(odd) td,
 :root[data-theme='dark'] .investments-table tbody tr:nth-child(odd) td {
   background: #1c1d21 !important;
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr:hover td,
+}:root[data-theme='dark'] .transactions-page tbody tr:hover td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr:hover td,
 :root[data-theme='dark'] .investments-table tbody tr:hover td,
 :root[data-theme='dark'] .clickable-row:hover td {
   background: #262830 !important;
-}
-
-:root[data-theme='dark'] .inline-create-row td {
+}:root[data-theme='dark'] .inline-create-row td {
   border-bottom-color: rgb(74 222 128 / 0.28);
   background: rgb(22 163 74 / 0.13) !important;
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .inline-edit-row td {
+}:root[data-theme='dark'] .inline-edit-row td {
   border-bottom-color: rgb(251 191 36 / 0.28);
   background: rgb(245 158 11 / 0.13) !important;
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .fully-reimbursed-row td:first-child::after {
+}:root[data-theme='dark'] .fully-reimbursed-row td:first-child::after {
   background: rgb(34 197 94 / 0.16);
   color: #bbf7d0;
-}
-
-:root[data-theme='dark'] .table-input,
+}:root[data-theme='dark'] .table-input,
 :root[data-theme='dark'] .table-input-secondary,
 :root[data-theme='dark'] .table-wrap input,
 :root[data-theme='dark'] .table-wrap select {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429 !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .transaction-row-action,
+}:root[data-theme='dark'] .transaction-row-action,
 :root[data-theme='dark'] .owed-row-action,
 :root[data-theme='dark'] .table-action-group button,
 :root[data-theme='dark'] .small-button {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429 !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .transaction-row-action:hover,
+}:root[data-theme='dark'] .transaction-row-action:hover,
 :root[data-theme='dark'] .owed-row-action:hover,
 :root[data-theme='dark'] .table-action-group button:hover,
 :root[data-theme='dark'] .small-button:hover {
   border-color: rgb(138 180 248 / 0.35);
   background: #292b31 !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .dashboard-recent-row,
+}:root[data-theme='dark'] .dashboard-recent-row,
 :root[data-theme='dark'] .wealth-account-card-footer,
 :root[data-theme='dark'] .wealth-subaccount-list,
 :root[data-theme='dark'] .wealth-mobile-account-group-header,
@@ -425,42 +309,24 @@ more native dark-panel feel. */
 :root[data-theme='dark'] .owed-person-card-header,
 :root[data-theme='dark'] .investment-position-mobile-details > div {
   border-color: rgb(255 255 255 / 0.075);
-}
-
-/* Summary cards that still had hardcoded light backgrounds. */
-:root[data-theme='dark'] .investments-page-polished .investment-summary-grid article,
-
+}/* Summary cards that still had hardcoded light backgrounds. */ :root[data-theme='dark'] .investments-page-polished .investment-summary-grid article,
 :root[data-theme='dark'] .investments-page-polished .investment-summary-market-value,
-
 :root[data-theme='dark'] .investments-page-polished .investment-summary-gain,
-
 :root[data-theme='dark'] .import-summary-grid .summary-card,
-
 :root[data-theme='dark'] .import-summary-card-primary,
-
 :root[data-theme='dark'] .wealth-summary-card-primary,
-
 :root[data-theme='dark'] .wealth-owed-summary-card,
-
 :root[data-theme='dark'] .wealth-investments-summary-card {
   border-color: rgb(255 255 255 / 0.105) !important;
   background: #202126 !important;
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .investments-page-polished .investment-summary-grid article strong,
-
+}:root[data-theme='dark'] .investments-page-polished .investment-summary-grid article strong,
 :root[data-theme='dark'] .investments-page-polished .investment-summary-grid article span,
-
 :root[data-theme='dark'] .summary-card strong,
-
 :root[data-theme='dark'] .summary-card h2,
-
 :root[data-theme='dark'] .wealth-summary-card-primary strong {
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .investments-page-polished .investment-summary-grid article span,
+}:root[data-theme='dark'] .investments-page-polished .investment-summary-grid article span,
 :root[data-theme='dark'] .summary-card h2 {
   color: var(--theme-muted) !important;
 }
