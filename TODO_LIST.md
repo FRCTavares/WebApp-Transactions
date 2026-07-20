@@ -15,7 +15,12 @@ verification, and UI/codebase maintainability.
 
 ## 7. CI and Deployment Reliability
 
-- [ ] Merge or close dependabot PR #3 (`pydantic-core` 2.46.4 → 2.47.0) and rerun CI.
+PR #3 (`pydantic-core` 2.46.4 → 2.47.0) was closed, not merged:
+`pydantic-core==2.47.0` conflicts with the pinned `pydantic==2.13.4` in
+`requirements.txt`, so `pip install -r requirements.txt` fails to resolve —
+that's why backend-tests, database-validation, and dependency-audit all
+failed on it. Revisit when a coordinated `pydantic`/`pydantic-core` bump is
+available.
 
 A CI check now fails if any Alembic migration adds/renames a column or
 table without an equivalent update to the legacy SQLite startup migrations
