@@ -15,7 +15,15 @@ The data is processed only to provide the finance-tracking, import, export, reco
 - Vercel hosts the static frontend.
 - Google provides OAuth authentication when Google sign-in is used.
 
-Provider regions and subprocessors follow the configuration and terms of the deployed projects. The application owner must record the selected hosting regions before inviting public users.
+Provider regions and subprocessors follow the configuration and terms of the deployed projects.
+
+**Recorded hosting regions (confirmed 2026-07-20):**
+
+- Supabase (auth + database): `eu-north-1` (Stockholm, Sweden).
+- Render (backend API): Frankfurt, Germany (EU Central).
+- Vercel (frontend): global edge network; no single region pinned.
+
+All data-storing providers are within the EU/EEA.
 
 ## Retention and backups
 
@@ -39,6 +47,21 @@ Deletion cannot be undone. If application data is deleted but the external ident
 
 ## Privacy requests and incidents
 
-The deployment owner must configure `VITE_PRIVACY_CONTACT_EMAIL` with a monitored privacy contact address before inviting public users. The Settings page displays that address. Requests to access, correct, export, or delete data should include the signed-in email address but must never include passwords, access tokens, or financial exports in ordinary email.
+`VITE_PRIVACY_CONTACT_EMAIL` is configured (confirmed 2026-07-20:
+`francisco.carreira.tavares@gmail.com`, monitored by the deployment owner).
+The Settings page displays that address. Requests to access, correct,
+export, or delete data should include the signed-in email address but must
+never include passwords, access tokens, or financial exports in ordinary
+email.
 
-Privacy incidents follow the incident-response procedure once that procedure is established. Until a monitored contact, hosting-region record, and incident process exist, unrestricted public release remains blocked.
+Privacy incidents follow the incident-response procedure in
+`docs/incident-response.md`. That document covers detection, triage, and
+recovery for outages/data-loss/auth breakage, but does not yet spell out
+confidentiality-breach-specific steps (e.g. what to do if user data is
+exposed to someone who shouldn't see it, or notification obligations) —
+that gap should be closed before a large public user base exists, but does
+not block the current small/invited scale.
+
+All three original release gates are now satisfied: a monitored privacy
+contact, a recorded hosting-region set (all EU/EEA), and an established
+incident-response procedure.

@@ -9,6 +9,7 @@ import { InvestmentsPage } from './pages/InvestmentsPage'
 import { WealthPage } from './pages/WealthPage'
 import { ExportPage } from './pages/ExportPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { AppSidebar } from './components/AppSidebar'
 import { AppMobileNav } from './components/AppMobileNav'
@@ -157,6 +158,13 @@ function App() {
     setAuthError(null)
     await deleteCurrentAccount(confirmation)
     await clearLocalSession()
+  }
+
+  // Public route: reachable without signing in. Needed for Google's OAuth
+  // consent screen (and general good practice) to link to a real, public
+  // privacy policy page rather than something behind a login wall.
+  if (location.pathname === '/privacy') {
+    return <PrivacyPage />
   }
 
   if (isLoading) {
