@@ -74,7 +74,11 @@ dump.
 To create one manually (e.g. before a risky migration, or on demand rather
 than waiting for the schedule), either trigger
 `.github/workflows/backup-database.yml` via `workflow_dispatch`
-(`gh workflow run backup-database.yml`), or run the equivalent locally:
+(`gh workflow run backup-database.yml`), or run the equivalent locally.
+Note: `pg_dump` refuses to dump from a newer major Postgres server version
+than itself (this actually broke the first automated run) — check your
+local `pg_dump --version` against the Supabase project's Postgres version
+(Project Settings → Infrastructure) first.
 
 ```
 pg_dump --format=custom --no-owner --no-privileges \

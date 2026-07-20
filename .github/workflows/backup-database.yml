@@ -23,8 +23,18 @@ jobs:
       - name: Install PostgreSQL client
         run: |
           set -euo pipefail
+          # Ubuntu's default repo only ships an older major pg_dump, and
+          # pg_dump refuses to dump from a newer major server version than
+          # itself. Add the official PGDG apt repo to install a client
+          # version that matches (or exceeds) Supabase's Postgres 17.
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends postgresql-client
+          sudo apt-get install -y --no-install-recommends wget ca-certificates gnupg
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
 
       - name: Dump production database
         env:
