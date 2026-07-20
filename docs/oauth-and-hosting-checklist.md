@@ -130,11 +130,13 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
       deploy gate could route traffic to a new instance that can't reach
       the database. Fixed: changed to `/api/ready` in the dashboard,
       confirmed live.
-- [ ] `autoDeployTrigger: off` is intentional (see
-      `docs/release-and-rollback.md`) — confirm this still reflects how you
-      want to deploy.
-- [ ] The free-tier hour budget and cold-start behavior are still
-      acceptable — see the upgrade triggers in `docs/production-roadmap.md`.
+- [x] `autoDeployTrigger: off` is intentional (see
+      `docs/release-and-rollback.md`) — confirmed 2026-07-20, still
+      reflects how the owner wants to deploy.
+- [x] The free-tier hour budget and cold-start behavior are still
+      acceptable — confirmed 2026-07-20: owner does not want to pay for
+      hosting; free tier remains the deliberate choice regardless of
+      cold-start tradeoffs.
 
 ## Vercel (dashboard)
 
