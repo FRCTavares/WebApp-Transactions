@@ -87,7 +87,16 @@ includes that other app's Vercel/Supabase domains alongside this one.
       Actions (see `docs/backups-supabase.md` for the honest retention
       caveat — GitHub's 90-day artifact cap means the seven-daily and
       four-weekly tiers are covered, not the full twelve-monthly tier).
-- [ ] Any Supabase-side alerts or warnings on the project overview page.
+- [x] Any Supabase-side alerts or warnings on the project overview page.
+      Investigated 2026-07-20: overview showed "Postgres: 119 requests, 111
+      errors" (20.1% success) in the last hour, all
+      `schema "pg_pgrst_no_exposed_schemas" does not exist` (3F000). This is
+      a documented, benign Supabase quirk that happens whenever the Data
+      API (PostgREST) is disabled for a project — confirmed via Project
+      Settings → Data API: "Enable Data API" is off, and Supabase's own UI
+      states this will produce exactly these `/rest/v1/` errors. Correct
+      and intentional for this app (backend talks to Postgres directly via
+      SQLAlchemy, never through Supabase's Data API). No action needed.
 
 Suggest checking this section monthly, or whenever usage noticeably changes.
 
