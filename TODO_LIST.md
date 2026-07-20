@@ -65,10 +65,12 @@ connections aren't reachable from GitHub-hosted runners — and
 `postgres-backup-29737009857`), after fixing an initial `pg_dump`
 major-version mismatch (runner ships v16; Supabase runs Postgres 17 — the
 workflow now installs and PATH-prioritizes the matching PGDG v17 client).
-- [ ] Known accepted gap: GitHub Actions' 90-day artifact retention ceiling
-      means the twelve-monthly retention tier isn't really satisfied yet —
-      revisit if that ever matters at this project's scale (see
-      `docs/backups-supabase.md`'s Retention section).
+Accepted gap, not tracked as open work: GitHub Actions' 90-day artifact
+retention ceiling means the twelve-monthly retention tier isn't really
+satisfied yet. Given the owner does not want to pay for hosting/storage
+(confirmed 2026-07-20), a paid off-device storage provider isn't on the
+table — this stays as a known, accepted limitation (see
+`docs/backups-supabase.md`'s Retention section).
 
 ## 7. CI and Deployment Reliability
 
@@ -103,7 +105,10 @@ Console/Supabase/Render/Vercel access to verify
 (`docs/oauth-and-hosting-checklist.md`) — walk through and tick that off
 when convenient; nothing in this repo can verify those items for you.
 
-- [ ] Walk through `docs/oauth-and-hosting-checklist.md` and close #33 once done.
+`docs/oauth-and-hosting-checklist.md` was fully walked through and closed
+2026-07-20 — every section confirmed, with three real production bugs
+found and fixed along the way (see the dated sections above). #33 is
+closed.
 
 ## 8. Documentation
 
@@ -151,7 +156,11 @@ Four real bugs were found and fixed along the way:
 - `usePresentationPreferences` had no unmount cleanup guard, causing a
   CI-only (not locally reproducible) unhandled rejection after test teardown.
 
-- [ ] Promote the "Frontend e2e" CI job to a required check once it has proven stable across a few more runs.
+"Frontend e2e" was promoted to a required check 2026-07-20, after
+confirming it succeeded on every CI run since #32 introduced it (checked
+recent run history via `gh run view --json jobs`). `.github/workflows/ci.yml`
+updated: renamed the job, removed `continue-on-error`, and added it to
+`required-checks`'s `needs` list.
 
 ## 10. UI and Codebase Maintainability
 
