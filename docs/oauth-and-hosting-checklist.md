@@ -102,8 +102,22 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
 
 ## Render (dashboard)
 
-- [ ] Environment variables match `render.yaml`'s expected keys — nothing
-      missing, nothing stale from a previous configuration.
+- [x] Environment variables match `render.yaml`'s expected keys — nothing
+      missing, nothing stale from a previous configuration. Real finding
+      2026-07-20: `SUPABASE_SERVICE_ROLE_KEY` was completely absent, meaning
+      account deletion was silently broken in production (fails with a
+      controlled 503, not a crash, per
+      `app/services/account_deletion_service.py`). Fixed: added the
+      **legacy** `service_role` JWT key (Supabase → Settings → API Keys →
+      "Legacy anon, service_role API keys" tab) rather than the newer
+      `sb_secret_...` key format, since the existing code was written and
+      tested against the JWT-style key and swapping to the new format
+      untested wasn't worth the risk. Deployed and confirmed live
+      2026-07-20. The other missing vars
+      (`API_DOCS_ENABLED`/`MARKET_DATA_TIMEOUT_SECONDS`/
+      `DATABASE_CONNECT_TIMEOUT_SECONDS`/`DATABASE_STATEMENT_TIMEOUT_MS`)
+      are harmless — their code-level defaults already match what
+      `render.yaml` would set.
 - [ ] **Notifications**: deploy-failure notifications (email/Slack/webhook)
       are configured for the `f-transactions-api` service.
 - [ ] `autoDeployTrigger: off` is intentional (see
