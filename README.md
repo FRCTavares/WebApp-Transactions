@@ -53,23 +53,6 @@ tracked in [`TODO_LIST.md`](TODO_LIST.md) and in the repository's GitHub issues.
 - Required GitHub Actions CI covering backend tests, database/recovery checks,
   frontend lint and build, dependency audits, and repository hygiene
 
-### Build versioning
-
-Every build embeds a short commit identifier, so a deployed build can always
-be identified unambiguously:
-
-- **Frontend**: `frontend/vite.config.ts` reads `VERCEL_GIT_COMMIT_SHA`
-  (Vercel) or `RENDER_GIT_COMMIT` (if ever built there), falling back to
-  running `git rev-parse --short HEAD` locally. It's embedded at build time
-  and shown in **Settings → Build** in the app.
-- **Backend**: `app/services/health_service.py` reads `RENDER_GIT_COMMIT`
-  (set automatically by Render at both build and runtime), falling back to
-  `git rev-parse --short HEAD`. It's returned in the `version` field of
-  `GET /api/health`.
-
-Release notes live in [`CHANGELOG.md`](CHANGELOG.md) — add an entry there in
-the same PR as any user-facing change.
-
 ## Free-tier viability
 
 **Viable today for:** personal use, a small invited group, low request volume,
@@ -110,9 +93,9 @@ See [`CHANGELOG.md`](CHANGELOG.md) for release notes and how to maintain them.
 - [`docs/security-and-timeouts.md`](docs/security-and-timeouts.md) — request/database timeouts and security hardening
 - [`docs/browser-support.md`](docs/browser-support.md) — supported browser matrix and how it's verified in CI
 - [`docs/pwa-offline.md`](docs/pwa-offline.md) — offline support decision and how the service worker works
-- [`docs/incident-response.md`](docs/incident-response.md) — detection, triage, communication, and recovery for production incidents
-- [`docs/release-and-rollback.md`](docs/release-and-rollback.md) — how releases and rollbacks actually work on Render and Vercel
-- [`docs/production-operations-checklist.md`](docs/production-operations-checklist.md) — dashboard-only items (OAuth, notifications, Supabase capacity) that can't be verified from this repo
+- [`docs/incident-response.md`](docs/incident-response.md) — detection, triage, communication, and recovery steps
+- [`docs/release-and-rollback.md`](docs/release-and-rollback.md) — how releases happen and how to roll one back
+- [`docs/oauth-and-hosting-checklist.md`](docs/oauth-and-hosting-checklist.md) — dashboard-only items the owner must verify directly (Google/Supabase/Render/Vercel)
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes
 - [`frontend/README.md`](frontend/README.md) — frontend-specific notes
 - [`TODO_LIST.md`](TODO_LIST.md) — open, actionable tasks only

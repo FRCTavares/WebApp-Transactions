@@ -22,18 +22,18 @@ Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 | UI/UX | 4/5 | Screen-level workflow clarity, loading/error states, and personal-default removal are implemented |
 | Accessibility | 4/5 | Dialog focus management, keyboard support, live regions, reduced motion, and browser zoom are implemented |
 | Internationalization | 4/5 | Locale, currency, date/time-zone preferences, and an English/Portuguese translation layer are implemented |
-| Testing | 4/5 | 465 backend tests, frontend lint and build, migrations, and recovery checks pass; broader end-to-end coverage is in progress (#32) |
-| CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene |
-| Observability | 4/5 | Structured logging, readiness checks, a monitoring ping covering liveness/readiness/frontend, and a documented incident runbook exist (#33). Dashboard-side alert configuration (Render/Vercel/GitHub notification settings) still needs manual confirmation — see `docs/production-operations-checklist.md`. |
-| Performance | 3/5 | Free-host cold starts remain; request/database timeouts are now enforced |
-| Documentation | 3/5 | Core docs (privacy, i18n, security/timeouts, deployment) exist; broader refresh in progress (#34) |
-| Global release readiness | 3/5 | Suitable for controlled use; monitoring, OAuth production checks, and remaining decisions block public launch |
+| Testing | 4/5 | 470 backend tests, 11 frontend unit test files (31 tests), and a Playwright e2e suite (Chromium/Firefox/WebKit, desktop+mobile) all pass; lint, build, and migrations pass (#32, #24 merged) |
+| CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene; a non-required e2e job runs the full browser matrix |
+| Observability | 4/5 | Structured logging, readiness checks, a monitoring ping covering liveness/readiness/frontend, and a documented incident runbook exist (#33). Dashboard-side alert configuration (Render/Vercel/GitHub notification settings) still needs manual confirmation — see `docs/oauth-and-hosting-checklist.md`. |
+| Performance | 3/5 | Free-host cold starts remain (accepted, see Upgrade Triggers); request/database timeouts are enforced |
+| Documentation | 4/5 | Privacy, i18n, security/timeouts, deployment, browser-support, offline, incident-response, and release/rollback docs exist; a broader accuracy refresh is still open (#34) |
+| Global release readiness | 3/5 | Suitable for controlled use; OAuth/Supabase/Render dashboard verification (checklist ready) and #34's documentation refresh still block public launch |
 
 ## 2. Verification Evidence
 
-Current repository evidence on 2026-07-19 (`main`, commit `dd87539` and later):
+Current repository evidence on 2026-07-19 (`main`, commit `5c3c18f` and later):
 
-- Full backend suite: 465 tests passed (6 short test-key warnings, pre-existing and non-blocking).
+- Full backend suite: 470 tests passed (6 short test-key warnings, pre-existing and non-blocking).
 - Frontend lint and production build passed.
 - Alembic has a single head: `913e77ab658e` (merges `1a3d5e7f9b20` and `2b4d6f8a0c31`).
 - Required GitHub Actions CI checks passed on `main` after each merge below.

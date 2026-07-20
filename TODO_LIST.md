@@ -22,17 +22,21 @@ verification, and UI/codebase maintainability.
   two real local-only 500 errors found via #32's e2e work (see the Testing
   section below).
 
-#33 is complete: production monitoring (extended `keep-backend-warm.yml` to
-also check readiness and frontend availability), an incident runbook
-(`docs/incident-response.md`), a documented and partially-tested
-release/rollback procedure (`docs/release-and-rollback.md` — the migration-
-failure-blocks-deploy claim has a real regression test; the dashboard
-rollback steps themselves are documented, not test-automatable), the Render
-cold-start policy explicitly reaffirmed in `docs/production-roadmap.md`,
-and a dashboard-only checklist for the parts that need real Google/Supabase/
-Render/GitHub-notification access to verify (`docs/production-operations-checklist.md`)
-— walk through and tick that off when convenient; nothing in this repo can
-verify those items for you.
+#33 is complete: production monitoring (documented `keep-backend-warm.yml`'s
+dual role — cold-start mitigation and the primary automated alert path via
+GitHub's default failed-scheduled-workflow email), an incident runbook
+(`docs/incident-response.md`), a documented release/rollback procedure
+(`docs/release-and-rollback.md` — the migration-failure-blocks-deploy claim
+has a real regression test,
+`backend/tests/test_migration_failure_blocks_deploy.py`; the dashboard
+rollback steps themselves are documented, not automatable from here), the
+Render cold-start/keep-warm policy explicitly reaffirmed, and a
+dashboard-only checklist for the parts that need real Google Cloud
+Console/Supabase/Render/Vercel access to verify
+(`docs/oauth-and-hosting-checklist.md`) — walk through and tick that off
+when convenient; nothing in this repo can verify those items for you.
+
+- [ ] Walk through `docs/oauth-and-hosting-checklist.md` and close #33 once done.
 
 ## 8. Documentation
 

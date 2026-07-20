@@ -25,13 +25,14 @@ that's generated. The current running build's commit is shown in
   tests, plus a Playwright e2e suite with real (locally-minted) Supabase
   session authentication against a live backend. (#32)
 - Production monitoring, incident response, and release/rollback
-  documentation: the keep-warm ping now also checks backend readiness and
-  frontend availability, a real test proves a bad database migration
-  blocks deployment, and `docs/incident-response.md` /
-  `docs/release-and-rollback.md` / `docs/production-operations-checklist.md`
-  cover detection, triage, tested rollback procedures, and the
-  dashboard-only items (OAuth, notification settings, Supabase capacity)
-  that need periodic manual confirmation. (#33)
+  documentation: `keep-backend-warm.yml`'s existing health/readiness/
+  frontend checks are now documented as the primary automated monitoring
+  path, a real regression test proves a broken database migration blocks
+  deployment, and `docs/incident-response.md`, `docs/release-and-rollback.md`,
+  and `docs/oauth-and-hosting-checklist.md` cover detection, triage,
+  documented rollback procedures, and the dashboard-only items (OAuth,
+  Supabase capacity, deploy notifications) that need the owner's own
+  periodic manual confirmation. (#33)
 
 ### Fixed
 

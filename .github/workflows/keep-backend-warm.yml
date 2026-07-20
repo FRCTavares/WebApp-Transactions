@@ -1,5 +1,12 @@
 name: Keep backend warm and monitor availability
 
+# This workflow serves two purposes:
+# 1. Reduce (not eliminate) Render free-tier cold starts.
+# 2. Act as the primary automated monitoring/alerting mechanism: a failed
+#    scheduled run triggers GitHub's default email notification to repo
+#    watchers. See docs/incident-response.md and
+#    docs/oauth-and-hosting-checklist.md for the reasoning.
+
 on:
   schedule:
     - cron: "7/10 * * * *"
