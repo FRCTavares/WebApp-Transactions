@@ -173,7 +173,7 @@ describe('transactions page workflows', () => {
     const user = userEvent.setup()
     renderPage()
 
-    const [owedButton] = await screen.findAllByRole('button', { name: 'Owed' })
+    const [owedButton] = await screen.findAllByRole('button', { name: /^Owed /i })
     await user.click(owedButton)
     const dialog = await screen.findByRole('dialog', {
       name: 'Split owed expense',

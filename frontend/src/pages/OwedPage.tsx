@@ -10,37 +10,19 @@ import {
 import { listTransactions } from '../api/transactions'
 import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItemsTable'
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
+import { RecordPaymentModal } from '../components/owed/RecordPaymentModal'
 import { StatusMessage } from '../components/StatusMessage'
 import { useDialogAccessibility } from '../hooks/useDialogAccessibility'
-import type { OwedItem, OwedPaymentMethod, OwedStatusFilter, Transaction } from '../types/api'
+import type { OwedItem, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney, formatMonthLabel } from '../utils/format'
-
-
-type PaymentFormState = {
-  person: string
-  amount: string
-  paymentDate: string
-  method: OwedPaymentMethod
-  linkedTransactionId: string
-  unallocatedCategory: string
-  unallocatedNotes: string
-  allocationAmounts: Record<string, string>
-  notes: string
-}
-
-
-const UNALLOCATED_CATEGORY_OPTIONS = [
-  { value: '', label: 'Not income / leave unclassified' },
-  { value: 'Allowance', label: 'Allowance' },
-  { value: 'Gift', label: 'Gift' },
-  { value: 'Income', label: 'Income' },
-  { value: 'Other', label: 'Other / not counted as income' },
-]
-
-
-function getTodayDate() {
-  return new Date().toISOString().slice(0, 10)
-}
+import {
+  formatLinkedTransactionOption,
+  getInitialPaymentFormState,
+  getManualAllocationTotal,
+  getManualPaymentAllocations,
+  getTodayDate,
+  type PaymentFormState,
+} from '../utils/owedPaymentUtils'
 
 function getCurrentMonthKey() {
   return getTodayDate().slice(0, 7)
@@ -52,81 +34,6 @@ function getMonthLabel(monthKey: string) {
 
 function isItemInMonth(item: OwedItem, monthKey: string) {
   return item.created_at.slice(0, 7) === monthKey
-}
-
-function getInitialPaymentFormState(): PaymentFormState {
-  return {
-    person: '',
-    amount: '',
-    paymentDate: getTodayDate(),
-    method: 'cash',
-    linkedTransactionId: '',
-    unallocatedCategory: '',
-    unallocatedNotes: '',
-    allocationAmounts: {},
-    notes: '',
-  }
-}
-
-function getPaymentPeople(items: OwedItem[]) {
-  return Array.from(new Set(
-    items
-      .filter((item) => item.status === 'open' || item.status === 'partially_paid')
-      .map((item) => item.person),
-  )).sort((first, second) => first.localeCompare(second))
-}
-
-function getAutoAllocationPreview(items: OwedItem[], person: string, amount: number) {
-  let remaining = amount
-
-  return items
-    .filter((item) => item.person === person)
-    .filter((item) => item.status === 'open' || item.status === 'partially_paid')
-    .map((item) => {
-      const allocationAmount = Math.min(remaining, Number(item.amount_remaining))
-      remaining -= allocationAmount
-
-      return {
-        item,
-        amount: allocationAmount,
-      }
-    })
-    .filter((allocation) => allocation.amount > 0)
-}
-
-function getPaymentAllocationItems(items: OwedItem[], person: string) {
-  return items
-    .filter((item) => item.person === person)
-    .filter((item) => item.status === 'open' || item.status === 'partially_paid')
-}
-
-function getManualPaymentAllocations(paymentForm: PaymentFormState) {
-  return Object.entries(paymentForm.allocationAmounts)
-    .map(([owedItemId, amount]) => ({
-      owed_item_id: Number(owedItemId),
-      amount: Math.abs(Number(amount.replace(',', '.'))),
-    }))
-    .filter((allocation) => (
-      Number.isInteger(allocation.owed_item_id) &&
-      allocation.owed_item_id > 0 &&
-      allocation.amount > 0 &&
-      !Number.isNaN(allocation.amount)
-    ))
-    .map((allocation) => ({
-      owed_item_id: allocation.owed_item_id,
-      amount: allocation.amount.toFixed(2),
-    }))
-}
-
-function getManualAllocationTotal(paymentForm: PaymentFormState) {
-  return getManualPaymentAllocations(paymentForm).reduce(
-    (total, allocation) => total + Number(allocation.amount),
-    0,
-  )
-}
-
-function getAllocationTotal(allocations: Array<{ amount: number }>) {
-  return allocations.reduce((total, allocation) => total + allocation.amount, 0)
 }
 
 function getInitialFormState(): OwedFormState {
@@ -165,13 +72,6 @@ function parseLinkedTransactionId(value: string) {
   }
 
   return parsedValue
-}
-
-function formatLinkedTransactionOption(transaction: Transaction) {
-  return `#${transaction.id} | ${transaction.date} | ${transaction.description} | ${formatMoney(
-    transaction.amount,
-    transaction.currency,
-  )}`
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -635,214 +535,17 @@ export function OwedPage() {
       </div>
 
       {isPaymentModalOpen && (
-        <div className="modal-backdrop" role="presentation">
-          <div
-            ref={paymentDialogRef}
-            className="modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="record-payment-title"
-            tabIndex={-1}
-          >
-            <div className="modal-header">
-              <div>
-                <h2 id="record-payment-title">Record payment</h2>
-                <p className="muted small">
-                  Record cash, bank transfer, MB WAY, or other repayments.
-                </p>
-              </div>
-              <button type="button" onClick={closePaymentModal}>
-                Close
-              </button>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Person
-                <select
-                  value={paymentForm.person}
-                  onChange={(event) => updatePaymentPerson(event.target.value)}
-                >
-                  <option value="">Choose person</option>
-                  {getPaymentPeople(items).map((person) => (
-                    <option key={person} value={person}>
-                      {person}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Amount received
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentForm.amount}
-                  onChange={(event) => updatePaymentForm('amount', event.target.value)}
-                  placeholder="0.00"
-                />
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Payment date
-                <input
-                  type="date"
-                  value={paymentForm.paymentDate}
-                  onChange={(event) => updatePaymentForm('paymentDate', event.target.value)}
-                />
-              </label>
-
-              <label>
-                Method
-                <select
-                  value={paymentForm.method}
-                  onChange={(event) =>
-                    updatePaymentForm('method', event.target.value as OwedPaymentMethod)
-                  }
-                >
-                  <option value="cash">Cash</option>
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="mbway">MB WAY</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Linked Money In
-                <select
-                  value={paymentForm.linkedTransactionId}
-                  onChange={(event) => updatePaymentForm('linkedTransactionId', event.target.value)}
-                >
-                  <option value="">No linked money in transaction</option>
-                  {paymentLinkedTransactions.map((transaction) => (
-                    <option key={transaction.id} value={transaction.id}>
-                      {formatLinkedTransactionOption(transaction)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Manual Money In Tx ID
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={paymentForm.linkedTransactionId}
-                  onChange={(event) => updatePaymentForm('linkedTransactionId', event.target.value)}
-                  placeholder="Optional"
-                />
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Unallocated category
-                <select
-                  value={paymentForm.unallocatedCategory}
-                  onChange={(event) => updatePaymentForm('unallocatedCategory', event.target.value)}
-                >
-                  {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
-                    <option key={option.value || 'empty'} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="muted small">
-                  Use Allowance, Gift, or Income when leftover money should count as money in.
-                </span>
-              </label>
-
-              <label>
-                Unallocated notes
-                <input
-                  value={paymentForm.unallocatedNotes}
-                  onChange={(event) => updatePaymentForm('unallocatedNotes', event.target.value)}
-                  placeholder="Grandma gave extra"
-                />
-              </label>
-            </div>
-
-            <label>
-              Payment notes
-              <textarea
-                value={paymentForm.notes}
-                onChange={(event) => updatePaymentForm('notes', event.target.value)}
-                rows={3}
-              />
-            </label>
-
-            {paymentForm.person && Number(paymentForm.amount) > 0 && (
-              <div className="modal-transaction-summary">
-                <div>
-                  <strong>Choose owed items to pay</strong>
-                  <p className="muted small">
-                    Leave all amounts blank to auto-allocate oldest first.
-                  </p>
-
-                  {getPaymentAllocationItems(items, paymentForm.person).length === 0 ? (
-                    <p className="muted small">No open owed items for this person.</p>
-                  ) : (
-                    getPaymentAllocationItems(items, paymentForm.person).map((item) => (
-                      <label key={item.id}>
-                        {item.reason} · remaining {formatMoney(item.amount_remaining)}
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          max={item.amount_remaining}
-                          value={paymentForm.allocationAmounts[item.id] ?? ''}
-                          onChange={(event) => updatePaymentAllocation(item.id, event.target.value)}
-                          placeholder="0.00"
-                        />
-                      </label>
-                    ))
-                  )}
-                </div>
-
-                {getManualPaymentAllocations(paymentForm).length > 0 ? (
-                  <span>
-                    Leftover: {formatMoney((
-                      Math.abs(Number(paymentForm.amount)) -
-                      getManualAllocationTotal(paymentForm)
-                    ).toFixed(2))}
-                  </span>
-                ) : (
-                  <span>
-                    Auto leftover: {formatMoney((
-                      Math.abs(Number(paymentForm.amount)) -
-                      getAllocationTotal(
-                        getAutoAllocationPreview(
-                          items,
-                          paymentForm.person,
-                          Math.abs(Number(paymentForm.amount)),
-                        ),
-                      )
-                    ).toFixed(2))}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="modal-actions">
-              <button type="button" onClick={closePaymentModal}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={recordPaymentFromForm}
-              >
-                Record payment
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecordPaymentModal
+          dialogRef={paymentDialogRef}
+          items={items}
+          paymentLinkedTransactions={paymentLinkedTransactions}
+          paymentForm={paymentForm}
+          onClose={closePaymentModal}
+          onUpdateField={updatePaymentForm}
+          onUpdatePerson={updatePaymentPerson}
+          onUpdateAllocation={updatePaymentAllocation}
+          onSubmit={recordPaymentFromForm}
+        />
       )}
 
       {isItemsLoading && items.length === 0 ? (

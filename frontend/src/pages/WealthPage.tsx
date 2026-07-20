@@ -17,10 +17,11 @@ import { StatusMessage } from '../components/StatusMessage'
 import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
 import { WealthAccountsPanel } from '../components/wealth/WealthAccountsPanel'
 import { WealthMobileAccounts } from '../components/wealth/WealthMobileAccounts'
+import { WealthAccountFormPanel } from '../components/wealth/WealthAccountFormPanel'
+import { WealthSnapshotFormPanel } from '../components/wealth/WealthSnapshotFormPanel'
+import { WealthSnapshotsTablePanel } from '../components/wealth/WealthSnapshotsTablePanel'
 import {
-  accountTypeOptions,
   getAccountGroups,
-  getAccountLabel,
   getAccountName,
   getDerivedInvestmentValue,
   getInitialAccountForm,
@@ -35,11 +36,10 @@ import type {
   InvestmentPosition,
   OwedItem,
   WealthAccount,
-  WealthAccountType,
   WealthMonthlyTotal,
   WealthSnapshot,
 } from '../types/api'
-import { formatDate, formatMoney } from '../utils/format'
+import { formatMoney } from '../utils/format'
 import {
   buildHistoricalCacheKey,
   invalidateHistoricalData,
@@ -577,218 +577,33 @@ export function WealthPage(_props: WealthPageProps) {
       )}
 
       {isAccountFormOpen ? (
-        <section className="content-card panel-card">
-          <div className="section-header">
-            <div>
-              <h2>{editingAccountId === null ? 'Add wealth account' : 'Edit wealth account'}</h2>
-              <p className="muted small">
-                Create manual balance accounts for banks, cash, savings, and other non-investment balances.
-              </p>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <label>
-              Name
-              <input
-                value={accountForm.name}
-                onChange={(event) => updateAccountForm('name', event.target.value)}
-                placeholder="ActivoBank Savings"
-              />
-            </label>
-
-            <label>
-              Type
-              <select
-                value={accountForm.accountType}
-                onChange={(event) => updateAccountForm('accountType', event.target.value as WealthAccountType)}
-              >
-                {accountTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Currency
-              <input
-                value={accountForm.currency}
-                onChange={(event) => updateAccountForm('currency', event.target.value)}
-                placeholder="EUR"
-              />
-            </label>
-          </div>
-
-          <div className="form-row">
-            <label>
-              Value source
-              <select
-                value={accountForm.valueSource}
-                onChange={(event) => updateAccountForm('valueSource', event.target.value)}
-              >
-                <option value="manual">Manual snapshots</option>
-                <option value="investment">Derived investment value</option>
-                <option value="owed">Derived money owed</option>
-              </select>
-            </label>
-
-            {accountForm.valueSource === 'investment' && (
-              <label>
-                Investment ticker or reference
-                <input
-                  value={accountForm.valueReference}
-                  onChange={(event) => updateAccountForm('valueReference', event.target.value)}
-                  placeholder="CSPX"
-                  required
-                />
-              </label>
-            )}
-
-            <label>
-              Institution
-              <input
-                value={accountForm.institution}
-                onChange={(event) => updateAccountForm('institution', event.target.value)}
-                placeholder="ActivoBank"
-              />
-            </label>
-
-            <label>
-              Notes
-              <input
-                value={accountForm.notes}
-                onChange={(event) => updateAccountForm('notes', event.target.value)}
-                placeholder="Emergency fund, broker, cash, etc."
-              />
-            </label>
-          </div>
-
-          <div className="action-group">
-            <button type="button" className="primary-button" onClick={submitAccountForm}>
-              {editingAccountId === null ? 'Create account' : 'Save account'}
-            </button>
-            <button type="button" onClick={cancelAccountEdit}>
-              Cancel
-            </button>
-          </div>
-        </section>
+        <WealthAccountFormPanel
+          accountForm={accountForm}
+          isEditing={editingAccountId !== null}
+          onUpdateField={updateAccountForm}
+          onSubmit={submitAccountForm}
+          onCancel={cancelAccountEdit}
+        />
       ) : null}
 
       {isSnapshotFormOpen ? (
-        <section className="content-card panel-card">
-          <div className="section-header">
-            <div>
-              <h2>{editingSnapshotId === null ? 'Add wealth snapshot' : 'Edit wealth snapshot'}</h2>
-              <p className="muted small">
-                Enter the manual balance shown by the account at the start or end of a month.
-              </p>
-            </div>
-          </div>
+        <WealthSnapshotFormPanel
+          snapshotForm={snapshotForm}
+          isEditing={editingSnapshotId !== null}
+          accounts={accounts}
+          onUpdateField={updateSnapshotForm}
+          onAccountChange={(accountId) => {
+            const account = accounts.find((item) => String(item.id) === accountId)
 
-          <div className="form-row">
-            <label>
-              Snapshot date
-              <input
-                type="date"
-                value={snapshotForm.snapshotDate}
-                onChange={(event) => updateSnapshotForm('snapshotDate', event.target.value)}
-              />
-            </label>
-
-            <label>
-              Account
-              <select
-                value={snapshotForm.accountId}
-                onChange={(event) => {
-                  const accountId = event.target.value
-                  const account = accounts.find((item) => String(item.id) === accountId)
-
-                  setSnapshotForm((currentForm) => ({
-                    ...currentForm,
-                    accountId,
-                    currency: account?.currency ?? currentForm.currency,
-                  }))
-                }}
-              >
-                <option value="">Choose account</option>
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {getAccountLabel(account)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Balance
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={snapshotForm.balance}
-                onChange={(event) => updateSnapshotForm('balance', event.target.value)}
-                placeholder="2150.00"
-              />
-            </label>
-          </div>
-
-          <div className="form-row">
-            <label>
-              Currency
-              <input
-                value={snapshotForm.currency}
-                onChange={(event) => updateSnapshotForm('currency', event.target.value)}
-                placeholder="EUR"
-              />
-            </label>
-
-            <label>
-              FX rate to EUR
-              <input
-                type="number"
-                min="0"
-                step="0.00000001"
-                value={snapshotForm.fxRateToEur}
-                onChange={(event) => updateSnapshotForm('fxRateToEur', event.target.value)}
-                placeholder="Only needed outside EUR"
-              />
-            </label>
-
-            <label>
-              Interest earned
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={snapshotForm.interestEarned}
-                onChange={(event) => updateSnapshotForm('interestEarned', event.target.value)}
-                placeholder="3.40"
-              />
-            </label>
-          </div>
-
-          <div className="form-row">
-            <label>
-              Notes
-              <input
-                value={snapshotForm.notes}
-                onChange={(event) => updateSnapshotForm('notes', event.target.value)}
-                placeholder="Monthly update"
-              />
-            </label>
-          </div>
-
-          <div className="action-group">
-            <button type="button" className="primary-button" onClick={submitSnapshotForm}>
-              {editingSnapshotId === null ? 'Create snapshot' : 'Save snapshot'}
-            </button>
-            <button type="button" onClick={cancelSnapshotEdit}>
-              Cancel
-            </button>
-          </div>
-        </section>
+            setSnapshotForm((currentForm) => ({
+              ...currentForm,
+              accountId,
+              currency: account?.currency ?? currentForm.currency,
+            }))
+          }}
+          onSubmit={submitSnapshotForm}
+          onCancel={cancelSnapshotEdit}
+        />
       ) : null}
 
 
@@ -818,81 +633,14 @@ export function WealthPage(_props: WealthPageProps) {
         />
       )}
 
-      <section className="content-card panel-card wealth-snapshots-panel">
-        <div className="section-header">
-          <div>
-            <h2>Snapshots</h2>
-            <p className="muted small">
-              Manual bank, cash, savings, and other account balances, newest first. Derived owed and investment values are not entered here.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className="small-button"
-            onClick={() => setIsSnapshotsTableOpen((isOpen) => !isOpen)}
-          >
-            {isSnapshotsTableOpen ? 'Hide snapshots' : 'Show snapshots'}
-          </button>
-        </div>
-
-        {isSnapshotsTableOpen ? (
-          <div className="table-wrap wealth-table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Account</th>
-                <th className="right">Balance</th>
-                <th>Currency</th>
-                <th className="right">Balance EUR</th>
-                <th>FX rate</th>
-                <th className="right">Interest</th>
-                <th>Notes</th>
-                <th className="actions-cell">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedSnapshots.map((snapshot) => (
-                <tr key={snapshot.id}>
-                  <td>{formatDate(snapshot.snapshot_date)}</td>
-                  <td>{getAccountName(accounts, snapshot.account_id)}</td>
-                  <td className="right">{formatMoney(snapshot.balance, snapshot.currency)}</td>
-                  <td>{snapshot.currency}</td>
-                  <td className="right">{formatMoney(snapshot.balance_eur)}</td>
-                  <td>{snapshot.fx_rate_to_eur}</td>
-                  <td className="right">
-                    {snapshot.interest_earned ? formatMoney(snapshot.interest_earned) : '-'}
-                  </td>
-                  <td>{snapshot.notes ?? '-'}</td>
-                  <td>
-                    <div className="table-action-group">
-                      <button type="button" className="small-button" onClick={() => startSnapshotEdit(snapshot)}>
-                        Edit
-                      </button>
-                      <button type="button" className="small-button danger-button" onClick={() => removeSnapshot(snapshot)}>
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {sortedSnapshots.length === 0 ? (
-                <tr>
-                  <td colSpan={9}>
-                    <div className="wealth-empty-state">
-                      <strong>No snapshots yet.</strong>
-                      <p className="muted small">Add your first manual month-start or month-end balance snapshot.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-          </div>
-        ) : null}
-      </section>
+      <WealthSnapshotsTablePanel
+        sortedSnapshots={sortedSnapshots}
+        accounts={accounts}
+        isOpen={isSnapshotsTableOpen}
+        onToggleOpen={() => setIsSnapshotsTableOpen((isOpen) => !isOpen)}
+        onStartEdit={startSnapshotEdit}
+        onRemove={removeSnapshot}
+      />
     </section>
   )
 }

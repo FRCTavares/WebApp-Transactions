@@ -12,124 +12,20 @@ import {
   type TransactionCategoryMigrationPreview,
   type TransactionCategoryUsage,
 } from '../../api/transactionCategories'
-import {
-  EXPENSE_CATEGORY_OPTIONS,
-  INCOME_CATEGORY_OPTIONS,
-  TRANSFER_CATEGORY_OPTIONS,
-} from '../../constants/categories'
-import type {
-  CashflowType,
-  Direction,
-  TransactionCategory,
-} from '../../types/api'
+import type { TransactionCategory } from '../../types/api'
 import { CategoryMigrationReviewDialog } from './CategoryMigrationReviewDialog'
 import { CategoryReplacementDialog } from './CategoryReplacementDialog'
-
-type CategoryGroup =
-  | 'expense'
-  | 'income'
-  | 'transfer_in'
-  | 'transfer_out'
-
-type CategoryFormState = {
-  name: string
-  group: CategoryGroup
-}
-
-type DisplayGroup = {
-  key: 'expense' | 'income' | 'transfer'
-  title: string
-  description: string
-  categories: TransactionCategory[]
-}
-
-const INITIAL_FORM: CategoryFormState = {
-  name: '',
-  group: 'expense',
-}
-
-function getCategoryIdentity(
-  name: string,
-  direction: Direction,
-  cashflowType: CashflowType,
-) {
-  return `${name.trim().toLowerCase()}|${direction}|${cashflowType}`
-}
-
-function getGroupValues(group: CategoryGroup): {
-  direction: Direction
-  cashflowType: CashflowType
-} {
-  if (group === 'income') {
-    return {
-      direction: 'in',
-      cashflowType: 'income',
-    }
-  }
-
-  if (group === 'transfer_in') {
-    return {
-      direction: 'in',
-      cashflowType: 'transfer',
-    }
-  }
-
-  if (group === 'transfer_out') {
-    return {
-      direction: 'out',
-      cashflowType: 'transfer',
-    }
-  }
-
-  return {
-    direction: 'out',
-    cashflowType: 'expense',
-  }
-}
-
-function getRecommendedCategories() {
-  return [
-    ...EXPENSE_CATEGORY_OPTIONS.map((name, index) => ({
-      name,
-      direction: 'out' as const,
-      cashflow_type: 'expense' as const,
-      sort_order: index,
-    })),
-    ...INCOME_CATEGORY_OPTIONS.map((name, index) => ({
-      name,
-      direction: 'in' as const,
-      cashflow_type: 'income' as const,
-      sort_order: index,
-    })),
-    ...TRANSFER_CATEGORY_OPTIONS.flatMap((name, index) => [
-      {
-        name,
-        direction: 'in' as const,
-        cashflow_type: 'transfer' as const,
-        sort_order: index,
-      },
-      {
-        name,
-        direction: 'out' as const,
-        cashflow_type: 'transfer' as const,
-        sort_order: index,
-      },
-    ]),
-  ]
-}
-
-function sortCategories(categories: TransactionCategory[]) {
-  return [...categories].sort(
-    (first, second) =>
-      Number(second.is_active) - Number(first.is_active) ||
-      first.sort_order - second.sort_order ||
-      first.name.localeCompare(second.name),
-  )
-}
-
-function getTransferDirectionLabel(category: TransactionCategory) {
-  return category.direction === 'in' ? 'Into account' : 'Out of account'
-}
+import { CategoryCreateForm } from './CategoryCreateForm'
+import { CategoryRow } from './CategoryRow'
+import {
+  INITIAL_FORM,
+  getCategoryIdentity,
+  getGroupValues,
+  getRecommendedCategories,
+  sortCategories,
+  type CategoryFormState,
+  type DisplayGroup,
+} from '../../utils/transactionCategoriesPanelUtils'
 
 export function TransactionCategoriesPanel() {
   const [categories, setCategories] = useState<TransactionCategory[]>([])
@@ -536,153 +432,15 @@ export function TransactionCategoriesPanel() {
     }
   }
 
-  function renderCategoryRow(category: TransactionCategory) {
-    const isEditing = editingId === category.id
-    const isTransfer = category.cashflow_type === 'transfer'
-
-    return (
-      <article
-        key={category.id}
-        className={`transaction-category-row ${
-          category.is_active
-            ? ''
-            : 'transaction-category-row-inactive'
-        }`}
-      >
-        <div className="transaction-category-row-main">
-          {isEditing ? (
-            <input
-              className="transaction-category-edit-input"
-              value={editingName}
-              onChange={(event) =>
-                setEditingName(event.target.value)
-              }
-              autoFocus
-            />
-          ) : (
-            <strong>{category.name}</strong>
-          )}
-
-          {isTransfer && (
-            <span className="transaction-category-direction">
-              {getTransferDirectionLabel(category)}
-            </span>
-          )}
-        </div>
-
-        <span
-          className={`transaction-category-status ${
-            category.is_active
-              ? 'transaction-category-status-active'
-              : 'transaction-category-status-inactive'
-          }`}
-        >
-          {category.is_active ? 'Active' : 'Inactive'}
-        </span>
-
-        <div className="transaction-category-actions">
-          {isEditing ? (
-            <>
-              <button
-                type="button"
-                className="transaction-category-action"
-                onClick={() => handleSaveName(category)}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                className="transaction-category-action"
-                onClick={cancelEditing}
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="transaction-category-action"
-              onClick={() => startEditing(category)}
-            >
-              Rename
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="transaction-category-action"
-            onClick={() => handleToggle(category)}
-          >
-            {category.is_active ? 'Disable' : 'Enable'}
-          </button>
-
-          <button
-            type="button"
-            className="transaction-category-action transaction-category-action-danger"
-            onClick={() => handleDelete(category)}
-          >
-            Delete
-          </button>
-        </div>
-      </article>
-    )
-  }
-
   return (
     <div className="transaction-categories-layout">
-      <section className="transaction-category-create-card">
-        <div className="transaction-category-create-copy">
-          <h2>Add a category</h2>
-          <p>
-            Add only the categories you actually use.
-          </p>
-        </div>
-
-        <form
-          className="transaction-category-create-form"
-          onSubmit={handleCreate}
-        >
-          <label>
-            Name
-            <input
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              placeholder="e.g. Groceries"
-            />
-          </label>
-
-          <label>
-            Used for
-            <select
-              value={form.group}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  group: event.target.value as CategoryGroup,
-                }))
-              }
-            >
-              <option value="expense">Money Out</option>
-              <option value="income">Money In</option>
-              <option value="transfer_in">Transfer into account</option>
-              <option value="transfer_out">Transfer out of account</option>
-            </select>
-          </label>
-
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={isBusy}
-          >
-            Add category
-          </button>
-        </form>
-      </section>
+      <CategoryCreateForm
+        form={form}
+        isBusy={isBusy}
+        onNameChange={(name) => setForm((current) => ({ ...current, name }))}
+        onGroupChange={(group) => setForm((current) => ({ ...current, group }))}
+        onSubmit={handleCreate}
+      />
 
       {error && (
         <p className="transaction-category-message error-text">
@@ -770,7 +528,20 @@ export function TransactionCategoriesPanel() {
                     </p>
                   ) : (
                     <div className="transaction-category-list">
-                      {group.categories.map(renderCategoryRow)}
+                      {group.categories.map((category) => (
+                        <CategoryRow
+                          key={category.id}
+                          category={category}
+                          isEditing={editingId === category.id}
+                          editingName={editingName}
+                          onEditingNameChange={setEditingName}
+                          onStartEditing={startEditing}
+                          onSaveName={handleSaveName}
+                          onCancelEditing={cancelEditing}
+                          onToggle={handleToggle}
+                          onDelete={handleDelete}
+                        />
+                      ))}
                     </div>
                   )}
                 </section>

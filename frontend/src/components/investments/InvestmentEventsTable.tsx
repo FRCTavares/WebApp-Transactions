@@ -1,6 +1,6 @@
 import type { InvestmentEvent } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
-import type { ManualFundingFormState } from '../../pages/InvestmentsPage'
+import type { ManualFundingFormState } from '../../utils/investmentsPageUtils'
 
 type InvestmentEventsTableProps = {
   events: InvestmentEvent[]
