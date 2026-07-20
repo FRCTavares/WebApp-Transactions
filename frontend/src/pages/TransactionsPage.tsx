@@ -1,9 +1,7 @@
 import { TransactionsPageView } from '../components/transactions/TransactionsPageView'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { listOwedItems, listOwedPayments } from '../api/owed'
 import {
-  createOwedSplitForTransaction,
   createTransactionWithOwed,
   deleteTransaction,
   exportTransactionsCsv,
@@ -13,35 +11,24 @@ import {
 import type { TransactionFilterState } from '../components/TransactionFilters'
 import type { TransactionFormState } from '../components/TransactionForm'
 import { listTransactionCategories } from '../api/transactionCategories'
-import type { TransactionTableRow } from '../components/TransactionTable'
-import type { OwedSplitRowState } from '../components/transactions/TransactionOwedSplitDialog'
 import { usePeriod } from '../hooks/usePeriod'
+import { useOwedSplitDialog } from '../hooks/useOwedSplitDialog'
+import { useCreateOwedAndRepayment } from '../hooks/useCreateOwedAndRepayment'
 import type {
   Direction,
-  OwedItem,
   Transaction,
   TransactionCategory,
 } from '../types/api'
-import { formatMoney } from '../utils/format'
+import { buildCreateTransactionWithOwedPayload } from '../utils/transactionFinancialCommandPayloads'
 import {
-  buildCreateTransactionWithOwedPayload,
-  buildExistingTransactionOwedSplitPayload,
-} from '../utils/transactionFinancialCommandPayloads'
-import {
-  createOwedSplitRow,
   downloadBlob,
-  getAvailablePaymentTransactions,
   getExportFilename,
   getFormStateFromTransaction,
   getInitialFilterState,
   getInitialFormState,
   getMonthDateRange,
-  getRankedOwedPeople,
   getRemainingOwedAmount,
   getTransactionsForDisplay,
-  parseMoneyInput,
-  type ParsedCreateOwedRow,
-  type ParsedRepaymentAllocation,
 } from '../utils/transactionPageHelpers'
 import { buildTransactionFilterUrl, getFiltersFromUrl } from '../utils/transactionFilterUrl'
 
@@ -64,25 +51,60 @@ export function TransactionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(true)
-  const [owedDraftTransaction, setOwedDraftTransaction] = useState<TransactionTableRow | null>(null)
-  const [owedPaymentTransactions, setOwedPaymentTransactions] = useState<Transaction[]>([])
-  const [owedPaymentAvailableAmounts, setOwedPaymentAvailableAmounts] = useState<Record<number, string>>({})
-  const [isCreatingOwedItem, setIsCreatingOwedItem] = useState(false)
-  const [owedRows, setOwedRows] = useState<OwedSplitRowState[]>([])
-  const [owedLeftoverItemsByPerson, setOwedLeftoverItemsByPerson] = useState<Record<string, OwedItem[]>>({})
-  const [isCreateOwedEnabled, setIsCreateOwedEnabled] = useState(false)
-  const [createOwedRows, setCreateOwedRows] = useState<OwedSplitRowState[]>([])
-  const [owedPersonOptions, setOwedPersonOptions] = useState<string[]>([])
   const [categoryOptions, setCategoryOptions] = useState<TransactionCategory[]>([])
-  const [isCreateRepaymentEnabled, setIsCreateRepaymentEnabled] = useState(false)
-  const [repaymentPerson, setRepaymentPerson] = useState('')
-  const [repaymentPersonOptions, setRepaymentPersonOptions] = useState<string[]>([])
-  const [repaymentItems, setRepaymentItems] = useState<OwedItem[]>([])
-  const [repaymentAllocations, setRepaymentAllocations] = useState<Record<number, string>>({})
-  const [repaymentUnallocatedCategory, setRepaymentUnallocatedCategory] = useState('')
   const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
+
+  const {
+    isCreateOwedEnabled,
+    createOwedRows,
+    owedPersonOptions,
+    isCreateRepaymentEnabled,
+    repaymentPerson,
+    repaymentPersonOptions,
+    repaymentItems,
+    repaymentAllocations,
+    repaymentUnallocatedCategory,
+    setRepaymentUnallocatedCategory,
+    resetCreateOwedAndRepaymentState,
+    toggleCreateOwedEnabled,
+    updateCreateOwedRow,
+    addCreateOwedRow,
+    removeCreateOwedRow,
+    toggleCreateRepaymentEnabled,
+    updateRepaymentPerson,
+    updateRepaymentAllocation,
+    getParsedCreateRepaymentAllocations,
+    getParsedCreateOwedRows,
+  } = useCreateOwedAndRepayment({
+    direction,
+    onWarning: (warning) => setDataWarning(warning),
+    onError: setError,
+  })
+
+  const {
+    owedDraftTransaction,
+    owedPaymentTransactions,
+    owedPaymentAvailableAmounts,
+    isCreatingOwedItem,
+    owedRows,
+    owedLeftoverItemsByPerson,
+    openOwedDialog,
+    closeOwedDialog,
+    updateOwedRow,
+    updateOwedLeftoverAllocation,
+    addOwedRow,
+    removeOwedRow,
+    getSelectedOwedPaymentTransaction,
+    createOwedItemsFromDialog,
+  } = useOwedSplitDialog({
+    filters,
+    monthKey,
+    onError: setError,
+    onMessage: setMessage,
+    reloadTransactions: () => loadTransactions(),
+  })
 
   function loadTransactions(activeFilters = filters) {
     setError(null)
@@ -149,9 +171,7 @@ export function TransactionsPage() {
       setIsTransactionsLoading(true)
       setEditingTransaction(null)
       setIsCreateFormOpen(false)
-      setIsCreateOwedEnabled(false)
-      setCreateOwedRows([])
-      resetCreateRepaymentState()
+      resetCreateOwedAndRepaymentState()
 
       listTransactions({
         direction,
@@ -175,6 +195,7 @@ export function TransactionsPage() {
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction, monthKey])
 
   function updateForm(field: keyof TransactionFormState, value: string) {
@@ -184,20 +205,9 @@ export function TransactionsPage() {
     }))
   }
 
-  function resetCreateRepaymentState() {
-    setIsCreateRepaymentEnabled(false)
-    setRepaymentPerson('')
-    setRepaymentPersonOptions([])
-    setRepaymentItems([])
-    setRepaymentAllocations({})
-    setRepaymentUnallocatedCategory('')
-  }
-
   function resetCreateFormState() {
     setForm(getInitialFormState(direction, monthKey))
-    setIsCreateOwedEnabled(false)
-    setCreateOwedRows([])
-    resetCreateRepaymentState()
+    resetCreateOwedAndRepaymentState()
   }
 
   function loadCategoryOptions() {
@@ -206,208 +216,6 @@ export function TransactionsPage() {
       .catch(() => {
         setDataWarning('Category options could not be refreshed.')
       })
-  }
-
-  function loadOwedPersonOptions() {
-    listOwedItems({ limit: 500 })
-      .then((items) => {
-        setOwedPersonOptions(getRankedOwedPeople(items))
-      })
-      .catch(() => {
-        setDataWarning('Owed-person suggestions could not be refreshed.')
-      })
-  }
-
-  function toggleCreateOwedEnabled(isEnabled: boolean) {
-    setIsCreateOwedEnabled(isEnabled)
-
-    if (!isEnabled) {
-      setCreateOwedRows([])
-      return
-    }
-
-    loadOwedPersonOptions()
-    setCreateOwedRows((currentRows) =>
-      currentRows.length > 0
-        ? currentRows
-        : [
-            createOwedSplitRow({
-              person: '',
-              amount: form.amount,
-            }),
-          ],
-    )
-  }
-
-  function updateCreateOwedRow<K extends keyof OwedSplitRowState>(
-    rowId: string,
-    field: K,
-    value: OwedSplitRowState[K],
-  ) {
-    setCreateOwedRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
-      ),
-    )
-  }
-
-  function addCreateOwedRow() {
-    setCreateOwedRows((currentRows) => [
-      ...currentRows,
-      createOwedSplitRow({
-        person: '',
-      }),
-    ])
-  }
-
-  function removeCreateOwedRow(rowId: string) {
-    setCreateOwedRows((currentRows) => currentRows.filter((row) => row.id !== rowId))
-  }
-
-  function loadRepaymentPersonOptions() {
-    listOwedItems({ status: 'active', limit: 500 })
-      .then((items) => {
-        const people = Array.from(
-          new Set(items.map((item) => item.person.trim()).filter(Boolean)),
-        ).sort((first, second) => first.localeCompare(second))
-
-        setRepaymentPersonOptions(people)
-      })
-      .catch(() => {
-        setDataWarning('Repayment-person suggestions could not be refreshed.')
-      })
-  }
-
-  function loadRepaymentItemsForPerson(person: string) {
-    if (!person.trim()) {
-      setRepaymentItems([])
-      return
-    }
-
-    listOwedItems({ status: 'active', person: person.trim(), limit: 500 })
-      .then(setRepaymentItems)
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load owed items for payer')
-      })
-  }
-
-  function toggleCreateRepaymentEnabled(isEnabled: boolean) {
-    setIsCreateRepaymentEnabled(isEnabled)
-
-    if (!isEnabled) {
-      setRepaymentPerson('')
-      setRepaymentItems([])
-      setRepaymentAllocations({})
-      setRepaymentUnallocatedCategory('')
-      return
-    }
-
-    loadRepaymentPersonOptions()
-  }
-
-  function updateRepaymentPerson(person: string) {
-    setRepaymentPerson(person)
-    setRepaymentAllocations({})
-    loadRepaymentItemsForPerson(person)
-  }
-
-  function updateRepaymentAllocation(owedItemId: number, amount: string) {
-    setRepaymentAllocations((currentAllocations) => ({
-      ...currentAllocations,
-      [owedItemId]: amount,
-    }))
-  }
-
-  function getParsedCreateRepaymentAllocations(
-    transactionAmount: number,
-  ): ParsedRepaymentAllocation[] | null {
-    if (!isCreateRepaymentEnabled || direction !== 'in') {
-      return []
-    }
-
-    if (!repaymentPerson.trim()) {
-      setError('Choose who paid you.')
-      return null
-    }
-
-    const parsedAllocations = Object.entries(repaymentAllocations)
-      .map(([owedItemId, amount]) => ({
-        owed_item_id: Number(owedItemId),
-        amount: parseMoneyInput(amount),
-      }))
-      .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
-
-    if (parsedAllocations.length === 0) {
-      setError('Allocate this Money In to at least one owed item.')
-      return null
-    }
-
-    const allocationTotal = parsedAllocations.reduce(
-      (total, allocation) => total + allocation.amount,
-      0,
-    )
-
-    if (allocationTotal > transactionAmount + 0.0001) {
-      setError('Allocated repayment amount cannot exceed the Money In amount.')
-      return null
-    }
-
-    const invalidAllocation = parsedAllocations.find((allocation) => {
-      const item = repaymentItems.find((candidate) => candidate.id === allocation.owed_item_id)
-
-      return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
-    })
-
-    if (invalidAllocation) {
-      setError('Allocated amount cannot exceed the selected owed item remaining amount.')
-      return null
-    }
-
-    return parsedAllocations
-  }
-
-  function getParsedCreateOwedRows(transactionAmount: number): ParsedCreateOwedRow[] | null {
-    if (!isCreateOwedEnabled || direction !== 'out') {
-      return []
-    }
-
-    if (createOwedRows.length === 0) {
-      setError('Add at least one owed person.')
-      return null
-    }
-
-    const parsedRows = createOwedRows.map((row) => ({
-      person: row.person.trim(),
-      amount: parseMoneyInput(row.amount),
-    }))
-
-    const invalidRow = parsedRows.find(
-      (row) => !row.person || !row.amount || Number.isNaN(row.amount),
-    )
-
-    if (invalidRow) {
-      setError('Each owed person needs a name and a positive owed amount.')
-      return null
-    }
-
-    const totalOwedAmount = parsedRows.reduce((total, row) => total + row.amount, 0)
-
-    if (totalOwedAmount > transactionAmount + 0.0001) {
-      setError(
-        `Total owed amount cannot exceed the transaction amount of ${formatMoney(
-          transactionAmount.toFixed(2),
-          'EUR',
-        )}.`,
-      )
-      return null
-    }
-
-    return parsedRows
   }
 
   function updateFilters(field: keyof TransactionFilterState, value: string | boolean) {
@@ -583,239 +391,6 @@ export function TransactionsPage() {
     }
   }
 
-  function loadOwedPaymentTransactionsForDialog() {
-    const selectedMonthForDialog = filters.month || monthKey
-    const monthDateRange = getMonthDateRange(selectedMonthForDialog)
-
-    Promise.all([
-      listTransactions({
-        direction: 'in',
-        date_from: filters.dateFrom || monthDateRange.dateFrom || undefined,
-        date_to: filters.dateTo || monthDateRange.dateTo || undefined,
-        limit: 500,
-      }),
-      listOwedPayments({ limit: 500 }),
-    ])
-      .then(([moneyInRows, owedPayments]) => {
-        const { availableTransactions, availableAmountsById } = getAvailablePaymentTransactions(moneyInRows, owedPayments)
-
-        setOwedPaymentTransactions(availableTransactions)
-        setOwedPaymentAvailableAmounts(availableAmountsById)
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load money in options')
-      })
-  }
-
-  function openOwedDialog(transaction: TransactionTableRow) {
-    const remainingOwedAmount = getRemainingOwedAmount(transaction)
-
-    setError(null)
-    setMessage(null)
-    setOwedDraftTransaction(transaction)
-    setOwedRows([createOwedSplitRow({
-      amount: remainingOwedAmount.toFixed(2),
-      notes: transaction.raw_description || transaction.description,
-    })])
-    loadOwedPaymentTransactionsForDialog()
-  }
-
-  function closeOwedDialog() {
-    setOwedDraftTransaction(null)
-    setOwedRows([])
-    setOwedPaymentTransactions([])
-    setOwedPaymentAvailableAmounts({})
-    setOwedLeftoverItemsByPerson({})
-  }
-
-  function loadOwedLeftoverItemsForPerson(person: string) {
-    const trimmedPerson = person.trim()
-
-    if (!trimmedPerson) {
-      return
-    }
-
-    const personKey = trimmedPerson.toLowerCase()
-
-    listOwedItems({ status: 'active', person: trimmedPerson, limit: 500 })
-      .then((items) => {
-        setOwedLeftoverItemsByPerson((currentItems) => ({
-          ...currentItems,
-          [personKey]: items.filter((item) => item.linked_transaction_id !== owedDraftTransaction?.id),
-        }))
-      })
-      .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load other owed items for this person')
-      })
-  }
-
-  function updateOwedRow<K extends keyof OwedSplitRowState>(
-    rowId: string,
-    field: K,
-    value: OwedSplitRowState[K],
-  ) {
-    setOwedRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
-      ),
-    )
-
-    if (field === 'person') {
-      loadOwedLeftoverItemsForPerson(String(value))
-    }
-  }
-
-  function updateOwedLeftoverAllocation(rowId: string, owedItemId: number, amount: string) {
-    setOwedRows((currentRows) =>
-      currentRows.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              leftoverAllocations: {
-                ...row.leftoverAllocations,
-                [owedItemId]: amount,
-              },
-            }
-          : row,
-      ),
-    )
-  }
-
-  function addOwedRow() {
-    setOwedRows((currentRows) => [
-      ...currentRows,
-      createOwedSplitRow({
-        notes: owedDraftTransaction?.raw_description || owedDraftTransaction?.description || '',
-      }),
-    ])
-  }
-
-  function removeOwedRow(rowId: string) {
-    setOwedRows((currentRows) => {
-      if (currentRows.length <= 1) {
-        return currentRows
-      }
-
-      return currentRows.filter((row) => row.id !== rowId)
-    })
-  }
-
-  function getSelectedOwedPaymentTransaction(row: OwedSplitRowState) {
-    if (!row.linkedPaymentTransactionId) {
-      return null
-    }
-
-    return (
-      owedPaymentTransactions.find(
-        (transaction) => transaction.id.toString() === row.linkedPaymentTransactionId,
-      ) ?? null
-    )
-  }
-
-  async function createOwedItemsFromDialog() {
-    if (!owedDraftTransaction || isCreatingOwedItem) {
-      return
-    }
-
-    if (owedRows.length === 0) {
-      setError('Add at least one owed person.')
-      return
-    }
-
-    const parsedRows = owedRows.map((row) => ({
-      ...row,
-      person: row.person.trim(),
-      amount: parseMoneyInput(row.amount),
-      linkedPaymentTransaction: getSelectedOwedPaymentTransaction(row),
-    }))
-
-    const invalidRow = parsedRows.find(
-      (row) => !row.person || !row.amount || Number.isNaN(row.amount),
-    )
-
-    if (invalidRow) {
-      setError('Each owed person needs a name and a positive owed amount.')
-      return
-    }
-
-    const totalOwedAmount = parsedRows.reduce((total, row) => total + row.amount, 0)
-    const remainingOwedAmount = getRemainingOwedAmount(owedDraftTransaction)
-
-    if (totalOwedAmount > remainingOwedAmount + 0.0001) {
-      setError(
-        `Total owed amount cannot exceed the remaining available amount of ${formatMoney(
-          remainingOwedAmount.toFixed(2),
-          owedDraftTransaction.currency,
-        )}.`,
-      )
-      return
-    }
-
-    for (const row of parsedRows) {
-      if (!row.linkedPaymentTransaction) {
-        continue
-      }
-
-      const paymentAmount = Number(owedPaymentAvailableAmounts[row.linkedPaymentTransaction.id] ?? row.linkedPaymentTransaction.amount)
-      const currentAllocationAmount = Math.min(paymentAmount, row.amount)
-      const availableLeftoverAmount = Math.max(paymentAmount - currentAllocationAmount, 0)
-      const personKey = row.person.toLowerCase()
-      const availableItems = owedLeftoverItemsByPerson[personKey] ?? []
-      const leftoverAllocations = Object.entries(row.leftoverAllocations)
-        .map(([owedItemId, amount]) => ({ owed_item_id: Number(owedItemId), amount: parseMoneyInput(amount) }))
-        .filter((allocation) => allocation.amount > 0 && !Number.isNaN(allocation.amount))
-      const leftoverAllocationTotal = leftoverAllocations.reduce((total, allocation) => total + allocation.amount, 0)
-
-      if (leftoverAllocationTotal > availableLeftoverAmount + 0.0001) {
-        setError('Leftover allocations cannot exceed the selected Money In leftover amount.')
-        return
-      }
-
-      const invalidAllocation = leftoverAllocations.find((allocation) => {
-        const item = availableItems.find((candidate) => candidate.id === allocation.owed_item_id)
-        return !item || allocation.amount > Number(item.amount_remaining) + 0.0001
-      })
-      if (invalidAllocation) {
-        setError('Leftover allocation cannot exceed the selected owed item remaining amount.')
-        return
-      }
-    }
-    setError(null)
-    setMessage(null)
-    setIsCreatingOwedItem(true)
-    try {
-      const result = await createOwedSplitForTransaction(
-        owedDraftTransaction.id,
-        buildExistingTransactionOwedSplitPayload({
-          rows: parsedRows,
-          paymentAvailableAmounts: owedPaymentAvailableAmounts,
-        }),
-      )
-
-      setMessage(
-        result.payments_created > 0
-          ? `${result.owed_items_created} owed item${
-              result.owed_items_created === 1 ? '' : 's'
-            } created and ${result.payments_created} payment${
-              result.payments_created === 1 ? '' : 's'
-            } recorded.`
-          : `${result.owed_items_created} owed item${
-              result.owed_items_created === 1 ? '' : 's'
-            } created.`,
-      )
-      closeOwedDialog()
-      loadTransactions()
-    } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to create owed split')
-    } finally {
-      setIsCreatingOwedItem(false)
-    }
-  }
   const selectedMonth = filters.month || monthKey
   const displayTransactions = getTransactionsForDisplay(
     transactions, selectedMonth, filters.showFullyOwed,
@@ -841,7 +416,7 @@ export function TransactionsPage() {
     onClearFilters: clearFilters,
     onCreateSubmit: handleCreateTransactionSubmit,
     onFormChange: updateForm,
-    onToggleCreateOwed: toggleCreateOwedEnabled,
+    onToggleCreateOwed: (isEnabled: boolean) => toggleCreateOwedEnabled(isEnabled, form.amount),
     onAddCreateOwedRow: addCreateOwedRow,
     onRemoveCreateOwedRow: removeCreateOwedRow, onUpdateCreateOwedRow: updateCreateOwedRow,
     onToggleCreateRepayment: toggleCreateRepaymentEnabled,

@@ -8,208 +8,35 @@ import {
   updateMarketPrice,
 } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
-import { InvestmentEventsTable } from '../components/investments/InvestmentEventsTable'
 import { InvestmentAllocationCharts } from '../components/investments/InvestmentAllocationCharts'
+import { InvestmentEventsPanel } from '../components/investments/InvestmentEventsPanel'
 import { InvestmentFiltersPanel } from '../components/investments/InvestmentFiltersPanel'
 import { InvestmentHoldingsOverview } from '../components/investments/InvestmentHoldingsOverview'
 import { InvestmentPortfolioTrendChart } from '../components/investments/InvestmentPortfolioTrendChart'
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
-import { InvestmentSummaryCards, type InvestmentCurrencyTotal } from '../components/investments/InvestmentSummaryCards'
+import { InvestmentSummaryCards } from '../components/investments/InvestmentSummaryCards'
+import { FundingSplitPanel } from '../components/investments/FundingSplitPanel'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import type { InvestmentEvent, InvestmentFundingMonth, InvestmentPosition, MarketPrice } from '../types/api'
+import type { InvestmentEvent, InvestmentFundingMonth, MarketPrice } from '../types/api'
 import { useInvestmentData } from '../hooks/useInvestmentData'
 import { formatMoney } from '../utils/format'
-
-export type ManualFundingFormState = {
-  eurAmount: string
-  date: string
-  description: string
-  notes: string
-}
-
-type MonthlyFundingFormState = {
-  month: string
-  source: string
-  manualAmount: string
-  cashbackRoundingAmount: string
-  currency: string
-  notes: string
-}
-
-type InvestmentEventSort =
-  | 'date_desc'
-  | 'date_asc'
-  | 'amount_desc'
-  | 'amount_asc'
-  | 'event_type'
-
-const INVESTMENT_EVENTS_PAGE_SIZE = 15
-
-function addCurrencyTotal(
-  totals: Map<string, number>,
-  currency: string | null,
-  amount: string | null,
-) {
-  if (!currency || !amount) {
-    return
-  }
-
-  const numericAmount = Number(amount)
-
-  if (Number.isNaN(numericAmount)) {
-    return
-  }
-
-  totals.set(currency, (totals.get(currency) ?? 0) + numericAmount)
-}
-
-function toCurrencyTotals(totals: Map<string, number>): InvestmentCurrencyTotal[] {
-  return [...totals.entries()]
-    .map(([currency, amount]) => ({
-      currency,
-      amount,
-    }))
-    .sort((left, right) => left.currency.localeCompare(right.currency))
-}
-
-function getInvestmentTotals(positions: InvestmentPosition[]) {
-  const costTotals = new Map<string, number>()
-  const marketValueTotals = new Map<string, number>()
-  const unrealisedGainTotals = new Map<string, number>()
-
-  for (const position of positions) {
-    for (const cost of position.costs) {
-      if (cost.currency === 'EUR') {
-        addCurrencyTotal(costTotals, 'EUR', cost.total_cost)
-        continue
-      }
-
-      if (position.market_fx_rate_to_eur) {
-        const convertedCost = Number(cost.total_cost) * Number(position.market_fx_rate_to_eur)
-
-        if (!Number.isNaN(convertedCost)) {
-          addCurrencyTotal(costTotals, 'EUR', String(convertedCost))
-          continue
-        }
-      }
-
-      addCurrencyTotal(costTotals, cost.currency, cost.total_cost)
-    }
-
-    addCurrencyTotal(
-      marketValueTotals,
-      position.market_value_currency,
-      position.market_value,
-    )
-
-    addCurrencyTotal(
-      unrealisedGainTotals,
-      position.market_value_currency,
-      position.unrealised_gain,
-    )
-  }
-
-  return {
-    costTotals: toCurrencyTotals(costTotals),
-    marketValueTotals: toCurrencyTotals(marketValueTotals),
-    unrealisedGainTotals: toCurrencyTotals(unrealisedGainTotals),
-  }
-}
-
-function getActiveFilterCount(values: string[]) {
-  return values.filter(Boolean).length
-}
-
-function getEventCount(events: InvestmentEvent[], eventType: string) {
-  return events.filter((event) => event.event_type === eventType).length
-}
-
-function getDefaultYahooSymbol(position: InvestmentPosition) {
-  const ticker = position.ticker?.toUpperCase()
-
-  if (ticker === 'VWCE') {
-    return 'VWCE.DE'
-  }
-
-  if (ticker === 'CSPX') {
-    return 'CSPX.L'
-  }
-
-  if (ticker === 'BTC') {
-    return 'BTC-EUR'
-  }
-
-  return position.ticker ?? ''
-}
-
-function getPositionCurrency(position: InvestmentPosition) {
-  return position.market_price_currency ?? position.costs[0]?.currency ?? ''
-}
-
-function getMarketDataLabel(position: InvestmentPosition) {
-  return position.ticker ?? position.isin ?? position.instrument_name ?? 'holding'
-}
-
-function createDefaultFundingForm(event: InvestmentEvent): ManualFundingFormState {
-  return {
-    eurAmount: '',
-    date: event.date,
-    description: 'Investment deposit funding',
-    notes: `Manual EUR funding resolution for ${event.amount} ${event.currency} deposit`,
-  }
-}
-
-function createDefaultMonthlyFundingForm(): MonthlyFundingFormState {
-  return {
-    month: '',
-    source: '',
-    manualAmount: '',
-    cashbackRoundingAmount: '',
-    currency: 'EUR',
-    notes: '',
-  }
-}
-
-function getMonthlyFundingTotal(funding: InvestmentFundingMonth | MonthlyFundingFormState) {
-  const manualAmount = 'manual_amount' in funding
-    ? Number(funding.manual_amount)
-    : Number(funding.manualAmount)
-  const cashbackRoundingAmount = 'cashback_rounding_amount' in funding
-    ? Number(funding.cashback_rounding_amount)
-    : Number(funding.cashbackRoundingAmount)
-
-  return manualAmount + cashbackRoundingAmount
-}
-
-function getSortedInvestmentEvents(
-  events: InvestmentEvent[],
-  sort: InvestmentEventSort,
-) {
-  return [...events].sort((left, right) => {
-    if (sort === 'date_asc') {
-      return left.date.localeCompare(right.date) || left.id - right.id
-    }
-
-    if (sort === 'amount_desc') {
-      return Number(right.amount) - Number(left.amount)
-    }
-
-    if (sort === 'amount_asc') {
-      return Number(left.amount) - Number(right.amount)
-    }
-
-    if (sort === 'event_type') {
-      return (
-        left.event_type.localeCompare(right.event_type) ||
-        right.date.localeCompare(left.date) ||
-        right.id - left.id
-      )
-    }
-
-    return right.date.localeCompare(left.date) || right.id - left.id
-  })
-}
+import {
+  createDefaultFundingForm,
+  createDefaultMonthlyFundingForm,
+  getActiveFilterCount,
+  getDefaultYahooSymbol,
+  getEventCount,
+  getInvestmentTotals,
+  getMarketDataLabel,
+  getMonthlyFundingTotal,
+  getPositionCurrency,
+  getSortedInvestmentEvents,
+  INVESTMENT_EVENTS_PAGE_SIZE,
+  type InvestmentEventSort,
+  type ManualFundingFormState,
+  type MonthlyFundingFormState,
+} from '../utils/investmentsPageUtils'
 
 export function InvestmentsPage() {
   const [chartMonths, setChartMonths] = useState(24)
@@ -657,111 +484,17 @@ export function InvestmentsPage() {
       </details>
 
       <div className="investment-tools-grid">
-      <section className="content-card panel-card investment-funding-card">
-        <div className="section-header">
-          <div>
-            <h2>Funding split</h2>
-            <p className="muted small">
-              Manual money vs cashback, rounding, and residual broker cash.
-            </p>
-          </div>
-        </div>
-
-        <p className="investment-funding-mobile-summary">
-          {formatMoney(String(monthlyFundingTotal))}
-        </p>
-
-        <details className="investment-funding-details">
-          <summary>Edit funding split</summary>
-
-          <div className="form-grid">
-          <label>
-            Month
-            <input
-              type="month"
-              value={monthlyFundingForm.month}
-              onChange={(event) =>
-                setMonthlyFundingForm((currentValue) => ({
-                  ...currentValue,
-                  month: event.target.value,
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Source
-            <input
-              value={monthlyFundingForm.source}
-              onChange={(event) =>
-                setMonthlyFundingForm((currentValue) => ({
-                  ...currentValue,
-                  source: event.target.value,
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Manual investment
-            <input
-              min="0"
-              step="0.01"
-              type="number"
-              value={monthlyFundingForm.manualAmount}
-              onChange={(event) =>
-                setMonthlyFundingForm((currentValue) => ({
-                  ...currentValue,
-                  manualAmount: event.target.value,
-                }))
-              }
-            />
-          </label>
-
-          <label>
-            Cashback / rounding / residual cash
-            <input
-              min="0"
-              step="0.01"
-              type="number"
-              value={monthlyFundingForm.cashbackRoundingAmount}
-              onChange={(event) =>
-                setMonthlyFundingForm((currentValue) => ({
-                  ...currentValue,
-                  cashbackRoundingAmount: event.target.value,
-                }))
-              }
-            />
-          </label>
-        </div>
-
-          <label>
-            Notes
-            <textarea
-              rows={2}
-              value={monthlyFundingForm.notes}
-              onChange={(event) =>
-                setMonthlyFundingForm((currentValue) => ({
-                  ...currentValue,
-                  notes: event.target.value,
-                }))
-              }
-            />
-          </label>
-
-          <div className="section-header">
-            <p className="muted small">
-              Current split: {formatMoney(monthlyFundingForm.manualAmount)} manual +{' '}
-              {formatMoney(monthlyFundingForm.cashbackRoundingAmount)} extra
-              = {formatMoney(String(monthlyFundingTotal))}.
-            </p>
-
-            <button type="button" onClick={submitMonthlyFundingBreakdown}>
-              Save split
-            </button>
-          </div>
-        </details>
-      </section>
+      <FundingSplitPanel
+        monthlyFundingForm={monthlyFundingForm}
+        monthlyFundingTotal={monthlyFundingTotal}
+        onUpdateField={(field, value) =>
+          setMonthlyFundingForm((currentValue) => ({
+            ...currentValue,
+            [field]: value,
+          }))
+        }
+        onSubmit={submitMonthlyFundingBreakdown}
+      />
 
       <MarketDataPanel
         positions={positions}
@@ -794,86 +527,29 @@ export function InvestmentsPage() {
         onClearFilters={clearFilters}
       />
 
-      <section className="content-card panel-card investment-events-card">
-        <div className="section-header">
-          <div>
-            <h2>Investment events</h2>
-            <p className="muted small">
-              {events.length} broker ledger entries.
-            </p>
-          </div>
-
-          <div className="action-group">
-            {isEventsOpen && (
-              <select
-                aria-label="Sort investment events"
-                value={eventSort}
-                onChange={(event) => {
-                  setEventSort(event.target.value as InvestmentEventSort)
-                  setEventPage(1)
-                }}
-                style={{ maxWidth: '220px' }}
-              >
-                <option value="date_desc">Date newest</option>
-                <option value="date_asc">Date oldest</option>
-                <option value="amount_desc">Amount highest</option>
-                <option value="amount_asc">Amount lowest</option>
-                <option value="event_type">Event type</option>
-              </select>
-            )}
-
-            <button
-              className="small-button"
-              type="button"
-              onClick={() => setIsEventsOpen((currentValue) => !currentValue)}
-            >
-              {isEventsOpen ? 'Hide events' : 'Show events'}
-            </button>
-          </div>
-        </div>
-
-        {isEventsOpen ? (
-          <>
-            <div className="section-header">
-              <p className="muted small">
-                Showing {shownFirstEvent}-{shownLastEvent} of {sortedEvents.length} events.
-              </p>
-
-              <div className="action-group">
-                <button
-                  className="small-button"
-                  type="button"
-                  disabled={currentEventPage <= 1}
-                  onClick={() => setEventPage((currentValue) => Math.max(1, currentValue - 1))}
-                >
-                  Previous
-                </button>
-                <span className="muted small">
-                  Page {currentEventPage} of {eventPageCount}
-                </span>
-                <button
-                  className="small-button"
-                  type="button"
-                  disabled={currentEventPage >= eventPageCount}
-                  onClick={() => setEventPage((currentValue) => Math.min(eventPageCount, currentValue + 1))}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-
-            <InvestmentEventsTable
-              events={paginatedEvents}
-              resolvingEventId={resolvingEventId}
-              fundingForm={fundingForm}
-              onFundingFormChange={setFundingForm}
-              onSubmitManualResolution={submitManualResolution}
-              onCancelManualResolution={cancelManualResolution}
-              onStartManualResolution={startManualResolution}
-            />
-          </>
-        ) : null}
-      </section>
+      <InvestmentEventsPanel
+        isOpen={isEventsOpen}
+        onToggleOpen={() => setIsEventsOpen((currentValue) => !currentValue)}
+        eventSort={eventSort}
+        onEventSortChange={(sort) => {
+          setEventSort(sort)
+          setEventPage(1)
+        }}
+        totalEventCount={sortedEvents.length}
+        paginatedEvents={paginatedEvents}
+        shownFirstEvent={shownFirstEvent}
+        shownLastEvent={shownLastEvent}
+        currentEventPage={currentEventPage}
+        eventPageCount={eventPageCount}
+        onPreviousPage={() => setEventPage((currentValue) => Math.max(1, currentValue - 1))}
+        onNextPage={() => setEventPage((currentValue) => Math.min(eventPageCount, currentValue + 1))}
+        resolvingEventId={resolvingEventId}
+        fundingForm={fundingForm}
+        onFundingFormChange={setFundingForm}
+        onSubmitManualResolution={submitManualResolution}
+        onCancelManualResolution={cancelManualResolution}
+        onStartManualResolution={startManualResolution}
+      />
     </section>
   )
 }

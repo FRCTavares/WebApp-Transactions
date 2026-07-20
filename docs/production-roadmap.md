@@ -18,7 +18,7 @@ Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 | Import reliability | 4/5 | Atomic commits, bounded uploads, deduplication, and preview-to-commit binding are implemented |
 | Recovery | 4/5 | PostgreSQL and JSON restore drills pass; RPO, RTO, retention, encryption, and ownership are documented |
 | Security | 4/5 | Auth, ownership, upload limits, dependency checks, rate limiting, secure backups, request/database timeouts, and a Content Security Policy are implemented |
-| Frontend architecture | 3/5 | API separation exists, but several pages remain oversized (see Known Risks below) |
+| Frontend architecture | 4/5 | API separation exists; all previously oversized pages were split into components/hooks/utils 2026-07-20 (see Known Risks below) |
 | UI/UX | 4/5 | Screen-level workflow clarity, loading/error states, and personal-default removal are implemented |
 | Accessibility | 4/5 | Dialog focus management, keyboard support, live regions, reduced motion, and browser zoom are implemented |
 | Internationalization | 4/5 | Locale, currency, date/time-zone preferences, and an English/Portuguese translation layer are implemented |
@@ -83,16 +83,10 @@ in open, unmerged PRs (#36–#40). This was reconciled today:
 
 ## 4. Known Risks
 
-Files approaching the project's 1,000-line hard limit / 900-line soft limit
-(see `TODO_LIST.md` for the corresponding refactor tasks):
-
-- `backend/app/services/investment_event_service.py` — 991 lines (hard limit is 1,000).
-- `frontend/src/pages/ImportPage.tsx` — 915 lines.
-- `frontend/src/pages/WealthPage.tsx` — 898 lines.
-- `frontend/src/pages/OwedPage.tsx` — 882 lines.
-- `frontend/src/pages/InvestmentsPage.tsx` — 879 lines.
-- `frontend/src/pages/TransactionsPage.tsx` — 868 lines.
-- `frontend/src/components/categories/TransactionCategoriesPanel.tsx` — 807 lines.
+**Resolved 2026-07-20**: the seven files previously approaching the
+project's 1,000-line hard limit / 900-line soft limit were all split
+(see `TODO_LIST.md` section 10 for the breakdown). No production source
+file exceeds 700 lines as of this pass.
 
 ## 5. Upgrade Triggers
 

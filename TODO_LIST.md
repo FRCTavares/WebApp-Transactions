@@ -162,17 +162,55 @@ recent run history via `gh run view --json jobs`). `.github/workflows/ci.yml`
 updated: renamed the job, removed `continue-on-error`, and added it to
 `required-checks`'s `needs` list.
 
-## 10. UI and Codebase Maintainability
+## 10. UI and Codebase Maintainability — closed 2026-07-20
 
-- [ ] Split `backend/app/services/investment_event_service.py` (991 lines) before it breaches the 1,000-line hard limit.
-- [ ] Split `frontend/src/pages/ImportPage.tsx` (915 lines) into smaller components/hooks.
-- [ ] Split `frontend/src/pages/WealthPage.tsx` (898 lines) into smaller components/hooks.
-- [ ] Split `frontend/src/pages/OwedPage.tsx` (882 lines) into smaller components/hooks.
-- [ ] Split `frontend/src/pages/InvestmentsPage.tsx` (879 lines) into smaller components/hooks.
-- [ ] Split `frontend/src/pages/TransactionsPage.tsx` (868 lines) into smaller components/hooks.
-- [ ] Split `frontend/src/components/categories/TransactionCategoriesPanel.tsx` (807 lines) into smaller, focused components.
-- [ ] Add a distinguishing `aria-label` (e.g. `Mark ${description} as owed`) to the mobile "Owed" row action in `TransactionTable.tsx`, matching the pattern already used for its Edit/Delete siblings — currently both desktop and mobile buttons share the plain accessible name "Owed".
-- [ ] Normalize remaining formatting and naming inconsistencies flagged in earlier audits.
+All seven oversized files were split, each into a CRUD/state layer plus
+presentational components or pure-helper utils modules, following the
+pattern already used elsewhere in the codebase (e.g. `wealthPageUtils.ts`):
+
+- `backend/app/services/investment_event_service.py` (was 991 lines) — now
+  249 lines. Valuation/cost-basis/FX-rate analytics moved to a new
+  `InvestmentValuationMixin` in `investment_valuation_service.py` (769
+  lines); `InvestmentEventService` keeps only CRUD/mutation logic and
+  inherits the mixin, so callers are unaffected.
+- `frontend/src/pages/ImportPage.tsx` (was 915) — now 658 lines. Preview
+  and batch-history tables moved to
+  `components/import/ImportPreviewTables.tsx`; `formatFxStatus` moved to
+  `utils/importPreview.ts`.
+- `frontend/src/pages/WealthPage.tsx` (was 898) — now 646 lines. Account
+  form, snapshot form, and snapshots table moved to
+  `components/wealth/WealthAccountFormPanel.tsx`,
+  `WealthSnapshotFormPanel.tsx`, and `WealthSnapshotsTablePanel.tsx`.
+- `frontend/src/pages/OwedPage.tsx` (was 882) — now 585 lines. The
+  "Record payment" modal and its pure helpers moved to
+  `components/owed/RecordPaymentModal.tsx` and
+  `utils/owedPaymentUtils.ts`.
+- `frontend/src/pages/InvestmentsPage.tsx` (was 879) — now 555 lines. Pure
+  helpers/form-state types moved to `utils/investmentsPageUtils.ts`; the
+  funding-split card and investment-events card moved to
+  `components/investments/FundingSplitPanel.tsx` and
+  `InvestmentEventsPanel.tsx`.
+- `frontend/src/pages/TransactionsPage.tsx` (was 868) — now 443 lines.
+  The owed-split dialog's state/handlers and the create-form's
+  owed-row/repayment state/handlers moved into two new hooks,
+  `hooks/useOwedSplitDialog.ts` and `hooks/useCreateOwedAndRepayment.ts`.
+- `frontend/src/components/categories/TransactionCategoriesPanel.tsx`
+  (was 807) — now 578 lines. The category row and create-category form
+  moved to `components/categories/CategoryRow.tsx` and
+  `CategoryCreateForm.tsx`; pure helpers moved to
+  `utils/transactionCategoriesPanelUtils.ts`.
+
+Verification: `ruff check` passes on the backend split; `tsc --noEmit`
+and `eslint .` pass clean across the whole frontend. The sandbox used to
+make these changes cannot run the real backend test suite (Python 3.10
+vs. the pinned 3.11+ dependencies) or `npm run build`/`npm run test`
+(the frontend's `node_modules` has an arch-specific `rolldown` native
+binding built for the owner's Mac) — these still need to be run for real
+in the owner's own terminal before merging, per this project's mandatory
+post-edit workflow.
+
+- [x] Add a distinguishing `aria-label` (e.g. `Mark ${description} as owed`) to the mobile "Owed" row action in `TransactionTable.tsx`, matching the pattern already used for its Edit/Delete siblings — done 2026-07-20; the equivalent desktop button was missing the same `aria-label` and was fixed at the same time.
+- [x] Normalize remaining formatting and naming inconsistencies — covered by the file-splitting pass above; `eslint .` is clean across the whole frontend with no outstanding warnings besides one pre-existing, intentionally-suppressed `exhaustive-deps` pattern already used elsewhere in the codebase (`useInvestmentData.ts`).
 
 ## 11. Open Decisions (#35) — all resolved 2026-07-20
 

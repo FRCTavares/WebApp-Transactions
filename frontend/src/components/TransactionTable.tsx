@@ -273,6 +273,7 @@ export function TransactionTable({
                         type="button"
                         className="transaction-mobile-action transaction-action-edit"
                         onClick={() => onMarkOwed(transaction)}
+                        aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                       >
                         {getOwedActionLabel(transaction)}
                       </button>
@@ -410,6 +411,7 @@ export function TransactionTable({
                           type="button"
                           className="transaction-row-action transaction-row-action-owed"
                           onClick={() => onMarkOwed(transaction)}
+                          aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                         >
                           {getOwedActionLabel(transaction)}
                         </button>

@@ -64,6 +64,17 @@ that's generated. The current running build's commit is shown in
 - Promoted the "Frontend e2e" CI job to a required check, after confirming
   it has succeeded on every run since being introduced in #32.
 
+### Changed
+
+- Split the seven largest source files (all approaching the 900/1,000-line
+  soft/hard limits) into focused components, hooks, and pure-helper utils
+  modules, with no behavior change: `investment_event_service.py`,
+  `ImportPage.tsx`, `WealthPage.tsx`, `OwedPage.tsx`, `InvestmentsPage.tsx`,
+  `TransactionsPage.tsx`, and `TransactionCategoriesPanel.tsx`. Also added
+  the missing `aria-label` to the mobile (and desktop) "Owed" row action in
+  `TransactionTable.tsx`. See `TODO_LIST.md` section 10 for the full
+  breakdown.
+
 ### Fixed
 
 - Corrected the recorded market-data ownership decision
