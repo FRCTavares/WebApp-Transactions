@@ -1,11 +1,16 @@
 name: Keep backend warm and monitor availability
 
-# This workflow serves two purposes:
-# 1. Reduce (not eliminate) Render free-tier cold starts.
-# 2. Act as the primary automated monitoring/alerting mechanism: a failed
-#    scheduled run triggers GitHub's default email notification to repo
-#    watchers. See docs/incident-response.md and
-#    docs/oauth-and-hosting-checklist.md for the reasoning.
+# This workflow's actual job, as of 2026-07-20, is monitoring/alerting: a
+# failed scheduled run triggers GitHub's default email notification to repo
+# watchers. See docs/incident-response.md and
+# docs/oauth-and-hosting-checklist.md for the reasoning.
+#
+# It does NOT reliably reduce Render cold starts by itself -- GitHub Actions
+# silently throttles frequent cron schedules like the one below to roughly
+# hourly under normal load, regardless of what's written here. That's a
+# GitHub-side limitation, not a bug in this file. The actual 10-minute
+# keep-warm pinging is handled externally by a free cron-job.org job hitting
+# GET /api/health, which isn't subject to this throttling.
 
 on:
   schedule:

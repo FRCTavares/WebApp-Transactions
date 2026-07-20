@@ -140,32 +140,41 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
 
 ## Vercel (dashboard)
 
-- [ ] Production domain and any preview/custom domains match what's
-      configured in Google/Supabase above.
-- [ ] **Notifications**: build-failure notifications are configured for
-      `web-app-transactions`.
-- [ ] Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+- [x] Production domain and any preview/custom domains match what's
+      configured in Google/Supabase above. Confirmed 2026-07-20: only
+      `web-app-transactions.vercel.app`, no custom domain, matches
+      everything already cross-checked in Google/Supabase.
+- [x] **Notifications**: build-failure notifications are configured for
+      `web-app-transactions`. Confirmed 2026-07-20.
+- [x] Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
       `VITE_API_BASE_URL`, `VITE_SUPABASE_AUTH_ENABLED`) are set correctly
       for Production (and Preview, if previews are actually used against a
-      real backend).
+      real backend). Confirmed 2026-07-20: all four present and real
+      (not placeholders), plus `VITE_PRIVACY_CONTACT_EMAIL`. Correctly
+      scoped: `VITE_API_BASE_URL` is Production-only, the rest are
+      Production and Preview.
 
 ## Render cold-start / keep-warm policy
 
 Resolved decision (`docs/production-roadmap.md`, decision #6): the app must
 work during backend cold starts — cold starts are accepted, not eliminated.
-Given that, the recommendation is:
 
-**Keep `.github/workflows/keep-backend-warm.yml` running, but treat it as
-monitoring infrastructure first and a warmth-keeping mechanism second.** It
-pings health/readiness/frontend every 10 minutes regardless; its failure is
-what feeds the incident-detection path in `docs/incident-response.md`. It
-does not, and cannot, guarantee uptime on Render's free tier — see the
-Upgrade Triggers in `docs/production-roadmap.md` for when that tradeoff
-should be revisited.
+Real finding 2026-07-20: `.github/workflows/keep-backend-warm.yml` was
+written to run every 10 minutes (`cron: "7/10 * * * *"`), but its actual
+run history showed it firing roughly hourly — every run succeeded, it just
+wasn't running on the schedule it claimed. This is a documented GitHub
+Actions limitation (frequent cron schedules get silently throttled), not a
+bug in the workflow. Since the owner specifically wants real 10-minute
+pinging to counter Render's sleep timer (not just accept hourly), fixed by
+adding **cron-job.org** (free, external, no GitHub throttling) hitting
+`GET /api/health` every 10 minutes as the actual keep-warm mechanism.
+`.github/workflows/keep-backend-warm.yml` stays as-is for what it's
+actually good at — failure-alert monitoring/incident-detection — just
+understood to run at its real, throttled cadence rather than the
+originally-intended one. See `docs/incident-response.md` for the split.
 
-- [ ] Confirm you're comfortable with this framing, or decide to remove/
-      change the workflow if the monitoring value doesn't justify its
-      GitHub Actions minutes.
+- [x] Confirmed 2026-07-20 with this corrected understanding — comfortable
+      keeping both mechanisms for what they each actually do.
 
 ## Re-verify after any of these change
 
