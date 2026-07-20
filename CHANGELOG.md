@@ -64,6 +64,12 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Account deletion was silently broken in production: `render.yaml` lists
+  `SUPABASE_SERVICE_ROLE_KEY` as required, but it was never actually set on
+  Render, so every deletion request failed with a controlled 503. Found
+  while walking through `docs/oauth-and-hosting-checklist.md`; fixed by
+  adding the key and redeploying.
+
 - A dialog focus-trap bug that stole focus away from whatever the user was
   typing into on every re-render, affecting every dialog in the app.
 - Two local-SQLite schema-drift bugs: columns added only via Alembic

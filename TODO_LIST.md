@@ -11,6 +11,18 @@ recovery, data integrity, CI/deployment reliability, accessibility, UI.
 Remaining work is CI/deployment reliability, documentation, accessibility
 follow-through verification, and UI/codebase maintainability.
 
+## Data Integrity — real gap found and fixed (2026-07-20)
+
+While walking through the Render section of
+`docs/oauth-and-hosting-checklist.md`, found `SUPABASE_SERVICE_ROLE_KEY` was
+completely absent from production. Account deletion
+(`app/services/account_deletion_service.py`) was silently broken as a
+result — it fails with a controlled 503 rather than a crash, so this had no
+visible symptom unless someone actually tried to delete their account.
+Fixed: added the legacy `service_role` JWT key (not the newer
+`sb_secret_...` format — the code was written and tested against the JWT
+style) to Render, redeployed, confirmed live.
+
 ## Backup and Recovery — real gap found and fixed (2026-07-20)
 
 While walking through `docs/oauth-and-hosting-checklist.md`, found that
