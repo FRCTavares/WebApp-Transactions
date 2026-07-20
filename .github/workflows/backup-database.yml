@@ -35,6 +35,14 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends postgresql-client-17
+          # The versioned package installs to /usr/lib/postgresql/17/bin
+          # without necessarily taking over the unversioned `pg_dump` /
+          # `pg_restore` on PATH (Ubuntu's own older client can still win).
+          # Prepend it explicitly for every later step in this job.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Verify pg_dump version
+        run: pg_dump --version
 
       - name: Dump production database
         env:
