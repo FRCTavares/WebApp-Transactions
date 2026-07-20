@@ -21,13 +21,14 @@ not actually being run consistently — meaning production had no real,
 current recoverable backup. Fixed by automating it via
 `.github/workflows/backup-database.yml` (daily cron + `workflow_dispatch`).
 
-- [ ] **Action needed**: add the two required repository secrets before
-      this workflow can succeed — `BACKUP_DATABASE_URL` (a direct,
-      read-capable Postgres connection string for production) and
-      `BACKUP_ENCRYPTION_PASSPHRASE` (see `docs/backups-supabase.md` for
-      exact requirements). Then trigger one manual run
-      (`gh workflow run backup-database.yml`) to confirm it actually
-      succeeds end to end before trusting the schedule.
+Confirmed working end to end 2026-07-20: both secrets
+(`BACKUP_DATABASE_URL` using the session pooler connection — direct/IPv6
+connections aren't reachable from GitHub-hosted runners — and
+`BACKUP_ENCRYPTION_PASSPHRASE`) are set, and a manual
+`workflow_dispatch` run succeeded (run `29737009857`, artifact
+`postgres-backup-29737009857`), after fixing an initial `pg_dump`
+major-version mismatch (runner ships v16; Supabase runs Postgres 17 — the
+workflow now installs and PATH-prioritizes the matching PGDG v17 client).
 - [ ] Known accepted gap: GitHub Actions' 90-day artifact retention ceiling
       means the twelve-monthly retention tier isn't really satisfied yet —
       revisit if that ever matters at this project's scale (see
