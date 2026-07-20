@@ -23,6 +23,17 @@ Fixed: added the legacy `service_role` JWT key (not the newer
 `sb_secret_...` format — the code was written and tested against the JWT
 style) to Render, redeployed, confirmed live.
 
+## CI/Deployment — real gap found and fixed (2026-07-20)
+
+While walking through the Render section of
+`docs/oauth-and-hosting-checklist.md`, found the dashboard's Health Check
+Path was set to `/api/health` (a trivial liveness check with no DB
+connectivity check) instead of `render.yaml`'s committed `/api/ready`
+(actually checks the database via `app/services/health_service.py`). This
+meant Render's zero-downtime deploy gate could have routed traffic to a new
+instance that couldn't reach the database. Fixed by updating the dashboard
+setting to `/api/ready`; confirmed live.
+
 ## Backup and Recovery — real gap found and fixed (2026-07-20)
 
 While walking through `docs/oauth-and-hosting-checklist.md`, found that
