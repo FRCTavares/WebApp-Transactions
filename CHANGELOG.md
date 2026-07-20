@@ -64,6 +64,12 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- `.github/workflows/keep-backend-warm.yml` was written to ping every 10
+  minutes but GitHub Actions silently throttled it to roughly hourly
+  (every run succeeded — it just wasn't running as often as intended).
+  Added cron-job.org (free, external) for reliable 10-minute pinging;
+  the GitHub Actions workflow now documented for what it actually
+  provides, failure-alert monitoring at its real cadence.
 - Render's Health Check Path was set to `/api/health` (trivial, no DB
   check) instead of `render.yaml`'s committed `/api/ready` (checks
   database connectivity) — meaning the zero-downtime deploy gate could

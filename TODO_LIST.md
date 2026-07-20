@@ -23,6 +23,19 @@ Fixed: added the legacy `service_role` JWT key (not the newer
 `sb_secret_...` format — the code was written and tested against the JWT
 style) to Render, redeployed, confirmed live.
 
+## Reliability — real gap found and fixed (2026-07-20)
+
+While confirming the keep-warm policy in `docs/oauth-and-hosting-checklist.md`,
+found `.github/workflows/keep-backend-warm.yml` was written for a 10-minute
+cron schedule but its actual run history showed ~hourly execution — every
+run succeeded, GitHub Actions was just silently throttling the frequent
+schedule (a documented platform limitation, not a workflow bug). Since real
+10-minute pinging was wanted to actually counter Render's sleep timer,
+added **cron-job.org** (free, external) hitting `GET /api/health` every 10
+minutes as the real keep-warm mechanism. The GitHub Actions workflow stays
+for what it's actually good at (failure-alert monitoring), documented at
+its real ~hourly cadence in `docs/incident-response.md`.
+
 ## CI/Deployment — real gap found and fixed (2026-07-20)
 
 While walking through the Render section of

@@ -17,14 +17,24 @@ There is no on-call rotation or external support contract.
 
 ## Detection
 
-- **Automated**: `.github/workflows/keep-backend-warm.yml` runs every 10
-  minutes and checks `GET /api/health`, `GET /api/ready`, and frontend
-  availability, failing the workflow (via `curl --fail`) on any non-2xx
-  response or timeout. A failed *scheduled* GitHub Actions workflow run
-  triggers GitHub's default email notification to repository watchers —
-  this is the primary automated alert. There's no separate paging service;
-  see `docs/production-roadmap.md` for the free-tier constraints this
-  accepts.
+- **Automated (keep-warm + monitoring)**: two separate mechanisms, found to
+  need splitting apart 2026-07-20 during the `docs/oauth-and-hosting-checklist.md`
+  walkthrough, after discovering GitHub Actions silently throttles frequent
+  cron schedules (runs every ~hour in practice, not every 10 minutes as
+  originally written/intended, even though nothing was failing):
+  - **cron-job.org** (external, free) hits `GET /api/health` every 10
+    minutes on a real, reliable schedule — this is what actually reduces
+    Render cold starts now.
+  - `.github/workflows/keep-backend-warm.yml` runs on its own (throttled,
+    roughly hourly) GitHub Actions schedule and checks `GET /api/health`,
+    `GET /api/ready`, and frontend availability, failing the workflow (via
+    `curl --fail`) on any non-2xx response or timeout. A failed *scheduled*
+    GitHub Actions workflow run triggers GitHub's default email
+    notification to repository watchers — this remains the primary
+    automated alert/incident-detection path, just at an hourly rather than
+    10-minute resolution. There's no separate paging service; see
+    `docs/production-roadmap.md` for the free-tier constraints this
+    accepts.
 - **Manual**: the owner notices broken behavior while using the app, or a
   user reports it directly.
 
