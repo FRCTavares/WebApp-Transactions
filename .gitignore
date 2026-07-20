@@ -29,6 +29,7 @@ frontend/node_modules/.tmp/
 backups/
 
 # Local environment files
+.env
 .env.local
 *.local.env
 backend/.env
