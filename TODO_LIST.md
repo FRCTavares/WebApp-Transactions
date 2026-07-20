@@ -16,11 +16,16 @@ verification, and UI/codebase maintainability.
 ## 7. CI and Deployment Reliability
 
 - [ ] Merge or close dependabot PR #3 (`pydantic-core` 2.46.4 → 2.47.0) and rerun CI.
-- [ ] Add a CI check that fails if any Alembic migration adds/renames a
-  column or table without an equivalent update to the legacy SQLite startup
-  migrations in `backend/app/database_migrations.py` — this exact gap caused
-  two real local-only 500 errors found via #32's e2e work (see the Testing
-  section below).
+
+A CI check now fails if any Alembic migration adds/renames a column or
+table without an equivalent update to the legacy SQLite startup migrations
+in `backend/app/database_migrations.py` — this exact gap caused two real
+local-only 500 errors found via #32's e2e work (see the Testing section
+below). Implemented as `backend/scripts/check_migration_drift.py`, wired
+into the normal test run via `backend/tests/test_migration_drift.py`.
+Intentional exceptions (new tables `create_all()` handles for free, with no
+backfill needed) are documented in
+`backend/scripts/legacy_migration_exemptions.py`.
 
 #33 is complete: production monitoring (documented `keep-backend-warm.yml`'s
 dual role — cold-start mitigation and the primary automated alert path via

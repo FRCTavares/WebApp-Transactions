@@ -41,6 +41,12 @@ that's generated. The current running build's commit is shown in
   actually work, including that disabling `VITE_SUPABASE_AUTH_ENABLED`
   only hides the login screen — the backend requires a real Supabase JWT
   regardless. (#34)
+- A CI safeguard (`scripts/check_migration_drift.py`, run as
+  `tests/test_migration_drift.py`) that fails the build if an Alembic
+  migration adds or renames a column or table with no matching reference in
+  the legacy SQLite startup migrations (`app/database_migrations.py`) —
+  closing the exact gap that caused two real local-only 500 errors found
+  during #32's e2e work.
 
 ### Fixed
 
