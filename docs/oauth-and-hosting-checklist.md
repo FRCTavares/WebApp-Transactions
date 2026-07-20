@@ -36,23 +36,26 @@ includes that other app's Vercel/Supabase domains alongside this one.
       callback URL for this project. Confirmed 2026-07-20:
       `https://stddbcpdpblqtwcseygg.supabase.co/auth/v1/callback`, which
       matches the live `SUPABASE_URL` on Render.
-- [ ] OAuth scopes requested are minimal — this app only needs `openid`,
-      `email`, and `profile`. Confirm nothing broader was added (Google
-      Cloud Console → Acesso a dados / Data access).
-- [ ] **Publishing status**: was in "Testing" mode (5/100 test users),
+- [x] OAuth scopes requested are minimal — this app only needs `openid`,
+      `email`, and `profile`. Confirmed 2026-07-20: zero scopes configured
+      under non-sensitive/sensitive/restricted in Data access — nothing
+      beyond the default OpenID Connect sign-in flow was ever added.
+- [x] **Publishing status**: was in "Testing" mode (5/100 test users),
       contradicting the recorded "open registration" decision in
-      `docs/production-roadmap.md`. Decision made 2026-07-20: move to "In
-      production". Blocked on three release gates in `docs/privacy.md`,
-      all now satisfied (monitored privacy contact, recorded EU/EEA hosting
-      regions, established incident-response procedure) — confirm the
-      actual "Publicar app" click completed and check whether Google
-      required a verification review.
+      `docs/production-roadmap.md`. Resolved 2026-07-20: moved to "Em
+      produção" (In production) after the three `docs/privacy.md` release
+      gates were satisfied. No verification review was required since the
+      app requests zero sensitive/restricted scopes (confirmed above) — the
+      100-user cap only applies to unverified apps requesting those. Note:
+      Google's separate *brand* verification is still pending, so new users
+      may see a "Google hasn't verified this app" interstitial (with a
+      click-through option) instead of the branded consent screen. Not a
+      registration blocker; not worth pursuing at this scale.
 - [x] Privacy policy link on the consent screen points to a real, public
       page. Built `frontend/src/pages/PrivacyPage.tsx` (public `/privacy`
-      route, mirrors `docs/privacy.md`) since `docs/privacy.md` itself isn't
-      publicly reachable. Set the Branding page's "Link da Política de
-      Privacidade" to `https://web-app-transactions.vercel.app/privacy`
-      once this is merged and deployed.
+      route, mirrors `docs/privacy.md`). Confirmed 2026-07-20: Branding
+      page's "Link da Política de Privacidade" is set to
+      `https://web-app-transactions.vercel.app/privacy`.
 
 ## Supabase (dashboard)
 
