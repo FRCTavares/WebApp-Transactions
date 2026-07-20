@@ -174,13 +174,25 @@ updated: renamed the job, removed `continue-on-error`, and added it to
 - [ ] Add a distinguishing `aria-label` (e.g. `Mark ${description} as owed`) to the mobile "Owed" row action in `TransactionTable.tsx`, matching the pattern already used for its Edit/Delete siblings — currently both desktop and mobile buttons share the plain accessible name "Owed".
 - [ ] Normalize remaining formatting and naming inconsistencies flagged in earlier audits.
 
-## 11. Open Decisions (#35)
+## 11. Open Decisions (#35) — all resolved 2026-07-20
 
-Most of #35 is answered in `docs/production-roadmap.md`. These remain undecided:
+All of #35's remaining items are now decided; see `docs/production-roadmap.md`
+section 6 for the authoritative record of each. Summary:
 
-- [ ] Decide whether local SQLite is a first-class deployment target, not just a development convenience.
-- [ ] Decide whether transaction categories should become foreign-key references.
-- [ ] Decide when availability requirements justify upgrading off Render's free tier (beyond the general triggers already listed).
-- [ ] Confirm market-data provider terms are compatible with the intended public release.
-- [ ] Resolve the market-data ownership discrepancy found during #34: the recorded decision says "user-specific" but the implementation is shared/admin-maintained (`docs/multi-user-data-model.md`) — decide whether to implement per-user market data or correct the recorded decision.
-- [ ] Once all of the above are decided, close #35 and link any resulting implementation tasks here.
+- Local SQLite: **dev convenience only**, not a deployment target.
+- Transaction categories: **stay freeform strings**, not FK references.
+- Render free tier: **owner will never pay for hosting** — the documented
+  Upgrade Triggers stay as reference only, not something to act on.
+- Market-data ownership: **corrected the docs to shared/admin-maintained**
+  (matching the actual implementation), rather than building per-user
+  market data. `docs/multi-user-data-model.md` updated to match.
+- **Real, unresolved legal risk found**: Yahoo's Terms of Service prohibit
+  automated access/scraping and commercial use of Yahoo data without
+  written permission. `yfinance` (this project's market-data source) wraps
+  Yahoo's unofficial endpoints. Acceptable risk at the current
+  personal/small-invited-group scale, but **must be resolved (switch to a
+  licensed market-data provider) before any wider or genuinely public
+  release** — do not treat "Global release readiness" in
+  `docs/production-roadmap.md` as met while this stands.
+
+#35 is closed.

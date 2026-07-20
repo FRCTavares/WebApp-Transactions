@@ -66,6 +66,20 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Corrected the recorded market-data ownership decision
+  (`docs/production-roadmap.md`) to match the actual shared/admin-maintained
+  implementation, instead of the stale "user-specific" recorded decision
+  that never matched the code.
+
+### Security
+
+- Real, unresolved risk identified: Yahoo Finance's Terms of Service
+  prohibit automated scraping and commercial use without written
+  permission. `yfinance` (this project's market-data source) wraps Yahoo's
+  unofficial endpoints. Acceptable at the current personal/small-invited-
+  group scale; must be resolved (licensed provider) before any wider public
+  release. See `docs/production-roadmap.md` decision 13.
+
 - `.github/workflows/keep-backend-warm.yml` was written to ping every 10
   minutes but GitHub Actions silently throttled it to roughly hourly
   (every run succeeded — it just wasn't running as often as intended).

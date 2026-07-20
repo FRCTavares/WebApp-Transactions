@@ -44,14 +44,12 @@ rows (`GET /api/market-prices`, `.../history`, `.../latest` all use
 data from the market-data provider requires `get_privileged_user`
 (`ADMIN_USER_EMAILS`) — see `app/routers/market_prices.py`.
 
-**This doesn't match the recorded decision.** `docs/production-roadmap.md`
-records "Should market data be shared, user-specific, or admin-maintained?
-→ User-specific" as a resolved decision, but the implementation is
-shared reads + admin-maintained writes, not per-user data. This
-discrepancy is flagged rather than silently resolved either way — it's a
-product decision (whether to actually implement per-user market data, or
-correct the recorded decision to match what's built), not a documentation
-fix, and is tracked in `TODO_LIST.md`.
+**Resolved 2026-07-20**: the recorded decision in `docs/production-roadmap.md`
+previously said "user-specific," which didn't match this shared
+reads + admin-maintained writes implementation. The decision has been
+corrected to match the code (shared/admin-maintained) rather than
+implementing per-user market data — simpler, and the owner confirmed
+that's the intended model going forward.
 
 ## Per-user investment tracking, built on shared prices
 

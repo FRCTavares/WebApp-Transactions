@@ -130,18 +130,18 @@ Tracked in issue #35. Answers recorded 2026-07-19; each still needs any
 consequential implementation work tracked as its own task.
 
 1. Invite-only or open registration? **Open registration.**
-2. Shared, user-specific, or admin-maintained market data? **User-specific** (recorded decision) — **does not match the implementation**: `market_prices`/`market_price_history` are shared, global tables with admin-only writes (`ADMIN_USER_EMAILS`), not per-user data. Flagged, not silently resolved either way — see `docs/multi-user-data-model.md` and `TODO_LIST.md`.
+2. Shared, user-specific, or admin-maintained market data? **Shared/admin-maintained** (corrected 2026-07-20 to match the actual implementation — `market_prices`/`market_price_history` are shared, global tables with admin-only writes via `ADMIN_USER_EMAILS`). The original recorded decision said "user-specific"; that was the documentation error, not the code. See `docs/multi-user-data-model.md`.
 3. Is moving weighted-average cost suitable for every tax jurisdiction? **No** — jurisdiction-specific cost-basis rules are out of scope for now.
 4. Required base currencies? **USD, EUR.**
 5. Required launch languages? **Portuguese, English.**
 6. Must the app work during backend cold starts? **Yes.**
-7. Is local SQLite a first-class deployment? **Undecided.**
+7. Is local SQLite a first-class deployment? **No** (confirmed 2026-07-20) — dev convenience only; Postgres/Supabase is the only real deployment target. The legacy SQLite startup migrations exist solely to keep local dev databases working, not as a supported deployment path.
 8. Deleted-account retention outside the backup schedule? **1 week.**
-9. Should transaction categories become foreign-key references? **Undecided.**
+9. Should transaction categories become foreign-key references? **No** (confirmed 2026-07-20) — freeform strings are fine for personal use at this scale; not worth the migration complexity/risk right now. Revisit if that changes.
 10. Is offline use real or only installability? **Real offline use is required, not just installability** — not expected to be exercised often, but must work when it is. **Implemented**: see `docs/pwa-offline.md`.
-11. When does availability justify paid Render? **Undecided** — see Upgrade Triggers above.
+11. When does availability justify paid Render? **Never, by owner preference** (confirmed 2026-07-20) — the owner does not want to pay for hosting regardless of cold-start/availability tradeoffs. The Upgrade Triggers above remain documented for reference but are not something the owner intends to act on.
 12. Are users outside Portugal targeted immediately? **No.**
-13. Are market-data terms compatible with public release? **Undecided.**
+13. Are market-data terms compatible with public release? **No — real, unresolved legal risk if released beyond personal/small-invited-group use.** Researched 2026-07-20: Yahoo's Terms of Service explicitly prohibit automated access/scraping without express written permission, and separately prohibit commercial use of Yahoo API data without permission. `yfinance` (used here) wraps Yahoo's unofficial endpoints — acceptable risk for personal/small-scale use like this project's current "controlled personal and invited-user deployment" (`docs/privacy.md`), but this must be resolved (switch to a licensed market-data provider) before any wider or genuinely public release. Do not treat "Global release readiness" below as met until this is addressed.
 
 ## 7. Deferred (do not prioritize before open work above)
 
