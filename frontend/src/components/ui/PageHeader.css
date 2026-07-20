@@ -37,6 +37,14 @@
   font-size: var(--text-base);
 }
 
+.ui-page-header-meta {
+  margin-top: var(--space-1);
+}
+
+.ui-page-header-meta > * {
+  margin: 0;
+}
+
 .ui-page-header-actions {
   display: flex;
   flex: 0 0 auto;

@@ -6,6 +6,13 @@ export type PageHeaderProps = {
   eyebrow?: ReactNode
   title: ReactNode
   description?: ReactNode
+  /**
+   * Supporting line rendered tight under the title, inside the header block -
+   * a "last refreshed" timestamp, a record count. Kept as its own slot so the
+   * caller keeps control of the element and its ARIA role, rather than being
+   * forced through `description` (which is hidden on narrow viewports).
+   */
+  meta?: ReactNode
   actions?: ReactNode
 }
 
@@ -19,7 +26,13 @@ export type PageHeaderProps = {
  * `description` is rendered but hidden on narrow viewports, matching the
  * behaviour the page sheets were each implementing separately.
  */
-export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  meta,
+  actions,
+}: PageHeaderProps) {
   return (
     <header className="ui-page-header">
       <div className="ui-page-header-titles">
@@ -28,6 +41,7 @@ export function PageHeader({ eyebrow, title, description, actions }: PageHeaderP
         {description ? (
           <p className="ui-page-header-description">{description}</p>
         ) : null}
+        {meta ? <div className="ui-page-header-meta">{meta}</div> : null}
       </div>
       {actions ? <div className="ui-page-header-actions">{actions}</div> : null}
     </header>
