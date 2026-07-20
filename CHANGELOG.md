@@ -61,6 +61,8 @@ that's generated. The current running build's commit is shown in
   `docs/oauth-and-hosting-checklist.md` that Supabase's Free plan includes
   no built-in backups at all, so this had been the only backup mechanism
   all along.
+- Promoted the "Frontend e2e" CI job to a required check, after confirming
+  it has succeeded on every run since being introduced in #32.
 
 ### Fixed
 

@@ -141,12 +141,11 @@ jobs:
         run: npm run build
 
   e2e-tests:
-    name: Frontend e2e (not required yet)
+    name: Frontend e2e
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # New infrastructure - kept out of required-checks until proven stable
-    # across several CI runs. See TODO_LIST.md.
-    continue-on-error: true
+    # Promoted to a required check 2026-07-20 after proving stable across
+    # every CI run since it was introduced (#32). See TODO_LIST.md.
 
     steps:
       - name: Check out repository
@@ -292,6 +291,7 @@ jobs:
       - backend-tests
       - database-validation
       - frontend
+      - e2e-tests
       - dependency-audit
       - repository-hygiene
 
@@ -301,6 +301,7 @@ jobs:
           BACKEND_RESULT: ${{ needs.backend-tests.result }}
           DATABASE_RESULT: ${{ needs.database-validation.result }}
           FRONTEND_RESULT: ${{ needs.frontend.result }}
+          E2E_RESULT: ${{ needs.e2e-tests.result }}
           DEPENDENCY_RESULT: ${{ needs.dependency-audit.result }}
           HYGIENE_RESULT: ${{ needs.repository-hygiene.result }}
         run: |
@@ -310,6 +311,7 @@ jobs:
             "backend-tests=$BACKEND_RESULT" \
             "database-validation=$DATABASE_RESULT" \
             "frontend=$FRONTEND_RESULT" \
+            "e2e-tests=$E2E_RESULT" \
             "dependency-audit=$DEPENDENCY_RESULT" \
             "repository-hygiene=$HYGIENE_RESULT"
 
@@ -317,6 +319,7 @@ jobs:
             "$BACKEND_RESULT" \
             "$DATABASE_RESULT" \
             "$FRONTEND_RESULT" \
+            "$E2E_RESULT" \
             "$DEPENDENCY_RESULT" \
             "$HYGIENE_RESULT"
           do
