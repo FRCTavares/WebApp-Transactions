@@ -1,0 +1,135 @@
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ui-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.ui-button-full {
+  width: 100%;
+}
+
+/* -- Sizes. Three, not eight. ---------------------------------------------- */
+.ui-button-sm {
+  min-height: 1.875rem; /* 30px */
+  padding: 0 var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.ui-button-md {
+  min-height: 2.25rem; /* 36px */
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+}
+
+.ui-button-lg {
+  min-height: 2.75rem; /* 44px - the iOS minimum touch target */
+  padding: 0 var(--space-6);
+  font-size: var(--text-md);
+}
+
+/* -- Variants -------------------------------------------------------------- */
+.ui-button-primary {
+  border-color: var(--color-positive);
+  background: var(--color-positive);
+  color: var(--color-text-inverse);
+}
+
+.ui-button-primary:hover:not(:disabled) {
+  border-color: var(--color-positive-hover);
+  background: var(--color-positive-hover);
+}
+
+.ui-button-primary:active:not(:disabled) {
+  border-color: var(--color-positive-active);
+  background: var(--color-positive-active);
+}
+
+.ui-button-secondary {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ui-button-secondary:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-subtle);
+}
+
+.ui-button-secondary:active:not(:disabled) {
+  background: var(--color-bg-subtle);
+}
+
+.ui-button-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.ui-button-ghost:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.ui-button-ghost:active:not(:disabled) {
+  background: var(--color-bg-subtle);
+}
+
+.ui-button-danger {
+  border-color: var(--color-negative-border);
+  background: var(--color-negative-subtle);
+  color: var(--color-negative-text);
+}
+
+.ui-button-danger:hover:not(:disabled) {
+  border-color: var(--color-negative);
+  background: var(--color-negative-subtle-hover);
+}
+
+.ui-button-danger:active:not(:disabled) {
+  background: var(--color-negative-subtle-hover);
+  color: var(--color-negative-active);
+}
+
+/* -- Disabled -------------------------------------------------------------- */
+.ui-button:disabled {
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+}
+
+/* -- Loading --------------------------------------------------------------- */
+.ui-button.is-loading {
+  cursor: progress;
+}
+
+.ui-button-spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid currentcolor;
+  border-radius: var(--radius-full);
+  border-top-color: transparent;
+  animation: ui-button-spin 600ms linear infinite;
+}
+
+@keyframes ui-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

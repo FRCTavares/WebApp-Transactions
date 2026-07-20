@@ -12,6 +12,29 @@ import {
 
 const THEME_STORAGE_KEY = 'finance-theme-preference'
 
+// Must stay in sync with --theme-bg in styles/theme.css and styles/theme-dark.css,
+// and with the pre-JS fallback <meta name="theme-color"> pair in index.html.
+const THEME_COLOURS: Record<ResolvedTheme, string> = {
+  light: '#f5f5f7',
+  dark: '#09090b',
+}
+
+// index.html ships two media-scoped theme-color tags so the browser chrome is
+// correct before React mounts. Once the resolved theme is known those are
+// replaced by a single unscoped tag, otherwise an explicit light/dark choice
+// that disagrees with the OS preference would be ignored by the browser.
+function applyThemeColour(resolvedTheme: ResolvedTheme) {
+  const head = document.head
+  head
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((tag) => tag.remove())
+
+  const meta = document.createElement('meta')
+  meta.name = 'theme-color'
+  meta.content = THEME_COLOURS[resolvedTheme]
+  head.appendChild(meta)
+}
+
 
 function getSystemTheme(): ResolvedTheme {
   if (
@@ -60,6 +83,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     document.documentElement.dataset.theme = resolvedTheme
     document.documentElement.dataset.themePreference = themePreference
     document.documentElement.style.colorScheme = resolvedTheme
+    applyThemeColour(resolvedTheme)
     window.localStorage.setItem(THEME_STORAGE_KEY, themePreference)
   }, [themePreference, resolvedTheme])
 

@@ -2,19 +2,17 @@
    Keep page-specific styles in their own files. */
 
 :root {
-  background: #f5f5f7;
+  background: var(--color-bg);
 }
 
 body {
-  background:
-    radial-gradient(circle at top left, rgb(255 255 255 / 0.9), transparent 28rem),
-    #f5f5f7;
+  background: var(--bg-canvas);
 }
 
 @media (min-width: 801px) {
   .app-shell {
     grid-template-columns: 214px minmax(0, 1fr);
-    background: #f5f5f7;
+    background: var(--color-bg);
   }
 
   .sidebar {
@@ -204,7 +202,7 @@ body {
 
 @media (max-width: 800px) {
   body {
-    background: #f5f5f7;
+    background: var(--color-bg);
   }
 
   .mobile-bottom-nav {
@@ -225,7 +223,7 @@ body {
   }
 
   main {
-    background: #f5f5f7;
+    background: var(--color-bg);
   }
 
   .global-topbar {

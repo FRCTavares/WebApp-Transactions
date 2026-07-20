@@ -1,0 +1,93 @@
+.ui-icon-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.ui-icon-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Square unless a visible label widens it. */
+.ui-icon-button-sm {
+  width: 1.875rem;
+  height: 1.875rem;
+}
+
+.ui-icon-button-md {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.ui-icon-button-lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.ui-icon-button-with-label {
+  width: auto;
+  padding: 0 var(--space-5);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+}
+
+.ui-icon-button-ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.ui-icon-button-ghost:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.ui-icon-button-secondary {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ui-icon-button-secondary:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-subtle);
+}
+
+.ui-icon-button-primary {
+  border-color: var(--color-positive);
+  background: var(--color-positive);
+  color: var(--color-text-inverse);
+}
+
+.ui-icon-button-primary:hover:not(:disabled) {
+  border-color: var(--color-positive-hover);
+  background: var(--color-positive-hover);
+}
+
+.ui-icon-button-danger {
+  background: transparent;
+  color: var(--color-negative-text);
+}
+
+.ui-icon-button-danger:hover:not(:disabled) {
+  background: var(--color-negative-subtle);
+  color: var(--color-negative);
+}
+
+.ui-icon-button:disabled {
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+}
+
+.ui-icon-button:disabled:hover {
+  background: transparent;
+}

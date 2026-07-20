@@ -1,0 +1,64 @@
+.ui-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ui-card-pad-none {
+  padding: 0;
+}
+
+.ui-card-pad-sm {
+  padding: var(--space-5);
+}
+
+.ui-card-pad-md {
+  padding: var(--space-6);
+}
+
+.ui-card-pad-lg {
+  padding: var(--space-8);
+}
+
+.ui-card-flat {
+  box-shadow: none;
+}
+
+.ui-card-raised {
+  box-shadow: var(--elevation-xs);
+}
+
+.ui-card-floating {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-raised);
+  box-shadow: var(--elevation-md);
+}
+
+.ui-card-interactive {
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.ui-card-interactive:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-hover);
+}
+
+.ui-card-interactive:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (max-width: 800px) {
+  .ui-card-pad-md {
+    padding: var(--space-5);
+  }
+
+  .ui-card-pad-lg {
+    padding: var(--space-6);
+  }
+}

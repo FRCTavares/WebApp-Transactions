@@ -1,0 +1,114 @@
+/* ---------------------------------------------------------------------------
+   DARK THEME - semantic overrides only.
+
+   This file redefines roles. It must never contain a component selector.
+   If a component renders wrong in dark mode, the fix belongs in that
+   component's CSS (by making it use a semantic token) or in semantic.css (by
+   adding the missing role) - not here.
+
+   That constraint is the entire point. The file this replaces, theme-dark.css,
+   is 631 lines and opens with a list of ~25 comma-separated component
+   selectors, because the light rules hardcoded their colours instead of using
+   roles. Every new component had to be manually added to that list or it
+   rendered light-on-dark. Nothing needs to be added here, ever.
+   --------------------------------------------------------------------------- */
+
+:root[data-theme='dark'] {
+  /* -- Backgrounds ---------------------------------------------------------- */
+  --color-bg: var(--zinc-950);
+  --color-bg-subtle: #111113;
+  --bg-canvas:
+    radial-gradient(circle at top left, rgb(37 99 235 / 0.16), transparent 30rem),
+    var(--color-bg);
+
+  /* -- Surfaces -------------------------------------------------------------
+     Dark elevation works by getting lighter, not by casting a bigger shadow,
+     so surface-sunken is *lighter* than surface here - the inverse of light
+     mode. This is why these are roles and not "grey-100". */
+  --color-surface: var(--zinc-900);
+  --color-surface-raised: #202024;
+  --color-surface-sunken: #202024;
+  --color-surface-hover: #232429;
+  --color-surface-subtle: #202024;
+
+  /* -- Borders --------------------------------------------------------------- */
+  --color-border: #2f3037;
+  --color-border-strong: #3f414a;
+  --color-border-focus: var(--blue-400);
+
+  /* -- Text ------------------------------------------------------------------ */
+  --color-text: var(--zinc-100);
+  --color-text-muted: var(--zinc-400);
+  --color-text-subtle: var(--zinc-500);
+  --color-text-inverse: var(--zinc-950);
+
+  /* -- Accent ---------------------------------------------------------------
+     Interactive ramps invert direction in dark mode: hover brightens, because
+     darkening against a near-black surface reads as the control going dead. */
+  --color-accent: var(--blue-400);
+  --color-accent-hover: var(--blue-300);
+  --color-accent-active: var(--blue-200);
+  --color-accent-subtle: rgb(37 99 235 / 0.18);
+  --color-accent-border: rgb(96 165 250 / 0.32);
+  --color-accent-text: var(--blue-300);
+
+  /* -- Positive -------------------------------------------------------------- */
+  --color-positive: var(--green-600);
+  --color-positive-hover: var(--green-500);
+  --color-positive-active: var(--green-600);
+  --color-positive-subtle: rgb(22 163 74 / 0.18);
+  --color-positive-border: rgb(74 222 128 / 0.32);
+  --color-positive-text: var(--green-400);
+
+  /* -- Negative -------------------------------------------------------------- */
+  --color-negative: var(--red-500);
+  --color-negative-hover: var(--red-400);
+  --color-negative-active: var(--red-300);
+  --color-negative-subtle: rgb(220 38 38 / 0.18);
+  --color-negative-border: rgb(248 113 113 / 0.45);
+  --color-negative-text: var(--red-200);
+
+  /* -- Warning --------------------------------------------------------------- */
+  --color-warning: var(--amber-400);
+  --color-warning-subtle: rgb(245 158 11 / 0.16);
+  --color-warning-border: rgb(251 191 36 / 0.35);
+  --color-warning-text: var(--amber-400);
+
+  /* -- Expense --------------------------------------------------------------- */
+  --color-expense: var(--orange-400);
+  --color-expense-subtle: rgb(249 115 22 / 0.18);
+  --color-expense-border: rgb(251 146 60 / 0.32);
+  --color-expense-text: var(--orange-300);
+
+  /* -- Investment ------------------------------------------------------------ */
+  --color-investment: var(--violet-400);
+  --color-investment-subtle: rgb(139 92 246 / 0.18);
+  --color-investment-border: rgb(167 139 250 / 0.32);
+  --color-investment-text: var(--violet-300);
+
+  /* -- Elevation ------------------------------------------------------------
+     Shadows do very little on a near-black canvas; the heavier alpha keeps
+     modals separable from the page without a visible halo. */
+  --shadow-color: rgb(0 0 0 / 0.35);
+  --shadow-color-strong: rgb(0 0 0 / 0.55);
+
+  --color-scrim: rgb(0 0 0 / 0.62);
+
+  /* -- Charts ---------------------------------------------------------------
+     Series colours shift one step lighter so they hold up against the dark
+     canvas. Order is preserved, so a category keeps its slot across themes. */
+  --chart-1: #6f98f7;
+  --chart-2: var(--green-400);
+  --chart-3: var(--orange-400);
+  --chart-4: var(--violet-400);
+  --chart-5: var(--blue-200);
+  --chart-6: var(--amber-400);
+  --chart-7: var(--red-400);
+  --chart-8: var(--green-300);
+
+  --chart-grid: #2f3037;
+  --chart-axis: #4a4c55;
+  --chart-axis-text: #8f95a1;
+  --chart-baseline: rgb(174 179 189 / 0.42);
+  --chart-track: #27272a;
+}

@@ -17,7 +17,9 @@
   --weight-strong: 700;
   --weight-label: 800;
 
-  --tracking-tight: -0.03em;
+  /* --tracking-tight now lives in tokens/primitives.css, which defines the
+     identical value (-0.03em) and loads first. The remaining two below are
+     folded into the token scale in Phase 2. */
   --tracking-metric: -0.05em;
   --tracking-label: 0.04em;
 }

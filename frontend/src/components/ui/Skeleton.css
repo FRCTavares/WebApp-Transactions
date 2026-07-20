@@ -1,0 +1,51 @@
+.ui-skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-subtle) 25%,
+    var(--color-surface-hover) 37%,
+    var(--color-bg-subtle) 63%
+  );
+  background-size: 400% 100%;
+  animation: ui-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.ui-skeleton-stack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ui-skeleton-text {
+  height: 0.75em;
+  border-radius: var(--radius-sm);
+}
+
+.ui-skeleton-block {
+  height: 100%;
+  border-radius: var(--radius-lg);
+}
+
+.ui-skeleton-circle {
+  border-radius: var(--radius-full);
+  aspect-ratio: 1;
+}
+
+@keyframes ui-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* base.css already neutralises animation globally under reduced motion, but
+   a shimmering placeholder is the exact thing that should hold still, so it
+   is stated here too rather than relying on that. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton {
+    background: var(--color-bg-subtle);
+    animation: none;
+  }
+}

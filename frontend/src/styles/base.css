@@ -1,9 +1,9 @@
 :root {
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: #111827;
-  background: #f3f4f6;
+    "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg-subtle);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -38,19 +38,26 @@ textarea {
 }
 
 button {
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #111827;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
   cursor: pointer;
-  padding: 8px 11px;
+  padding: var(--space-4) 11px;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 
-button:hover {
-  border-color: #9ca3af;
-  background: #f9fafb;
+button:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-subtle);
 }
 
+button:active:not(:disabled) {
+  background: var(--color-bg-subtle);
+}
 
 button:focus:not(:focus-visible) {
   outline: none;
@@ -60,24 +67,59 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
-
+/* A real disabled palette rather than opacity, which drags borders and text
+   below contrast minimums and compounds when a disabled control sits on a
+   tinted surface. */
 button:disabled {
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text-subtle);
   cursor: not-allowed;
-  opacity: 0.5;
 }
+
 input,
 select,
 textarea {
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  padding: 8px 10px;
-  min-width: 220px;
-  background: #ffffff;
-  color: #111827;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+
+  /* Width is the layout's job, not the control's.
+
+     This replaces a global `min-width: 220px`, which forced every narrow
+     context in the app to fight it back - `.table-input`, `.modal-card input`,
+     the owed-split dialog and ~20 other rules all carry a `min-width: 0` that
+     exists only to undo it. The two places that genuinely need an intrinsic
+     width already declare their own (`.owed-toolbar select` at 220px,
+     `.table-wrap input` at 180px).
+
+     `min-width: 0` is set explicitly because flex and grid items default to
+     `min-width: auto`, which refuses to shrink below the input's intrinsic
+     size and is the direct cause of the horizontal overflow those rules were
+     patching. */
+  min-width: 0;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-subtle);
 }
 
 h1 {
@@ -96,19 +138,19 @@ h2 {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 th,
 td {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   padding: 10px;
   text-align: left;
   vertical-align: top;
 }
 
 th {
-  background: #f9fafb;
+  background: var(--color-surface-subtle);
   font-weight: 600;
 }
 
@@ -122,8 +164,8 @@ th {
   position: sticky;
   top: 0;
   height: 100vh;
-  border-right: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
   padding: 18px;
   overflow-y: auto;
 }
@@ -138,7 +180,7 @@ th {
 
 .sidebar-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -149,7 +191,7 @@ th {
 
 .nav-group h3 {
   margin: 0 0 8px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -167,9 +209,9 @@ th {
 }
 
 .sidebar button.active {
-  border-color: #e5e7eb;
-  background: #f3f4f6;
-  color: #111827;
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
 }
 
 main {
@@ -187,15 +229,15 @@ main {
 }
 
 .card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   padding: 14px;
 }
 
 .card span {
   display: block;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
   margin-bottom: 8px;
 }
@@ -226,10 +268,10 @@ main {
 }
 
 .table-wrap {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
   overflow-x: auto;
-  background: #ffffff;
+  background: var(--color-surface);
   margin-bottom: 20px;
 }
 
@@ -238,7 +280,7 @@ main {
 }
 
 .muted {
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .small {
@@ -246,26 +288,35 @@ main {
 }
 
 .status {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin: 12px 0;
   padding: 10px 12px;
 }
 
 .status-error {
-  border: 1px solid #fca5a5;
-  background: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--color-negative-border);
+  background: var(--color-negative-subtle);
+  color: var(--color-negative-text);
 }
 
 .status-ok {
-  border: 1px solid #86efac;
-  background: #f0fdf4;
-  color: #166534;
+  border: 1px solid var(--color-positive-border);
+  background: var(--color-positive-subtle);
+  color: var(--color-positive-text);
+}
+
+/* `.status-info` was used in 10 places across 5 pages but defined in no
+   stylesheet, so every info banner in the app rendered as bare padded text
+   with no background, border or colour. */
+.status-info {
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
 }
 
 @media (max-width: 800px) {
   body {
-    background: #f9fafb;
+    background: var(--color-surface-subtle);
   }
 
   button {
@@ -290,9 +341,9 @@ main {
 }
 
 .manual-form {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -321,12 +372,12 @@ main {
 }
 
 .danger-button {
-  border-color: #fca5a5;
-  color: #991b1b;
+  border-color: var(--color-negative-border);
+  color: var(--color-negative-text);
 }
 
 .danger-button:hover {
-  background: #fef2f2;
+  background: var(--color-negative-subtle);
 }
 
 .action-group {
@@ -336,9 +387,9 @@ main {
 }
 
 .filter-panel {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -360,14 +411,24 @@ main {
 }
 
 .primary-button {
-  border-color: #16a34a;
-  background: #16a34a;
-  color: #ffffff;
+  border-color: var(--color-positive);
+  background: var(--color-positive);
+  color: var(--color-text-inverse);
   font-weight: 600;
 }
 
 .primary-button:hover {
-  background: #16a34a;
+  border-color: var(--color-positive-hover);
+  background: var(--color-positive-hover);
+}
+
+.primary-button:active:not(:disabled) {
+  border-color: var(--color-positive-active);
+  background: var(--color-positive-active);
+}
+
+.danger-button:active:not(:disabled) {
+  background: var(--color-negative-subtle-hover);
 }
 
 .compact-filter-panel {
@@ -391,7 +452,7 @@ main {
 
 .compact-filter-panel summary::after {
   content: "Show";
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 500;
 }
@@ -410,9 +471,9 @@ main {
 }
 
 .filter-count {
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #3730a3;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
   font-size: 12px;
   padding: 3px 8px;
 }
@@ -425,8 +486,8 @@ main {
 }
 
 .inline-create-row td {
-  background: #f0fdf4;
-  border-bottom: 1px solid #bbf7d0;
+  background: var(--color-positive-subtle);
+  border-bottom: 1px solid var(--color-positive-border);
 }
 
 .table-input {
@@ -444,8 +505,8 @@ main {
 }
 
 .inline-edit-row td {
-  background: #fffbeb;
-  border-bottom: 1px solid #fde68a;
+  background: var(--color-warning-subtle);
+  border-bottom: 1px solid var(--color-warning-border);
 }
 
 .inline-edit-row .action-group {
@@ -472,7 +533,7 @@ main {
 @media (max-width: 800px) {
   .sidebar {
     padding: 10px 12px 12px;
-    background: #ffffff;
+    background: var(--color-surface);
   }
 
   .sidebar-header {
@@ -527,7 +588,7 @@ main {
 
   .card {
     padding: 10px 12px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
   }
 
   .card span {
@@ -547,7 +608,7 @@ main {
   .filter-panel,
   .manual-form {
     padding: 12px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
   }
 
   .compact-filter-panel summary {
@@ -565,7 +626,7 @@ main {
 
 .account-greeting {
   margin: 0;
-  color: #111827;
+  color: var(--color-text);
   font-size: 18px;
   font-weight: 600;
   line-height: 1.2;
@@ -573,7 +634,7 @@ main {
 
 .account-subtitle {
   margin: 3px 0 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -587,8 +648,8 @@ main {
     top: 0;
     z-index: 40;
     padding: 10px 12px;
-    border-bottom: 1px solid #e5e7eb;
-    background: #ffffff;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
   }
 
   .sidebar-header {
@@ -633,7 +694,7 @@ main {
     grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--color-border);
     background: rgb(255 255 255 / 0.97);
     backdrop-filter: blur(14px);
   }
@@ -642,26 +703,30 @@ main {
     min-height: 40px;
     padding: 4px 2px;
     border: 0;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     background: transparent;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 11px;
     font-weight: 600;
     text-align: center;
   }
 
   .mobile-bottom-nav button.active {
-    background: #f3f4f6;
-    color: #111827;
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
   }
 
-  .mobile-bottom-nav button:focus {
+  .mobile-bottom-nav button:focus:not(:focus-visible) {
     outline: none;
   }
 
+  /* Was `outline: none` plus a 1px inset #cbd5e1 ring: too low-contrast to
+     serve as a focus indicator on white, and invisible in dark mode. The bar
+     is only 40px tall, so the ring is inset rather than offset to avoid it
+     being clipped by the fixed nav. */
   .mobile-bottom-nav button:focus-visible {
-    outline: none;
-    box-shadow: inset 0 0 0 1px #cbd5e1;
+    outline: var(--focus-ring);
+    outline-offset: calc(-1 * var(--focus-ring-width));
   }
 
   main {
@@ -717,7 +782,7 @@ main {
 
 .dashboard-hero p {
   margin: 0 0 4px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
   font-weight: 700;
 }
@@ -757,9 +822,9 @@ main {
   display: grid;
   gap: 10px;
   padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
 .mobile-more-section-header {
@@ -774,7 +839,7 @@ main {
 
 .mobile-more-section-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -784,7 +849,7 @@ main {
 }
 
 .mobile-more-danger {
-  color: #991b1b;
+  color: var(--color-negative-text);
 }
 
 @media (max-width: 800px) {
@@ -794,44 +859,44 @@ main {
     gap: 4px;
     margin-bottom: 12px;
     padding: 4px;
-    border: 1px solid #d1d5db;
-    border-radius: 999px;
-    background: #ffffff;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
   }
 
   .mobile-segmented-control button {
     min-height: 38px;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: transparent;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 14px;
     font-weight: 600;
     text-align: center;
   }
 
   .mobile-segmented-control button.active {
-    background: #111827;
-    color: #ffffff;
+    background: var(--color-text);
+    color: var(--color-text-inverse);
   }
 
   .mobile-more-actions button {
     min-height: 42px;
     padding: 8px 10px;
-    border-radius: 10px;
-    background: #ffffff;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
     text-align: left;
     font-size: 14px;
     font-weight: 600;
   }
 
   .mobile-more-actions button:hover {
-    background: #f9fafb;
+    background: var(--color-surface-subtle);
   }
 
   .mobile-more-danger {
-    border-color: #fecaca;
-    background: #fff7f7 !important;
+    border-color: var(--color-negative-border);
+    background: var(--color-negative-subtle) !important;
   }
 }
 
@@ -849,7 +914,7 @@ main {
   }
 
   .global-period-selector {
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 }
 
@@ -868,7 +933,7 @@ main {
     margin-right: 0;
     margin-left: 0;
     padding: 14px;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
   }
 
   .manual-form h2 {

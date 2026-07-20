@@ -423,6 +423,19 @@
   font-weight: 850;
 }
 
+/* Needed because the rule above matches base.css's .primary-button:hover at
+   equal specificity and wins on source order, which would otherwise leave this
+   page's primary action with no hover feedback. */
+.owed-page-polished .primary-button:hover {
+  border-color: #166534;
+  background: #15803d;
+}
+
+.owed-page-polished .primary-button:active:not(:disabled) {
+  border-color: #14532d;
+  background: #166534;
+}
+
 .owed-page-polished .owed-toolbar {
   display: flex;
   align-items: end;

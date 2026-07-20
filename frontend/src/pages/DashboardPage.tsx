@@ -4,8 +4,24 @@ import { listTransactions } from '../api/transactions'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
 import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary, Transaction } from '../types/api'
 import { formatMoney, formatMonthLabel } from '../utils/format'
+import { ArrowDownLeft, ArrowUpRight, Equal, Receipt, TrendingUp } from 'lucide-react'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableMessageRow,
+  TableRow,
+} from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { usePeriod } from '../hooks/usePeriod'
 
@@ -89,6 +105,18 @@ function getReasonText(transaction: Transaction) {
   }
 
   return transaction.description
+}
+
+/**
+ * The reason line only earns its space when it says something the description
+ * does not. With no notes and a raw_description equal to the description, the
+ * fallback above returns the description itself, which rendered every recent
+ * transaction twice ("Prenda de Anos Ze / Prenda de Anos Ze").
+ */
+function getSecondaryReasonText(transaction: Transaction) {
+  const reason = getReasonText(transaction)
+
+  return reason === transaction.description ? null : reason
 }
 
 function buildCategoryRollups(items: CategorySummaryItem[]) {
@@ -324,15 +352,14 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
   return (
     <section className="app-page dashboard-page">
-      <div className="page-title-block dashboard-hero">
-        <p>{greeting}, {displayName}</p>
-        <h1>Dashboard</h1>
-        {lastUpdatedAt && (
-          <p className="muted small" role="status">
-            Data refreshed at {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
-          </p>
-        )}
-      </div>
+      <PageHeader eyebrow={`${greeting}, ${displayName}`} title="Dashboard" />
+
+      {lastUpdatedAt && (
+        <p className="muted small dashboard-refreshed-at" role="status">
+          Data refreshed at{' '}
+          {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+        </p>
+      )}
 
       <StatusMessage error={error} />
 
@@ -343,53 +370,84 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       )}
 
       {isDashboardLoading && summary === null && (
-        <section className="dashboard-loading-panel" role="status" aria-live="polite">
-          <div className="dashboard-loading-spinner" aria-hidden="true" />
-          <div>
-            <p className="eyebrow">Loading data</p>
-            <h2>Preparing dashboard</h2>
-            <p>The hosted backend may need a few seconds to wake up.</p>
+        <>
+          <p className="dashboard-loading-note" role="status" aria-live="polite">
+            <strong>Preparing dashboard</strong>
+            <span>The hosted backend may need a few seconds to wake up.</span>
+          </p>
+
+          {/* Skeletons stand at the real height of what replaces them, so
+              nothing reflows when the data lands. */}
+          <div className="dashboard-summary-grid" aria-hidden="true">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Card key={index} padding="md" className="dashboard-metric-card">
+                <Skeleton variant="text" width="45%" />
+                <Skeleton variant="text" width="70%" height="1.5rem" />
+                <Skeleton variant="text" width="85%" />
+              </Card>
+            ))}
           </div>
-        </section>
+
+          <div className="dashboard-main-grid" aria-hidden="true">
+            <Card padding="md">
+              <Skeleton variant="text" width="40%" height="1.25rem" />
+              <Skeleton variant="block" height="9rem" />
+            </Card>
+            <Card padding="md">
+              <Skeleton variant="text" width="40%" height="1.25rem" />
+              <Skeleton variant="block" height="9rem" />
+            </Card>
+          </div>
+        </>
       )}
 
       {summary && (
         <>
           <div className="dashboard-summary-grid" role="list" aria-label="Monthly key metrics">
-            <article
+            <Card
+              as="article"
+              padding="md"
               className="dashboard-metric-card dashboard-metric-income"
               role="listitem"
               aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}
             >
-              <span className="dashboard-metric-icon" aria-hidden="true">↓</span>
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <ArrowDownLeft size={16} />
+              </span>
               <div>
                 <p>Money In</p>
                 <strong>{formatMoney(summary.money_in)}</strong>
                 <small>Income received</small>
               </div>
-            </article>
+            </Card>
 
-            <article
+            <Card
+              as="article"
+              padding="md"
               className="dashboard-metric-card dashboard-metric-spent"
               role="listitem"
               aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}
             >
-              <span className="dashboard-metric-icon" aria-hidden="true">↑</span>
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <ArrowUpRight size={16} />
+              </span>
               <div>
                 <p>Money Out</p>
                 <strong>{formatMoney(summary.personal_money_out)}</strong>
                 <small>Excludes owed/reimbursable spending</small>
               </div>
-            </article>
+            </Card>
 
-            <article
+            <Card
+              as="article"
+              padding="md"
               aria-label={`Investment change: ${investmentChange ? formatMoney(investmentChange) : 'unavailable'}. ${investmentMonthlyChange?.is_estimated ? 'Estimated from the nearest available historical market and foreign exchange prices.' : 'Calculated from available market and foreign exchange prices.'}`}
-              className={`dashboard-metric-card dashboard-metric-${getMetricTone(
-                investmentChange,
-              )}`}
+              className={`dashboard-metric-card dashboard-metric-${getMetricTone(investmentChange)}`}
               role="listitem"
             >
-              <span className="dashboard-metric-icon" aria-hidden="true">↗</span>
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <TrendingUp size={16} />
+              </span>
               <div>
                 <p>Investments</p>
                 <strong>{investmentChange ? formatMoney(investmentChange) : '-'}</strong>
@@ -399,24 +457,28 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                     : 'Unrealised monthly gain/loss'}
                 </small>
               </div>
-            </article>
+            </Card>
 
-            <article
+            <Card
+              as="article"
+              padding="md"
               aria-label={`Net: ${formatMoney(netAmount)}. Income minus personal spending plus investment change.`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
               role="listitem"
             >
-              <span className="dashboard-metric-icon" aria-hidden="true">=</span>
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <Equal size={16} />
+              </span>
               <div>
                 <p>Net</p>
                 <strong>{formatMoney(netAmount)}</strong>
                 <small>Income - spent + investments</small>
               </div>
-            </article>
+            </Card>
           </div>
 
           <div className="dashboard-main-grid">
-            <section className="dashboard-panel dashboard-monthly-summary">
+            <Card as="section" padding="md" className="dashboard-monthly-summary">
               <div className="dashboard-panel-header">
                 <div>
                   <h2>Monthly summary</h2>
@@ -448,7 +510,9 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                   <div className="dashboard-summary-bar-track">
                     <span
                       className="dashboard-summary-bar dashboard-summary-bar-spent"
-                      style={{ width: getSummaryBarWidth(summary.personal_money_out, summaryMaxValue) }}
+                      style={{
+                        width: getSummaryBarWidth(summary.personal_money_out, summaryMaxValue),
+                      }}
                     />
                   </div>
                 </div>
@@ -469,9 +533,9 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                   </div>
                 </div>
               </div>
-            </section>
+            </Card>
 
-            <section className="dashboard-panel dashboard-spending-panel">
+            <Card as="section" padding="md" className="dashboard-spending-panel">
               {categories && (
                 <ExpenseCategoryDonutChart
                   items={sortedCategoryRollups}
@@ -481,43 +545,51 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                   onSelectCategory={handleCategoryClick}
                 />
               )}
-            </section>
+            </Card>
           </div>
 
           {selectedCategory && (
-            <section className="dashboard-panel category-detail-panel">
+            <Card as="section" padding="md" className="category-detail-panel">
               <div className="category-detail-header">
                 <div>
                   <h3>{selectedCategory} details</h3>
                   <p className="muted small">Transactions behind the selected category.</p>
                 </div>
-                <button type="button" onClick={() => handleCategoryClick(selectedCategory)}>
+                <Button size="sm" onClick={() => handleCategoryClick(selectedCategory)}>
                   Close
-                </button>
+                </Button>
               </div>
 
               {categoryDetailsLoading ? (
-                <p className="muted">Loading category details...</p>
+                <Skeleton variant="text" lines={4} />
               ) : (
                 <>
                   <div className="dashboard-mobile-category-transactions">
                     {categoryTransactions.map((transaction) => (
-                      <article key={transaction.id} className="dashboard-mobile-category-transaction">
+                      <article
+                        key={transaction.id}
+                        className="dashboard-mobile-category-transaction"
+                      >
                         <div className="dashboard-mobile-category-transaction-main">
                           <div>
                             <strong>{transaction.description}</strong>
                             <p>{transaction.date}</p>
                           </div>
-                          <strong>{formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}</strong>
+                          <strong>
+                            {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
+                          </strong>
                         </div>
 
                         <div className="dashboard-mobile-category-transaction-meta">
                           {getTransactionOwedAmount(transaction) > 0 && (
-                            <span className="badge badge-neutral">
-                              Owed {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
-                            </span>
+                            <Badge tone="neutral" size="sm">
+                              Owed{' '}
+                              {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
+                            </Badge>
                           )}
-                          <span className="muted small">Gross {formatMoney(transaction.amount)}</span>
+                          <span className="muted small">
+                            Gross {formatMoney(transaction.amount)}
+                          </span>
                         </div>
 
                         <p className="muted small">{getReasonText(transaction)}</p>
@@ -525,63 +597,69 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                     ))}
 
                     {categoryTransactions.length === 0 && (
-                      <div className="dashboard-mobile-category-empty">
-                        <p className="muted">No transactions found for this category.</p>
-                      </div>
+                      <EmptyState
+                        size="sm"
+                        icon={Receipt}
+                        title="No transactions found for this category."
+                      />
                     )}
                   </div>
 
-                  <div className="table-wrap dashboard-category-detail-table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Description</th>
-                          <th className="right">Personal</th>
-                          <th className="right">Owed</th>
-                          <th className="right">Gross</th>
-                          <th>Reason</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                  <div className="dashboard-category-detail-table-wrap">
+                    <Table label={`${selectedCategory} transactions`} minWidth="52rem">
+                      <TableHead>
+                        <TableRow>
+                          <TableHeaderCell>Date</TableHeaderCell>
+                          <TableHeaderCell>Description</TableHeaderCell>
+                          <TableHeaderCell align="right">Personal</TableHeaderCell>
+                          <TableHeaderCell align="right">Owed</TableHeaderCell>
+                          <TableHeaderCell align="right">Gross</TableHeaderCell>
+                          <TableHeaderCell>Reason</TableHeaderCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {categoryTransactions.map((transaction) => (
-                          <tr key={transaction.id}>
-                            <td>{transaction.date}</td>
-                            <td>{transaction.description}</td>
-                            <td className="right amount-primary">
+                          <TableRow key={transaction.id}>
+                            <TableCell>{transaction.date}</TableCell>
+                            <TableCell>{transaction.description}</TableCell>
+                            <TableCell align="right" numeric>
                               {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
-                            </td>
-                            <td className="right amount-muted">
-                              {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
-                            </td>
-                            <td className="right amount-muted">{formatMoney(transaction.amount)}</td>
-                            <td>
+                            </TableCell>
+                            <TableCell align="right" numeric>
+                              <span className="amount-muted">
+                                {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
+                              </span>
+                            </TableCell>
+                            <TableCell align="right" numeric>
+                              <span className="amount-muted">
+                                {formatMoney(transaction.amount)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
                               <span className="muted small">{getReasonText(transaction)}</span>
                               {transaction.owed_person && (
-                                <span className="badge badge-neutral category-detail-badge">
+                                <Badge tone="neutral" size="sm">
                                   owed by {transaction.owed_person}
-                                </span>
+                                </Badge>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
 
                         {categoryTransactions.length === 0 && (
-                          <tr>
-                            <td colSpan={6}>
-                              <p className="muted">No transactions found for this category.</p>
-                            </td>
-                          </tr>
+                          <TableMessageRow colSpan={6}>
+                            No transactions found for this category.
+                          </TableMessageRow>
                         )}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </>
               )}
-            </section>
+            </Card>
           )}
 
-          <section className="dashboard-panel dashboard-recent-panel">
+          <Card as="section" padding="md" className="dashboard-recent-panel">
             <div className="dashboard-panel-header">
               <div>
                 <h2>Recent transactions</h2>
@@ -594,9 +672,13 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 <article key={transaction.id} className="dashboard-recent-row">
                   <div className="dashboard-recent-main">
                     <strong>{transaction.description}</strong>
-                    <span>{getReasonText(transaction)}</span>
+                    {getSecondaryReasonText(transaction) && (
+                      <span>{getSecondaryReasonText(transaction)}</span>
+                    )}
                   </div>
-                  <span className="dashboard-recent-category">{getCategoryLabel(transaction)}</span>
+                  <span className="dashboard-recent-category">
+                    {getCategoryLabel(transaction)}
+                  </span>
                   <span className="dashboard-recent-date">{transaction.date}</span>
                   <strong className="dashboard-recent-amount">
                     {formatMoney(getRecentTransactionAmount(transaction).toFixed(2))}
@@ -605,10 +687,15 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               ))}
 
               {recentTransactions.length === 0 && (
-                <p className="muted">No recent spending found for this month.</p>
+                <EmptyState
+                  size="sm"
+                  icon={Receipt}
+                  title="No recent spending found for this month."
+                  description="Spending you record this month will appear here."
+                />
               )}
             </div>
-          </section>
+          </Card>
         </>
       )}
     </section>
