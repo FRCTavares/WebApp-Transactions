@@ -352,14 +352,22 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
   return (
     <section className="app-page dashboard-page">
-      <PageHeader eyebrow={`${greeting}, ${displayName}`} title="Dashboard" />
-
-      {lastUpdatedAt && (
-        <p className="muted small dashboard-refreshed-at" role="status">
-          Data refreshed at{' '}
-          {lastUpdatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
-        </p>
-      )}
+      <PageHeader
+        eyebrow={`${greeting}, ${displayName}`}
+        title="Dashboard"
+        meta={
+          lastUpdatedAt && (
+            <p className="muted small" role="status">
+              Data refreshed at{' '}
+              {lastUpdatedAt.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              .
+            </p>
+          )
+        }
+      />
 
       <StatusMessage error={error} />
 

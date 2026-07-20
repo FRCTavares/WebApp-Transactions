@@ -1,6 +1,11 @@
+/* Radius is --radius-xl (20px), not the --radius-lg you might expect for a
+   card. The app's established card idiom was 1.25rem, and dropping to 14px
+   made panels read boxier than the surrounding chrome (the period selector
+   and sidebar items keep their own radii). Matching the existing look is the
+   brief here. */
 .ui-card {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--color-surface);
   color: var(--color-text);
 }

@@ -1,5 +1,4 @@
-/* `:not(.ui-button,
-.ui-icon-button)` throughout this file: these legacy
+/* `:not(:where(.ui-button, .ui-icon-button))` throughout this file: these legacy
    element-level dark rules have specificity (0,
 2,
 1) and were overriding the
@@ -138,16 +137,14 @@ and this exclusion with it. */
 :root[data-theme='dark'] .investment-holding-ticker,
 :root[data-theme='dark'] .investment-holding-meta {
   color: var(--theme-muted);
-}:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
-.ui-icon-button),
+}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: var(--theme-border-strong);
   background: var(--theme-surface-muted);
   color: var(--theme-text);
-}:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
-.ui-icon-button):hover,
+}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):hover,
 :root[data-theme='dark'] .settings-action-button:hover,
 :root[data-theme='dark'] .sidebar button:hover {
   border-color: #3b82f6;
@@ -374,8 +371,7 @@ since darkening against a near-black surface reads as the control going dead. */
   color: #aeb4c0;
 }:root[data-theme='dark'] .eyebrow {
   color: #8f96a7;
-}:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
-.ui-icon-button),
+}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
@@ -386,8 +382,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
-}:root[data-theme='dark'] button:not(.ui-button, .ui-icon-button):not(.ui-button,
-.ui-icon-button):hover {
+}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):hover {
   border-color: rgb(122 183 255 / 0.36);
   background: rgb(255 255 255 / 0.075);
 }:root[data-theme='dark'] .global-period-selector {
