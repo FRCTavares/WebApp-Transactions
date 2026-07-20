@@ -85,8 +85,12 @@ See [`CHANGELOG.md`](CHANGELOG.md) for release notes and how to maintain them.
 
 ## Documentation
 
+Full index: [`docs/README.md`](docs/README.md).
+
 - [`docs/production-roadmap.md`](docs/production-roadmap.md) — readiness scorecard, verification evidence, release-readiness definition, upgrade triggers, resolved product decisions
-- [`docs/deployment.md`](docs/deployment.md) — deployment and API documentation policy
+- [`docs/deployment.md`](docs/deployment.md) — environment variables, local/production setup, API documentation policy
+- [`docs/auth-options.md`](docs/auth-options.md) — Supabase Auth configuration and what "local mode" actually does
+- [`docs/multi-user-data-model.md`](docs/multi-user-data-model.md) — ownership, ownership enforcement, shared vs. per-user data
 - [`docs/backups-supabase.md`](docs/backups-supabase.md) — backup and recovery
 - [`docs/privacy.md`](docs/privacy.md) — privacy and account deletion
 - [`docs/internationalization.md`](docs/internationalization.md) — locale, currency, and translation support
@@ -97,5 +101,5 @@ See [`CHANGELOG.md`](CHANGELOG.md) for release notes and how to maintain them.
 - [`docs/release-and-rollback.md`](docs/release-and-rollback.md) — how releases happen and how to roll one back
 - [`docs/oauth-and-hosting-checklist.md`](docs/oauth-and-hosting-checklist.md) — dashboard-only items the owner must verify directly (Google/Supabase/Render/Vercel)
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes
-- [`frontend/README.md`](frontend/README.md) — frontend-specific notes
+- [`frontend/README.md`](frontend/README.md) — frontend-specific setup, commands, and project structure
 - [`TODO_LIST.md`](TODO_LIST.md) — open, actionable tasks only

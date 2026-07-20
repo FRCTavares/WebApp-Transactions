@@ -33,6 +33,14 @@ that's generated. The current running build's commit is shown in
   documented rollback procedures, and the dashboard-only items (OAuth,
   Supabase capacity, deploy notifications) that need the owner's own
   periodic manual confirmation. (#33)
+- Documentation refresh: `frontend/README.md` (previously unedited Vite
+  boilerplate), `docs/deployment.md` (now a complete environment variable
+  reference plus local/production setup steps), and both `.env.example`
+  files were brought up to date; new `docs/auth-options.md` and
+  `docs/multi-user-data-model.md` document how auth and per-user ownership
+  actually work, including that disabling `VITE_SUPABASE_AUTH_ENABLED`
+  only hides the login screen — the backend requires a real Supabase JWT
+  regardless. (#34)
 
 ### Fixed
 
@@ -44,6 +52,8 @@ that's generated. The current running build's commit is shown in
   database created before those migrations existed.
 - A CI-only unhandled rejection caused by a missing unmount cleanup guard in
   `usePresentationPreferences`.
+- A duplicate dashboard-checklist file created under two different names
+  across two separate pieces of work; consolidated into one.
 
 ## How to maintain this file
 
