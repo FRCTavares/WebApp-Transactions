@@ -118,8 +118,18 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
       `DATABASE_CONNECT_TIMEOUT_SECONDS`/`DATABASE_STATEMENT_TIMEOUT_MS`)
       are harmless — their code-level defaults already match what
       `render.yaml` would set.
-- [ ] **Notifications**: deploy-failure notifications (email/Slack/webhook)
-      are configured for the `f-transactions-api` service.
+- [x] **Notifications**: deploy-failure notifications (email/Slack/webhook)
+      are configured for the `f-transactions-api` service. Confirmed
+      2026-07-20: "Only failure notifications" (workspace default).
+- [x] Real finding 2026-07-20: **Health Check Path was set to `/api/health`
+      in the Render dashboard, not `/api/ready` as `render.yaml` specifies**
+      — a drift between committed config and actual dashboard state.
+      `/api/health` returns `{"status": "ok"}` unconditionally;
+      `/api/ready` (`app/routers/health.py`) actually checks database
+      connectivity. With the wrong path configured, Render's zero-downtime
+      deploy gate could route traffic to a new instance that can't reach
+      the database. Fixed: changed to `/api/ready` in the dashboard,
+      confirmed live.
 - [ ] `autoDeployTrigger: off` is intentional (see
       `docs/release-and-rollback.md`) — confirm this still reflects how you
       want to deploy.

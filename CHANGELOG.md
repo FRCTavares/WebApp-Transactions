@@ -64,6 +64,11 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Render's Health Check Path was set to `/api/health` (trivial, no DB
+  check) instead of `render.yaml`'s committed `/api/ready` (checks
+  database connectivity) — meaning the zero-downtime deploy gate could
+  route traffic to an instance that couldn't reach the database. Found
+  and fixed while walking through `docs/oauth-and-hosting-checklist.md`.
 - Account deletion was silently broken in production: `render.yaml` lists
   `SUPABASE_SERVICE_ROLE_KEY` as required, but it was never actually set on
   Render, so every deletion request failed with a controlled 503. Found
