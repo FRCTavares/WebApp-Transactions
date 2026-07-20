@@ -52,6 +52,16 @@ that's generated. The current running build's commit is shown in
   closing the exact gap that caused two real local-only 500 errors found
   during #32's e2e work.
 
+- Automated production database backups
+  (`.github/workflows/backup-database.yml`): daily `pg_dump`, `pg_restore
+  --list` validation, SHA-256 checksum, GPG (AES-256) encryption, uploaded
+  as a GitHub Actions artifact. Replaces a manual procedure
+  (`docs/backups-supabase.md`) that turned out not to be consistently
+  run — discovered while walking through
+  `docs/oauth-and-hosting-checklist.md` that Supabase's Free plan includes
+  no built-in backups at all, so this had been the only backup mechanism
+  all along.
+
 ### Fixed
 
 - A dialog focus-trap bug that stole focus away from whatever the user was

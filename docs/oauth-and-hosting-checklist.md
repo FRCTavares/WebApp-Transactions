@@ -59,18 +59,34 @@ includes that other app's Vercel/Supabase domains alongside this one.
 
 ## Supabase (dashboard)
 
-- [ ] **Authentication → URL Configuration**: Site URL and Redirect URLs
+- [x] **Authentication → URL Configuration**: Site URL and Redirect URLs
       match the exact production frontend domain(s), no trailing slash
-      mismatches.
-- [ ] **Authentication → Providers → Google**: Client ID/Secret match the
-      Google Cloud Console OAuth client actually in use.
-- [ ] Database size, egress, and connection count are below plan limits —
+      mismatches. Confirmed 2026-07-20: Site URL
+      `https://web-app-transactions.vercel.app`; Redirect URLs are that plus
+      `http://localhost:5173`.
+- [x] **Authentication → Providers → Google**: Client ID/Secret match the
+      Google Cloud Console OAuth client actually in use. Confirmed
+      2026-07-20: Client ID
+      `1025162530033-3u76h8gfq0d5cggmokiafmedhhuum7mp.apps.googleusercontent.com`
+      matches exactly.
+- [x] Database size, egress, and connection count are below plan limits —
       check the dashboard's usage page against the free-tier limits noted
-      in `docs/production-roadmap.md`.
-- [ ] Backup availability and most recent backup timestamp (Supabase's own
-      automatic daily backups — confirm this hasn't silently changed; see
-      `docs/backups-supabase.md` for this project's own separate backup
-      procedure).
+      in `docs/production-roadmap.md`. Confirmed 2026-07-20: 0.031 GB
+      database size, 0.519 GB egress, 1 MAU — trivially below Free plan
+      limits.
+- [x] Backup availability and most recent backup timestamp. Real finding
+      2026-07-20: **Supabase Free plan includes zero built-in backups at
+      all** ("Free Plan does not include project backups" on the Backups
+      page) — this checklist item's original wording wrongly assumed
+      Supabase provided automatic daily backups as a baseline. The only
+      actual backup mechanism was this project's own manual `pg_dump`
+      procedure in `docs/backups-supabase.md`, which — per direct
+      confirmation — was documented but not actually being run
+      consistently. Fixed by automating it:
+      `.github/workflows/backup-database.yml` now runs it daily via GitHub
+      Actions (see `docs/backups-supabase.md` for the honest retention
+      caveat — GitHub's 90-day artifact cap means the seven-daily and
+      four-weekly tiers are covered, not the full twelve-monthly tier).
 - [ ] Any Supabase-side alerts or warnings on the project overview page.
 
 Suggest checking this section monthly, or whenever usage noticeably changes.

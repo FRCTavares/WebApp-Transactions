@@ -8,10 +8,30 @@ This file lists only open, actionable work, ordered by the project's stated
 priority: security, ownership, financial correctness, atomicity, backup and
 recovery, data integrity, CI/deployment reliability, accessibility, UI.
 
-No open items remain in categories 1–6 (security, ownership, financial
-correctness, atomic workflows, backup/recovery, data integrity). Remaining
-work is CI/deployment reliability, documentation, accessibility follow-through
-verification, and UI/codebase maintainability.
+Remaining work is CI/deployment reliability, documentation, accessibility
+follow-through verification, and UI/codebase maintainability.
+
+## Backup and Recovery — real gap found and fixed (2026-07-20)
+
+While walking through `docs/oauth-and-hosting-checklist.md`, found that
+Supabase's Free plan includes **zero built-in backups** (contrary to what
+the checklist's own wording assumed), and that this project's own manual
+`pg_dump` backup procedure (`docs/backups-supabase.md`) was documented but
+not actually being run consistently — meaning production had no real,
+current recoverable backup. Fixed by automating it via
+`.github/workflows/backup-database.yml` (daily cron + `workflow_dispatch`).
+
+- [ ] **Action needed**: add the two required repository secrets before
+      this workflow can succeed — `BACKUP_DATABASE_URL` (a direct,
+      read-capable Postgres connection string for production) and
+      `BACKUP_ENCRYPTION_PASSPHRASE` (see `docs/backups-supabase.md` for
+      exact requirements). Then trigger one manual run
+      (`gh workflow run backup-database.yml`) to confirm it actually
+      succeeds end to end before trusting the schedule.
+- [ ] Known accepted gap: GitHub Actions' 90-day artifact retention ceiling
+      means the twelve-monthly retention tier isn't really satisfied yet —
+      revisit if that ever matters at this project's scale (see
+      `docs/backups-supabase.md`'s Retention section).
 
 ## 7. CI and Deployment Reliability
 
