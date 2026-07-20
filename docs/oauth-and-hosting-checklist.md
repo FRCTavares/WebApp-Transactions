@@ -8,36 +8,51 @@ off as you confirm them; this file is meant to be edited in place.
 
 ## GitHub Actions notifications
 
-- [ ] Confirm GitHub Actions notifications are enabled for your account:
+- [x] Confirm GitHub Actions notifications are enabled for your account:
       **GitHub → Settings → Notifications → Actions**. Without this, a
       failing `keep-backend-warm` run (see `docs/incident-response.md`)
       won't actually reach you — it'll just sit in the Actions tab.
-- [ ] Consider "Only notify for failed workflow runs" so this doesn't add
-      noise for the routine successful 10-minute pings.
+      Confirmed 2026-07-20: on, via GitHub + Email.
+- [x] Consider "Only notify for failed workflow runs" so this doesn't add
+      noise for the routine successful 10-minute pings. Confirmed
+      2026-07-20: already scoped to "Failed workflows only".
 
 ## Google OAuth (Google Cloud Console)
 
-- [ ] App branding (name, logo, support email) is accurate, not a default
-      placeholder — users see this on the Google sign-in screen.
-- [ ] **Authorized JavaScript origins** includes the exact production
+Note: this project's Google Cloud project ("Fitness Dashboard Auth") and
+OAuth client/consent screen are intentionally shared with another,
+unrelated app of the owner's. The authorized-domains list legitimately
+includes that other app's Vercel/Supabase domains alongside this one.
+
+- [x] App branding (name, logo, support email) is accurate, not a default
+      placeholder — users see this on the Google sign-in screen. Confirmed
+      2026-07-20: OAuth client named "F Transactions Web", real logo, real
+      support email.
+- [x] **Authorized JavaScript origins** includes the exact production
       frontend domain (`https://web-app-transactions.vercel.app` and any
-      custom domain actually in use), no trailing slash.
-- [ ] **Authorized redirect URIs** includes the exact Supabase Auth
-      callback URL for this project — **Supabase Dashboard → Authentication
-      → URL Configuration** shows the exact value to copy (it follows the
-      pattern `https://<project-ref>.supabase.co/auth/v1/callback`, but
-      copy the real one rather than assuming).
+      custom domain actually in use), no trailing slash. Confirmed
+      2026-07-20.
+- [x] **Authorized redirect URIs** includes the exact Supabase Auth
+      callback URL for this project. Confirmed 2026-07-20:
+      `https://stddbcpdpblqtwcseygg.supabase.co/auth/v1/callback`, which
+      matches the live `SUPABASE_URL` on Render.
 - [ ] OAuth scopes requested are minimal — this app only needs `openid`,
-      `email`, and `profile`. Confirm nothing broader was added.
-- [ ] **Publishing status**: if the consent screen is still in "Testing"
-      mode, only explicitly added test users can sign in — confirm this
-      matches the resolved "open registration" decision in
-      `docs/production-roadmap.md`, or move to "In production" (which may
-      trigger Google's verification review for some scope/branding
-      combinations).
-- [ ] Privacy policy link on the consent screen points to
-      [`docs/privacy.md`](privacy.md) (or wherever it's actually published)
-      and is accurate.
+      `email`, and `profile`. Confirm nothing broader was added (Google
+      Cloud Console → Acesso a dados / Data access).
+- [ ] **Publishing status**: was in "Testing" mode (5/100 test users),
+      contradicting the recorded "open registration" decision in
+      `docs/production-roadmap.md`. Decision made 2026-07-20: move to "In
+      production". Blocked on three release gates in `docs/privacy.md`,
+      all now satisfied (monitored privacy contact, recorded EU/EEA hosting
+      regions, established incident-response procedure) — confirm the
+      actual "Publicar app" click completed and check whether Google
+      required a verification review.
+- [x] Privacy policy link on the consent screen points to a real, public
+      page. Built `frontend/src/pages/PrivacyPage.tsx` (public `/privacy`
+      route, mirrors `docs/privacy.md`) since `docs/privacy.md` itself isn't
+      publicly reachable. Set the Branding page's "Link da Política de
+      Privacidade" to `https://web-app-transactions.vercel.app/privacy`
+      once this is merged and deployed.
 
 ## Supabase (dashboard)
 

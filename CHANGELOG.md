@@ -41,6 +41,10 @@ that's generated. The current running build's commit is shown in
   actually work, including that disabling `VITE_SUPABASE_AUTH_ENABLED`
   only hides the login screen — the backend requires a real Supabase JWT
   regardless. (#34)
+- A public, unauthenticated `/privacy` page (`frontend/src/pages/PrivacyPage.tsx`)
+  mirroring `docs/privacy.md`, so Google's OAuth consent screen (and anyone
+  else) has a real public link instead of one behind the login wall. (#33
+  follow-up)
 - A CI safeguard (`scripts/check_migration_drift.py`, run as
   `tests/test_migration_drift.py`) that fails the build if an Alembic
   migration adds or renames a column or table with no matching reference in
