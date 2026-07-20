@@ -130,7 +130,7 @@ Tracked in issue #35. Answers recorded 2026-07-19; each still needs any
 consequential implementation work tracked as its own task.
 
 1. Invite-only or open registration? **Open registration.**
-2. Shared, user-specific, or admin-maintained market data? **User-specific.**
+2. Shared, user-specific, or admin-maintained market data? **User-specific** (recorded decision) — **does not match the implementation**: `market_prices`/`market_price_history` are shared, global tables with admin-only writes (`ADMIN_USER_EMAILS`), not per-user data. Flagged, not silently resolved either way — see `docs/multi-user-data-model.md` and `TODO_LIST.md`.
 3. Is moving weighted-average cost suitable for every tax jurisdiction? **No** — jurisdiction-specific cost-basis rules are out of scope for now.
 4. Required base currencies? **USD, EUR.**
 5. Required launch languages? **Portuguese, English.**

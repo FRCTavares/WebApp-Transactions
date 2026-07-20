@@ -40,9 +40,21 @@ when convenient; nothing in this repo can verify those items for you.
 
 ## 8. Documentation
 
-- [ ] #34 — Review and refresh `README.md`, `frontend/README.md`, `docs/deployment.md`, `docs/backups-supabase.md`, `docs/production-roadmap.md`, and add `docs/auth-options.md` and `docs/multi-user-data-model.md` (currently missing).
-- [ ] #34 — Document `VITE_SUPABASE_AUTH_ENABLED` and all other environment variables, including local and production setup steps.
-- [ ] #34 — Verify documentation matches the deployed architecture and current code paths after the 2026-07-19 merges (#36–#40).
+#34 is complete: `README.md`, `frontend/README.md` (was unedited Vite
+boilerplate), `docs/deployment.md` (now has a full environment variable
+reference table plus local/production setup steps), and
+`docs/production-roadmap.md` (stale test counts and commit references
+refreshed) were all reviewed and refreshed. `docs/auth-options.md` and
+`docs/multi-user-data-model.md` were added (previously missing).
+`VITE_SUPABASE_AUTH_ENABLED` and every other environment variable are now
+documented in `docs/deployment.md`, including the important correction that
+disabling it only hides the login screen — the backend's local-auth bypass
+was removed, so every request still needs a real Supabase JWT regardless
+(`docs/auth-options.md`). Both `.env.example` files were incomplete and are
+now accurate. Also found and fixed a real duplicate-file bug from #33's
+work (two overlapping dashboard checklists under different names) and a
+genuine product-decision-vs-implementation discrepancy on market data
+ownership, tracked in section 11 below rather than silently resolved.
 
 ## 9. Testing
 
@@ -94,4 +106,5 @@ Most of #35 is answered in `docs/production-roadmap.md`. These remain undecided:
 - [ ] Decide whether transaction categories should become foreign-key references.
 - [ ] Decide when availability requirements justify upgrading off Render's free tier (beyond the general triggers already listed).
 - [ ] Confirm market-data provider terms are compatible with the intended public release.
+- [ ] Resolve the market-data ownership discrepancy found during #34: the recorded decision says "user-specific" but the implementation is shared/admin-maintained (`docs/multi-user-data-model.md`) — decide whether to implement per-user market data or correct the recorded decision.
 - [ ] Once all of the above are decided, close #35 and link any resulting implementation tasks here.
