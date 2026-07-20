@@ -1,0 +1,85 @@
+name: Backup production database
+
+on:
+  schedule:
+    # 03:17 UTC daily -- off-peak, avoids the exact-midnight rush other
+    # scheduled jobs (and Supabase's own maintenance windows) tend to use.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Dump, validate, encrypt, upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+
+      - name: Dump production database
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${BACKUP_DATABASE_URL:-}" ]; then
+            echo "::error::BACKUP_DATABASE_URL secret is not set. See docs/backups-supabase.md." >&2
+            exit 1
+          fi
+
+          pg_dump --format=custom --no-owner --no-privileges \
+            --dbname="$BACKUP_DATABASE_URL" \
+            --file=backup.dump
+
+      - name: Validate the dump
+        run: |
+          set -euo pipefail
+          # Mirrors docs/backups-supabase.md: "Validate each dump with
+          # pg_restore --list before considering it successful."
+          pg_restore --list backup.dump > /dev/null
+          echo "pg_restore --list succeeded: dump is structurally valid."
+
+      - name: Checksum the dump
+        run: |
+          set -euo pipefail
+          sha256sum backup.dump > backup.dump.sha256
+          cat backup.dump.sha256
+
+      - name: Encrypt the dump
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
+            echo "::error::BACKUP_ENCRYPTION_PASSPHRASE secret is not set. See docs/backups-supabase.md." >&2
+            exit 1
+          fi
+
+          gpg --batch --yes --pinentry-mode loopback \
+            --passphrase "$BACKUP_ENCRYPTION_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 \
+            --output backup.dump.gpg backup.dump
+
+          # The plaintext dump must never leave this point as an artifact.
+          rm -f backup.dump
+
+      - name: Upload encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-backup-${{ github.run_id }}
+          path: |
+            backup.dump.gpg
+            backup.dump.sha256
+          retention-days: 90
+          if-no-files-found: error

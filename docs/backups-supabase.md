@@ -22,9 +22,42 @@ An RTO of 4 hours means the owner aims to restore service within four hours afte
 
 ### Production PostgreSQL
 
-Production data is stored in Supabase Postgres.
+Production data is stored in Supabase Postgres. **Supabase's Free plan does
+not include any built-in scheduled backups** (confirmed 2026-07-20 via the
+dashboard's Database → Backups page) — everything below is this project's
+own, fully independent backup mechanism; it does not build on top of
+anything Supabase provides automatically.
 
-Create a custom-format PostgreSQL dump using `pg_dump`. A valid production backup must include:
+**Automated since 2026-07-20**:
+`.github/workflows/backup-database.yml` runs this daily on a schedule (plus
+`workflow_dispatch` for on-demand runs) so it no longer depends on the
+owner remembering to run it manually. It dumps, validates, checksums,
+encrypts, and uploads the result as a GitHub Actions artifact. A failed run
+surfaces through the same GitHub Actions notification settings covered in
+`docs/oauth-and-hosting-checklist.md` (failed-workflows-only).
+
+Required repository secrets (set via `gh secret set <NAME>` or GitHub →
+Settings → Secrets and variables → Actions):
+
+- `BACKUP_DATABASE_URL`: a direct (non-pooled) Postgres connection string
+  for the production Supabase database, with a role that can read all
+  tables. Keep this separate from the backend's own `DATABASE_URL` secret
+  on Render — same database, but this one only needs read access.
+- `BACKUP_ENCRYPTION_PASSPHRASE`: a long, random passphrase used to encrypt
+  the dump with GPG symmetric (AES-256) encryption before upload. Store
+  this passphrase itself somewhere durable and separate from the repository
+  (e.g. a password manager) — losing it makes every backup unrecoverable.
+
+**Known retention gap**: GitHub Actions artifacts expire after a maximum of
+90 days, so this mechanism alone cannot literally satisfy the "twelve
+monthly backups" target below — anything older than ~90 days is gone
+unless manually archived elsewhere first. It fully covers the seven-daily
+and four-weekly tiers. Revisit if the twelve-month tier actually matters in
+practice (e.g. by periodically downloading an artifact to a second,
+independent encrypted location before it expires, or moving to genuine
+off-device object storage).
+
+A valid production backup must include:
 
 - all application tables,
 - the Alembic version table,
@@ -34,7 +67,23 @@ Create a custom-format PostgreSQL dump using `pg_dump`. A valid production backu
 - a SHA-256 checksum,
 - the backup timestamp and source environment.
 
-Validate each dump with `pg_restore --list` before considering it successful.
+Validate each dump with `pg_restore --list` before considering it successful
+— the workflow does this automatically; do the same by hand for any manual
+dump.
+
+To create one manually (e.g. before a risky migration, or on demand rather
+than waiting for the schedule), either trigger
+`.github/workflows/backup-database.yml` via `workflow_dispatch`
+(`gh workflow run backup-database.yml`), or run the equivalent locally:
+
+```
+pg_dump --format=custom --no-owner --no-privileges \
+  --dbname="$BACKUP_DATABASE_URL" --file=backup.dump
+pg_restore --list backup.dump > /dev/null && echo "valid"
+sha256sum backup.dump > backup.dump.sha256
+gpg --symmetric --cipher-algo AES256 --output backup.dump.gpg backup.dump
+rm backup.dump
+```
 
 ### User JSON exports
 
@@ -62,7 +111,12 @@ The script must run `PRAGMA integrity_check` against the completed backup before
 
 ### Daily
 
-The owner creates or confirms a production PostgreSQL backup at least once every 24 hours while the application contains active financial data.
+Automated: `.github/workflows/backup-database.yml` runs daily. The owner
+should still glance at the Actions tab occasionally (a failed run also
+triggers the account's GitHub Actions failure notification), and confirm at
+least once a month that recent artifacts are actually restorable, not just
+present — an automated dump that silently produces a corrupt file is worse
+than no automation, because it creates false confidence.
 
 ### Monthly
 
@@ -92,6 +146,13 @@ Keep successful production PostgreSQL backups using this minimum schedule:
 - seven daily backups,
 - four weekly backups,
 - twelve monthly backups.
+
+**As of 2026-07-20, the automated GitHub Actions workflow only satisfies the
+first two tiers** — GitHub Actions artifacts expire after a maximum of 90
+days, so nothing survives to fill the twelve-month tier without a separate,
+manual step to archive an artifact somewhere longer-lived before it expires.
+This is a known, accepted gap for now given the project's scale — revisit
+if that changes.
 
 Keep at least the two most recent successful JSON exports.
 
@@ -126,6 +187,14 @@ At least one current production backup must be stored outside:
 The off-device copy must be encrypted and accessible to the recovery owner.
 
 A backup stored only on the same machine or provider as the source is not sufficient.
+
+**GitHub Actions artifacts satisfy this today** — they're outside Supabase,
+Render, and the development Mac. They are, however, hosted by the same
+provider (GitHub) as the source code itself, which is not full independence
+in the strictest sense: a GitHub account-level incident (not just a repo or
+Actions issue) could plausibly affect both at once. Accepted tradeoff for
+now given the project's scale; a genuinely independent provider (e.g. an
+S3-compatible bucket) would close this residual gap if it ever matters.
 
 ## Recovery ownership
 
