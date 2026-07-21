@@ -1,11 +1,15 @@
 import type { CashflowRule } from '../../types/api'
+import { Badge } from '../ui'
+import {
+  formatCashflowType,
+  formatDirection,
+  formatSource,
+  getCashflowTone,
+  getDirectionTone,
+} from '../../utils/badgeLabels'
 
 type CashflowRulesTableProps = {
   rules: CashflowRule[]
-}
-
-function formatCashflowType(cashflowType: string) {
-  return cashflowType.replaceAll('_', ' ')
 }
 
 export function CashflowRulesTable({ rules }: CashflowRulesTableProps) {
@@ -32,30 +36,30 @@ export function CashflowRulesTable({ rules }: CashflowRulesTableProps) {
               <td>{rule.name}</td>
               <td>{rule.match_text}</td>
               <td>
-                <span className={`badge badge-${rule.cashflow_type.replaceAll('_', '-')}`}>
+                <Badge tone={getCashflowTone(rule.cashflow_type)}>
                   {formatCashflowType(rule.cashflow_type)}
-                </span>
+                </Badge>
               </td>
               <td>
                 {rule.direction ? (
-                  <span className={`badge badge-direction-${rule.direction}`}>
-                    {rule.direction}
-                  </span>
+                  <Badge tone={getDirectionTone(rule.direction)}>
+                    {formatDirection(rule.direction)}
+                  </Badge>
                 ) : (
                   <span className="muted">-</span>
                 )}
               </td>
               <td>
                 {rule.source ? (
-                  <span className="badge badge-source">{rule.source}</span>
+                  <Badge>{formatSource(rule.source)}</Badge>
                 ) : (
                   <span className="muted">-</span>
                 )}
               </td>
               <td>
-                <span className={`badge ${rule.is_active ? 'badge-active' : 'badge-inactive'}`}>
-                  {rule.is_active ? 'active' : 'inactive'}
-                </span>
+                <Badge tone={rule.is_active ? 'positive' : 'neutral'}>
+                  {rule.is_active ? 'Active' : 'Inactive'}
+                </Badge>
               </td>
             </tr>
           ))}

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { PresentationPreferences } from '../utils/format'
 import { translate } from '../i18n/messages'
+import { Button, PageHeader } from '../components/ui'
 
 const PRIVACY_CONTACT =
   import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
@@ -91,11 +92,11 @@ export function SettingsPage({
 
   return (
     <section className="settings-page settings-page-redesigned">
-      <header className="settings-hero">
-        <p className="eyebrow">{t('settings')}</p>
-        <h1>{t('settings')}</h1>
-        <p className="page-subtitle">{t('settingsSubtitle')}</p>
-      </header>
+      <PageHeader
+        eyebrow={t('settings')}
+        title={t('settings')}
+        description={t('settingsSubtitle')}
+      />
 
       <div className="settings-balanced-grid">
         <section className="settings-group settings-group-presentation">
@@ -107,7 +108,14 @@ export function SettingsPage({
             <label>{t('timeZone')}<select value={draft.time_zone} onChange={(event) => setDraft({ ...draft, time_zone: event.target.value })}><option value="Europe/Lisbon">Europe/Lisbon</option><option value="Atlantic/Azores">Atlantic/Azores</option><option value="UTC">UTC</option></select></label>
             <label>{t('dateFormat')}<select value={draft.date_format} onChange={(event) => setDraft({ ...draft, date_format: event.target.value as PresentationPreferences['date_format'] })}><option value="short">{t('short')}</option><option value="medium">{t('medium')}</option><option value="long">{t('long')}</option></select></label>
             {(preferencesError || saveState) && <p className={preferencesError ? 'error-text' : 'muted'} role="status">{preferencesError ?? saveState}</p>}
-            <button type="submit" disabled={preferencesLoading || draft.currency.length !== 3}>{t('savePreferences')}</button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={preferencesLoading}
+              disabled={preferencesLoading || draft.currency.length !== 3}
+            >
+              {t('savePreferences')}
+            </Button>
           </form>
         </section>
 
@@ -127,9 +135,9 @@ export function SettingsPage({
             </span>
 
             {isAuthEnabled ? (
-              <button type="button" className="danger-button" onClick={() => void onSignOut()}>
+              <Button type="button" size="sm" variant="danger" onClick={() => void onSignOut()}>
                 {t('signOut')}
-              </button>
+              </Button>
             ) : (
               <em>{t('localOnly')}</em>
             )}
@@ -169,9 +177,10 @@ export function SettingsPage({
                     />
                   </label>
                   {deleteError && <p className="status status-error" role="alert">{deleteError}</p>}
-                  <button
+                  <Button
                     type="button"
-                    className="danger-button"
+                    variant="danger"
+                    loading={isDeleting}
                     disabled={
                       isDeleting ||
                       deleteConfirmation.trim().toLowerCase() !== accountEmail.toLowerCase()
@@ -179,7 +188,7 @@ export function SettingsPage({
                     onClick={() => void handleDeleteAccount()}
                   >
                     {isDeleting ? 'Deleting account…' : 'Permanently delete account'}
-                  </button>
+                  </Button>
                 </div>
               )}
             </>

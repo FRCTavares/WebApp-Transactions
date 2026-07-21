@@ -50,61 +50,6 @@ td[colspan] {
   text-align: center;
 }
 
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #f9fafb;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 4px 8px;
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.badge-income,
-.badge-reimbursement {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.badge-expense,
-.badge-reimbursed-expense {
-  border-color: #fed7aa;
-  background: #fff7ed;
-  color: #9a3412;
-}
-
-.badge-internal-transfer {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.badge-investment {
-  border-color: #ddd6fe;
-  background: #f5f3ff;
-  color: #6d28d9;
-}
-
-.badge-neutral {
-  border-color: #e5e7eb;
-  background: #ffffff;
-  color: #374151;
-}
-
-.badge-source {
-  border-color: #e5e7eb;
-  background: #f3f4f6;
-  color: #4b5563;
-}
-
 .month-navigator {
   display: flex;
   flex-wrap: wrap;
@@ -157,18 +102,6 @@ td[colspan] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.badge-owed-open {
-  background: #fef3c7;
-  border-color: #fbbf24;
-  color: #92400e;
-}
-
-.badge-owed-paid {
-  background: #dcfce7;
-  border-color: #22c55e;
-  color: #166534;
 }
 
 .modal-backdrop {
@@ -234,14 +167,6 @@ td[colspan] {
     border-radius: 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .badge {
-    /* TODO(design-system phase 7): 10.5px is a sub-pixel type size and below the
-       legibility floor. Kept as-is here so this consolidation is a pure
-       no-visual-change refactor. */
-    padding: 3px 7px;
-    font-size: 10.5px;
   }
 
   .transaction-description-line {

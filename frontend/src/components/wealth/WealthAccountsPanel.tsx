@@ -7,7 +7,7 @@ import {
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
 import { WealthAccountDetailsModal } from './WealthAccountDetailsModal'
-import { Button, EmptyState } from '../ui'
+import { Badge, Button, EmptyState } from '../ui'
 import { Landmark } from 'lucide-react'
 
 type WealthAccountsPanelProps = {
@@ -169,9 +169,9 @@ export function WealthAccountsPanel({
                   </div>
 
                   <div className="wealth-account-card-footer">
-                    <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
+                    <Badge tone={account.is_active ? 'positive' : 'neutral'}>
                       {account.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    </Badge>
 
                     <AccountActions
                       account={account}

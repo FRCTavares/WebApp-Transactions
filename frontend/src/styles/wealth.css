@@ -340,18 +340,6 @@
   min-height: 2.15rem;
 }
 
-.wealth-page .badge-active {
-  border-color: #bbf7d0;
-  background: var(--wealth-green-soft);
-  color: #15803d;
-}
-
-.wealth-page .badge-inactive {
-  border-color: #e5e7eb;
-  background: #f1f5f9;
-  color: #64748b;
-}
-
 .wealth-table-wrap {
   overflow: hidden;
   margin-bottom: 0;
@@ -485,10 +473,6 @@
 
   .wealth-subaccount-row {
     grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .wealth-subaccount-row .badge {
-    justify-self: start;
   }
 
   .wealth-account-actions {

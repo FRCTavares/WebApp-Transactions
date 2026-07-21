@@ -112,7 +112,6 @@
   font-weight: 850;
 }
 
-
 .settings-account-row {
   display: grid;
   align-items: start;
@@ -124,8 +123,11 @@
   justify-self: start;
 }
 
-.settings-account-row .danger-button {
-  flex: 0 0 auto;
+/* `flex` did nothing here - the row is a grid, so the button stretched across
+   the column. `justify-self` is the grid equivalent, matching the `<em>`
+   sibling that renders in its place when auth is disabled. */
+.settings-account-row .ui-button {
+  justify-self: start;
 }
 
 .settings-delete-trigger strong,

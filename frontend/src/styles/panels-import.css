@@ -25,34 +25,6 @@
   padding: 10px 12px;
 }
 
-.badge-direction-in {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.badge-direction-out {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.badge-status-committed,
-.badge-status-completed,
-.badge-status-imported {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.badge-status-rolled-back,
-.badge-status-deleted,
-.badge-status-failed {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-}
-
 .import-upload-panel {
   display: grid;
   gap: 14px;

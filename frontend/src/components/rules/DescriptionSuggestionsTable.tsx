@@ -1,5 +1,11 @@
 import type { DescriptionRuleSuggestion } from '../../types/api'
 import { formatMoney } from '../../utils/format'
+import { Badge, Button } from '../ui'
+import {
+  formatDirection,
+  formatSource,
+  getDirectionTone,
+} from '../../utils/badgeLabels'
 
 type DescriptionSuggestionsTableProps = {
   suggestions: DescriptionRuleSuggestion[]
@@ -48,12 +54,12 @@ export function DescriptionSuggestionsTable({
                 <td>{suggestion.raw_description}</td>
                 <td>{suggestion.description}</td>
                 <td>
-                  <span className="badge badge-source">{suggestion.source}</span>
+                  <Badge>{formatSource(suggestion.source)}</Badge>
                 </td>
                 <td>
-                  <span className={`badge badge-direction-${suggestion.direction}`}>
-                    {suggestion.direction}
-                  </span>
+                  <Badge tone={getDirectionTone(suggestion.direction)}>
+                    {formatDirection(suggestion.direction)}
+                  </Badge>
                 </td>
                 <td>{suggestion.count}</td>
                 <td className="right">{formatMoney(suggestion.total)}</td>
@@ -66,14 +72,15 @@ export function DescriptionSuggestionsTable({
                   />
                 </td>
                 <td>
-                  <button
+                  <Button
                     type="button"
-                    className="primary-button"
+                    size="sm"
+                    variant="primary"
                     disabled={!cleanedDescription}
                     onClick={() => onAddRule(suggestion)}
                   >
                     Add rule
-                  </button>
+                  </Button>
                 </td>
               </tr>
             )

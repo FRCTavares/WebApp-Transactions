@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import type { CashflowType } from '../../types/api'
+import { Button } from '../ui'
 
 export type CashflowRuleFormState = {
   name: string
@@ -103,10 +104,10 @@ export function CashflowRuleForm({
       </label>
 
       <div className="action-group">
-        <button type="submit">Create cashflow rule</button>
-        <button type="button" onClick={onClear}>
+        <Button type="submit" variant="primary">Create cashflow rule</Button>
+        <Button type="button" onClick={onClear}>
           Clear
-        </button>
+        </Button>
       </div>
     </form>
   )

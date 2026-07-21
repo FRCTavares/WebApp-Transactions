@@ -197,12 +197,6 @@
     justify-self: end;
   }
 
-  .wealth-modal-subaccount-row > .badge {
-    grid-area: status;
-    justify-self: end;
-    align-self: end;
-  }
-
   .wealth-modal-actions {
     grid-area: actions;
     justify-self: end;
@@ -251,9 +245,6 @@
 }
 
 @media (max-width: 900px) {
-  .wealth-modal-subaccount-row > .badge {
-    justify-self: start;
-  }
 
   .wealth-modal-balance .wealth-quick-snapshot {
     width: 100%;

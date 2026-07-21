@@ -4,6 +4,11 @@ import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 import { Badge, Button, EmptyState } from './ui'
 import type { BadgeTone } from './ui'
+import {
+  formatCashflowType,
+  formatSource,
+  getCashflowTone,
+} from '../utils/badgeLabels'
 
 export type TransactionTableRow = Transaction & {
   is_grouped?: boolean
@@ -22,47 +27,6 @@ type TransactionTableProps = {
 type SortField = 'date' | 'amount'
 type SortDirection = 'asc' | 'desc'
 
-/* Labels are produced here rather than by CSS `text-transform: capitalize`,
-   which the legacy `.badge` relied on. Capitalising in CSS cannot know where
-   word boundaries really are, so it turned "activobank" into "Activobank" and
-   "trading212" into "Trading212". */
-
-const CASHFLOW_LABEL: Record<string, string> = {
-  income: 'Income',
-  expense: 'Expense',
-  transfer: 'Transfer',
-}
-
-const CASHFLOW_TONE: Record<string, BadgeTone> = {
-  income: 'positive',
-  expense: 'expense',
-  transfer: 'accent',
-}
-
-const SOURCE_LABEL: Record<string, string> = {
-  activobank: 'ActivoBank',
-  revolut: 'Revolut',
-  trading212: 'Trading 212',
-  legacy_excel: 'Legacy Excel',
-  manual: 'Manual',
-}
-
-function toSentenceCase(value: string) {
-  const spaced = value.replaceAll('_', ' ')
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
-}
-
-function formatCashflowType(cashflowType: string) {
-  return CASHFLOW_LABEL[cashflowType] ?? toSentenceCase(cashflowType)
-}
-
-function getCashflowTone(cashflowType: string): BadgeTone {
-  return CASHFLOW_TONE[cashflowType] ?? 'neutral'
-}
-
-function formatSource(source: string) {
-  return SOURCE_LABEL[source] ?? toSentenceCase(source)
-}
 
 type OwedCoverage = 'none' | 'partly' | 'fully'
 
