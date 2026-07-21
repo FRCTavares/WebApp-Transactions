@@ -183,7 +183,6 @@ since darkening against a near-black surface reads as the control going dead. */
 }
 
 :root[data-theme='dark'] .danger-button,
-:root[data-theme='dark'] .owed-row-action-delete,
 :root[data-theme='dark'] .wealth-account-action-danger {
   border-color: rgb(248 113 113 / 0.45);
   background: var(--theme-red-soft);
@@ -234,8 +233,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .badge,
 :root[data-theme='dark'] .filter-count,
 :root[data-theme='dark'] .dashboard-recent-category,
-:root[data-theme='dark'] .badge-source,
-:root[data-theme='dark'] .badge-owed-status {
+:root[data-theme='dark'] .badge-source {
   border-color: var(--theme-border);
   background: #27272a;
   color: var(--theme-muted);
@@ -249,8 +247,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .badge-direction-in,
 :root[data-theme='dark'] .badge-active,
 :root[data-theme='dark'] .badge-event-dividend,
-:root[data-theme='dark'] .badge-event-interest,
-:root[data-theme='dark'] .badge-owed-status-paid {
+:root[data-theme='dark'] .badge-event-interest {
   border-color: rgb(74 222 128 / 0.35);
   background: var(--theme-green-soft);
   color: #bbf7d0;
@@ -259,9 +256,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .badge-expense,
 :root[data-theme='dark'] .badge-reimbursed-expense,
 :root[data-theme='dark'] .badge-direction-out,
-:root[data-theme='dark'] .badge-event-market-sell,
-:root[data-theme='dark'] .badge-owed-status-open,
-:root[data-theme='dark'] .badge-owed-status-partially-paid {
+:root[data-theme='dark'] .badge-event-market-sell {
   border-color: rgb(251 146 60 / 0.35);
   background: var(--theme-orange-soft);
   color: #fed7aa;

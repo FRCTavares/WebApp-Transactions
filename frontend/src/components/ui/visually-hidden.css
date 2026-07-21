@@ -1,0 +1,14 @@
+/* Removes content from the visual layout while leaving it in the accessibility
+   tree. Use for the accessible name of a control whose visible affordance is an
+   icon - not for hiding decorative content, which should be aria-hidden. */
+.ui-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

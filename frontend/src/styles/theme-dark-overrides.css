@@ -372,7 +372,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   color: var(--theme-text);
 }
 
-:root[data-theme='dark'] .owed-row-action,
 :root[data-theme='dark'] .table-action-group button,
 :root[data-theme='dark'] .small-button {
   border-color: rgb(255 255 255 / 0.13);
@@ -380,7 +379,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   color: var(--theme-text);
 }
 
-:root[data-theme='dark'] .owed-row-action:hover,
 :root[data-theme='dark'] .table-action-group button:hover,
 :root[data-theme='dark'] .small-button:hover {
   border-color: rgb(138 180 248 / 0.35);

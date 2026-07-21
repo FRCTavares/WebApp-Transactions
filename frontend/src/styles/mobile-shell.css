@@ -16,7 +16,10 @@
 
   main {
     min-height: 100dvh;
-    padding: 0.85rem 0.8rem 1.35rem;
+    /* The bottom nav is fixed and ~3.6rem tall, so 1.35rem of padding left the
+       last thing on the page sitting underneath it - on the Owed create form
+       that was the Save button, occluded until you scrolled further down. */
+    padding: 0.85rem 0.8rem calc(4.75rem + env(safe-area-inset-bottom));
   }
 
   .mobile-bottom-nav {

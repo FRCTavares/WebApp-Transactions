@@ -13,6 +13,12 @@ export type ButtonProps = {
   iconLeft?: LucideIcon
   iconRight?: LucideIcon
   fullWidth?: boolean
+  /**
+   * Appended, not replaced. For concerns the button cannot know about -
+   * responsive visibility, grid placement. Never for restyling it: that is
+   * what `variant` and `size` are for.
+   */
+  className?: string
   children?: ReactNode
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>
 
@@ -39,6 +45,7 @@ export function Button({
   iconRight: IconRight,
   fullWidth = false,
   disabled,
+  className,
   children,
   type = 'button',
   ...rest
@@ -49,6 +56,7 @@ export function Button({
     `ui-button-${size}`,
     fullWidth ? 'ui-button-full' : '',
     loading ? 'is-loading' : '',
+    className ?? '',
   ]
     .filter(Boolean)
     .join(' ')

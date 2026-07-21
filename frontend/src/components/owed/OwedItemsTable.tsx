@@ -1,15 +1,13 @@
+import { ChevronDown, HandCoins } from 'lucide-react'
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
+import { Badge, Button, EmptyState } from '../ui'
+import type { BadgeTone } from '../ui'
 
-export type OwedFormState = {
-  person: string
-  reason: string
-  amountTotal: string
-  amountPaid: string
-  dueDate: string
-  linkedTransactionId: string
-  notes: string
-}
+import { OwedInlineForm } from './OwedInlineForm'
+import type { OwedFormState } from './OwedInlineForm'
+
+export type { OwedFormState } from './OwedInlineForm'
 
 function getPersonGroups(items: OwedItem[]) {
   const groups = new Map<string, OwedItem[]>()
@@ -38,6 +36,28 @@ function getPersonGroups(items: OwedItem[]) {
 
       return firstGroup.person.localeCompare(secondGroup.person)
     })
+}
+
+/* Tones mirror the meaning the old per-status badge classes carried: settled
+   is positive, anything overdue or partially paid still needs attention, and
+   cancelled is simply inactive. */
+function getStatusTone(item: OwedItem): BadgeTone {
+  if (item.status === 'paid') {
+    return 'positive'
+  }
+
+  if (item.status === 'cancelled') {
+    return 'neutral'
+  }
+
+  if (
+    item.due_date
+    && item.due_date < new Date().toISOString().slice(0, 10)
+  ) {
+    return 'negative'
+  }
+
+  return 'warning'
 }
 
 function getStatusLabel(item: OwedItem) {
@@ -107,12 +127,11 @@ export function OwedItemsTable({
       {!shouldShowFlatTable && (
         <div className="owed-person-groups owed-mobile-groups">
           {personGroups.length === 0 ? (
-            <div className="owed-empty-state owed-mobile-empty">
-              <strong>No owed items in this view</strong>
-              <p className="muted">
-                Add a new item when someone owes you money, or switch the view filter.
-              </p>
-            </div>
+            <EmptyState
+              icon={HandCoins}
+              title="No owed items in this view"
+              description="Add a new item when someone owes you money, or switch the view filter."
+            />
           ) : (
             personGroups.map((group, groupIndex) => (
               <article key={group.person} className="owed-person-card">
@@ -149,23 +168,34 @@ export function OwedItemsTable({
                     <details key={item.id} className="owed-person-item">
                       <summary className="owed-person-item-summary">
                         <span className="owed-person-item-title">{item.reason}</span>
-                        <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')} owed-person-item-status-compact`}>
+                        <Badge
+                          tone={getStatusTone(item)}
+                          size="sm"
+                          className="owed-person-item-status-compact"
+                        >
                           {getStatusLabel(item)}
-                        </span>
+                        </Badge>
                         <span className="owed-person-item-paid">
                           {formatMoney(item.amount_paid)}
                         </span>
                         <span className="owed-person-item-amount">
                           {formatMoney(item.amount_remaining)}
                         </span>
-                        <span className="owed-person-item-more" aria-hidden="true">⋯</span>
+                        <span className="owed-person-item-more">
+                          <span className="ui-visually-hidden">Details</span>
+                          <ChevronDown
+                            className="owed-person-item-chevron"
+                            size={16}
+                            aria-hidden="true"
+                          />
+                        </span>
                       </summary>
 
                       <div className="owed-person-item-details">
                         <div className="owed-person-item-status-row">
-                          <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
+                          <Badge tone={getStatusTone(item)} size="sm">
                             {getStatusLabel(item)}
-                          </span>
+                          </Badge>
                           {item.due_date && (
                             <span className="muted small">Due {formatDate(item.due_date)}</span>
                           )}
@@ -179,21 +209,33 @@ export function OwedItemsTable({
                         {item.notes && <p className="muted small">{item.notes}</p>}
 
                         <div className="owed-person-item-actions">
-                          <button type="button" onClick={() => onStartEdit(item)}>
-                            Edit
-                          </button>
-                          {item.status !== 'paid' && item.status !== 'cancelled' && (
-                            <button type="button" onClick={() => onMarkPaid(item)}>
-                              Paid
-                            </button>
-                          )}
-                          <button
+                          <Button
                             type="button"
-                            className="danger-button"
+                            size="sm"
+                            onClick={() => onStartEdit(item)}
+                            aria-label={`Edit ${item.reason}`}
+                          >
+                            Edit
+                          </Button>
+                          {item.status !== 'paid' && item.status !== 'cancelled' && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => onMarkPaid(item)}
+                              aria-label={`Mark ${item.reason} as paid`}
+                            >
+                              Paid
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="danger"
                             onClick={() => onDelete(item)}
+                            aria-label={`Delete ${item.reason}`}
                           >
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </details>
@@ -223,100 +265,18 @@ export function OwedItemsTable({
         <tbody>
           {isCreateRowOpen && (
             <tr className="inline-create-row">
-              <td>
-                <input
-                  className="table-input"
-                  value={form.person}
-                  onChange={(event) => onFormChange('person', event.target.value)}
-                  placeholder="Person"
-                  aria-label="Person owing"
+              <td colSpan={9}>
+                <OwedInlineForm
+                  form={form}
+                  onChange={onFormChange}
+                  onLinkedTransactionChange={onLinkedTransactionChange}
+                  linkedTransactions={linkedTransactions}
+                  formatLinkedTransactionOption={formatLinkedTransactionOption}
+                  onSave={onCreateItem}
+                  onCancel={onCancelCreate}
+                  status={<Badge tone="warning" size="sm">open</Badge>}
+                  saveLabel="Save"
                 />
-              </td>
-              <td>
-                <input
-                  className="table-input"
-                  value={form.reason}
-                  onChange={(event) => onFormChange('reason', event.target.value)}
-                  placeholder="Description"
-                  aria-label="Description"
-                />
-                <input
-                  className="table-input table-input-secondary"
-                  value={form.notes}
-                  onChange={(event) => onFormChange('notes', event.target.value)}
-                  placeholder="Notes"
-                  aria-label="Notes"
-                />
-              </td>
-              <td>open</td>
-              <td>
-                <input
-                  className="table-input"
-                  type="date"
-                  value={form.dueDate}
-                  onChange={(event) => onFormChange('dueDate', event.target.value)}
-                  aria-label="Due date"
-                />
-              </td>
-              <td>
-                <select
-                  className="table-input"
-                  value={form.linkedTransactionId}
-                  onChange={(event) => onLinkedTransactionChange(event.target.value)}
-                  aria-label="Linked transaction"
-                >
-                  <option value="">Choose transaction</option>
-                  {linkedTransactions.map((transaction) => (
-                    <option key={transaction.id} value={transaction.id}>
-                      {formatLinkedTransactionOption(transaction)}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="table-input table-input-secondary"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={form.linkedTransactionId}
-                  onChange={(event) => onFormChange('linkedTransactionId', event.target.value)}
-                  placeholder="Manual Tx ID"
-                  aria-label="Linked transaction ID"
-                />
-              </td>
-              <td className="right">
-                <input
-                  className="table-input right"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amountTotal}
-                  onChange={(event) => onFormChange('amountTotal', event.target.value)}
-                  placeholder="0.00"
-                  aria-label="Total amount"
-                />
-              </td>
-              <td className="right">
-                <input
-                  className="table-input right"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amountPaid}
-                  onChange={(event) => onFormChange('amountPaid', event.target.value)}
-                  placeholder="0.00"
-                  aria-label="Amount already paid"
-                />
-              </td>
-              <td className="right">-</td>
-              <td className="actions-cell">
-                <div className="table-action-group">
-                  <button type="button" className="primary-button" onClick={onCreateItem}>
-                    Save
-                  </button>
-                  <button type="button" onClick={onCancelCreate}>
-                    Cancel
-                  </button>
-                </div>
               </td>
             </tr>
           )}
@@ -324,116 +284,34 @@ export function OwedItemsTable({
           {items.length === 0 && !isCreateRowOpen ? (
             <tr>
               <td colSpan={9}>
-                <div className="owed-empty-state">
-                  <strong>No owed items in this view</strong>
-                  <p className="muted">
-                    Add a new item when someone owes you money, or switch the view/status filters.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={HandCoins}
+                  title="No owed items in this view"
+                  description="Add a new item when someone owes you money, or switch the view or status filters."
+                />
               </td>
             </tr>
           ) : (
             items.map((item) => (
               editingItem?.id === item.id ? (
                 <tr key={item.id} className="inline-edit-row">
-                  <td>
-                    <input
-                      className="table-input"
-                      value={editForm.person}
-                      onChange={(event) => onEditFormChange('person', event.target.value)}
-                      aria-label="Edit person owing"
-                      placeholder="Person"
+                  <td colSpan={9}>
+                    <OwedInlineForm
+                      form={editForm}
+                      onChange={onEditFormChange}
+                      onLinkedTransactionChange={onEditLinkedTransactionChange}
+                      linkedTransactions={linkedTransactions}
+                      formatLinkedTransactionOption={formatLinkedTransactionOption}
+                      onSave={onSaveEdit}
+                      onCancel={onCancelEdit}
+                      labelPrefix="Edit"
+                      status={(
+                        <Badge tone={getStatusTone(item)} size="sm">
+                          {getStatusLabel(item)}
+                        </Badge>
+                      )}
+                      saveLabel="Save"
                     />
-                  </td>
-                  <td>
-                    <input
-                      className="table-input"
-                      value={editForm.reason}
-                      onChange={(event) => onEditFormChange('reason', event.target.value)}
-                      aria-label="Edit description"
-                      placeholder="Description"
-                    />
-                    <input
-                      className="table-input table-input-secondary"
-                      value={editForm.notes}
-                      onChange={(event) => onEditFormChange('notes', event.target.value)}
-                      aria-label="Edit notes"
-                      placeholder="Notes"
-                    />
-                  </td>
-                  <td>
-                    <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
-                      {getStatusLabel(item)}
-                    </span>
-                  </td>
-                  <td>
-                    <input
-                      className="table-input"
-                      type="date"
-                      value={editForm.dueDate}
-                      onChange={(event) => onEditFormChange('dueDate', event.target.value)}
-                      aria-label="Edit due date"
-                    />
-                  </td>
-                  <td>
-                    <select
-                      className="table-input"
-                      value={editForm.linkedTransactionId}
-                      onChange={(event) => onEditLinkedTransactionChange(event.target.value)}
-                      aria-label="Edit linked transaction"
-                    >
-                      <option value="">Choose transaction</option>
-                      {linkedTransactions.map((transaction) => (
-                        <option key={transaction.id} value={transaction.id}>
-                          {formatLinkedTransactionOption(transaction)}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className="table-input table-input-secondary"
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={editForm.linkedTransactionId}
-                      onChange={(event) => onEditFormChange('linkedTransactionId', event.target.value)}
-                      aria-label="Edit linked transaction ID"
-                      placeholder="Manual Tx ID"
-                    />
-                  </td>
-                  <td className="right">
-                    <input
-                      className="table-input right"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={editForm.amountTotal}
-                      onChange={(event) => onEditFormChange('amountTotal', event.target.value)}
-                      aria-label="Edit total amount"
-                      placeholder="0.00"
-                    />
-                  </td>
-                  <td className="right">
-                    <input
-                      className="table-input right"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={editForm.amountPaid}
-                      onChange={(event) => onEditFormChange('amountPaid', event.target.value)}
-                      aria-label="Edit amount already paid"
-                      placeholder="0.00"
-                    />
-                  </td>
-                  <td className="right">{formatMoney(item.amount_remaining)}</td>
-                  <td className="actions-cell">
-                    <div className="table-action-group">
-                      <button type="button" className="primary-button" onClick={onSaveEdit}>
-                        Save
-                      </button>
-                      <button type="button" onClick={onCancelEdit}>
-                        Cancel
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ) : (
@@ -444,9 +322,9 @@ export function OwedItemsTable({
                     {item.notes && <div className="muted small">{item.notes}</div>}
                   </td>
                   <td>
-                    <span className={`badge badge-owed-status badge-owed-status-${item.status.replaceAll('_', '-')}`}>
+                    <Badge tone={getStatusTone(item)} size="sm">
                       {getStatusLabel(item)}
-                    </span>
+                    </Badge>
                   </td>
                   <td>{formatDate(item.due_date)}</td>
                   <td>{item.linked_transaction_id ?? '-'}</td>
@@ -455,29 +333,33 @@ export function OwedItemsTable({
                   <td className="right">{formatMoney(item.amount_remaining)}</td>
                   <td>
                     <div className="action-group">
-                      <button
+                      <Button
                         type="button"
-                        className="owed-row-action owed-row-action-edit"
+                        size="sm"
                         onClick={() => onStartEdit(item)}
+                        aria-label={`Edit ${item.reason}`}
                       >
                         Edit
-                      </button>
+                      </Button>
                       {item.status !== 'paid' && item.status !== 'cancelled' && (
-                        <button
+                        <Button
                           type="button"
-                          className="owed-row-action owed-row-action-paid"
+                          size="sm"
                           onClick={() => onMarkPaid(item)}
+                          aria-label={`Mark ${item.reason} as paid`}
                         >
                           Mark Paid
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
-                        className="owed-row-action owed-row-action-delete"
+                        size="sm"
+                        variant="danger"
                         onClick={() => onDelete(item)}
+                        aria-label={`Delete ${item.reason}`}
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

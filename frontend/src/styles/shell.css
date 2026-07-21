@@ -697,3 +697,32 @@ body {
     color: #8ab4f8;
   }
 }
+
+/* The global period pill is `position: absolute; left: 50%`, so it is out of
+   flow and floats over whatever the page header puts underneath it. Page
+   headers lay their actions out against the right edge, so on pages with wide
+   action groups the actions slid under the pill: Owed clipped "Export CSV" by
+   19px and Investments clipped "Resolve FX" by 51px.
+
+   Reserving a centre column in the header grid keeps the actions clear of it.
+   Equal `1fr` side columns make the reserved column centre on the same axis
+   the pill is centred on, so the clearance holds at any width. Scoped with
+   `:has()` to the pages that actually render a pill - Import and Settings do
+   not, and should keep the plain two-part header. */
+@media (min-width: 801px) {
+  .app-main:has(> .global-topbar) .ui-page-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 24rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .app-main:has(> .global-topbar) .ui-page-header-titles {
+    grid-column: 1;
+  }
+
+  .app-main:has(> .global-topbar) .ui-page-header-actions {
+    grid-column: 3;
+    justify-content: flex-end;
+    justify-self: end;
+  }
+}

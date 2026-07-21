@@ -15,6 +15,12 @@ export type BadgeProps = {
   size?: 'sm' | 'md'
   children: ReactNode
   title?: string
+  /**
+   * Appended, not replaced. For layout concerns the badge cannot know about -
+   * grid placement, responsive visibility. Never for changing its colours:
+   * that is what `tone` is for.
+   */
+  className?: string
 }
 
 /**
@@ -24,9 +30,19 @@ export type BadgeProps = {
  * everything, which mangled acronyms and multi-word source names
  * ("ActivoBank" -> "Activobank"). Callers pass the string they want shown.
  */
-export function Badge({ tone = 'neutral', size = 'md', children, title }: BadgeProps) {
+export function Badge({
+  tone = 'neutral',
+  size = 'md',
+  children,
+  title,
+  className,
+}: BadgeProps) {
+  const classes = ['ui-badge', `ui-badge-${tone}`, `ui-badge-${size}`, className ?? '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <span className={`ui-badge ui-badge-${tone} ui-badge-${size}`} title={title}>
+    <span className={classes} title={title}>
       {children}
     </span>
   )

@@ -1,4 +1,5 @@
 import type { OwedStatusFilter } from '../../types/api'
+import { Button } from '../ui'
 
 const statusOptions: Array<{ value: '' | OwedStatusFilter; label: string }> = [
   { value: 'active', label: 'Current owed' },
@@ -40,21 +41,21 @@ export function OwedStatusToolbar({
       </div>
 
       <div className="owed-toolbar-actions">
-        <button type="button" onClick={() => onStatusFilterChange('active')}>
+        <Button type="button" size="sm" onClick={() => onStatusFilterChange('active')}>
           Current
-        </button>
+        </Button>
 
-        <button type="button" onClick={() => onStatusFilterChange('paid')}>
+        <Button type="button" size="sm" onClick={() => onStatusFilterChange('paid')}>
           Paid history
-        </button>
+        </Button>
 
-        <button type="button" onClick={() => onStatusFilterChange('')}>
+        <Button type="button" size="sm" onClick={() => onStatusFilterChange('')}>
           All history
-        </button>
+        </Button>
 
-        <button type="button" onClick={onRefresh}>
+        <Button type="button" size="sm" onClick={onRefresh}>
           Refresh
-        </button>
+        </Button>
       </div>
     </div>
   )

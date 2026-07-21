@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import {
   createOwedItem,
@@ -12,6 +13,7 @@ import { OwedItemsTable, type OwedFormState } from '../components/owed/OwedItems
 import { OwedStatusToolbar } from '../components/owed/OwedStatusToolbar'
 import { RecordPaymentModal } from '../components/owed/RecordPaymentModal'
 import { StatusMessage } from '../components/StatusMessage'
+import { Button, PageHeader, SegmentedControl } from '../components/ui'
 import { useDialogAccessibility } from '../hooks/useDialogAccessibility'
 import type { OwedItem, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney, formatMonthLabel } from '../utils/format'
@@ -457,37 +459,39 @@ export function OwedPage() {
       : items
   return (
     <section className="app-page owed-page owed-page-polished">
-      <div className="page-header owed-page-header">
-        <div className="page-title-block">
-          <h1>Owed To Me</h1>
-        </div>
-
-        <div className="action-group">
-          <button className="desktop-only" type="button" onClick={handleExportCsv}>
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="desktop-only"
-            onClick={() => {
-              setPaymentForm(getInitialPaymentFormState())
-              setIsPaymentModalOpen(true)
-            }}
-          >
-            Record Payment
-          </button>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              setEditingItem(null)
-              setIsCreateRowOpen((isOpen) => !isOpen)
-            }}
-          >
-            {isCreateRowOpen ? 'Close' : '+ Add'}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Owed To Me"
+        actions={(
+          <>
+            <Button className="desktop-only" size="sm" type="button" onClick={handleExportCsv}>
+              Export CSV
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="desktop-only"
+              onClick={() => {
+                setPaymentForm(getInitialPaymentFormState())
+                setIsPaymentModalOpen(true)
+              }}
+            >
+              Record Payment
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={isCreateRowOpen ? 'secondary' : 'primary'}
+              iconLeft={isCreateRowOpen ? undefined : Plus}
+              onClick={() => {
+                setEditingItem(null)
+                setIsCreateRowOpen((isOpen) => !isOpen)
+              }}
+            >
+              {isCreateRowOpen ? 'Close' : 'Add'}
+            </Button>
+          </>
+        )}
+      />
 
       <StatusMessage error={error} message={message} />
 
@@ -516,22 +520,16 @@ export function OwedPage() {
           </p>
         </div>
 
-        <div className="segmented-control">
-          <button
-            type="button"
-            className={tableMonthFilter === 'current' ? 'active' : ''}
-            onClick={() => setTableMonthFilter('current')}
-          >
-            {getMonthLabel(currentMonthKey)}
-          </button>
-          <button
-            type="button"
-            className={tableMonthFilter === 'all' ? 'active' : ''}
-            onClick={() => setTableMonthFilter('all')}
-          >
-            All
-          </button>
-        </div>
+        <SegmentedControl
+          label="Owed items period"
+          size="sm"
+          value={tableMonthFilter}
+          onChange={setTableMonthFilter}
+          options={[
+            { value: 'current', label: getMonthLabel(currentMonthKey) },
+            { value: 'all', label: 'All' },
+          ]}
+        />
       </div>
 
       {isPaymentModalOpen && (

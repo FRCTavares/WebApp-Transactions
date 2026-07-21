@@ -560,7 +560,7 @@ row activation.
 
 ### Phase 4 — Call-site migration, one commit per page
 
-**Current next task: Transactions.** Complete and verify it before starting Investments. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
+**Current next task: Wealth.** Complete and verify it before starting the next page. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
 
 - [x] **Dashboard — done and verified 2026-07-20 (pilot).**
       `npm run lint` clean, 49/49 unit tests pass (the 4 Dashboard state tests
@@ -813,36 +813,78 @@ row activation.
       admin-maintained, so both are owner-only by design. And this increases
       yfinance usage, which section 11 already flags as an unresolved Yahoo
       ToS risk before any wider release.
-- [ ] Wealth
-- [ ] Owed — **blocking bug already fixed 2026-07-21, ahead of the migration.**
-      `.owed-page-polished .owed-table-wrap` carried `overflow: hidden` (added
-      so the rounded corners clip the table). The inline create/edit row pushes
-      the table to ~1660px against a ~1170px container, so Save and Cancel sat
-      ~340px past the right edge **with no scrollbar** — adding or editing an
-      owed item from the page was impossible at 1440px.
+- [ ] Wealth — note: its `<h1>` is currently overlapped by the global period
+      pill (`.global-topbar` is absolutely positioned and out of flow).
+      Migrating its header to `PageHeader` fixes this, as it did on Owed.
+- [x] **Owed — migrated 2026-07-21.** `PageHeader`, `Button` (all raw buttons),
+      `Badge` (all legacy `.badge` spans), `SegmentedControl` and `EmptyState`.
+      Verified: lint clean, 49/49 unit tests, build passing, 12/12 e2e on
+      chromium and mobile-chromium against a live backend, and both themes
+      screenshotted at desktop and mobile.
 
-      Note this passed automated testing throughout: Playwright clicks clipped
-      elements happily, so the e2e suite reported the flow working while a
-      human could not complete it. It was only visible in a screenshot.
+      **The blocking bug was bigger than first diagnosed.**
+      `.owed-page-polished .owed-table-wrap` carried `overflow: hidden`, so
+      Save and Cancel sat ~340px past the right edge with no scrollbar. The
+      first fix (`overflow-x: auto` plus a sticky actions column) made Save
+      reachable but left the real problem: the inline form was a `<tr>` spread
+      across nine columns, ~1650px wide in a ~1010px container, so the **total
+      amount and linked-transaction fields sat underneath the sticky actions
+      column** where they could be neither seen nor clicked. Adding an item
+      with an amount was still effectively impossible.
 
-      Fixed with `overflow-x: auto` / `overflow-y: hidden` (keeps the corner
-      clipping), plus a **sticky actions column** so Save stays in view instead
-      of forcing you to scroll away from the fields you are editing.
+      Both inline rows are now one `OwedInlineForm` in a single full-width
+      cell, laid out on a grid that fits the container at any width. Every
+      field is labelled and visible, and the two forms no longer duplicate
+      ~100 lines of JSX.
 
-      Also fixed while there:
-      - Every input in both inline rows had **no accessible name** — placeholder
-        only, which is not a label and disappears once you type. The two amount
-        fields were both `placeholder="0.00"`, so total and paid were
-        indistinguishable to a screen reader. 16 `aria-label`s added.
-      - The 80px Status column was breaking "open" mid-word into "ope / n".
-      - `.owed-page-polished .owed-table th` hardcoded `#fbfbfd`/`#475569`,
-        now tokenised.
+      **`toBeInViewport()` is not enough, and this is the second time.** It
+      passes for a control that is on screen but covered by something else —
+      exactly how both the sticky-column occlusion and the mobile tab bar
+      hiding Save got through a green suite. Verification now hit-tests the
+      centre point with `elementFromPoint` and requires the button itself to
+      answer. That check failed immediately on mobile and found a third bug:
+      `main`'s 1.35rem bottom padding left the last control on the page under
+      the fixed bottom nav (now clears it).
 
-      Still open for the migration proper: the page is not yet on the
-      primitives, and `--owed-*` is already aliased (done during #74), so it
-      should be quick. The grouped person-card view hides row actions behind a
-      `<details>` whose only affordance is an `aria-hidden` "⋯" — worth
-      revisiting for discoverability.
+      Fixed while there:
+      - **The row disclosure affordance.** The `aria-hidden` "⋯" is now a
+        chevron that rotates when open, with a visually-hidden "Details" as
+        its accessible name. The person-card header row and the item summary
+        share one grid template and had to change together. Added a
+        `ui-visually-hidden` utility — the codebase had none.
+      - **The period pill overlapped the page header actions.**
+        `.global-topbar` is `position: absolute; left: 50%`, so it is out of
+        flow and floats over whatever the header puts under it: Owed clipped
+        "Export CSV" by 19px. `.ui-page-header` now reserves a centre column
+        on pages that render a pill. **Wealth and Investments still collide**
+        (Investments clips "Resolve FX" by 51px) because they are still on the
+        legacy `.page-header`; migrating them fixes it for free.
+      - **Mobile amounts were clipped to "€85"** — the person-item summary
+        declared three grid tracks for four visible children, so the amount
+        landed in the 1.2rem track sized for the old ellipsis and the chevron
+        wrapped onto a second row.
+      - Table columns 3+ now shrink to content, so Person and Description stop
+        wrapping mid-word now that the form no longer forces the table wide.
+      - Deleted the CSS the migration orphaned: `.owed-row-action*`,
+        `.badge-owed-status*`, `.owed-empty-state` — 14 rules, plus 10
+        selectors pruned from mixed lists in the two dark sheets.
+      - `Button` and `Badge` gained an appended `className`, matching `Card`.
+
+      Earlier, ahead of the migration: 16 `aria-label`s added to the inline
+      inputs (both amount fields were `placeholder="0.00"`, indistinguishable
+      to a screen reader), the 80px Status column breaking "open" into
+      "ope / n", and `.owed-table th`'s hardcoded `#fbfbfd`/`#475569`.
+
+      A note on the harness, since it cost real time: `page.route` globs treat
+      `?` as a single-character wildcard, so `**/api/owed?**` also matched the
+      Vite module `/src/api/owed.ts` and served JSON in its place — a blank
+      page and four vacuously passing tests. The app also registers `/sw.js`,
+      which intercepts fetches before `page.route` sees them. Verifying
+      against the real backend is more reliable than stubbing here.
+
+      Still open: the VIEW `<select>` and the Current / Paid history / All
+      history buttons are two controls for the same state, which is
+      redundant — a product decision rather than styling, so left alone.
 - [ ] Categories
 - [ ] Import
 - [ ] Export

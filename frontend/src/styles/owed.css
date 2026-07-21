@@ -53,24 +53,6 @@
   padding: 12px 10px;
 }
 
-.owed-empty-state {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  padding: 28px 12px;
-  text-align: center;
-}
-
-.owed-empty-state strong {
-  color: #111827;
-  font-size: 16px;
-}
-
-.owed-empty-state p {
-  margin: 0;
-  max-width: 460px;
-}
-
 @media (max-width: 900px) {
 
   .owed-toolbar {
@@ -594,70 +576,6 @@
   font-weight: 800;
 }
 
-.badge-owed-status {
-  border-color: #e5e7eb;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 850;
-}
-
-.badge-owed-status-open,
-.badge-owed-status-partially-paid {
-  border-color: #fed7aa;
-  background: var(--owed-orange-soft);
-  color: #c2410c;
-}
-
-.badge-owed-status-paid {
-  border-color: #bbf7d0;
-  background: var(--owed-green-soft);
-  color: #15803d;
-}
-
-.badge-owed-status-cancelled {
-  border-color: #e5e7eb;
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.owed-row-action {
-  min-height: 2.1rem;
-  min-width: 0;
-  padding: 0 0.65rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.owed-row-action-edit:hover,
-.owed-row-action-paid:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.owed-row-action-delete {
-  border-color: #fecaca;
-  color: #dc2626;
-}
-
-.owed-row-action-delete:hover {
-  border-color: #fca5a5;
-  background: var(--owed-red-soft);
-  color: #b91c1c;
-}
-
-.owed-page-polished .owed-empty-state {
-  padding: 2rem 1rem;
-}
-
-.owed-page-polished .owed-empty-state strong {
-  font-size: 1rem;
-}
-
 @media (max-width: 900px) {
 }
 
@@ -744,7 +662,101 @@
   white-space: nowrap;
 }
 
-.owed-page-polished .owed-row-action {
-  min-height: 2rem;
-  padding: 0 0.58rem;
+/* Inline create and edit form.
+
+   These were `<tr>`s spread across the table's nine columns, which made the
+   row ~1650px wide inside a ~1010px container: the amount and linked-
+   transaction fields ended up underneath the sticky actions column, where they
+   could be neither seen nor clicked, and Save sat off the right edge. The form
+   now occupies one full-width cell and lays itself out in a grid that fits the
+   container at any width. */
+.owed-inline-form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-2);
+}
+
+.owed-inline-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+}
+
+.owed-inline-field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.owed-inline-field-wide {
+  grid-column: span 2;
+}
+
+.owed-inline-field > span {
+  /* The cell this form sits in inherits the table's centred alignment. */
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.owed-inline-field .table-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.owed-inline-status {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.owed-inline-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 800px) {
+  .owed-inline-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owed-inline-field-wide {
+    grid-column: auto;
+  }
+
+  .owed-inline-form-actions > * {
+    flex: 1 1 0;
+  }
+}
+
+/* With the inline form no longer forcing the table to ~1650px, the columns are
+   narrower and dates wrapped onto three lines ("10 / Jan / 2026"). */
+.owed-page-polished .owed-table td:nth-child(4),
+.owed-page-polished .owed-table th:nth-child(4) {
+  white-space: nowrap;
+}
+
+/* Let the text columns absorb the slack. `width: 1%` on a table cell means
+   "shrink to content", so the status, date, amount and action columns take
+   only what they need and Person/Description stop wrapping mid-word. */
+.owed-page-polished .owed-table th:nth-child(n + 3),
+.owed-page-polished .owed-table td:nth-child(n + 3) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.owed-page-polished .owed-table th:nth-child(-n + 2),
+.owed-page-polished .owed-table td:nth-child(-n + 2) {
+  white-space: normal;
+}
+
+/* The form cell spans every column, so it must not inherit the shrink rule. */
+.owed-page-polished .owed-table td[colspan] {
+  width: auto;
+  white-space: normal;
 }

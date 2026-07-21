@@ -12,6 +12,7 @@ import {
   getPaymentPeople,
   type PaymentFormState,
 } from '../../utils/owedPaymentUtils'
+import { Button } from '../ui'
 
 /**
  * The "Record payment" modal on `OwedPage`. Split out (along with its
@@ -56,9 +57,9 @@ export function RecordPaymentModal({
               Record cash, bank transfer, MB WAY, or other repayments.
             </p>
           </div>
-          <button type="button" onClick={onClose}>
+          <Button type="button" size="sm" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
 
         <div className="form-row">
@@ -235,16 +236,16 @@ export function RecordPaymentModal({
         )}
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>
+          <Button type="button" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="primary-button"
+            variant="primary"
             onClick={onSubmit}
           >
             Record payment
-          </button>
+          </Button>
         </div>
       </div>
     </div>
