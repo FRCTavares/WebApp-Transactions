@@ -142,7 +142,7 @@ main {
 .investment-funding-mobile-summary {
     display: block;
     margin: 0;
-    color: #111827;
+    color: var(--color-text);
     font-size: 15px;
     font-weight: 700;
   }
@@ -193,7 +193,7 @@ main {
 
 .page-title-block h1 {
   margin: 0;
-  color: #111827;
+  color: var(--color-text);
   font-size: clamp(1.75rem, 2.4vw, 2.35rem);
   line-height: 1.05;
   letter-spacing: -0.045em;
@@ -222,7 +222,7 @@ main {
 
 .page-section-header h2 {
   margin: 0 0 0.25rem;
-  color: #111827;
+  color: var(--color-text);
   font-size: 1.2rem;
   line-height: 1.2;
   letter-spacing: -0.025em;
