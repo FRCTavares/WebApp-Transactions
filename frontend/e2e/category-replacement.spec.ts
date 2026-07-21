@@ -2,8 +2,17 @@ import { expect, test } from '@playwright/test'
 
 test('replaces a category with linked transactions and deletes it', async ({ page }) => {
   const categoryName = `E2E Category ${Date.now()}`
+  const replacementName = `E2E Replacement ${Date.now()}`
 
   await page.goto('/categories')
+
+  // The replacement dialog needs somewhere to reassign the transactions to.
+  // Create that target explicitly rather than relying on categories left
+  // behind by earlier runs - against a clean database there are none.
+  await page.getByLabel('Name').fill(replacementName)
+  await page.getByRole('button', { name: 'Add category' }).click()
+  await expect(page.getByText(replacementName)).toBeVisible()
+
   await page.getByLabel('Name').fill(categoryName)
   await page.getByRole('button', { name: 'Add category' }).click()
   await expect(page.getByText(categoryName)).toBeVisible()
