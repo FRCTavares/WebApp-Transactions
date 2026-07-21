@@ -560,7 +560,7 @@
 
 .owed-page-polished .owed-table td {
   padding: 0.8rem 0.9rem;
-  border-bottom-color: #eef2f7;
+  border-bottom-color: var(--color-border);
   color: var(--owed-text);
 }
 

@@ -234,7 +234,7 @@
 }
 
 .transactions-page tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td {
-  background: #ffffff;
+  background: var(--color-surface-sunken);
 }
 
 .transactions-page tbody tr:hover td {
@@ -244,7 +244,7 @@
 .transactions-page th,
 .transactions-page td {
   padding: 0.75rem 1rem;
-  border-bottom-color: #eef2f7;
+  border-bottom-color: var(--color-border);
 }
 
 .transactions-page tbody tr:last-child td {

@@ -11,23 +11,30 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 1px solid #d1d5db;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+/* Zebra striping. Both rows are named explicitly so the pair themes together:
+   previously only the even row was set and the odd row fell through to the
+   table background, which meant dark mode had to restate both. */
+tbody tr:nth-child(odd):not(.inline-create-row):not(.inline-edit-row) td {
+  background: var(--color-surface);
 }
 
 tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td {
-  background: #fdfdfd;
+  background: var(--color-surface-sunken);
 }
 
 tbody tr:hover td {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
 }
 
 .inline-create-row:hover td {
-  background: #ecfdf5;
+  background: var(--color-positive-subtle);
 }
 
 .inline-edit-row:hover td {
-  background: #fef3c7;
+  background: var(--color-warning-subtle);
 }
 
 td.right,

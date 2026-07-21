@@ -492,7 +492,7 @@ which is why dark mode
 
 .investments-page .investment-position-table-wrap td {
   padding: 0.72rem 0.8rem;
-  border-bottom-color: #eef2f7;
+  border-bottom-color: var(--color-border);
   color: var(--investment-text);
   vertical-align: middle;
 }
