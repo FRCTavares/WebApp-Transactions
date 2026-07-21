@@ -394,7 +394,7 @@
 @media (max-width: 800px) {
   .owed-page-polished .owed-mobile-empty {
     border: 1px solid rgb(226 232 240 / 0.95) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     color: var(--color-text) !important;
     box-shadow: 0 10px 30px rgb(15 23 42 / 0.06) !important;
   }

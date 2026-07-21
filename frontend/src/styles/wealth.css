@@ -267,7 +267,7 @@
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--color-border);
   border-radius: 0.85rem;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .wealth-subaccount-row > div:first-child {
@@ -297,7 +297,7 @@
   min-height: 2rem;
   padding: 0 0.58rem;
   border-radius: 0.75rem;
-  background: #ffffff;
+  background: var(--color-surface);
   color: #334155;
   font-size: 0.82rem;
   font-weight: 800;
@@ -542,7 +542,7 @@
     padding: 0.55rem 0.65rem;
     border: 1px solid var(--wealth-border);
     border-radius: 1rem;
-    background: #ffffff;
+    background: var(--color-surface);
     box-shadow: 0 8px 20px rgb(15 23 42 / 0.035);
   }
 

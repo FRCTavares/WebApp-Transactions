@@ -63,7 +63,7 @@
     min-height: 2.15rem;
     padding: 0 0.85rem;
     border-radius: 999px;
-    background: #ffffff;
+    background: var(--color-surface);
     font-size: 0.8rem;
     font-weight: 800;
   }
@@ -527,7 +527,7 @@
 
   .transactions-page .transaction-filter-mobile-header button:not(:where(.ui-button)) {
     border-color: rgb(209 213 219 / 0.9) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     color: var(--color-text) !important;
   }
 
@@ -538,13 +538,13 @@
 
   .transactions-page .transaction-form-more-toggle {
     border-color: rgb(209 213 219 / 0.9) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     color: var(--color-text) !important;
   }
 
   .transactions-page .transaction-form {
     border-color: rgb(209 213 219 / 0.9) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
   }
 
   :root[data-theme='dark'] .transactions-page .transaction-filter-mobile-header {

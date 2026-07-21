@@ -337,7 +337,7 @@
   .wealth-page .wealth-trend-panel,
   .wealth-page .wealth-chart-card {
     border-color: rgb(226 232 240 / 0.95) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     box-shadow: 0 10px 30px rgb(15 23 42 / 0.06) !important;
   }
 
@@ -345,7 +345,7 @@
   .wealth-page .wealth-mobile-account-group,
   .wealth-page .wealth-account-card {
     border: 1px solid rgb(226 232 240 / 0.95) !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     box-shadow: 0 8px 24px rgb(15 23 42 / 0.045) !important;
   }
 

@@ -68,7 +68,7 @@ td[colspan] {
 .month-navigator button {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--color-surface);
   padding: 8px 12px;
   color: var(--color-text);
   font-size: 14px;
@@ -124,11 +124,12 @@ td[colspan] {
 
 .modal-card {
   width: min(560px, 100%);
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
   border-radius: 0.75rem;
-  box-shadow: 0 20px 40px rgb(15 23 42 / 0.2);
+  box-shadow: var(--shadow-lg, 0 20px 40px rgb(15 23 42 / 0.2));
   padding: 1rem;
+  color: var(--color-text);
 }
 
 .modal-header,
@@ -276,7 +277,7 @@ td[colspan] {
     padding: 10px 11px;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--color-surface);
   }
 
   .transaction-mobile-card-main {

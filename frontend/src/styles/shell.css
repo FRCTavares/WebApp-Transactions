@@ -73,7 +73,7 @@ body {
 
   .lock-button:hover {
     border-color: #e5e7eb;
-    background: #ffffff;
+    background: var(--color-surface);
   }
 
   .sidebar-nav {
@@ -176,7 +176,7 @@ body {
     min-width: 0;
     border-color: #dbe1ea;
     border-radius: 0.75rem;
-    background: #ffffff;
+    background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 650;
@@ -188,7 +188,7 @@ body {
     padding: 0 0.7rem;
     border-color: #dbe1ea;
     border-radius: 0.75rem;
-    background: #ffffff;
+    background: var(--color-surface);
     color: var(--color-text);
     font-weight: 750;
   }
@@ -324,7 +324,7 @@ body {
   padding: 0.8rem 0.9rem;
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
-  background: #ffffff;
+  background: var(--color-surface);
   color: var(--color-text);
   text-align: left;
   box-shadow: none;
@@ -370,7 +370,7 @@ body {
   padding: 0.8rem 0.9rem;
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .settings-status span {
@@ -659,7 +659,7 @@ body {
 
   .sidebar-signout-button:hover {
     border-color: #cbd5e1 !important;
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     color: var(--color-text) !important;
   }
 
