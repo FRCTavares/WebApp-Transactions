@@ -4,6 +4,8 @@ import type {
   TransactionCategoryMigrationPreview,
 } from '../../api/transactionCategories'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
+import { X } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 
 type CategoryMigrationReviewDialogProps = {
   preview: TransactionCategoryMigrationPreview
@@ -99,15 +101,13 @@ export function CategoryMigrationReviewDialog({
             </p>
           </div>
 
-          <button
+          <IconButton
             type="button"
-            className="category-replacement-close"
-            aria-label="Close migration review"
+            icon={X}
+            label="Close migration review"
             disabled={isSubmitting}
             onClick={onCancel}
-          >
-            ×
-          </button>
+          />
         </header>
 
         {preview.replacement_categories.length === 0 ? (
@@ -231,17 +231,13 @@ export function CategoryMigrationReviewDialog({
         )}
 
         <footer className="category-migration-actions">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={onCancel}
-          >
+          <Button type="button" disabled={isSubmitting} onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className="danger-button"
+            variant="danger"
             disabled={
               isSubmitting ||
               !isComplete ||
@@ -252,7 +248,7 @@ export function CategoryMigrationReviewDialog({
             {isSubmitting
               ? 'Applying migration…'
               : 'Apply migration and delete'}
-          </button>
+          </Button>
         </footer>
       </section>
     </div>

@@ -1,5 +1,6 @@
 import type { TransactionCategory } from '../../types/api'
 import { getTransferDirectionLabel } from '../../utils/transactionCategoriesPanelUtils'
+import { Button } from '../ui'
 
 /**
  * A single row in `TransactionCategoriesPanel`'s category list. Split
@@ -69,46 +70,26 @@ export function CategoryRow({
       <div className="transaction-category-actions">
         {isEditing ? (
           <>
-            <button
-              type="button"
-              className="transaction-category-action"
-              onClick={() => onSaveName(category)}
-            >
+            <Button type="button" size="sm" variant="primary" onClick={() => onSaveName(category)}>
               Save
-            </button>
-            <button
-              type="button"
-              className="transaction-category-action"
-              onClick={onCancelEditing}
-            >
+            </Button>
+            <Button type="button" size="sm" onClick={onCancelEditing}>
               Cancel
-            </button>
+            </Button>
           </>
         ) : (
-          <button
-            type="button"
-            className="transaction-category-action"
-            onClick={() => onStartEditing(category)}
-          >
+          <Button type="button" size="sm" onClick={() => onStartEditing(category)}>
             Rename
-          </button>
+          </Button>
         )}
 
-        <button
-          type="button"
-          className="transaction-category-action"
-          onClick={() => onToggle(category)}
-        >
+        <Button type="button" size="sm" onClick={() => onToggle(category)}>
           {category.is_active ? 'Disable' : 'Enable'}
-        </button>
+        </Button>
 
-        <button
-          type="button"
-          className="transaction-category-action transaction-category-action-danger"
-          onClick={() => onDelete(category)}
-        >
+        <Button type="button" size="sm" variant="danger" onClick={() => onDelete(category)}>
           Delete
-        </button>
+        </Button>
       </div>
     </article>
   )

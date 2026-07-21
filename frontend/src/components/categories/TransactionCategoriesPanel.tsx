@@ -26,6 +26,8 @@ import {
   type CategoryFormState,
   type DisplayGroup,
 } from '../../utils/transactionCategoriesPanelUtils'
+import { Tags } from 'lucide-react'
+import { Button, EmptyState } from '../ui'
 
 export function TransactionCategoriesPanel() {
   const [categories, setCategories] = useState<TransactionCategory[]>([])
@@ -455,28 +457,21 @@ export function TransactionCategoriesPanel() {
       )}
 
       {categories.length === 0 ? (
-        <section className="transaction-category-empty-state">
-          <div className="transaction-category-empty-icon" aria-hidden="true">
-            +
-          </div>
-
-          <div>
-            <h2>No categories yet</h2>
-            <p>
-              Start with a recommended set, then rename, disable, or
-              remove anything you do not use.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className="primary-button"
-            disabled={isBusy}
-            onClick={handleAddRecommended}
-          >
-            Add recommended categories
-          </button>
-        </section>
+        <EmptyState
+          icon={Tags}
+          title="No categories yet"
+          description="Start with a recommended set, then rename, disable, or remove anything you do not use."
+          action={(
+            <Button
+              type="button"
+              variant="primary"
+              disabled={isBusy}
+              onClick={handleAddRecommended}
+            >
+              Add recommended categories
+            </Button>
+          )}
+        />
       ) : (
         <section className="transaction-category-groups">
           <header className="transaction-category-groups-header">
@@ -490,13 +485,14 @@ export function TransactionCategoriesPanel() {
 
             <div className="transaction-category-groups-summary">
               <span>{activeCount} active</span>
-              <button
+              <Button
                 type="button"
+                size="sm"
                 disabled={isBusy}
                 onClick={handleAddRecommended}
               >
                 Add recommended
-              </button>
+              </Button>
             </div>
           </header>
 
