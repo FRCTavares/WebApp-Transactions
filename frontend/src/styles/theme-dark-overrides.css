@@ -252,25 +252,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
     );
 }
 
-/* Text hierarchy. */ :root[data-theme='dark'] .page-subtitle,
-:root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
-:root[data-theme='dark'] .settings-action-button small,
-:root[data-theme='dark'] .theme-option-button small,
-:root[data-theme='dark'] .transactions-page td .muted.small {
-  color: #aeb3bd;
-}
-
-:root[data-theme='dark'] .eyebrow,
-:root[data-theme='dark'] .nav-group h3 {
-  color: #8f95a1;
-}
-
-/* Keep status/action text readable. */ :root[data-theme='dark'] .settings-status span,
-:root[data-theme='dark'] .theme-option-button strong,
-:root[data-theme='dark'] .settings-action-button strong {
-  color: var(--theme-text);
-}
-
 /* Mobile bottom nav should match the flat sidebar. */
 @media (max-width: 800px) {:root[data-theme='dark'] .mobile-bottom-nav {
     border-top-color: rgb(255 255 255 / 0.08);
@@ -334,17 +315,4 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   border-color: rgb(255 255 255 / 0.105) !important;
   background: #202126 !important;
   color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .investments-page .investment-summary-grid article strong,
-:root[data-theme='dark'] .investments-page .investment-summary-grid article span,
-:root[data-theme='dark'] .summary-card strong,
-:root[data-theme='dark'] .summary-card h2,
-:root[data-theme='dark'] .wealth-summary-card-primary strong {
-  color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .investments-page .investment-summary-grid article span,
-:root[data-theme='dark'] .summary-card h2 {
-  color: var(--theme-muted) !important;
 }

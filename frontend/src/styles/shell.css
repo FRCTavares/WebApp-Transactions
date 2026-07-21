@@ -43,7 +43,7 @@ body {
   .account-greeting {
     overflow: hidden;
     margin: 0;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 850;
     letter-spacing: -0.02em;
@@ -106,7 +106,7 @@ body {
     border: 1px solid transparent;
     border-radius: 0.8rem;
     background: transparent;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.88rem;
     font-weight: 720;
     line-height: 1.15;
@@ -177,7 +177,7 @@ body {
     border-color: #dbe1ea;
     border-radius: 0.75rem;
     background: #ffffff;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 650;
   }
@@ -189,7 +189,7 @@ body {
     border-color: #dbe1ea;
     border-radius: 0.75rem;
     background: #ffffff;
-    color: #111827;
+    color: var(--color-text);
     font-weight: 750;
   }
 
@@ -296,7 +296,7 @@ body {
 
 .settings-card-header h2 {
   margin: 0;
-  color: #111827;
+  color: var(--color-text);
   font-size: 1rem;
   font-weight: 850;
   letter-spacing: -0.02em;
@@ -325,7 +325,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
   background: #ffffff;
-  color: #111827;
+  color: var(--color-text);
   text-align: left;
   box-shadow: none;
 }
@@ -342,7 +342,7 @@ body {
 }
 
 .settings-action-button strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 0.92rem;
   font-weight: 800;
 }
@@ -374,7 +374,7 @@ body {
 }
 
 .settings-status span {
-  color: #111827;
+  color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 800;
 }
@@ -455,7 +455,7 @@ body {
     gap: 0.62rem;
     padding: 0.52rem 0.7rem;
     border-radius: 0.82rem;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.9rem;
     font-weight: 760;
     letter-spacing: -0.015em;
@@ -517,7 +517,7 @@ body {
   }
 
   .sidebar-brand .account-greeting {
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 850;
   }
@@ -607,7 +607,7 @@ body {
   }
 
   .sidebar-profile .account-greeting {
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.88rem;
     font-weight: 820;
   }
@@ -634,7 +634,7 @@ body {
   .sidebar-signout-button:hover {
     border-color: #cbd5e1 !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .sidebar-signout-button::before {

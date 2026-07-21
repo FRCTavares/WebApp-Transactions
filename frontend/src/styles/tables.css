@@ -70,7 +70,7 @@ td[colspan] {
   border-radius: 8px;
   background: #ffffff;
   padding: 8px 12px;
-  color: #111827;
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -288,7 +288,7 @@ td[colspan] {
 
   .transaction-mobile-card-main strong {
     display: block;
-    color: #111827;
+    color: var(--color-text);
     font-size: 14px;
     line-height: 1.25;
   }
@@ -301,7 +301,7 @@ td[colspan] {
 
   .transaction-mobile-card-main > span {
     flex: 0 0 auto;
-    color: #111827;
+    color: var(--color-text);
     font-size: 14px;
     font-weight: 600;
     white-space: nowrap;

@@ -52,7 +52,7 @@
 }
 
 .investment-trend-empty strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 1rem;
   font-weight: 850;
 }

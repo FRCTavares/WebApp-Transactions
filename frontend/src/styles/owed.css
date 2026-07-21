@@ -193,7 +193,7 @@
   }
 
   .owed-person-card-header > strong {
-    color: #111827;
+    color: var(--color-text);
     font-size: 16px;
     white-space: nowrap;
   }
@@ -338,7 +338,7 @@
 }
 
 .owed-page-polished .segmented-control button.active {
-  background: #111827;
+  background: var(--color-text);
   color: #ffffff;
 }
 
@@ -478,7 +478,7 @@
 }
 
 .owed-page-polished .segmented-control button.active {
-  background: #111827;
+  background: var(--color-text);
   color: #ffffff;
   box-shadow: 0 8px 18px rgb(15 23 42 / 0.12);
 }

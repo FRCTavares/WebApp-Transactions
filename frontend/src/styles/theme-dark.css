@@ -94,56 +94,6 @@ and this exclusion with it. */
   background: rgb(24 24 27 / 0.82);
 }
 
-:root[data-theme='dark'] h1,
-:root[data-theme='dark'] h2,
-:root[data-theme='dark'] h3,
-:root[data-theme='dark'] strong,
-:root[data-theme='dark'] .account-greeting,
-:root[data-theme='dark'] .page-title-block h1,
-:root[data-theme='dark'] .settings-card-header h2,
-:root[data-theme='dark'] .settings-action-button strong,
-:root[data-theme='dark'] .transactions-page .page-title-block h1,
-:root[data-theme='dark'] .transactions-page .transaction-description-line span:first-child,
-:root[data-theme='dark'] .transactions-page td.right,
-:root[data-theme='dark'] .owed-page-polished .page-title-block h1,
-:root[data-theme='dark'] .wealth-page .page-title-block h1,
-:root[data-theme='dark'] .wealth-summary-card strong,
-:root[data-theme='dark'] .wealth-account-card h3,
-:root[data-theme='dark'] .wealth-subaccount-row strong,
-:root[data-theme='dark'] .wealth-modal-header h2,
-:root[data-theme='dark'] .wealth-modal-total strong,
-:root[data-theme='dark'] .investments-page .portfolio-snapshot h2,
-:root[data-theme='dark'] .investments-page .section-header h2,
-:root[data-theme='dark'] .investment-trend-header h2,
-:root[data-theme='dark'] .investment-trend-current strong {
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] p,
-:root[data-theme='dark'] small,
-:root[data-theme='dark'] .muted,
-:root[data-theme='dark'] .page-subtitle,
-:root[data-theme='dark'] .account-subtitle,
-:root[data-theme='dark'] .nav-group h3,
-:root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
-:root[data-theme='dark'] .settings-action-button small,
-:root[data-theme='dark'] .global-period-selector label span,
-:root[data-theme='dark'] .transactions-page td .muted.small,
-:root[data-theme='dark'] .transactions-page .transaction-filter-card label,
-:root[data-theme='dark'] .wealth-summary-card span,
-:root[data-theme='dark'] .wealth-summary-card small,
-:root[data-theme='dark'] .wealth-account-type,
-:root[data-theme='dark'] .wealth-account-card p,
-:root[data-theme='dark'] .wealth-subaccount-row span,
-:root[data-theme='dark'] .wealth-chart-label,
-:root[data-theme='dark'] .investment-trend-label,
-:root[data-theme='dark'] .investment-trend-legend,
-:root[data-theme='dark'] .investment-trend-current span,
-:root[data-theme='dark'] .investment-holding-ticker,
-:root[data-theme='dark'] .investment-holding-meta {
-  color: var(--theme-muted);
-}
-
 :root[data-theme='dark'] button:not(:where(.ui-button,
 .ui-icon-button)),
 :root[data-theme='dark'] input,
@@ -195,10 +145,6 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .investments-page .investment-position-table-wrap th {
   background: #202024;
   color: var(--theme-muted);
-}
-
-:root[data-theme='dark'] .sidebar button {
-  color: var(--theme-text);
 }
 
 :root[data-theme='dark'] .sidebar button.active,
@@ -311,19 +257,6 @@ since darkening against a near-black surface reads as the control going dead. */
     12px 0 42px rgb(0 0 0 / 0.16);
 }
 
-:root[data-theme='dark'] .account-greeting {
-  color: #f5f5f7;
-}
-
-:root[data-theme='dark'] .account-subtitle,
-:root[data-theme='dark'] .nav-group h3 {
-  color: #9298a6;
-}
-
-:root[data-theme='dark'] .sidebar button {
-  color: #e7e8ed;
-}
-
 :root[data-theme='dark'] .sidebar button:hover {
   border-color: rgb(255 255 255 / 0.12);
   background: rgb(255 255 255 / 0.055);
@@ -388,21 +321,6 @@ since darkening against a near-black surface reads as the control going dead. */
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 0.055),
     0 12px 26px rgb(37 99 235 / 0.12);
-}
-
-:root[data-theme='dark'] .settings-status span {
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .page-subtitle,
-:root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
-:root[data-theme='dark'] .settings-action-button small,
-:root[data-theme='dark'] .theme-option-button small {
-  color: #aeb4c0;
-}
-
-:root[data-theme='dark'] .eyebrow {
-  color: #8f96a7;
 }
 
 :root[data-theme='dark'] button:not(:where(.ui-button,

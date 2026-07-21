@@ -155,7 +155,7 @@
 }
 
 .transaction-create-owed-toggle strong {
-  color: var(--theme-text, #111827);
+  color: var(--theme-text, var(--color-text));
   font-size: 0.92rem;
   line-height: 1.2;
 }
@@ -528,7 +528,7 @@
   .transactions-page .transaction-filter-mobile-header button:not(:where(.ui-button)) {
     border-color: rgb(209 213 219 / 0.9) !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .transactions-page .transaction-filter-card-open .transaction-filter-body {
@@ -539,7 +539,7 @@
   .transactions-page .transaction-form-more-toggle {
     border-color: rgb(209 213 219 / 0.9) !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .transactions-page .transaction-form {

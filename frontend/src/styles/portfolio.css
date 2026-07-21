@@ -47,7 +47,7 @@
 
 .portfolio-metrics strong {
   display: block;
-  color: #111827;
+  color: var(--color-text);
   font-size: 22px;
   line-height: 1.2;
 }

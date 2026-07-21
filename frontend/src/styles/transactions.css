@@ -512,7 +512,7 @@
 
 .transaction-delete-dialog h2 {
   margin: 0;
-  color: var(--theme-text, #111827);
+  color: var(--theme-text, var(--color-text));
   font-size: 1.25rem;
   letter-spacing: -0.035em;
 }
@@ -535,7 +535,7 @@
 
 .transaction-delete-dialog-summary strong,
 .transaction-delete-dialog-summary span {
-  color: var(--theme-text, #111827);
+  color: var(--theme-text, var(--color-text));
   font-weight: 850;
 }
 
