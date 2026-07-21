@@ -68,8 +68,15 @@ export function InvestmentSummaryCards({
       <div className="portfolio-snapshot-header">
         <div>
           <h2>Portfolio</h2>
+          {/* The open-position count lives here rather than in its own metric
+              tile. The grid is four columns, so a fifth tile wrapped onto a
+              row of its own and left most of that row empty - and the count
+              is a scale figure like the others on this line, not a monetary
+              measure like the four tiles below. */}
           <p className="muted small investment-summary-meta">
-            {eventCount} events · {marketBuyCount} buys · {depositCount} deposits · {unmatchedDepositCount} unmatched
+            {eventCount} events · {marketBuyCount} buys · {depositCount} deposits ·{' '}
+            {unmatchedDepositCount} unmatched · {openPositionCount}{' '}
+            {openPositionCount === 1 ? 'position' : 'positions'}
           </p>
         </div>
       </div>
@@ -111,11 +118,6 @@ export function InvestmentSummaryCards({
               ? formatMoney(String(primaryCostBasis.amount), primaryCostBasis.currency)
               : formatCurrencyTotals(costTotals)}
           </strong>
-        </article>
-
-        <article className="investment-summary-desktop-only">
-          <span>Positions</span>
-          <strong>{openPositionCount}</strong>
         </article>
       </div>
     </section>
