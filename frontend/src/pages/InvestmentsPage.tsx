@@ -5,6 +5,7 @@ import {
   createOrUpdateMarketPrice,
   deleteMarketPrice,
   fetchLatestMarketPrice,
+  fetchMarketPriceHistory,
   updateMarketPrice,
 } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
@@ -60,6 +61,7 @@ export function InvestmentsPage() {
     source: 'manual',
   })
   const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
+  const [isBackfillingHistory, setIsBackfillingHistory] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
@@ -282,6 +284,97 @@ export function InvestmentsPage() {
     }
   }
 
+  /**
+   * Backfills daily closes for every open position over the charted window.
+   *
+   * The portfolio trend already returns a point for every month, but a month
+   * with no stored price is valued by carrying the last known price forward,
+   * so the line reports the cost basis rather than real market movement. The
+   * backend already exposes per-symbol history fetching and the valuation
+   * layer already prefers stored history over carried-forward prices - this
+   * just fills the gap for every held symbol at once.
+   */
+  async function backfillMarketHistory() {
+    setError(null)
+    setMessage(null)
+
+    if (positions.length === 0) {
+      setError('No open positions to backfill.')
+      return
+    }
+
+    const requests = positions
+      .map((position) => ({
+        position,
+        symbol: getDefaultYahooSymbol(position),
+      }))
+      .filter((request) => request.symbol.trim())
+
+    if (requests.length === 0) {
+      setError('No Yahoo symbols could be inferred for the current positions.')
+      return
+    }
+
+    const today = new Date()
+    const start = new Date(today)
+    start.setMonth(start.getMonth() - (chartMonths - 1))
+    start.setDate(1)
+    const toIsoDate = (value: Date) => value.toISOString().slice(0, 10)
+
+    setIsBackfillingHistory(true)
+
+    try {
+      const results = await Promise.allSettled(
+        requests.map((request) =>
+          fetchMarketPriceHistory({
+            symbol: request.symbol,
+            ticker: request.position.ticker ?? null,
+            isin: request.position.isin ?? null,
+            currency: getPositionCurrency(request.position) || null,
+            date_from: toIsoDate(start),
+            date_to: toIsoDate(today),
+          }),
+        ),
+      )
+
+      const failedLabels = results
+        .map((result, index) => ({
+          result,
+          label: getMarketDataLabel(requests[index].position),
+        }))
+        .filter(({ result }) => result.status === 'rejected')
+        .map(({ label }) => label)
+
+      const storedCount = results.reduce(
+        (total, result) =>
+          result.status === 'fulfilled' ? total + result.value.length : total,
+        0,
+      )
+      const successCount = results.length - failedLabels.length
+
+      if (failedLabels.length > 0) {
+        setMessage(
+          `Backfilled ${storedCount} daily prices for ${successCount} of ${results.length} positions.`,
+        )
+        setError(`Failed to backfill: ${failedLabels.join(', ')}`)
+      } else {
+        setMessage(
+          `Backfilled ${storedCount} daily prices across ${successCount} positions.`,
+        )
+      }
+
+      reloadAfterMutation()
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to backfill market price history',
+      )
+    } finally {
+      setIsBackfillingHistory(false)
+    }
+  }
+
   async function submitMarketPrice() {
     setError(null)
     setMessage(null)
@@ -417,6 +510,14 @@ export function InvestmentsPage() {
         </div>
 
         <div className="action-group">
+          <Button
+            type="button"
+            loading={isBackfillingHistory}
+            onClick={backfillMarketHistory}
+            title="Fetch daily closing prices for the charted window so the portfolio trend reflects real market movement"
+          >
+            {isBackfillingHistory ? 'Backfilling…' : 'Backfill history'}
+          </Button>
           <Button
             type="button"
             loading={isFetchingMarketData}

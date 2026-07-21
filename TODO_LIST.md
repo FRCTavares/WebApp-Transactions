@@ -744,6 +744,42 @@ row activation.
 
       Not adopted: `Card` (the page's panels are shared classes now tokenised,
       so wrapping them buys nothing yet), `Table`, `Field`, `Skeleton`.
+
+      **Follow-up (2026-07-21): the portfolio trend line was not missing data
+      points — it was missing prices, and then FX rates.**
+
+      The chart looked like it had "too few points". It does not: the endpoint
+      returns one point per month for all 24 months, and the SVG plots every
+      one. The line looked smooth because months without a stored price are
+      valued by carrying the last known price forward, so the line tracked the
+      cost basis rather than market movement. Local price history covered only
+      2 of 24 months.
+
+      A "Backfill history" action now fetches daily closes for every open
+      position across the charted window. No new backend work was needed —
+      `POST /api/market-prices/fetch/history`, `MarketPriceService.fetch_history`
+      and the provider's `get_history` all already existed, and even
+      `fetchMarketPriceHistory` was already in the frontend API module. Nothing
+      had ever called it. Verified against the local database: all three
+      tickers went from 2 months of prices to 24 (720/498/496 daily rows), and
+      the valued portion of the series went from near-flat to €2,243 → €4,000
+      across 10 months with 12 distinct values.
+
+      **The remaining gap is FX rates, not prices.** Months from 2024-09 to
+      2025-09 still return no market value even with full price history,
+      because every CSPX buy in that period is in USD with
+      `fx_rate_to_eur = NULL` and `fx_rate_source = 'pending'`. The valuation
+      cannot convert USD to EUR without a rate, so the whole month is dropped.
+      The only events carrying an FX rate start 2025-10. Resolving those
+      pending rates (there is already an `import_fx_resolution_service`) would
+      extend the trend back another year. This is pre-existing and unrelated
+      to the design-system work.
+
+      Also note: the backfill endpoint requires `get_privileged_user`, exactly
+      like the existing "Refresh prices" action — market data is shared and
+      admin-maintained, so both are owner-only by design. And this increases
+      yfinance usage, which section 11 already flags as an unresolved Yahoo
+      ToS risk before any wider release.
 - [ ] Wealth
 - [ ] Owed
 - [ ] Categories

@@ -2,6 +2,7 @@ import { TrendingUp } from 'lucide-react'
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import { Badge, EmptyState } from '../ui'
+import { formatFxSource } from '../../utils/fxSourceLabels'
 
 type InvestmentPositionsTableProps = {
   positions: InvestmentPosition[]
@@ -157,7 +158,8 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                         </span>
                         {position.market_fx_rate_to_eur && position.market_price_currency !== position.market_value_currency && (
                           <span className="table-subtext muted">
-                            FX {position.market_price_currency}/EUR {position.market_fx_rate_to_eur} · {position.market_fx_rate_source ?? 'unknown source'}
+                            FX {position.market_price_currency}/EUR {position.market_fx_rate_to_eur} ·{' '}
+                            {formatFxSource(position.market_fx_rate_source)}
                           </span>
                         )}
                       </>

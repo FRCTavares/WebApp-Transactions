@@ -2,6 +2,7 @@ import { TrendingUp } from 'lucide-react'
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import { EmptyState } from '../ui'
+import { formatFxSource, getFxSourceHint } from '../../utils/fxSourceLabels'
 
 type InvestmentHoldingsOverviewProps = {
   positions: InvestmentPosition[]
@@ -130,7 +131,9 @@ export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOver
                 </div>
                 <div>
                   <dt>FX source</dt>
-                  <dd>{position.market_fx_rate_source ?? 'Not required / unavailable'}</dd>
+                  <dd title={getFxSourceHint(position.market_fx_rate_source)}>
+                    {formatFxSource(position.market_fx_rate_source)}
+                  </dd>
                 </div>
               </dl>
             </article>
