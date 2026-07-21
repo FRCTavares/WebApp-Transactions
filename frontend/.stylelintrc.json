@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "color-no-hex": [
+      true,
+      {
+        "message": "Use a semantic token (var(--color-*)) instead of a raw hex colour. Raw hex does not respond to the theme and is the cause of the dark-mode bugs this ratchet exists to prevent.",
+        "severity": "warning"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/styles/tokens/primitives.css"],
+      "rules": { "color-no-hex": null }
+    }
+  ]
+}

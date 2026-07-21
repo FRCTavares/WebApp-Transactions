@@ -134,6 +134,9 @@ jobs:
       - name: Run frontend lint
         run: npm run lint
 
+      - name: Check CSS hex ratchet
+        run: npm run lint:css
+
       - name: Run frontend unit tests
         run: npm run test
 
