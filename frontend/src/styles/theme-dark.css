@@ -43,17 +43,8 @@ and this exclusion with it. */
   color: var(--theme-text);
 }
 
-:root[data-theme='dark'] .app-shell,
-:root[data-theme='dark'] main {
-  background: transparent;
-}
-
-:root[data-theme='dark'] .sidebar,
 :root[data-theme='dark'] .mobile-bottom-nav,
-:root[data-theme='dark'] .global-period-selector,
 :root[data-theme='dark'] .card,
-:root[data-theme='dark'] .summary-card,
-:root[data-theme='dark'] .filter-panel,
 :root[data-theme='dark'] .manual-form,
 :root[data-theme='dark'] .table-wrap,
 :root[data-theme='dark'] .settings-card,
@@ -75,7 +66,6 @@ and this exclusion with it. */
 :root[data-theme='dark'] .wealth-chart-wrap,
 :root[data-theme='dark'] .wealth-modal-card,
 :root[data-theme='dark'] .wealth-modal-subaccount-row,
-:root[data-theme='dark'] .investments-page .filter-panel,
 :root[data-theme='dark'] .investment-holding-card,
 :root[data-theme='dark'] .investment-trend-visual,
 :root[data-theme='dark'] .market-data-refresh-card,
@@ -88,29 +78,6 @@ and this exclusion with it. */
   background: var(--theme-surface);
   color: var(--theme-text);
   box-shadow: 0 14px 38px var(--theme-shadow);
-}
-
-:root[data-theme='dark'] .sidebar {
-  background: rgb(24 24 27 / 0.82);
-}
-
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)),
-:root[data-theme='dark'] input,
-:root[data-theme='dark'] select,
-:root[data-theme='dark'] textarea {
-  border-color: var(--theme-border-strong);
-  background: var(--theme-surface-muted);
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)):hover,
-:root[data-theme='dark'] .settings-action-button:hover,
-:root[data-theme='dark'] .sidebar button:hover {
-  border-color: #3b82f6;
-  background: #1f2937;
-  color: var(--theme-text);
 }
 
 :root[data-theme='dark'] .primary-button {
@@ -147,7 +114,6 @@ since darkening against a near-black surface reads as the control going dead. */
   color: var(--theme-muted);
 }
 
-:root[data-theme='dark'] .sidebar button.active,
 :root[data-theme='dark'] .mobile-bottom-nav button.active,
 :root[data-theme='dark'] .transaction-direction-switch button.active,
 :root[data-theme='dark'] .dashboard-chart-toggle button.active,
@@ -242,41 +208,6 @@ since darkening against a near-black surface reads as the control going dead. */
     linear-gradient(180deg, #111218 0%, #0d0e12 100%);
 }
 
-:root[data-theme='dark'] main {
-  background:
-    radial-gradient(circle at 30% 0%, rgb(255 255 255 / 0.035), transparent 24rem),
-    transparent;
-}
-
-:root[data-theme='dark'] .sidebar {
-  border-right-color: rgb(255 255 255 / 0.08);
-  background:
-    linear-gradient(180deg, rgb(28 29 35 / 0.92), rgb(22 23 29 / 0.92));
-  box-shadow:
-    inset -1px 0 0 rgb(255 255 255 / 0.035),
-    12px 0 42px rgb(0 0 0 / 0.16);
-}
-
-:root[data-theme='dark'] .sidebar button:hover {
-  border-color: rgb(255 255 255 / 0.12);
-  background: rgb(255 255 255 / 0.055);
-}
-
-:root[data-theme='dark'] .sidebar button.active {
-  border-color: rgb(122 183 255 / 0.55);
-  background:
-    linear-gradient(180deg, rgb(59 130 246 / 0.26), rgb(37 99 235 / 0.18));
-  color: #d7eaff;
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.08),
-    0 10px 26px rgb(37 99 235 / 0.12);
-}
-
-:root[data-theme='dark'] .sidebar button.active::before {
-  background: #8ec5ff;
-  box-shadow: 0 0 12px rgb(96 165 250 / 0.55);
-}
-
 :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,
@@ -323,39 +254,10 @@ since darkening against a near-black surface reads as the control going dead. */
     0 12px 26px rgb(37 99 235 / 0.12);
 }
 
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)),
-:root[data-theme='dark'] input,
-:root[data-theme='dark'] select,
-:root[data-theme='dark'] textarea {
-  border-color: rgb(255 255 255 / 0.12);
-  background: rgb(255 255 255 / 0.045);
-  color: var(--theme-text);
-}
-
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
-}
-
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)):hover {
-  border-color: rgb(122 183 255 / 0.36);
-  background: rgb(255 255 255 / 0.075);
-}
-
-:root[data-theme='dark'] .global-period-selector {
-  border-color: rgb(255 255 255 / 0.12);
-  background: rgb(28 29 35 / 0.82);
-  box-shadow:
-    0 20px 54px rgb(0 0 0 / 0.32),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
-}
-
-:root[data-theme='dark'] .global-period-selector input,
-:root[data-theme='dark'] .global-period-selector button {
-  background: rgb(255 255 255 / 0.055);
 }
 
 :root[data-theme='dark'] tbody tr:hover td,

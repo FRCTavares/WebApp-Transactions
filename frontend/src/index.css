@@ -44,10 +44,10 @@
   align-items: center;
   gap: 0.45rem;
   padding: 0.5rem 0.65rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 0.85rem;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgb(15 23 42 / 0.08);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-md);
   pointer-events: auto;
 }
 
@@ -65,7 +65,15 @@
 .global-period-selector input {
   width: 8.5rem;
   height: 2.25rem;
-  background: white;
+  background: var(--color-surface);
+}
+
+/* This input/button wash is a subtle highlight distinguishing the control
+   from the pill's own surface - not a semantic surface role on its own, so
+   it stays a literal dark override here rather than a new token. */
+:root[data-theme='dark'] .global-period-selector input,
+:root[data-theme='dark'] .global-period-selector button {
+  background: rgb(255 255 255 / 0.055);
 }
 
 .global-period-selector button {
@@ -292,7 +300,7 @@ main {
   border: 0;
   border-radius: 0.45rem;
   background: transparent;
-  color: #0f172a;
+  color: var(--color-text);
   text-align: left;
 }
 
@@ -468,9 +476,9 @@ main {
     width: 100%;
     gap: 6px;
     padding: 5px;
-    border-color: #e5e7eb;
+    border-color: var(--color-border);
     border-radius: 14px;
-    background: #ffffff;
+    background: var(--color-surface);
     box-shadow: none;
   }
 
@@ -506,10 +514,10 @@ main {
     min-width: 0;
     height: 36px;
     padding: 0 10px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: #ffffff;
-    color: #111827;
+    background: var(--color-surface);
+    color: var(--color-text);
     font-size: 15px;
     font-weight: 800;
     pointer-events: none;

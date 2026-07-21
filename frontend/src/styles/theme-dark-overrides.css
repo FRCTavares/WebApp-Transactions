@@ -102,45 +102,9 @@ no decorative gradients. */ :root[data-theme='dark'] {
 }
 
 :root[data-theme='dark'],
-:root[data-theme='dark'] body,
-:root[data-theme='dark'] main {
+:root[data-theme='dark'] body {
   background: var(--theme-bg) !important;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .app-shell {
-  background: var(--theme-bg) !important;
-}
-
-/* Sidebar: flatter,
-quieter,
-still separate from content. */ :root[data-theme='dark'] .sidebar {
-  border-right-color: rgb(255 255 255 / 0.08);
-  background: rgb(24 25 29 / 0.96) !important;
-  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.035);
-}
-
-:root[data-theme='dark'] .sidebar button {
-  border-color: transparent;
-  background: transparent;
-  color: #e8e9ed;
-}
-
-:root[data-theme='dark'] .sidebar button:hover {
-  border-color: rgb(255 255 255 / 0.105);
-  background: rgb(255 255 255 / 0.045);
-}
-
-:root[data-theme='dark'] .sidebar button.active {
-  border-color: rgb(138 180 248 / 0.48);
-  background: rgb(138 180 248 / 0.14);
-  color: #dbeafe;
-  box-shadow: none;
-}
-
-:root[data-theme='dark'] .sidebar button.active::before {
-  background: #8ab4f8;
-  box-shadow: none;
 }
 
 /* Main cards: less glow,
@@ -152,7 +116,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .wealth-chart-card,
 :root[data-theme='dark'] .card,
 :root[data-theme='dark'] .expense-chart-card,
-:root[data-theme='dark'] .filter-panel,
 :root[data-theme='dark'] .manual-form,
 :root[data-theme='dark'] .table-wrap {
   border-color: rgb(255 255 255 / 0.105);
@@ -191,17 +154,13 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 }
 
 :root[data-theme='dark'] .theme-option-button:focus-visible,
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)):focus-visible,
 :root[data-theme='dark'] input:focus-visible,
 :root[data-theme='dark'] select:focus-visible,
 :root[data-theme='dark'] textarea:focus-visible {
   outline-color: rgb(138 180 248 / 0.55);
 }
 
-/* Inputs and small controls. */ :root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)),
-:root[data-theme='dark'] input,
+/* Inputs and small controls. */ :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: rgb(255 255 255 / 0.13);
@@ -209,27 +168,10 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   color: var(--theme-text);
 }
 
-:root[data-theme='dark'] button:not(:where(.ui-button,
-.ui-icon-button)):hover,
 :root[data-theme='dark'] .settings-action-button:hover,
 :root[data-theme='dark'] .theme-option-button:hover {
   border-color: rgb(138 180 248 / 0.35);
   background: #292b31 !important;
-}
-
-/* Top period selector: panel,
-not floating glow. */ :root[data-theme='dark'] .global-period-selector {
-  border-color: rgb(255 255 255 / 0.12);
-  background: #1c1d21 !important;
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.035) inset,
-    0 14px 30px rgb(0 0 0 / 0.18);
-}
-
-:root[data-theme='dark'] .global-period-selector strong {
-  border-color: rgb(255 255 255 / 0.12);
-  background: rgb(255 255 255 / 0.055);
-  color: var(--theme-text);
 }
 
 /* Dashboard bars and chart tracks. */ :root[data-theme='dark'] .dashboard-summary-bar-track,
@@ -307,7 +249,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
 /* Summary cards that still had hardcoded light backgrounds. */ :root[data-theme='dark'] .investments-page .investment-summary-grid article,
 :root[data-theme='dark'] .investments-page .investment-summary-market-value,
 :root[data-theme='dark'] .investments-page .investment-summary-gain,
-:root[data-theme='dark'] .import-summary-grid .summary-card,
 :root[data-theme='dark'] .import-summary-card-primary,
 :root[data-theme='dark'] .wealth-summary-card-primary,
 :root[data-theme='dark'] .wealth-owed-summary-card,

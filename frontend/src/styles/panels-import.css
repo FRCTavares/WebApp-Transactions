@@ -68,9 +68,9 @@
   min-height: 96px;
   margin-bottom: 0;
   padding: 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: none;
 }
 
@@ -288,9 +288,9 @@
   min-height: 88px;
   margin-bottom: 0;
   padding: 14px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: none;
 }
 

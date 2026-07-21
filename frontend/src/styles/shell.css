@@ -22,8 +22,8 @@ body {
     flex-direction: column;
     height: 100vh;
     padding: 1.05rem 0.75rem;
-    border-right: 1px solid rgb(209 213 219 / 0.8);
-    background: rgb(251 251 253 / 0.86);
+    border-right: 1px solid var(--color-border-glass);
+    background: var(--color-surface-glass);
     backdrop-filter: blur(20px);
   }
 
@@ -491,6 +491,32 @@ body {
   .nav-label {
     line-height: 1.1;
   }
+}
+
+/* Dark-only nav accents below: bespoke tinted values with no clean semantic
+   token equivalent (light and dark use genuinely different hues here, not
+   just an inverted lightness), so they stay literal overrides colocated with
+   the light rules they pair with, rather than new tokens or a *dark*.css
+   file. */
+:root[data-theme='dark'] .sidebar {
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.035);
+}
+
+:root[data-theme='dark'] .sidebar button:hover {
+  border-color: rgb(255 255 255 / 0.105);
+  background: rgb(255 255 255 / 0.045);
+}
+
+:root[data-theme='dark'] .sidebar button.active {
+  border-color: rgb(138 180 248 / 0.48);
+  background: rgb(138 180 248 / 0.14);
+  color: #dbeafe;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .sidebar button.active::before {
+  background: #8ab4f8;
+  box-shadow: none;
 }
 
 /* Sidebar app brand. */
