@@ -1,5 +1,6 @@
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
+import { chartSliceColour } from '../../utils/chartColours'
 
 type AllocationItem = {
   label: string
@@ -20,15 +21,6 @@ type InvestmentAllocationChartsProps = {
 const STROKE_WIDTH = 14
 const RADIUS = 42
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
-
-const SLICE_COLOURS = [
-  '#2563eb',
-  '#16a34a',
-  '#f97316',
-  '#9333ea',
-  '#dc2626',
-  '#64748b',
-]
 
 function toNumber(value: string | null | undefined) {
   const number = Number(value ?? 0)
@@ -163,7 +155,7 @@ function AllocationDonut({
               cy="60"
               r={RADIUS}
               fill="none"
-              stroke={SLICE_COLOURS[index % SLICE_COLOURS.length]}
+              stroke={chartSliceColour(index)}
               strokeWidth={STROKE_WIDTH}
               strokeDasharray={slice.dashArray}
               strokeDashoffset={slice.dashOffset}
@@ -188,7 +180,7 @@ function AllocationDonut({
             <div key={slice.id} className="expense-chart-legend-row">
               <span
                 className="expense-chart-dot"
-                style={{ background: SLICE_COLOURS[index % SLICE_COLOURS.length] }}
+                style={{ background: chartSliceColour(index) }}
               />
               <span>
                 <strong>{slice.label}</strong>
