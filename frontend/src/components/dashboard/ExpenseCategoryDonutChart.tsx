@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { formatMoney } from '../../utils/format'
+import { chartSliceColour } from '../../utils/chartColours'
 
 export type ExpenseCategoryChartItem = {
   category: string
@@ -28,15 +29,6 @@ const MAX_VISIBLE_SLICES = 5
 const STROKE_WIDTH = 14
 const RADIUS = 42
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
-
-const SLICE_COLOURS = [
-  '#2563eb',
-  '#16a34a',
-  '#f97316',
-  '#9333ea',
-  '#dc2626',
-  '#64748b',
-]
 
 function buildChartSlices(items: ExpenseCategoryChartItem[]) {
   const positiveItems = items
@@ -135,7 +127,7 @@ export function ExpenseCategoryDonutChart({
               cy="60"
               r={RADIUS}
               fill="none"
-              stroke={SLICE_COLOURS[index % SLICE_COLOURS.length]}
+              stroke={chartSliceColour(index)}
               strokeWidth={STROKE_WIDTH}
               strokeDasharray={slice.dashArray}
               strokeDashoffset={slice.dashOffset}
@@ -181,7 +173,7 @@ export function ExpenseCategoryDonutChart({
               >
                 <span
                   className="expense-chart-dot"
-                  style={{ background: SLICE_COLOURS[index % SLICE_COLOURS.length] }}
+                  style={{ background: chartSliceColour(index) }}
                 />
                 <span>
                   <strong>{slice.category}</strong>
