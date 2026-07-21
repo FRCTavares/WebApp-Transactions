@@ -53,24 +53,6 @@
   padding: 12px 10px;
 }
 
-.owed-empty-state {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-  padding: 28px 12px;
-  text-align: center;
-}
-
-.owed-empty-state strong {
-  color: #111827;
-  font-size: 16px;
-}
-
-.owed-empty-state p {
-  margin: 0;
-  max-width: 460px;
-}
-
 @media (max-width: 900px) {
 
   .owed-toolbar {
@@ -502,11 +484,66 @@
 }
 
 .owed-page-polished .owed-table-wrap {
-  overflow: hidden;
+  /* `overflow: hidden` was here so the rounded corners clip the table. It also
+     clipped horizontally: the inline create/edit row pushes the table to
+     ~1660px against a ~1170px container, so the Save and Cancel buttons sat
+     roughly 340px past the right edge with no way to scroll to them. Adding or
+     editing an owed item from this page was impossible on a 1440px screen.
+
+     overflow-x: auto restores the scroll; overflow-y stays hidden so the
+     corner clipping still works. */
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--owed-border);
   border-radius: 1.25rem;
   background: var(--owed-surface);
   box-shadow: 0 10px 28px rgb(15 23 42 / 0.035);
+}
+
+/* Status values are single words ("open", "overdue"); the 80px column was
+   breaking them mid-word into "ope / n". */
+.owed-page-polished .owed-table td:nth-child(3),
+.owed-page-polished .owed-table th:nth-child(3) {
+  white-space: nowrap;
+}
+
+/* Pin the actions column. The inline create/edit row makes the table far wider
+   than the viewport, so without this you have to scroll right to reach Save -
+   and doing so scrolls the Person and Description fields you are editing out
+   of view. Keeping actions in place means the row is never wider than the
+   distance between what you are typing and the button that saves it. */
+.owed-page-polished .owed-table th:last-child,
+.owed-page-polished .owed-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--owed-surface);
+}
+
+.owed-page-polished .owed-table th:last-child {
+  z-index: 2;
+  background: var(--color-surface-sunken);
+}
+
+/* The pinned column needs an edge, or rows appear to run underneath it. */
+.owed-page-polished .owed-table th:last-child::before,
+.owed-page-polished .owed-table td:last-child::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 1px;
+  background: var(--owed-border);
+}
+
+/* Inline rows tint their background, so the pinned cell must match or it
+   shows as a white block sitting over a coloured row. */
+.owed-page-polished .owed-table tr.inline-create-row td:last-child {
+  background: var(--owed-green-soft);
+}
+
+.owed-page-polished .owed-table tr.inline-edit-row td:last-child {
+  background: var(--owed-orange-soft);
 }
 
 .owed-page-polished .owed-table {
@@ -515,8 +552,8 @@
 
 .owed-page-polished .owed-table th {
   border-bottom: 1px solid var(--owed-border);
-  background: #fbfbfd;
-  color: #475569;
+  background: var(--color-surface-sunken);
+  color: var(--owed-muted);
   font-size: 0.82rem;
   font-weight: 850;
 }
@@ -537,70 +574,6 @@
 
 .owed-page-polished .owed-table td.right {
   font-weight: 800;
-}
-
-.badge-owed-status {
-  border-color: #e5e7eb;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 850;
-}
-
-.badge-owed-status-open,
-.badge-owed-status-partially-paid {
-  border-color: #fed7aa;
-  background: var(--owed-orange-soft);
-  color: #c2410c;
-}
-
-.badge-owed-status-paid {
-  border-color: #bbf7d0;
-  background: var(--owed-green-soft);
-  color: #15803d;
-}
-
-.badge-owed-status-cancelled {
-  border-color: #e5e7eb;
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.owed-row-action {
-  min-height: 2.1rem;
-  min-width: 0;
-  padding: 0 0.65rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.owed-row-action-edit:hover,
-.owed-row-action-paid:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.owed-row-action-delete {
-  border-color: #fecaca;
-  color: #dc2626;
-}
-
-.owed-row-action-delete:hover {
-  border-color: #fca5a5;
-  background: var(--owed-red-soft);
-  color: #b91c1c;
-}
-
-.owed-page-polished .owed-empty-state {
-  padding: 2rem 1rem;
-}
-
-.owed-page-polished .owed-empty-state strong {
-  font-size: 1rem;
 }
 
 @media (max-width: 900px) {
@@ -689,7 +662,101 @@
   white-space: nowrap;
 }
 
-.owed-page-polished .owed-row-action {
-  min-height: 2rem;
-  padding: 0 0.58rem;
+/* Inline create and edit form.
+
+   These were `<tr>`s spread across the table's nine columns, which made the
+   row ~1650px wide inside a ~1010px container: the amount and linked-
+   transaction fields ended up underneath the sticky actions column, where they
+   could be neither seen nor clicked, and Save sat off the right edge. The form
+   now occupies one full-width cell and lays itself out in a grid that fits the
+   container at any width. */
+.owed-inline-form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-2);
+}
+
+.owed-inline-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+}
+
+.owed-inline-field {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.owed-inline-field-wide {
+  grid-column: span 2;
+}
+
+.owed-inline-field > span {
+  /* The cell this form sits in inherits the table's centred alignment. */
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.owed-inline-field .table-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.owed-inline-status {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.owed-inline-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 800px) {
+  .owed-inline-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .owed-inline-field-wide {
+    grid-column: auto;
+  }
+
+  .owed-inline-form-actions > * {
+    flex: 1 1 0;
+  }
+}
+
+/* With the inline form no longer forcing the table to ~1650px, the columns are
+   narrower and dates wrapped onto three lines ("10 / Jan / 2026"). */
+.owed-page-polished .owed-table td:nth-child(4),
+.owed-page-polished .owed-table th:nth-child(4) {
+  white-space: nowrap;
+}
+
+/* Let the text columns absorb the slack. `width: 1%` on a table cell means
+   "shrink to content", so the status, date, amount and action columns take
+   only what they need and Person/Description stop wrapping mid-word. */
+.owed-page-polished .owed-table th:nth-child(n + 3),
+.owed-page-polished .owed-table td:nth-child(n + 3) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.owed-page-polished .owed-table th:nth-child(-n + 2),
+.owed-page-polished .owed-table td:nth-child(-n + 2) {
+  white-space: normal;
+}
+
+/* The form cell spans every column, so it must not inherit the shrink rule. */
+.owed-page-polished .owed-table td[colspan] {
+  width: auto;
+  white-space: normal;
 }

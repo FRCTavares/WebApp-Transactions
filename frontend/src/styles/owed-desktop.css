@@ -70,7 +70,11 @@
 
   .owed-person-groups .owed-person-card-columns {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1rem;
+    /* Last track holds the disclosure chevron. It was 1rem, sized for the
+       old aria-hidden ellipsis, which clipped the chevron; 1.9rem fits it
+       without taking width from the description column. The column-header
+       row and the item summary share this template and must stay in step. */
+    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1.9rem;
     align-items: center;
     gap: 0.6rem;
     min-height: 2.15rem;
@@ -121,7 +125,11 @@
 
   .owed-person-groups .owed-person-item-summary {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1rem;
+    /* Last track holds the disclosure chevron. It was 1rem, sized for the
+       old aria-hidden ellipsis, which clipped the chevron; 1.9rem fits it
+       without taking width from the description column. The column-header
+       row and the item summary share this template and must stay in step. */
+    grid-template-columns: minmax(0, 1fr) 5.6rem 5.4rem 6.2rem 1.9rem;
     align-items: center;
     gap: 0.6rem;
     min-height: 2.55rem;
@@ -171,20 +179,56 @@
     color: var(--theme-muted, #64748b);
   }
 
+  /* Was a 1rem "\22EF" glyph at 0.65 opacity, marked aria-hidden - it read as
+     decoration, so nothing indicated the row could be opened. Now a labelled
+     chevron: the word carries the meaning, the icon carries the direction. */
   .owed-person-groups .owed-person-item-more {
-    display: grid;
-    width: 1rem;
-    height: 1rem;
-    place-items: center;
-    color: var(--theme-muted, #64748b);
-    font-size: 0.95rem;
-    font-weight: 950;
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--owed-muted);
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-semibold);
     line-height: 1;
-    opacity: 0.65;
+    white-space: nowrap;
   }
 
-  .owed-person-groups .owed-person-item[open] .owed-person-item-more {
-    transform: rotate(90deg);
+  .owed-person-groups .owed-person-item-chevron {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .owed-person-groups .owed-person-item[open] .owed-person-item-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* The whole summary is the control, so it should look like one. */
+  .owed-person-groups .owed-person-item-summary {
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .owed-person-groups .owed-person-item-summary:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .owed-person-groups .owed-person-item-summary:hover .owed-person-item-more {
+    color: var(--color-text);
+  }
+
+  .owed-person-groups .owed-person-item-summary:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: calc(-1 * var(--focus-ring-width));
+  }
+
+  /* Native disclosure triangle would duplicate the chevron. */
+  .owed-person-groups .owed-person-item-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .owed-person-groups .owed-person-item-summary {
+    list-style: none;
   }
 
   .owed-person-groups .owed-person-item-details {

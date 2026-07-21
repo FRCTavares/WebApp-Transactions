@@ -1,3 +1,5 @@
+import './visually-hidden.css'
+
 /* Barrel for the design-system primitives.
    Import from '../ui' rather than reaching into individual files. */
 
