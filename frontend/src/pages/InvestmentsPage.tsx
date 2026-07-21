@@ -1,10 +1,15 @@
 import { useState } from 'react'
-import { resolveManualFunding } from '../api/investmentEvents'
+import {
+  previewPendingFx,
+  resolveManualFunding,
+  resolvePendingFx,
+} from '../api/investmentEvents'
 import { upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
 import {
   createOrUpdateMarketPrice,
   deleteMarketPrice,
   fetchLatestMarketPrice,
+  fetchMarketPriceHistory,
   updateMarketPrice,
 } from '../api/marketPrices'
 import { StatusMessage } from '../components/StatusMessage'
@@ -60,6 +65,8 @@ export function InvestmentsPage() {
     source: 'manual',
   })
   const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
+  const [isBackfillingHistory, setIsBackfillingHistory] = useState(false)
+  const [isResolvingFx, setIsResolvingFx] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
@@ -282,6 +289,160 @@ export function InvestmentsPage() {
     }
   }
 
+  /**
+   * Backfills daily closes for every open position over the charted window.
+   *
+   * The portfolio trend already returns a point for every month, but a month
+   * with no stored price is valued by carrying the last known price forward,
+   * so the line reports the cost basis rather than real market movement. The
+   * backend already exposes per-symbol history fetching and the valuation
+   * layer already prefers stored history over carried-forward prices - this
+   * just fills the gap for every held symbol at once.
+   */
+  async function backfillMarketHistory() {
+    setError(null)
+    setMessage(null)
+
+    if (positions.length === 0) {
+      setError('No open positions to backfill.')
+      return
+    }
+
+    const requests = positions
+      .map((position) => ({
+        position,
+        symbol: getDefaultYahooSymbol(position),
+      }))
+      .filter((request) => request.symbol.trim())
+
+    if (requests.length === 0) {
+      setError('No Yahoo symbols could be inferred for the current positions.')
+      return
+    }
+
+    const today = new Date()
+    const start = new Date(today)
+    start.setMonth(start.getMonth() - (chartMonths - 1))
+    start.setDate(1)
+    const toIsoDate = (value: Date) => value.toISOString().slice(0, 10)
+
+    setIsBackfillingHistory(true)
+
+    try {
+      const results = await Promise.allSettled(
+        requests.map((request) =>
+          fetchMarketPriceHistory({
+            symbol: request.symbol,
+            ticker: request.position.ticker ?? null,
+            isin: request.position.isin ?? null,
+            currency: getPositionCurrency(request.position) || null,
+            date_from: toIsoDate(start),
+            date_to: toIsoDate(today),
+          }),
+        ),
+      )
+
+      const failedLabels = results
+        .map((result, index) => ({
+          result,
+          label: getMarketDataLabel(requests[index].position),
+        }))
+        .filter(({ result }) => result.status === 'rejected')
+        .map(({ label }) => label)
+
+      const storedCount = results.reduce(
+        (total, result) =>
+          result.status === 'fulfilled' ? total + result.value.length : total,
+        0,
+      )
+      const successCount = results.length - failedLabels.length
+
+      if (failedLabels.length > 0) {
+        setMessage(
+          `Backfilled ${storedCount} daily prices for ${successCount} of ${results.length} positions.`,
+        )
+        setError(`Failed to backfill: ${failedLabels.join(', ')}`)
+      } else {
+        setMessage(
+          `Backfilled ${storedCount} daily prices across ${successCount} positions.`,
+        )
+      }
+
+      reloadAfterMutation()
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to backfill market price history',
+      )
+    } finally {
+      setIsBackfillingHistory(false)
+    }
+  }
+
+  /**
+   * Resolves FX rates left pending on stored investment events.
+   *
+   * Historical valuation converts every holding to EUR using a rate carried on
+   * an event, so a single unresolved non-EUR event makes every month from that
+   * date onward unvaluable - which silently truncated the portfolio trend.
+   *
+   * Previews first and asks for confirmation, matching the import workflow:
+   * this writes to financial records, so it should never happen implicitly.
+   */
+  async function resolvePendingFxRates() {
+    setError(null)
+    setMessage(null)
+    setIsResolvingFx(true)
+
+    try {
+      const preview = await previewPendingFx()
+
+      if (preview.pending_count === 0) {
+        setMessage('No pending FX rates to resolve.')
+        return
+      }
+
+      const span =
+        preview.earliest_date && preview.latest_date
+          ? ` between ${preview.earliest_date} and ${preview.latest_date}`
+          : ''
+      const confirmed = window.confirm(
+        `${preview.pending_count} event(s) in `
+          + `${preview.currencies.join(', ')}${span} have no FX rate.\n\n`
+          + `${preview.resolvable_count} can be resolved from historical rates; `
+          + `${preview.unresolvable_count} cannot and will stay pending.\n\n`
+          + 'Apply the resolvable rates?',
+      )
+
+      if (!confirmed) {
+        setMessage('FX resolution cancelled. Nothing was changed.')
+        return
+      }
+
+      const result = await resolvePendingFx()
+
+      if (result.unresolvable_count > 0) {
+        setMessage(
+          `Resolved ${result.resolvable_count} FX rate(s). `
+            + `${result.unresolvable_count} still pending - no historical rate was available.`,
+        )
+      } else {
+        setMessage(`Resolved ${result.resolvable_count} FX rate(s).`)
+      }
+
+      reloadAfterMutation()
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to resolve pending FX rates',
+      )
+    } finally {
+      setIsResolvingFx(false)
+    }
+  }
+
   async function submitMarketPrice() {
     setError(null)
     setMessage(null)
@@ -417,6 +578,22 @@ export function InvestmentsPage() {
         </div>
 
         <div className="action-group">
+          <Button
+            type="button"
+            loading={isResolvingFx}
+            onClick={resolvePendingFxRates}
+            title="Resolve FX rates left pending on stored events, which block historical valuation"
+          >
+            {isResolvingFx ? 'Resolving…' : 'Resolve FX'}
+          </Button>
+          <Button
+            type="button"
+            loading={isBackfillingHistory}
+            onClick={backfillMarketHistory}
+            title="Fetch daily closing prices for the charted window so the portfolio trend reflects real market movement"
+          >
+            {isBackfillingHistory ? 'Backfilling…' : 'Backfill history'}
+          </Button>
           <Button
             type="button"
             loading={isFetchingMarketData}

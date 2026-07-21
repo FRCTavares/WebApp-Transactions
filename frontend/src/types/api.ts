@@ -741,3 +741,22 @@ export type LegacyExcelWealthCommitResponse = {
   duplicate_snapshots_skipped: number
   status: string
 }
+
+export type PendingFxResolution = {
+  event_id: number
+  event_date: string
+  currency: string
+  ticker: string | null
+  resolved_rate: string | null
+  rate_date: string | null
+}
+
+export type PendingFxSummary = {
+  pending_count: number
+  resolvable_count: number
+  unresolvable_count: number
+  currencies: string[]
+  earliest_date: string | null
+  latest_date: string | null
+  resolutions: PendingFxResolution[]
+}
