@@ -1,5 +1,6 @@
 import type { FormEvent } from "react"
 import { StatusMessage } from "../StatusMessage"
+import { Button, PageHeader, SegmentedControl } from "../ui"
 import {
   TransactionFilters,
   type TransactionFilterState,
@@ -125,46 +126,44 @@ export type TransactionsPageViewProps = {
 export function TransactionsPageView(props: TransactionsPageViewProps) {
   return (
     <section className={`app-page transactions-page transactions-page-${props.direction}`}>
-      <div className="page-header transactions-page-header">
-        <div className="page-title-block">
-          <h1>{props.direction === 'in' ? 'Money In' : 'Money Out'}</h1>
-          <div className="transaction-direction-switch" aria-label="Transaction direction">
-            <button
+      <PageHeader
+        title={props.direction === 'in' ? 'Money In' : 'Money Out'}
+        meta={
+          <SegmentedControl
+            label="Transaction direction"
+            options={[
+              { value: 'out', label: 'Money Out' },
+              { value: 'in', label: 'Money In' },
+            ]}
+            value={props.direction}
+            onChange={props.onDirectionChange}
+            size="sm"
+          />
+        }
+        actions={
+          <>
+            <span className="desktop-only">
+              <Button type="button" onClick={props.onExportCsv}>
+                Export CSV
+              </Button>
+            </span>
+            <Button
               type="button"
-              className={props.direction === 'out' ? 'active' : undefined}
-              onClick={() => props.onDirectionChange('out')}
+              variant="primary"
+              onClick={() => {
+                if (props.isCreateFormOpen) {
+                  props.onResetCreateForm()
+                  props.onSetCreateFormOpen(false)
+                  return
+                }
+                props.onSetCreateFormOpen(true)
+              }}
             >
-              Money Out
-            </button>
-            <button
-              type="button"
-              className={props.direction === 'in' ? 'active' : undefined}
-              onClick={() => props.onDirectionChange('in')}
-            >
-              Money In
-            </button>
-          </div>
-        </div>
-        <div className="action-group">
-          <button className="desktop-only" type="button" onClick={props.onExportCsv}>
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              if (props.isCreateFormOpen) {
-                props.onResetCreateForm()
-                props.onSetCreateFormOpen(false)
-                return
-              }
-              props.onSetCreateFormOpen(true)
-            }}
-          >
-            {props.isCreateFormOpen ? 'Close' : '+ Add'}
-          </button>
-        </div>
-      </div>
+              {props.isCreateFormOpen ? 'Close' : '+ Add'}
+            </Button>
+          </>
+        }
+      />
       <StatusMessage error={props.error} message={props.message} />
 
       {props.dataWarning && (

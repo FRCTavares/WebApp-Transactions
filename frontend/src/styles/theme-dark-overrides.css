@@ -1,4 +1,5 @@
-/* `:not(:where(.ui-button, .ui-icon-button))` throughout this file: these legacy
+/* `:not(:where(.ui-button,
+.ui-icon-button))` throughout this file: these legacy
    element-level dark rules have specificity (0,
 2,
 1) and were overriding the
@@ -104,8 +105,6 @@ still separate from content. */ :root[data-theme='dark'] .sidebar {
   box-shadow: none;
 }/* Main cards: less glow,
 more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
-:root[data-theme='dark'] .transaction-filter-card,
-:root[data-theme='dark'] .transaction-desktop-table-wrap,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,
 :root[data-theme='dark'] .owed-table-wrap,
@@ -152,19 +151,22 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   color: #dbeafe;
   box-shadow: none;
 }:root[data-theme='dark'] .theme-option-button:focus-visible,
-:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):focus-visible,
+:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)):focus-visible,
 :root[data-theme='dark'] input:focus-visible,
 :root[data-theme='dark'] select:focus-visible,
 :root[data-theme='dark'] textarea:focus-visible {
   outline-color: rgb(138 180 248 / 0.55);
-}/* Inputs and small controls. */ :root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)),
+}/* Inputs and small controls. */ :root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429;
   color: var(--theme-text);
-}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):hover,
+}:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)):hover,
 :root[data-theme='dark'] .settings-action-button:hover,
 :root[data-theme='dark'] .theme-option-button:hover {
   border-color: rgb(138 180 248 / 0.35);
@@ -284,15 +286,13 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429 !important;
   color: var(--theme-text);
-}:root[data-theme='dark'] .transaction-row-action,
-:root[data-theme='dark'] .owed-row-action,
+}:root[data-theme='dark'] .owed-row-action,
 :root[data-theme='dark'] .table-action-group button,
 :root[data-theme='dark'] .small-button {
   border-color: rgb(255 255 255 / 0.13);
   background: #232429 !important;
   color: var(--theme-text);
-}:root[data-theme='dark'] .transaction-row-action:hover,
-:root[data-theme='dark'] .owed-row-action:hover,
+}:root[data-theme='dark'] .owed-row-action:hover,
 :root[data-theme='dark'] .table-action-group button:hover,
 :root[data-theme='dark'] .small-button:hover {
   border-color: rgb(138 180 248 / 0.35);

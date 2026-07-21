@@ -1,18 +1,18 @@
 /* Money In / Money Out redesign. Shared by TransactionsPage. */
 
 .transactions-page {
-  --transaction-surface: #ffffff;
-  --transaction-border: #e5e7eb;
-  --transaction-muted: #6b7280;
-  --transaction-text: #111827;
-  --transaction-green: #16a34a;
-  --transaction-green-soft: #ecfdf3;
-  --transaction-orange: #f97316;
-  --transaction-orange-soft: #fff7ed;
-  --transaction-blue: #2563eb;
-  --transaction-blue-soft: #eff6ff;
-  --transaction-red: #ef4444;
-  --transaction-red-soft: #fef2f2;
+  --transaction-surface: var(--color-surface);
+  --transaction-border: var(--color-border);
+  --transaction-muted: var(--color-text-muted);
+  --transaction-text: var(--color-text);
+  --transaction-green: var(--color-positive);
+  --transaction-green-soft: var(--color-positive-subtle);
+  --transaction-orange: var(--color-expense);
+  --transaction-orange-soft: var(--color-expense-subtle);
+  --transaction-blue: var(--color-accent);
+  --transaction-blue-soft: var(--color-accent-subtle);
+  --transaction-red: var(--color-negative);
+  --transaction-red-soft: var(--color-negative-subtle);
 
   gap: 1.1rem;
 }
@@ -34,7 +34,7 @@
   gap: 0.65rem;
 }
 
-.transactions-page .action-group > button {
+.transactions-page .action-group > button:not(:where(.ui-button)) {
   min-height: 2.55rem;
   border-radius: 0.9rem;
 }
@@ -175,7 +175,7 @@
   gap: 0.55rem;
 }
 
-.transaction-filter-actions button {
+.transaction-filter-actions button:not(:where(.ui-button)) {
   min-height: 2.3rem;
   border-radius: 0.85rem;
   font-weight: 700;
@@ -205,6 +205,7 @@
 }
 
 .transactions-page .transaction-desktop-table-wrap {
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--transaction-border);
   border-radius: 1.25rem;
@@ -218,8 +219,8 @@
 
 .transactions-page thead th {
   border-bottom: 1px solid var(--transaction-border);
-  background: #fbfbfd;
-  color: #475569;
+  background: var(--color-surface-sunken);
+  color: var(--transaction-muted);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: -0.01em;
@@ -298,35 +299,9 @@
   gap: 0.45rem;
 }
 
-.transaction-row-action {
-  min-width: 0;
-  min-height: 2.1rem;
-  padding: 0 0.65rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
 
-.transaction-row-action-edit:hover,
-.transaction-row-action-owed:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
 
-.transaction-row-action-delete {
-  border-color: #fecaca;
-  background: #ffffff;
-  color: #dc2626;
-}
 
-.transaction-row-action-delete:hover {
-  border-color: #fca5a5;
-  background: var(--transaction-red-soft);
-  color: #b91c1c;
-}
 
 .transactions-page .manual-form {
   border: 1px solid var(--transaction-border);
@@ -383,7 +358,7 @@
     flex-wrap: wrap;
   }
 
-  .transaction-filter-actions button {
+  .transaction-filter-actions button:not(:where(.ui-button)) {
     flex: 1;
   }
 
@@ -629,23 +604,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
-}
-
-.transaction-delete-dialog-actions button {
-  min-height: 2.75rem;
-  border-radius: 0.95rem;
-  font-weight: 900;
-}
-
-.transaction-delete-confirm-button {
-  border-color: rgb(248 113 113 / 0.5);
-  background: rgb(220 38 38 / 0.92);
-  color: #ffffff;
-}
-
-.transaction-delete-confirm-button:hover {
-  border-color: rgb(248 113 113 / 0.7);
-  background: #b91c1c;
 }
 
 :root[data-theme='dark'] .transaction-delete-dialog {

@@ -79,12 +79,9 @@
   display: none;
 }
 
-
-
 main {
   position: relative;
 }
-
 
 .backend-wake-notice {
   display: flex;
@@ -165,11 +162,9 @@ main {
   }
 }
 
-
 .page-header {
   min-height: 3.5rem;
 }
-
 
 /* Shared page rhythm. Dashboard is the first page using this visual baseline. */
 .app-page {
@@ -694,11 +689,6 @@ main {
   }
 }
 
-/* Transactions page alignment with the shared Dashboard baseline. */
-.transactions-page .transactions-page-header {
-  margin-bottom: 0;
-}
-
 .transactions-page .filter-panel {
   margin-bottom: 0;
 }
@@ -712,9 +702,6 @@ main {
 }
 
 @media (max-width: 800px) {
-  .transactions-page .transactions-page-header {
-    gap: 0.75rem;
-  }
 
   .transactions-page .transaction-mobile-list {
     margin-bottom: 0;

@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactNode } from 'react'
+import { Button } from './ui'
 import { CategorySelect } from './CategorySelect'
 import {
   getCashflowTypeOptions,
@@ -127,14 +128,14 @@ export function TransactionForm({
       {children}
 
       <div className="action-group">
-        <button type="submit">
+        <Button type="submit" variant="primary">
           {direction ? `${submitLabel} ${direction === 'in' ? 'Money In' : 'Money Out'}` : submitLabel}
-        </button>
+        </Button>
 
         {onCancel && (
-          <button type="button" onClick={onCancel}>
+          <Button type="button" onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
         )}
       </div>
     </form>

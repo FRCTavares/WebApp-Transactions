@@ -1,6 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { Receipt } from 'lucide-react'
 import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
+import { Badge, Button, EmptyState } from './ui'
+import type { BadgeTone } from './ui'
 
 export type TransactionTableRow = Transaction & {
   is_grouped?: boolean
@@ -19,12 +22,46 @@ type TransactionTableProps = {
 type SortField = 'date' | 'amount'
 type SortDirection = 'asc' | 'desc'
 
-function formatCashflowType(cashflowType: string) {
-  return cashflowType.replaceAll('_', ' ')
+/* Labels are produced here rather than by CSS `text-transform: capitalize`,
+   which the legacy `.badge` relied on. Capitalising in CSS cannot know where
+   word boundaries really are, so it turned "activobank" into "Activobank" and
+   "trading212" into "Trading212". */
+
+const CASHFLOW_LABEL: Record<string, string> = {
+  income: 'Income',
+  expense: 'Expense',
+  transfer: 'Transfer',
 }
 
-function getCashflowBadgeClass(cashflowType: string) {
-  return `badge badge-${cashflowType.replaceAll('_', '-')}`
+const CASHFLOW_TONE: Record<string, BadgeTone> = {
+  income: 'positive',
+  expense: 'expense',
+  transfer: 'accent',
+}
+
+const SOURCE_LABEL: Record<string, string> = {
+  activobank: 'ActivoBank',
+  revolut: 'Revolut',
+  trading212: 'Trading 212',
+  legacy_excel: 'Legacy Excel',
+  manual: 'Manual',
+}
+
+function toSentenceCase(value: string) {
+  const spaced = value.replaceAll('_', ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
+function formatCashflowType(cashflowType: string) {
+  return CASHFLOW_LABEL[cashflowType] ?? toSentenceCase(cashflowType)
+}
+
+function getCashflowTone(cashflowType: string): BadgeTone {
+  return CASHFLOW_TONE[cashflowType] ?? 'neutral'
+}
+
+function formatSource(source: string) {
+  return SOURCE_LABEL[source] ?? toSentenceCase(source)
 }
 
 type OwedCoverage = 'none' | 'partly' | 'fully'
@@ -63,10 +100,9 @@ function getOwedLabel(transaction: TransactionTableRow) {
   return null
 }
 
-function getOwedBadgeClassName(transaction: TransactionTableRow) {
-  return getOwedCoverage(transaction) === 'fully'
-    ? 'badge badge-owed-fully'
-    : 'badge badge-owed-partial'
+/* Fully covered reads as settled, partial as still outstanding. */
+function getOwedCoverageTone(transaction: TransactionTableRow): BadgeTone {
+  return getOwedCoverage(transaction) === 'fully' ? 'positive' : 'warning'
 }
 
 function getMobileCardClassName(transaction: TransactionTableRow) {
@@ -209,7 +245,12 @@ export function TransactionTable({
       {!hasInlineForm && (
         <div className="transaction-mobile-list">
           {sortedTransactions.length === 0 ? (
-            <p className="muted">No transactions found.</p>
+            <EmptyState
+              size="sm"
+              icon={Receipt}
+              title="No transactions found."
+              description="Adjust the filters above, or add a transaction to get started."
+            />
           ) : (
             sortedTransactions.map((transaction) => {
               const amountDisplay = getAmountDisplay(transaction)
@@ -238,16 +279,16 @@ export function TransactionTable({
                 </div>
 
                 <div className="transaction-mobile-card-meta">
-                  <span className={getCashflowBadgeClass(transaction.cashflow_type)}>
+                  <Badge tone={getCashflowTone(transaction.cashflow_type)} size="sm">
                     {formatCashflowType(transaction.cashflow_type)}
-                  </span>
+                  </Badge>
                   {getOwedLabel(transaction) && (
-                    <span className={getOwedBadgeClassName(transaction)}>
+                    <Badge tone={getOwedCoverageTone(transaction)} size="sm">
                       {getOwedLabel(transaction)}
-                    </span>
+                    </Badge>
                   )}
                   {transaction.source && (
-                    <span className="badge badge-source">{transaction.source}</span>
+                    <Badge tone="neutral" size="sm">{formatSource(transaction.source)}</Badge>
                   )}
                 </div>
 
@@ -260,32 +301,32 @@ export function TransactionTable({
                 {showActions && !transaction.is_grouped && (
                   <div className="transaction-mobile-actions">
                     {onEdit && (
-                      <button
+                      <Button
                         type="button"
-                        className="transaction-mobile-action transaction-action-edit"
+                        size="sm" fullWidth
                         onClick={() => onEdit(transaction)}
                       >
                         Edit
-                      </button>
+                      </Button>
                     )}
                     {onMarkOwed && canCreateOwedShare(transaction) && (
-                      <button
+                      <Button
                         type="button"
-                        className="transaction-mobile-action transaction-action-edit"
+                        size="sm" fullWidth
                         onClick={() => onMarkOwed(transaction)}
                         aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                       >
                         {getOwedActionLabel(transaction)}
-                      </button>
+                      </Button>
                     )}
                     {onDelete && (
-                      <button
+                      <Button
                         type="button"
-                        className="transaction-mobile-action transaction-action-delete transaction-mobile-action-danger"
+                        size="sm" variant="danger" fullWidth
                         onClick={() => onDelete(transaction)}
                       >
                         Delete
-                      </button>
+                      </Button>
                     )}
                   </div>
                 )}
@@ -296,7 +337,15 @@ export function TransactionTable({
         </div>
       )}
 
-      <div className={`content-card table-wrap transaction-desktop-table-wrap ${hasInlineForm ? 'transaction-table-has-inline-form' : ''}`}>
+      {/* Deliberately no `content-card table-wrap` here. Both are legacy
+          generic classes that the dark override sheets force to #1c1d21 with
+          !important, which beat this page's own --transaction-surface and left
+          the table a different shade from every other surface on the page.
+          Neither contributed anything unique: `.transactions-page
+          .transaction-desktop-table-wrap` already sets the border, radius,
+          background and a 960px table min-width that overrode the generic
+          920px. */}
+      <div className={`transaction-desktop-table-wrap ${hasInlineForm ? 'transaction-table-has-inline-form' : ''}`}>
         <table>
         <thead>
           <tr>
@@ -331,7 +380,12 @@ export function TransactionTable({
           {transactions.length === 0 && !createRow && (
             <tr>
               <td colSpan={showActions ? 7 : 6}>
-                <p className="muted">No transactions found.</p>
+                <EmptyState
+                  size="sm"
+                  icon={Receipt}
+                  title="No transactions found."
+                  description="Adjust the filters above, or add a transaction to get started."
+                />
               </td>
             </tr>
           )}
@@ -354,34 +408,47 @@ export function TransactionTable({
                   <div className="transaction-description-line">
                     <span>{transaction.description}</span>
                     {getOwedLabel(transaction) && (
-                      <span className={`badge ${
-                        transaction.owed_status === 'paid'
-                          ? 'badge-owed-paid'
-                          : 'badge-owed-open'
-                      }`}>
+                      <Badge
+                        tone={transaction.owed_status === 'paid' ? 'positive' : 'warning'}
+                        size="sm"
+                      >
                         {getOwedLabel(transaction)}
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <div className="muted small">
-                    {transaction.raw_description}
-                    {transaction.grouped_count ? ` · ${transaction.grouped_count} grouped rows` : ''}
-                  </div>
+                  {/* Only show the raw description when it actually differs from
+                      the description. Rendering it unconditionally printed every
+                      row's text twice - the mobile card above already guards this
+                      the same way. The grouped-row count still needs a home when
+                      the raw description is suppressed. */}
+                  {(transaction.raw_description !== transaction.description ||
+                    transaction.grouped_count) && (
+                    <div className="muted small">
+                      {transaction.raw_description !== transaction.description
+                        ? transaction.raw_description
+                        : ''}
+                      {transaction.grouped_count
+                        ? `${
+                            transaction.raw_description !== transaction.description ? ' · ' : ''
+                          }${transaction.grouped_count} grouped rows`
+                        : ''}
+                    </div>
+                  )}
                 </td>
                 <td>
-                  <span className={getCashflowBadgeClass(transaction.cashflow_type)}>
+                  <Badge tone={getCashflowTone(transaction.cashflow_type)} size="sm">
                     {formatCashflowType(transaction.cashflow_type)}
-                  </span>
+                  </Badge>
                 </td>
                 <td>
                   {transaction.category ? (
-                    <span className="badge badge-neutral">{transaction.category}</span>
+                    <Badge tone="neutral" size="sm">{transaction.category}</Badge>
                   ) : (
                     <span className="muted">-</span>
                   )}
                 </td>
                 <td>
-                  <span className="badge badge-source">{transaction.source}</span>
+                  <Badge tone="neutral" size="sm">{formatSource(transaction.source)}</Badge>
                 </td>
                 <td className="right">
                   <div>
@@ -397,34 +464,34 @@ export function TransactionTable({
                   <td>
                     <div className="action-group">
                       {!transaction.is_grouped && onEdit && (
-                        <button
+                        <Button
                           type="button"
-                          className="transaction-row-action transaction-row-action-edit"
+                          size="sm"
                           onClick={() => onEdit(transaction)}
                           aria-label={`Edit ${transaction.description}`}
                         >
                           Edit
-                        </button>
+                        </Button>
                       )}
                       {!transaction.is_grouped && onMarkOwed && canCreateOwedShare(transaction) && (
-                        <button
+                        <Button
                           type="button"
-                          className="transaction-row-action transaction-row-action-owed"
+                          size="sm"
                           onClick={() => onMarkOwed(transaction)}
                           aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                         >
                           {getOwedActionLabel(transaction)}
-                        </button>
+                        </Button>
                       )}
                       {!transaction.is_grouped && onDelete && (
-                        <button
+                        <Button
                           type="button"
-                          className="transaction-row-action transaction-row-action-delete"
+                          size="sm" variant="danger"
                           onClick={() => onDelete(transaction)}
                           aria-label={`Delete ${transaction.description}`}
                         >
                           Delete
-                        </button>
+                        </Button>
                       )}
                       {transaction.is_grouped && (
                         <span className="muted small">Grouped</span>
