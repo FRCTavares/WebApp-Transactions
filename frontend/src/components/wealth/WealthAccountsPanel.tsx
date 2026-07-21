@@ -7,6 +7,8 @@ import {
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
 import { WealthAccountDetailsModal } from './WealthAccountDetailsModal'
+import { Button, EmptyState } from '../ui'
+import { Landmark } from 'lucide-react'
 
 type WealthAccountsPanelProps = {
   accountGroups: WealthAccountGroup[]
@@ -79,19 +81,20 @@ function AccountActions({
 }) {
   return (
     <div className="wealth-account-actions">
-      <button type="button" onClick={() => onStartAccountEdit(account)}>
+      <Button type="button" size="sm" onClick={() => onStartAccountEdit(account)}>
         Edit
-      </button>
-      <button type="button" onClick={() => onToggleAccountActive(account)}>
+      </Button>
+      <Button type="button" size="sm" onClick={() => onToggleAccountActive(account)}>
         {account.is_active ? 'Archive' : 'Restore'}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className="wealth-account-action-danger"
+        size="sm"
+        variant="danger"
         onClick={() => onRemoveAccount(account)}
       >
         Delete
-      </button>
+      </Button>
     </div>
   )
 }
@@ -133,10 +136,11 @@ export function WealthAccountsPanel({
       </div>
 
       {accountGroups.length === 0 ? (
-        <div className="wealth-empty-state">
-          <strong>No wealth accounts yet.</strong>
-          <p className="muted small">Create manual accounts first, then add monthly balance snapshots.</p>
-        </div>
+        <EmptyState
+          icon={Landmark}
+          title="No wealth accounts yet"
+          description="Create manual accounts first, then add monthly balance snapshots."
+        />
       ) : (
         <div className="wealth-account-card-grid">
           {accountGroups.map((group) => {

@@ -42,7 +42,7 @@ import {
   type ManualFundingFormState,
   type MonthlyFundingFormState,
 } from '../utils/investmentsPageUtils'
-import { Button } from '../components/ui'
+import { Button, PageHeader } from '../components/ui'
 
 export function InvestmentsPage() {
   const [chartMonths, setChartMonths] = useState(24)
@@ -572,37 +572,39 @@ export function InvestmentsPage() {
 
   return (
     <section className="app-page investments-page">
-      <div className="page-header investments-page-header">
-        <div className="page-title-block">
-          <h1>Investments</h1>
-        </div>
-
-        <div className="action-group">
-          <Button
-            type="button"
-            loading={isResolvingFx}
-            onClick={resolvePendingFxRates}
-            title="Resolve FX rates left pending on stored events, which block historical valuation"
-          >
-            {isResolvingFx ? 'Resolving…' : 'Resolve FX'}
-          </Button>
-          <Button
-            type="button"
-            loading={isBackfillingHistory}
-            onClick={backfillMarketHistory}
-            title="Fetch daily closing prices for the charted window so the portfolio trend reflects real market movement"
-          >
-            {isBackfillingHistory ? 'Backfilling…' : 'Backfill history'}
-          </Button>
-          <Button
-            type="button"
-            loading={isFetchingMarketData}
-            onClick={refreshAllMarketData}
-          >
-            {isFetchingMarketData ? 'Refreshing…' : 'Refresh prices'}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Investments"
+        actions={(
+          <>
+            <Button
+              type="button"
+              size="sm"
+              loading={isResolvingFx}
+              onClick={resolvePendingFxRates}
+              title="Resolve FX rates left pending on stored events, which block historical valuation"
+            >
+              {isResolvingFx ? 'Resolving…' : 'Resolve FX'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              loading={isBackfillingHistory}
+              onClick={backfillMarketHistory}
+              title="Fetch daily closing prices for the charted window so the portfolio trend reflects real market movement"
+            >
+              {isBackfillingHistory ? 'Backfilling…' : 'Backfill'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              loading={isFetchingMarketData}
+              onClick={refreshAllMarketData}
+            >
+              {isFetchingMarketData ? 'Refreshing…' : 'Refresh prices'}
+            </Button>
+          </>
+        )}
+      />
 
       <StatusMessage error={error} message={message} />
 

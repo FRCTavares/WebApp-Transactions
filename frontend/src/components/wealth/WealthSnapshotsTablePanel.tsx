@@ -1,6 +1,8 @@
 import { getAccountName } from '../../utils/wealthPageUtils'
 import type { WealthAccount, WealthSnapshot } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
+import { Button, EmptyState } from '../ui'
+import { CalendarClock } from 'lucide-react'
 
 /**
  * The manual snapshots history table. Split out of `WealthPage.tsx`
@@ -32,13 +34,9 @@ export function WealthSnapshotsTablePanel({
           </p>
         </div>
 
-        <button
-          type="button"
-          className="small-button"
-          onClick={onToggleOpen}
-        >
+        <Button type="button" size="sm" onClick={onToggleOpen}>
           {isOpen ? 'Hide snapshots' : 'Show snapshots'}
-        </button>
+        </Button>
       </div>
 
       {isOpen ? (
@@ -72,12 +70,12 @@ export function WealthSnapshotsTablePanel({
                 <td>{snapshot.notes ?? '-'}</td>
                 <td>
                   <div className="table-action-group">
-                    <button type="button" className="small-button" onClick={() => onStartEdit(snapshot)}>
+                    <Button type="button" size="sm" onClick={() => onStartEdit(snapshot)}>
                       Edit
-                    </button>
-                    <button type="button" className="small-button danger-button" onClick={() => onRemove(snapshot)}>
+                    </Button>
+                    <Button type="button" size="sm" variant="danger" onClick={() => onRemove(snapshot)}>
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -86,10 +84,11 @@ export function WealthSnapshotsTablePanel({
             {sortedSnapshots.length === 0 ? (
               <tr>
                 <td colSpan={9}>
-                  <div className="wealth-empty-state">
-                    <strong>No snapshots yet.</strong>
-                    <p className="muted small">Add your first manual month-start or month-end balance snapshot.</p>
-                  </div>
+                  <EmptyState
+                    icon={CalendarClock}
+                    title="No snapshots yet"
+                    description="Add your first manual month-start or month-end balance snapshot."
+                  />
                 </td>
               </tr>
             ) : null}

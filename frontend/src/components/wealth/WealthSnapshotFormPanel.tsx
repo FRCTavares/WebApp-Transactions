@@ -1,5 +1,6 @@
 import { getAccountLabel, type SnapshotFormState } from '../../utils/wealthPageUtils'
 import type { WealthAccount } from '../../types/api'
+import { Button } from '../ui'
 
 /**
  * The add/edit wealth snapshot form. Split out of `WealthPage.tsx` (which
@@ -119,12 +120,12 @@ export function WealthSnapshotFormPanel({
       </div>
 
       <div className="action-group">
-        <button type="button" className="primary-button" onClick={onSubmit}>
+        <Button type="button" variant="primary" onClick={onSubmit}>
           {isEditing ? 'Save snapshot' : 'Create snapshot'}
-        </button>
-        <button type="button" onClick={onCancel}>
+        </Button>
+        <Button type="button" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     </section>
   )

@@ -310,13 +310,11 @@
   color: #1d4ed8;
 }
 
-.wealth-account-action-danger,
 .wealth-page .danger-button {
   border-color: #fecaca;
   color: #dc2626;
 }
 
-.wealth-account-action-danger:hover,
 .wealth-page .danger-button:hover {
   border-color: #fca5a5;
   background: var(--wealth-red-soft);
@@ -476,23 +474,6 @@
   font-size: 12px;
 }
 
-.wealth-empty-state {
-  display: grid;
-  gap: 0.4rem;
-  justify-items: center;
-  padding: 2rem 1rem;
-  text-align: center;
-}
-
-.wealth-empty-state strong {
-  color: var(--wealth-text);
-}
-
-.wealth-empty-state p {
-  margin: 0;
-  max-width: 28rem;
-}
-
 .wealth-mobile-accounts {
   display: none;
 }
@@ -571,8 +552,7 @@
     font-size: 1rem;
   }
 
-  .wealth-mobile-account-group,
-  .wealth-mobile-empty {
+  .wealth-mobile-account-group {
     display: grid;
     gap: 0.55rem;
     padding: 0.55rem 0.65rem;
@@ -632,7 +612,6 @@
     display: none;
   }
 }
-
 
 /* Compact Wealth pass: keep cards useful without making the page huge. */
 .wealth-page .panel-card {
@@ -724,7 +703,6 @@
   }
 }
 
-
 /* Wealth mobile receivable/account card pass. */
 @media (max-width: 800px) {
   .wealth-page {
@@ -760,8 +738,7 @@
     letter-spacing: -0.06em;
   }
 
-  .wealth-mobile-account-group,
-  .wealth-mobile-empty {
+  .wealth-mobile-account-group {
     overflow: hidden;
     padding: 0.85rem 0.9rem !important;
     border: 1px solid rgb(255 255 255 / 0.12) !important;
@@ -812,9 +789,7 @@
 
   .wealth-mobile-account-group-header span,
   .wealth-mobile-account-group span,
-  .wealth-mobile-account-item span,
-  .wealth-mobile-empty,
-  .wealth-mobile-empty p {
+  .wealth-mobile-account-item span {
     color: var(--theme-muted, #aeb5c2) !important;
   }
 

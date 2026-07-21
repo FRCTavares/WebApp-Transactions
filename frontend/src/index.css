@@ -698,15 +698,6 @@ main {
   }
 }
 
-/* Investments page alignment with the shared Dashboard baseline. */
-.investments-page .investments-page-header {
-  margin-bottom: 0;
-}
-
-.investments-page .page-title-block h1 {
-  margin-bottom: 0;
-}
-
 .investments-page .portfolio-snapshot,
 .investments-page .panel-card,
 .investments-page .filter-panel {
@@ -763,10 +754,6 @@ main {
 
 @media (max-width: 800px) {.investments-page {
     gap: 0.85rem;
-  }
-
-.investments-page .investments-page-header {
-    gap: 0.75rem;
   }
 
 .investments-page .investment-funding-card,

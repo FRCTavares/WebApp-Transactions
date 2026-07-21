@@ -560,7 +560,7 @@ row activation.
 
 ### Phase 4 — Call-site migration, one commit per page
 
-**Current next task: Wealth.** Complete and verify it before starting the next page. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
+**Current next task: Categories.** Complete and verify it before starting the next page. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
 
 - [x] **Dashboard — done and verified 2026-07-20 (pilot).**
       `npm run lint` clean, 49/49 unit tests pass (the 4 Dashboard state tests
@@ -813,9 +813,63 @@ row activation.
       admin-maintained, so both are owner-only by design. And this increases
       yfinance usage, which section 11 already flags as an unresolved Yahoo
       ToS risk before any wider release.
-- [ ] Wealth — note: its `<h1>` is currently overlapped by the global period
-      pill (`.global-topbar` is absolutely positioned and out of flow).
-      Migrating its header to `PageHeader` fixes this, as it did on Owed.
+- [x] **Wealth — migrated 2026-07-21.** `PageHeader`, `Button` (18 call sites
+      across the page and 6 components) and `EmptyState` (3). Verified: lint
+      clean, 49/49 unit tests, build passing, 12/12 e2e on chromium and
+      mobile-chromium against a live backend, and both themes screenshotted at
+      desktop and mobile including the account form, snapshot form and
+      snapshots panel.
+
+      Quick page, because `--wealth-*` was already aliased onto the semantic
+      layer during #74 — the Dashboard lesson paid off in advance. No page-local
+      palette work was needed and there were no legacy `.badge` spans.
+
+      Migrating the header fixed the period pill overlapping the `<h1>`, as
+      predicted. **That fix then needed a second pass.** Reserving a centre
+      column squeezed Wealth's description into three cramped lines, because
+      Wealth is the first migrated page with a long `description`. The pill only
+      covers the *first line* of the header, so the title block now spans the
+      full width while the eyebrow and title — the parts level with the pill —
+      are clamped short of it. Both title block and actions are pinned to row 1
+      so the buttons stay level with the title rather than dropping below.
+
+      Also fixed: the description's box started 1px above the pill's bottom
+      edge, invisible only because the glyphs sit lower in the line box and one
+      font-size change from a real overlap. It now has real clearance.
+
+      Deliberately not converted:
+      - `wealth-account-group-button` — a whole account card acting as a
+        button, not a UI button.
+      - The chart's 6M/12M/24M/5Y window selector. It is a `SegmentedControl`
+        by rights, but it lives inside `WealthMonthlyChart`, whose 15
+        `!important` declarations in `charts.css` are Phase 6 work. Converting
+        the control without resolving the nesting would entangle the two.
+
+      Shortened the two form toggles from "Close account form" / "Close
+      snapshot form" to "Close account" / "Close snapshot": the longer labels
+      overflowed the reserved actions column and wrapped the header onto two
+      rows whenever a form was open. The snapshot toggle also drops to
+      `secondary` while open, matching Owed — it means "close" in that state,
+      so it should not read as the primary action.
+
+      Deleted the CSS the migration orphaned: `.wealth-page-header`,
+      `.wealth-empty-state`, `.wealth-mobile-empty`,
+      `.wealth-account-action-danger` — 5 rules plus 8 selectors pruned from
+      mixed lists.
+
+      **The Investments header was migrated in the same change**, rather than
+      left as a known production defect: it was the last page still on the
+      legacy `.page-header` and was clipping "Resolve FX" by 51px live. Every
+      page that renders a period pill is now verified clear in both themes,
+      with an assertion that the header actions do not wrap onto a second row.
+
+      Its three actions needed 326px against the 323px available to the right
+      of the pill, so no layout change could fit them - the content was simply
+      too wide. "Backfill history" is now "Backfill"; it carries a `title` that
+      explains it in full. Deleted `.investments-page-header` and the three
+      `.investments-page .page-title-block h1` rules that PageHeader orphaned
+      (the generic `.page-header` / `.page-title-block` stay: App, Import and
+      Export still use them).
 - [x] **Owed — migrated 2026-07-21.** `PageHeader`, `Button` (all raw buttons),
       `Badge` (all legacy `.badge` spans), `SegmentedControl` and `EmptyState`.
       Verified: lint clean, 49/49 unit tests, build passing, 12/12 e2e on

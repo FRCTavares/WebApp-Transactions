@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { listInvestmentPositions } from '../api/investmentEvents'
@@ -14,6 +15,7 @@ import {
   updateWealthSnapshot,
 } from '../api/wealth'
 import { StatusMessage } from '../components/StatusMessage'
+import { Button, PageHeader } from '../components/ui'
 import { WealthMonthlyChart } from '../components/wealth/WealthMonthlyChart'
 import { WealthAccountsPanel } from '../components/wealth/WealthAccountsPanel'
 import { WealthMobileAccounts } from '../components/wealth/WealthMobileAccounts'
@@ -497,9 +499,9 @@ export function WealthPage(_props: WealthPageProps) {
           onChange={(event) => updateQuickSnapshotBalance(account.id, event.target.value)}
           placeholder={latestSnapshot?.balance_eur ?? '0.00'}
         />
-        <button type="button" className="small-button" onClick={() => saveQuickSnapshot(account)}>
+        <Button type="button" size="sm" onClick={() => saveQuickSnapshot(account)}>
           Save
-        </button>
+        </Button>
       </div>
     )
   }
@@ -513,41 +515,42 @@ export function WealthPage(_props: WealthPageProps) {
 
   return (
     <section className="app-page wealth-page wealth-page-polished">
-      <div className="page-header wealth-page-header">
-        <div className="page-title-block">
-          <h1>Wealth</h1>
-          <p className="muted small">
-            Bank, cash, savings, and other balances are manual snapshots. Owed money and investments are derived automatically.
-          </p>
-        </div>
-
-        <div className="action-group">
-          <button type="button" onClick={() => refreshWealthData(true)}>
-            Refresh
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setEditingAccountId(null)
-              setAccountForm(getInitialAccountForm())
-              setIsAccountFormOpen((isOpen) => !isOpen)
-            }}
-          >
-            {isAccountFormOpen && editingAccountId === null ? 'Close account form' : '+ Account'}
-          </button>
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              setEditingSnapshotId(null)
-              setSnapshotForm(getInitialSnapshotForm())
-              setIsSnapshotFormOpen((isOpen) => !isOpen)
-            }}
-          >
-            {isSnapshotFormOpen && editingSnapshotId === null ? 'Close snapshot form' : '+ Snapshot'}
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Wealth"
+        description="Bank, cash, savings, and other balances are manual snapshots. Owed money and investments are derived automatically."
+        actions={(
+          <>
+            <Button type="button" size="sm" onClick={() => refreshWealthData(true)}>
+              Refresh
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              iconLeft={isAccountFormOpen && editingAccountId === null ? undefined : Plus}
+              onClick={() => {
+                setEditingAccountId(null)
+                setAccountForm(getInitialAccountForm())
+                setIsAccountFormOpen((isOpen) => !isOpen)
+              }}
+            >
+              {isAccountFormOpen && editingAccountId === null ? 'Close account' : 'Account'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={isSnapshotFormOpen && editingSnapshotId === null ? 'secondary' : 'primary'}
+              iconLeft={isSnapshotFormOpen && editingSnapshotId === null ? undefined : Plus}
+              onClick={() => {
+                setEditingSnapshotId(null)
+                setSnapshotForm(getInitialSnapshotForm())
+                setIsSnapshotFormOpen((isOpen) => !isOpen)
+              }}
+            >
+              {isSnapshotFormOpen && editingSnapshotId === null ? 'Close snapshot' : 'Snapshot'}
+            </Button>
+          </>
+        )}
+      />
 
       <StatusMessage error={error} message={message} />
 

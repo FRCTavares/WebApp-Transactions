@@ -149,7 +149,6 @@
   }
 }
 
-
 /* Wealth mobile chart card polish v2. */
 @media (max-width: 800px) {
   .wealth-page .wealth-trend-panel {
@@ -217,7 +216,6 @@
   }
 }
 
-
 /* Wealth mobile real plot geometry fix. */
 @media (max-width: 800px) {
   .wealth-page .wealth-chart-wrap {
@@ -260,12 +258,6 @@
     gap: 0.72rem !important;
   }
 
-  .wealth-page .wealth-page-header {
-    min-height: 0 !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-  }
-
   .wealth-page .page-title-block {
     gap: 0 !important;
   }
@@ -288,7 +280,6 @@
     margin-top: 0 !important;
   }
 }
-
 
 /* Wealth mobile theme safety pass. */
 @media (max-width: 800px) {
@@ -337,11 +328,6 @@
 
   .wealth-page {
     gap: 0.76rem !important;
-  }
-
-  .wealth-page .wealth-page-header {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
   }
 
   .wealth-page .wealth-monthly-panel.wealth-trend-panel {
