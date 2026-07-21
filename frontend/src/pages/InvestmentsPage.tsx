@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { resolveManualFunding } from '../api/investmentEvents'
+import {
+  previewPendingFx,
+  resolveManualFunding,
+  resolvePendingFx,
+} from '../api/investmentEvents'
 import { upsertInvestmentFundingMonth } from '../api/investmentFundingMonths'
 import {
   createOrUpdateMarketPrice,
@@ -62,6 +66,7 @@ export function InvestmentsPage() {
   })
   const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
   const [isBackfillingHistory, setIsBackfillingHistory] = useState(false)
+  const [isResolvingFx, setIsResolvingFx] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
@@ -375,6 +380,69 @@ export function InvestmentsPage() {
     }
   }
 
+  /**
+   * Resolves FX rates left pending on stored investment events.
+   *
+   * Historical valuation converts every holding to EUR using a rate carried on
+   * an event, so a single unresolved non-EUR event makes every month from that
+   * date onward unvaluable - which silently truncated the portfolio trend.
+   *
+   * Previews first and asks for confirmation, matching the import workflow:
+   * this writes to financial records, so it should never happen implicitly.
+   */
+  async function resolvePendingFxRates() {
+    setError(null)
+    setMessage(null)
+    setIsResolvingFx(true)
+
+    try {
+      const preview = await previewPendingFx()
+
+      if (preview.pending_count === 0) {
+        setMessage('No pending FX rates to resolve.')
+        return
+      }
+
+      const span =
+        preview.earliest_date && preview.latest_date
+          ? ` between ${preview.earliest_date} and ${preview.latest_date}`
+          : ''
+      const confirmed = window.confirm(
+        `${preview.pending_count} event(s) in `
+          + `${preview.currencies.join(', ')}${span} have no FX rate.\n\n`
+          + `${preview.resolvable_count} can be resolved from historical rates; `
+          + `${preview.unresolvable_count} cannot and will stay pending.\n\n`
+          + 'Apply the resolvable rates?',
+      )
+
+      if (!confirmed) {
+        setMessage('FX resolution cancelled. Nothing was changed.')
+        return
+      }
+
+      const result = await resolvePendingFx()
+
+      if (result.unresolvable_count > 0) {
+        setMessage(
+          `Resolved ${result.resolvable_count} FX rate(s). `
+            + `${result.unresolvable_count} still pending - no historical rate was available.`,
+        )
+      } else {
+        setMessage(`Resolved ${result.resolvable_count} FX rate(s).`)
+      }
+
+      reloadAfterMutation()
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to resolve pending FX rates',
+      )
+    } finally {
+      setIsResolvingFx(false)
+    }
+  }
+
   async function submitMarketPrice() {
     setError(null)
     setMessage(null)
@@ -510,6 +578,14 @@ export function InvestmentsPage() {
         </div>
 
         <div className="action-group">
+          <Button
+            type="button"
+            loading={isResolvingFx}
+            onClick={resolvePendingFxRates}
+            title="Resolve FX rates left pending on stored events, which block historical valuation"
+          >
+            {isResolvingFx ? 'Resolving…' : 'Resolve FX'}
+          </Button>
           <Button
             type="button"
             loading={isBackfillingHistory}

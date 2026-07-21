@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import delete as sqlalchemy_delete, select
+from sqlalchemy import delete as sqlalchemy_delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.investment_event import InvestmentEvent
@@ -81,6 +81,34 @@ class InvestmentEventRepository:
 
         if source is not None:
             statement = statement.where(InvestmentEvent.source == source)
+
+        return list(self.db.scalars(statement).all())
+
+    def list_unresolved_fx(
+        self,
+        *,
+        user_id: str,
+    ) -> list[InvestmentEvent]:
+        """Events in a non-EUR currency that still have no usable FX rate.
+
+        Historical portfolio valuation converts every holding to EUR, and it
+        can only do so from a rate carried on an event. A non-EUR event left
+        with `fx_rate_source = "pending"` therefore makes every month from that
+        event onward unvaluable, not just the event itself.
+        """
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(InvestmentEvent.currency != "EUR")
+            .where(
+                or_(
+                    InvestmentEvent.fx_rate_to_eur.is_(None),
+                    InvestmentEvent.fx_rate_to_eur <= 0,
+                    InvestmentEvent.fx_rate_source == "pending",
+                )
+            )
+            .order_by(InvestmentEvent.date.asc(), InvestmentEvent.id.asc())
+        )
 
         return list(self.db.scalars(statement).all())
 

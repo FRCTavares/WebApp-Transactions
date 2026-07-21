@@ -21,10 +21,24 @@ from app.schemas.investment_event import (
     ManualFundingResolutionCreate,
     ManualFundingResolutionRead,
 )
+from app.schemas.pending_fx import PendingFxSummaryRead
+from app.security.rate_limit import enforce_market_fetch_rate_limit
 from app.services.investment_event_service import InvestmentEventService
+from app.services.market_data.yfinance_provider import YFinanceMarketDataProvider
+from app.services.pending_fx_resolution_service import PendingFxResolutionService
 
 
 router = APIRouter(prefix="/api/investment-events", tags=["investment-events"])
+
+
+def get_pending_fx_resolution_service(
+    db: Session = Depends(get_db),
+) -> PendingFxResolutionService:
+    return PendingFxResolutionService(
+        db=db,
+        repository=InvestmentEventRepository(db),
+        provider=YFinanceMarketDataProvider(),
+    )
 
 
 def get_investment_event_service(
@@ -121,6 +135,36 @@ def get_investment_monthly_series(
         months=months,
         current_user=current_user,
     )
+
+
+@router.get(
+    "/pending-fx",
+    response_model=PendingFxSummaryRead,
+    dependencies=[Depends(enforce_market_fetch_rate_limit)],
+)
+def preview_pending_fx(
+    service: PendingFxResolutionService = Depends(get_pending_fx_resolution_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Report which pending FX rates could be resolved. Writes nothing."""
+    return service.preview(current_user=current_user)
+
+
+@router.post(
+    "/pending-fx/resolve",
+    response_model=PendingFxSummaryRead,
+    dependencies=[Depends(enforce_market_fetch_rate_limit)],
+)
+def resolve_pending_fx(
+    service: PendingFxResolutionService = Depends(get_pending_fx_resolution_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Apply every resolvable rate in one transaction.
+
+    Events the provider cannot cover stay pending and are reported back rather
+    than being filled with a guess.
+    """
+    return service.resolve(current_user=current_user)
 
 
 @router.get("/{event_id}", response_model=InvestmentEventRead)

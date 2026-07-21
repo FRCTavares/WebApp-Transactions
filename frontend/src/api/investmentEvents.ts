@@ -9,6 +9,7 @@ import type {
   InvestmentRealisedGain,
   ManualFundingResolutionPayload,
   ManualFundingResolutionResponse,
+  PendingFxSummary,
 } from '../types/api'
 
 export function listInvestmentEvents(filters: InvestmentEventFilters = {}) {
@@ -50,6 +51,20 @@ export function resolveManualFunding(
   return apiPostJson<ManualFundingResolutionResponse>(
     `/api/investment-events/${eventId}/resolve-manual-funding`,
     payload,
+  ).then((result) => {
+    invalidateHistoricalData()
+    return result
+  })
+}
+
+export function previewPendingFx() {
+  return apiGet<PendingFxSummary>('/api/investment-events/pending-fx')
+}
+
+export function resolvePendingFx() {
+  return apiPostJson<PendingFxSummary>(
+    '/api/investment-events/pending-fx/resolve',
+    {},
   ).then((result) => {
     invalidateHistoricalData()
     return result

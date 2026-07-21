@@ -765,15 +765,48 @@ row activation.
       the valued portion of the series went from near-flat to €2,243 → €4,000
       across 10 months with 12 distinct values.
 
-      **The remaining gap is FX rates, not prices.** Months from 2024-09 to
-      2025-09 still return no market value even with full price history,
-      because every CSPX buy in that period is in USD with
-      `fx_rate_to_eur = NULL` and `fx_rate_source = 'pending'`. The valuation
-      cannot convert USD to EUR without a rate, so the whole month is dropped.
-      The only events carrying an FX rate start 2025-10. Resolving those
-      pending rates (there is already an `import_fx_resolution_service`) would
-      extend the trend back another year. This is pre-existing and unrelated
-      to the design-system work.
+      **The remaining gap was FX rates, not prices — now resolved.** Months
+      from 2024-09 to 2025-09 returned no market value even with full price
+      history, because every CSPX buy in that period was in USD with
+      `fx_rate_to_eur = NULL` and `fx_rate_source = 'pending'`. Historical
+      valuation converts every holding to EUR from a rate carried on an event,
+      so **one** unresolved non-EUR event makes every month from that date
+      onward unvaluable — 82 pending events silently truncated the trend by a
+      year.
+
+      `ImportFxResolutionService` only resolves rates *during* an import;
+      nothing ever revisited stored events. Added
+      `PendingFxResolutionService` (`pending_fx_resolution_service.py`) plus
+      `GET /api/investment-events/pending-fx` (preview) and
+      `POST /api/investment-events/pending-fx/resolve` (commit).
+
+      Design decisions, given this writes to financial records:
+      - **Preview then commit**, mirroring the import workflow. The UI previews,
+        shows what will change, and asks for confirmation before writing.
+      - **Rates are never invented.** If the provider has no rate on or before
+        an event's date, that event stays pending and is reported as
+        unresolvable — no carry-forward, no guess.
+      - **Never uses a rate dated after the event.** There is a regression test
+        for this specifically.
+      - **One provider call per currency**, covering the whole span, instead of
+        one per event date — 82 events needed 76 distinct dates.
+      - `fx_rate_source` records the exact rate date
+        (`yfinance_historical:2024-09-06`), so every value stays auditable.
+        Note `fx_rate_source` is `String(30)` and that format is exactly 30
+        characters, so the prefix cannot grow without a migration.
+      - The service owns the transaction and commits once, per the layering
+        rules; the repository only reads.
+
+      Result on the local database: 82/82 resolved, 0 left pending, and the
+      trend went from **10 valued months to 24/24 with 24 distinct values**
+      (€34.93 in 2024-09 rising to €3,946.33 in 2026-07). The full two-year
+      curve is real data end to end.
+
+      8 new backend tests (`test_pending_fx_resolution.py`); backend suite
+      479 passing. One of them initially failed the ownership-boundary guard —
+      it inspects the AST of every user-owned model construction and requires
+      `user_id` as a visible keyword, which `InvestmentEvent(**defaults)` hid.
+      Fixed by passing it explicitly rather than by weakening the guard.
 
       Also note: the backfill endpoint requires `get_privileged_user`, exactly
       like the existing "Refresh prices" action — market data is shared and
