@@ -201,10 +201,6 @@
     letter-spacing: -0.03em;
   }
 
-  .investment-summary-desktop-only {
-    display: none;
-  }
-
   .investments-page {
     display: grid;
     gap: 14px;
