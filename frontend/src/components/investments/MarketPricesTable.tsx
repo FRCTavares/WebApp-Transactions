@@ -1,5 +1,7 @@
+import { TrendingUp } from 'lucide-react'
 import type { MarketPrice } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
+import { Badge, Button, EmptyState } from '../ui'
 
 type MarketPricesTableProps = {
   marketPrices: MarketPrice[]
@@ -46,24 +48,27 @@ export function MarketPricesTable({
                   {formatMoney(marketPrice.price, marketPrice.currency)} {marketPrice.currency}
                 </td>
                 <td>
-                  <span className="badge badge-source">{marketPrice.source}</span>
+                  <Badge tone="neutral" size="sm">{marketPrice.source}</Badge>
                 </td>
                 <td>{formatDate(marketPrice.fetched_at)}</td>
                 <td className="actions-cell">
-                  <button
-                    className="small-button"
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => onEdit(marketPrice)}
+                    aria-label={`Edit cached price for ${marketPrice.ticker}`}
                   >
                     Edit
-                  </button>
-                  <button
-                    className="small-button"
+                  </Button>
+                  <Button
                     type="button"
+                    size="sm"
+                    variant="danger"
                     onClick={() => onDelete(marketPrice)}
+                    aria-label={`Delete cached price for ${marketPrice.ticker}`}
                   >
                     Delete
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -71,7 +76,12 @@ export function MarketPricesTable({
             {marketPrices.length === 0 && (
               <tr>
                 <td colSpan={5} className="empty-state">
-                  No cached market prices found.
+                  <EmptyState
+                    size="sm"
+                    icon={TrendingUp}
+                    title="No cached market prices found."
+                    description="Prices are cached here after a refresh."
+                  />
                 </td>
               </tr>
             )}

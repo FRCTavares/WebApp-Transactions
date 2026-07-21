@@ -1,5 +1,6 @@
 import { formatMoney } from '../../utils/format'
 import type { MonthlyFundingFormState } from '../../utils/investmentsPageUtils'
+import { Button } from '../ui'
 
 /**
  * The "Funding split" card on `InvestmentsPage`. Split out (which was
@@ -92,9 +93,9 @@ export function FundingSplitPanel({
             = {formatMoney(String(monthlyFundingTotal))}.
           </p>
 
-          <button type="button" onClick={onSubmit}>
+          <Button type="button" variant="primary" onClick={onSubmit}>
             Save split
-          </button>
+          </Button>
         </div>
       </details>
     </section>

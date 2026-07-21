@@ -206,9 +206,6 @@
   }
 }
 
-
-
-
 /* Final mobile transaction card dark override. */
 @media (max-width: 800px) {
   :root[data-theme='dark'] .transactions-page .transaction-mobile-list .transaction-mobile-card {

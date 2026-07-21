@@ -37,6 +37,7 @@ import {
   type ManualFundingFormState,
   type MonthlyFundingFormState,
 } from '../utils/investmentsPageUtils'
+import { Button } from '../components/ui'
 
 export function InvestmentsPage() {
   const [chartMonths, setChartMonths] = useState(24)
@@ -409,20 +410,20 @@ export function InvestmentsPage() {
   )
 
   return (
-    <section className="app-page investments-page investments-page-polished">
+    <section className="app-page investments-page">
       <div className="page-header investments-page-header">
         <div className="page-title-block">
           <h1>Investments</h1>
         </div>
 
         <div className="action-group">
-          <button
+          <Button
             type="button"
-            disabled={isFetchingMarketData}
+            loading={isFetchingMarketData}
             onClick={refreshAllMarketData}
           >
             {isFetchingMarketData ? 'Refreshing…' : 'Refresh prices'}
-          </button>
+          </Button>
         </div>
       </div>
 
