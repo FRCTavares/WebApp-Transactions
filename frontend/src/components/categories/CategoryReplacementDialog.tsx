@@ -4,6 +4,8 @@ import type {
   TransactionCategoryUsage,
 } from '../../api/transactionCategories'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
+import { X } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 
 type CategoryReplacementDialogProps = {
   category: TransactionCategory
@@ -77,15 +79,13 @@ export function CategoryReplacementDialog({
             </h2>
           </div>
 
-          <button
+          <IconButton
             type="button"
-            className="category-replacement-close"
-            aria-label="Close replacement dialog"
+            icon={X}
+            label="Close replacement dialog"
             disabled={isSubmitting}
             onClick={onCancel}
-          >
-            ×
-          </button>
+          />
         </header>
 
         <div className="category-replacement-summary">
@@ -138,15 +138,11 @@ export function CategoryReplacementDialog({
         </p>
 
         <footer className="category-replacement-actions">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={onCancel}
-          >
+          <Button type="button" disabled={isSubmitting} onClick={onCancel}>
             Cancel
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             disabled={
               isSubmitting ||
@@ -155,11 +151,11 @@ export function CategoryReplacementDialog({
             onClick={onReview}
           >
             Review individually
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
-            className="danger-button"
+            variant="danger"
             disabled={
               isSubmitting ||
               replacementCategoryId === null
@@ -173,7 +169,7 @@ export function CategoryReplacementDialog({
             {isSubmitting
               ? 'Replacing…'
               : 'Replace all and delete'}
-          </button>
+          </Button>
         </footer>
       </section>
     </div>

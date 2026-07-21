@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import type { CategoryFormState, CategoryGroup } from '../../utils/transactionCategoriesPanelUtils'
+import { Button } from '../ui'
 
 /**
  * The "Add a category" form card on `TransactionCategoriesPanel`. Split
@@ -54,13 +55,9 @@ export function CategoryCreateForm({
           </select>
         </label>
 
-        <button
-          type="submit"
-          className="primary-button"
-          disabled={isBusy}
-        >
+        <Button type="submit" variant="primary" disabled={isBusy}>
           Add category
-        </button>
+        </Button>
       </form>
     </section>
   )

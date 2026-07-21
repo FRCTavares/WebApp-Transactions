@@ -939,7 +939,40 @@ row activation.
       Still open: the VIEW `<select>` and the Current / Paid history / All
       history buttons are two controls for the same state, which is
       redundant — a product decision rather than styling, so left alone.
-- [ ] Categories
+- [x] **Categories — migrated 2026-07-21.** `PageHeader`, `Button` (15 call
+      sites), `IconButton` (2 dialog closes) and `EmptyState`. Verified: lint
+      clean, 49/49 unit tests, build passing, 12/12 e2e, and both themes
+      screenshotted at desktop and mobile including the replacement and
+      migration dialogs, with every control hit-tested for occlusion.
+
+      **This page carried its own dark mode.** `transaction-categories.css`
+      had 54 `[data-theme='dark']` selectors in 27 rules — the largest such
+      block left — because its light values were hardcoded rather than
+      tokenised, so dark had to be repainted by hand. Tokenising the light
+      declarations onto the semantic layer made all 27 redundant. The sheet
+      is 787 → 556 lines and now contains **zero dark-mode CSS**.
+
+      That was proved rather than assumed. Computed colours for every selector
+      the dark blocks targeted were captured with both dialogs open, the blocks
+      deleted, and the measurement repeated. Five differences remained, all
+      accounted for:
+      - three are the page converging on the token palette (surface
+        `#1c1d21` → `#18181b`, label `#d5d7dc` → `#f4f4f5`, border
+        `rgb(255 255 255 / 0.075)` → `#2f3037`);
+      - two were `currentColor` readings on **zero-width borders** —
+        `.transaction-category-row` has `border-width: 0` on all four sides, so
+        the dark rule was colouring a border that does not render. Dead code.
+
+      Light mode changed in exactly two places, both deliberate: form labels
+      moved from `gray-700` to `--color-text`, and one group border from a
+      bespoke `#eef2f7` to `--color-border`. Collapsing bespoke greys onto the
+      ramp is the point of the exercise.
+
+      Deleted the CSS the migration orphaned: `.transaction-category-action*`,
+      `.category-replacement-close`, `.transaction-category-empty-state`,
+      `.transaction-category-empty-icon` — 11 rules plus 3 selectors. Note
+      `.transaction-category-actions` (plural, the flex container) is still
+      rendered; a substring match would have deleted it.
 - [ ] Import
 - [ ] Export
 - [ ] Settings
