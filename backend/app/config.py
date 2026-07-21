@@ -60,6 +60,34 @@ def get_api_docs_enabled() -> bool:
     return configured_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def validate_e2e_config() -> None:
+    """Refuse to serve the developer's real database to an end-to-end run.
+
+    The e2e suite creates categories, transactions and import batches on every
+    run and does not fully clean up. Started without DATABASE_URL the backend
+    serves backend/data/finance.db, so those rows accumulate in real financial
+    data. Declaring APP_ENV=e2e opts a process into this check.
+    """
+
+    if get_app_env() != "e2e":
+        return
+
+    database_url = os.getenv("DATABASE_URL", "").strip()
+
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL is required when APP_ENV=e2e. Without it the backend "
+            "serves backend/data/finance.db and the suite writes test rows into "
+            "real data. Use backend/scripts/start_e2e_backend.sh."
+        )
+
+    if "data/finance.db" in database_url:
+        raise RuntimeError(
+            f"Refusing to run an e2e backend against {database_url}. "
+            "Point DATABASE_URL at a throwaway database."
+        )
+
+
 def validate_production_config() -> None:
     if not is_production():
         return

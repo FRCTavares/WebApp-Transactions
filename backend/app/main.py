@@ -12,6 +12,7 @@ from app.auth.local_network import (
 from app.config import (
     get_api_docs_enabled,
     get_cors_origins,
+    validate_e2e_config,
     validate_production_config,
     is_production,
 )
@@ -43,6 +44,7 @@ from app.routers.user_preferences import router as user_preferences_router
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     validate_production_config()
+    validate_e2e_config()
     initialise_database()
     yield
 

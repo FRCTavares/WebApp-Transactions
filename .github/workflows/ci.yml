@@ -171,6 +171,7 @@ jobs:
           SUPABASE_JWT_SECRET: ${{ secrets.E2E_SUPABASE_JWT_SECRET }}
           ALLOWED_USER_EMAILS: ${{ secrets.E2E_TEST_EMAIL }}
           CORS_ORIGINS: http://127.0.0.1:4173
+          APP_ENV: e2e
           DATABASE_URL: sqlite:///${{ runner.temp }}/e2e-tests.db
         run: |
           set -euo pipefail
