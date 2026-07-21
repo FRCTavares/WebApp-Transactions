@@ -248,13 +248,6 @@ which is why dark mode
   margin-bottom: 0;
 }
 
-.investments-page .page-title-block h1 {
-  color: var(--investment-text);
-  font-size: clamp(2rem, 3vw, 2.55rem);
-  line-height: 1.02;
-  letter-spacing: -0.055em;
-}
-
 .investments-page .page-header button {
   min-height: 2.55rem;
   border-radius: 0.9rem;

@@ -3,6 +3,7 @@ import {
   type AccountFormState,
 } from '../../utils/wealthPageUtils'
 import type { WealthAccountType } from '../../types/api'
+import { Button } from '../ui'
 
 /**
  * The add/edit wealth account form. Split out of `WealthPage.tsx` (which
@@ -112,12 +113,12 @@ export function WealthAccountFormPanel({
       </div>
 
       <div className="action-group">
-        <button type="button" className="primary-button" onClick={onSubmit}>
+        <Button type="button" variant="primary" onClick={onSubmit}>
           {isEditing ? 'Save account' : 'Create account'}
-        </button>
-        <button type="button" onClick={onCancel}>
+        </Button>
+        <Button type="button" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
       </div>
     </section>
   )

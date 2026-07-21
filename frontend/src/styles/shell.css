@@ -716,12 +716,31 @@ body {
     align-items: start;
   }
 
+  /* The pill only covers the first line of the header. Letting the title block
+     span the full width lets a long description use it, while the eyebrow and
+     title - the parts level with the pill - are clamped short of it. Wealth's
+     description was otherwise squeezed into three cramped lines. */
   .app-main:has(> .global-topbar) .ui-page-header-titles {
-    grid-column: 1;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .app-main:has(> .global-topbar) .ui-page-header-eyebrow,
+  .app-main:has(> .global-topbar) .ui-page-header-title {
+    max-width: calc(50% - 13rem);
+  }
+
+  /* Clearance under the pill. Without it the description's box started 1px
+     above the pill's bottom edge - invisible today only because the glyphs sit
+     lower in the line box, and one font-size change away from a real overlap. */
+  .app-main:has(> .global-topbar) .ui-page-header-description,
+  .app-main:has(> .global-topbar) .ui-page-header-meta {
+    margin-top: var(--space-2);
   }
 
   .app-main:has(> .global-topbar) .ui-page-header-actions {
     grid-column: 3;
+    grid-row: 1;
     justify-content: flex-end;
     justify-self: end;
   }

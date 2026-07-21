@@ -7,6 +7,7 @@ import {
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
+import { Button } from '../ui'
 
 type WealthAccountDetailsModalProps = {
   group: WealthAccountGroup
@@ -80,25 +81,27 @@ function AccountActions({
 }) {
   return (
     <div className="wealth-account-actions wealth-modal-actions">
-      <button
+      <Button
         type="button"
+        size="sm"
         onClick={() => {
           onClose()
           onStartAccountEdit(account)
         }}
       >
         Edit
-      </button>
-      <button type="button" onClick={() => onToggleAccountActive(account)}>
+      </Button>
+      <Button type="button" size="sm" onClick={() => onToggleAccountActive(account)}>
         {account.is_active ? 'Archive' : 'Restore'}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className="wealth-account-action-danger"
+        size="sm"
+        variant="danger"
         onClick={() => onRemoveAccount(account)}
       >
         Delete
-      </button>
+      </Button>
     </div>
   )
 }
@@ -141,9 +144,9 @@ export function WealthAccountDetailsModal({
             <strong>{formatMoney(getGroupTotal(group, latestByAccount, investmentPositions))}</strong>
           </div>
 
-          <button type="button" className="wealth-modal-close" onClick={onClose}>
+          <Button type="button" size="sm" className="wealth-modal-close" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </header>
 
         <div className="wealth-modal-subaccount-list">

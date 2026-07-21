@@ -4,6 +4,8 @@ import {
   getAccountTypeLabel,
   getDerivedInvestmentValue,
 } from '../../utils/wealthPageUtils'
+import { Landmark } from 'lucide-react'
+import { EmptyState } from '../ui'
 
 type WealthAccountGroup = {
   key: string
@@ -109,10 +111,11 @@ export function WealthMobileAccounts({
   if (accountGroups.length === 0 && owedReceivableTotal <= 0) {
     return (
       <section className="wealth-mobile-accounts">
-        <div className="wealth-mobile-empty">
-          <strong>No wealth accounts yet.</strong>
-          <p className="muted small">Create accounts from the desktop view for now.</p>
-        </div>
+        <EmptyState
+          icon={Landmark}
+          title="No wealth accounts yet"
+          description="Create accounts from the desktop view for now."
+        />
       </section>
     )
   }
