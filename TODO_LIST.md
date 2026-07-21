@@ -814,7 +814,35 @@ row activation.
       yfinance usage, which section 11 already flags as an unresolved Yahoo
       ToS risk before any wider release.
 - [ ] Wealth
-- [ ] Owed
+- [ ] Owed — **blocking bug already fixed 2026-07-21, ahead of the migration.**
+      `.owed-page-polished .owed-table-wrap` carried `overflow: hidden` (added
+      so the rounded corners clip the table). The inline create/edit row pushes
+      the table to ~1660px against a ~1170px container, so Save and Cancel sat
+      ~340px past the right edge **with no scrollbar** — adding or editing an
+      owed item from the page was impossible at 1440px.
+
+      Note this passed automated testing throughout: Playwright clicks clipped
+      elements happily, so the e2e suite reported the flow working while a
+      human could not complete it. It was only visible in a screenshot.
+
+      Fixed with `overflow-x: auto` / `overflow-y: hidden` (keeps the corner
+      clipping), plus a **sticky actions column** so Save stays in view instead
+      of forcing you to scroll away from the fields you are editing.
+
+      Also fixed while there:
+      - Every input in both inline rows had **no accessible name** — placeholder
+        only, which is not a label and disappears once you type. The two amount
+        fields were both `placeholder="0.00"`, so total and paid were
+        indistinguishable to a screen reader. 16 `aria-label`s added.
+      - The 80px Status column was breaking "open" mid-word into "ope / n".
+      - `.owed-page-polished .owed-table th` hardcoded `#fbfbfd`/`#475569`,
+        now tokenised.
+
+      Still open for the migration proper: the page is not yet on the
+      primitives, and `--owed-*` is already aliased (done during #74), so it
+      should be quick. The grouped person-card view hides row actions behind a
+      `<details>` whose only affordance is an `aria-hidden` "⋯" — worth
+      revisiting for discoverability.
 - [ ] Categories
 - [ ] Import
 - [ ] Export

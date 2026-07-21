@@ -229,6 +229,7 @@ export function OwedItemsTable({
                   value={form.person}
                   onChange={(event) => onFormChange('person', event.target.value)}
                   placeholder="Person"
+                  aria-label="Person owing"
                 />
               </td>
               <td>
@@ -237,12 +238,14 @@ export function OwedItemsTable({
                   value={form.reason}
                   onChange={(event) => onFormChange('reason', event.target.value)}
                   placeholder="Description"
+                  aria-label="Description"
                 />
                 <input
                   className="table-input table-input-secondary"
                   value={form.notes}
                   onChange={(event) => onFormChange('notes', event.target.value)}
                   placeholder="Notes"
+                  aria-label="Notes"
                 />
               </td>
               <td>open</td>
@@ -252,6 +255,7 @@ export function OwedItemsTable({
                   type="date"
                   value={form.dueDate}
                   onChange={(event) => onFormChange('dueDate', event.target.value)}
+                  aria-label="Due date"
                 />
               </td>
               <td>
@@ -259,6 +263,7 @@ export function OwedItemsTable({
                   className="table-input"
                   value={form.linkedTransactionId}
                   onChange={(event) => onLinkedTransactionChange(event.target.value)}
+                  aria-label="Linked transaction"
                 >
                   <option value="">Choose transaction</option>
                   {linkedTransactions.map((transaction) => (
@@ -275,6 +280,7 @@ export function OwedItemsTable({
                   value={form.linkedTransactionId}
                   onChange={(event) => onFormChange('linkedTransactionId', event.target.value)}
                   placeholder="Manual Tx ID"
+                  aria-label="Linked transaction ID"
                 />
               </td>
               <td className="right">
@@ -286,6 +292,7 @@ export function OwedItemsTable({
                   value={form.amountTotal}
                   onChange={(event) => onFormChange('amountTotal', event.target.value)}
                   placeholder="0.00"
+                  aria-label="Total amount"
                 />
               </td>
               <td className="right">
@@ -297,6 +304,7 @@ export function OwedItemsTable({
                   value={form.amountPaid}
                   onChange={(event) => onFormChange('amountPaid', event.target.value)}
                   placeholder="0.00"
+                  aria-label="Amount already paid"
                 />
               </td>
               <td className="right">-</td>
@@ -333,6 +341,7 @@ export function OwedItemsTable({
                       className="table-input"
                       value={editForm.person}
                       onChange={(event) => onEditFormChange('person', event.target.value)}
+                      aria-label="Edit person owing"
                       placeholder="Person"
                     />
                   </td>
@@ -341,12 +350,14 @@ export function OwedItemsTable({
                       className="table-input"
                       value={editForm.reason}
                       onChange={(event) => onEditFormChange('reason', event.target.value)}
+                      aria-label="Edit description"
                       placeholder="Description"
                     />
                     <input
                       className="table-input table-input-secondary"
                       value={editForm.notes}
                       onChange={(event) => onEditFormChange('notes', event.target.value)}
+                      aria-label="Edit notes"
                       placeholder="Notes"
                     />
                   </td>
@@ -361,6 +372,7 @@ export function OwedItemsTable({
                       type="date"
                       value={editForm.dueDate}
                       onChange={(event) => onEditFormChange('dueDate', event.target.value)}
+                      aria-label="Edit due date"
                     />
                   </td>
                   <td>
@@ -368,6 +380,7 @@ export function OwedItemsTable({
                       className="table-input"
                       value={editForm.linkedTransactionId}
                       onChange={(event) => onEditLinkedTransactionChange(event.target.value)}
+                      aria-label="Edit linked transaction"
                     >
                       <option value="">Choose transaction</option>
                       {linkedTransactions.map((transaction) => (
@@ -383,6 +396,7 @@ export function OwedItemsTable({
                       step="1"
                       value={editForm.linkedTransactionId}
                       onChange={(event) => onEditFormChange('linkedTransactionId', event.target.value)}
+                      aria-label="Edit linked transaction ID"
                       placeholder="Manual Tx ID"
                     />
                   </td>
@@ -394,6 +408,7 @@ export function OwedItemsTable({
                       step="0.01"
                       value={editForm.amountTotal}
                       onChange={(event) => onEditFormChange('amountTotal', event.target.value)}
+                      aria-label="Edit total amount"
                       placeholder="0.00"
                     />
                   </td>
@@ -405,6 +420,7 @@ export function OwedItemsTable({
                       step="0.01"
                       value={editForm.amountPaid}
                       onChange={(event) => onEditFormChange('amountPaid', event.target.value)}
+                      aria-label="Edit amount already paid"
                       placeholder="0.00"
                     />
                   </td>
