@@ -262,7 +262,7 @@ Playwright specs select on visible text and ARIA roles. Preserve every
 existing accessible name, role, `aria-label`, and `data-testid` exactly.
 Run the suites after each component migration, not only at the end.
 
-### Phase 0 — Correctness fixes — implemented and verified 2026-07-20
+### Phase 0 — Correctness fixes — implementation complete; visual verification open (2026-07-20)
 
 Verification run on the owner's machine, uncommitted in the working tree:
 
@@ -554,6 +554,8 @@ row activation.
 
 ### Phase 4 — Call-site migration, one commit per page
 
+**Current next task: Transactions.** Complete and verify it before starting Investments. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
+
 - [x] **Dashboard — done and verified 2026-07-20 (pilot).**
       `npm run lint` clean, 49/49 unit tests pass (the 4 Dashboard state tests
       unchanged), `npm run build` passes, and `dashboard.spec.ts` +
@@ -611,17 +613,87 @@ row activation.
         `getSecondaryReasonText` returns `null` in that case and the line is
         omitted. Worth checking wherever else `getReasonText` is used.
 
-      **Still open on this page (product decision, not styling):** fully-owed
-      transactions render a column of `€0.00` in the recent list. That is
-      arithmetically correct — personal amount is zero once the whole sum is
-      owed — but on real data it reads as broken. Needs a "fully owed"
-      treatment showing the gross amount instead.
+      **Still open on this page:**
+      - *Card inside a card on the Spending breakdown panel.*
+        `ExpenseCategoryDonutChart` renders its own `.expense-chart-card`
+        surface and the Dashboard wraps it in a `Card` as well, so the donut
+        sits in a visibly lighter inset rectangle while `Monthly summary`
+        beside it is flat. Introduced by the Phase 4 migration. Fix: either
+        drop the wrapper to `padding="none"` and let the chart own its
+        surface, or strip `.expense-chart-card`'s border/background/radius and
+        let `Card` own it — the second is preferable, since it is the same
+        nesting problem `charts.css` currently papers over with 15
+        `!important` declarations for `WealthMonthlyChart`. Disposition: leave this open and resolve it in Phase 6 together with `WealthMonthlyChart`; do not include it in the Transactions migration unless it blocks verification.
+      - *Fully-owed transactions render a column of `€0.00`* in the recent
+        list (product decision, not styling). Arithmetically correct — the
+        personal amount is zero once the whole sum is owed — but on real data
+        it reads as broken. Needs a "fully owed" treatment showing the gross
+        amount instead.
 
       Note for future audits: the production app looks considerably better
       than a stripped test fixture suggests. The problems found in this work
       were mostly invisible — broken variables, an unloaded font, dead hover
       states, a fragile dark mode — rather than the pages looking bad.
-- [ ] Transactions
+- [x] **Transactions — migrated, reviewed and completed 2026-07-21.**
+      `Button` (54 call sites), `IconButton` (4), `SegmentedControl` (2),
+      `PageHeader` (2), `Badge` (7) and `EmptyState` (2). Verified: lint
+      clean, 49/49 unit tests, build passing, **12/12 e2e** on chromium and
+      mobile-chromium against a live backend, and computed-style assertions
+      for the surface and badge fixes below.
+
+      Done well, and worth copying on the remaining pages: the page-local
+      palette (`--transaction-surface`, `--transaction-border`, ...) was
+      aliased onto the semantic tokens rather than left hardcoded, which is
+      the Dashboard lesson applied correctly. Dialog semantics
+      (`role="dialog"`, `aria-modal`, `aria-labelledby`) were preserved, and
+      `type="submit"` was kept explicitly where forms rely on it.
+
+      Fixed during review:
+      - **Every desktop row printed its description twice.** The desktop table
+        rendered `raw_description` unconditionally while the mobile card
+        already guarded it with `raw_description !== description`. Now guarded
+        on both, preserving the grouped-row count suffix.
+      - **17 bare `:not(.ui-button)` exclusions** converted to
+        `:not(:where(...))`. Bare `:not()` contributes its argument's
+        specificity — the exact mechanism that broke the dark sidebar in #70.
+        None had caused visible breakage yet; this removes the latent trap.
+      - **`.transactions-page-header` CSS removed** (6 rules in
+        `transactions-mobile.css`, 2 in `index.css`). `PageHeader` replaced
+        the class and left the rules orphaned.
+      - **All 7 legacy `.badge` spans replaced with `Badge`**, and the labels
+        are now produced in TypeScript instead of by CSS
+        `text-transform: capitalize`. CSS cannot know where word boundaries
+        are, so it rendered "activobank" as "Activobank" and "trading212" as
+        "Trading212". `SOURCE_LABEL` and `CASHFLOW_LABEL` maps give
+        "ActivoBank", "Trading 212", "Income"/"Expense"/"Transfer", with a
+        sentence-case fallback for unknown values. A computed-style assertion
+        checks `text-transform: none` on every badge and that zero legacy
+        `.badge` elements remain.
+      - **Both empty states now use `EmptyState`** (mobile list and the
+        `td[colspan]` row) with an icon and a "adjust the filters, or add a
+        transaction" follow-up, instead of a bare sentence.
+      - **The page's two surface colours were unified.** The filter panel and
+        table wrap rendered at `#1c1d21` while every migrated button and badge
+        used `--color-surface` (`#18181b`). Two causes: the legacy dark sheets
+        listed both classes in their `#1c1d21 !important` rule, *and* the
+        table wrap additionally carried the generic `content-card table-wrap`
+        classes, which are in the same rule. Removed both classes from the
+        element — neither contributed anything unique, since
+        `.transactions-page .transaction-desktop-table-wrap` already sets the
+        border, radius, background and a 960px table `min-width` that
+        overrode the generic 920px — and dropped the six dark-override
+        entries. Asserted equal computed backgrounds in dark.
+      - **`.transactions-page thead th` hardcoded `#fbfbfd`/`#475569`**
+        tokenised to `--color-surface-sunken` / `--transaction-muted`.
+
+      Considered and deliberately **not** done: adding `aria-label` to the
+      mobile Edit/Delete row actions. Their desktop twins have one, so a
+      screen reader on mobile hears "Edit" repeated once per row. It is a
+      genuine pre-existing gap, but fixing it changes the buttons' accessible
+      names and breaks three `TransactionsPage` tests that select on the bare
+      name `Edit`/`Delete` — the mobile and desktop buttons would then be
+      indistinguishable to `getByRole`. Worth doing as its own change, with
+      the tests reworked to scope by row.
 - [ ] Investments — also delete the `investments-page-polished` class and the
       per-page `margin-bottom: 0` patch blocks at the end of `index.css`;
       polish becomes the default, not a per-page opt-in

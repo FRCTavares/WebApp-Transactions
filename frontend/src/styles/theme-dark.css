@@ -1,4 +1,5 @@
-/* `:not(:where(.ui-button, .ui-icon-button))` throughout this file: these legacy
+/* `:not(:where(.ui-button,
+.ui-icon-button))` throughout this file: these legacy
    element-level dark rules have specificity (0,
 2,
 1) and were overriding the
@@ -58,8 +59,6 @@ and this exclusion with it. */
 :root[data-theme='dark'] .portfolio-snapshot,
 :root[data-theme='dark'] .expense-chart-card,
 :root[data-theme='dark'] .expense-chart-legend-row,
-:root[data-theme='dark'] .transaction-filter-card,
-:root[data-theme='dark'] .transaction-desktop-table-wrap,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,
 :root[data-theme='dark'] .owed-table-wrap,
@@ -137,14 +136,16 @@ and this exclusion with it. */
 :root[data-theme='dark'] .investment-holding-ticker,
 :root[data-theme='dark'] .investment-holding-meta {
   color: var(--theme-muted);
-}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)),
+}:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   border-color: var(--theme-border-strong);
   background: var(--theme-surface-muted);
   color: var(--theme-text);
-}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):hover,
+}:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)):hover,
 :root[data-theme='dark'] .settings-action-button:hover,
 :root[data-theme='dark'] .sidebar button:hover {
   border-color: #3b82f6;
@@ -163,7 +164,6 @@ since darkening against a near-black surface reads as the control going dead. */
   border-color: #22c55e;
   background: #16a34a;
 }:root[data-theme='dark'] .danger-button,
-:root[data-theme='dark'] .transaction-row-action-delete,
 :root[data-theme='dark'] .owed-row-action-delete,
 :root[data-theme='dark'] .wealth-account-action-danger {
   border-color: rgb(248 113 113 / 0.45);
@@ -318,8 +318,6 @@ since darkening against a near-black surface reads as the control going dead. */
   background: #8ec5ff;
   box-shadow: 0 0 12px rgb(96 165 250 / 0.55);
 }:root[data-theme='dark'] .settings-card,
-:root[data-theme='dark'] .transaction-filter-card,
-:root[data-theme='dark'] .transaction-desktop-table-wrap,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,
 :root[data-theme='dark'] .owed-table-wrap,
@@ -371,7 +369,8 @@ since darkening against a near-black surface reads as the control going dead. */
   color: #aeb4c0;
 }:root[data-theme='dark'] .eyebrow {
   color: #8f96a7;
-}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)),
+}:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)),
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
@@ -382,7 +381,8 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] select,
 :root[data-theme='dark'] textarea {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
-}:root[data-theme='dark'] button:not(:where(.ui-button, .ui-icon-button)):hover {
+}:root[data-theme='dark'] button:not(:where(.ui-button,
+.ui-icon-button)):hover {
   border-color: rgb(122 183 255 / 0.36);
   background: rgb(255 255 255 / 0.075);
 }:root[data-theme='dark'] .global-period-selector {

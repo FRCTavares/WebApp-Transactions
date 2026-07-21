@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Button } from './ui'
 import { getTransactionCategoryOptions } from '../constants/categories'
 import type {
   CashflowType,
@@ -73,12 +74,14 @@ export function TransactionFilters({
             {activeFilterCount > 0 ? `${activeFilterCount} active` : 'Current month'}
           </span>
         </div>
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant="ghost"
           onClick={() => setIsMobileOpen((isOpen) => !isOpen)}
         >
           {isMobileOpen ? 'Hide' : 'Show'}
-        </button>
+        </Button>
       </div>
 
       <div className="transaction-filter-body">
@@ -185,13 +188,18 @@ export function TransactionFilters({
             </span>
           )}
 
-          <button type="button" onClick={onApply}>
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            onClick={onApply}
+          >
             Apply
-          </button>
+          </Button>
 
-          <button type="button" onClick={onClear}>
+          <Button type="button" size="sm" onClick={onClear}>
             Clear
-          </button>
+          </Button>
         </div>
       </div>
       </div>

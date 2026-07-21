@@ -1,4 +1,6 @@
+import { X } from 'lucide-react'
 import { CategorySelect } from '../CategorySelect'
+import { Button, IconButton } from '../ui'
 import type { TransactionFormState } from '../TransactionForm'
 import {
   getCashflowTypeOptions,
@@ -55,9 +57,12 @@ export function TransactionEditDialog({
             <p className="eyebrow">Edit transaction</p>
             <h2>{transaction.description}</h2>
           </div>
-          <button type="button" onClick={onCancel} aria-label="Close edit dialog">
-            ×
-          </button>
+          <IconButton
+            type="button"
+            icon={X}
+            label="Close edit dialog"
+            onClick={onCancel}
+          />
         </div>
 
         <div className="transaction-edit-dialog-reference">
@@ -144,12 +149,12 @@ export function TransactionEditDialog({
         </label>
 
         <div className="transaction-edit-dialog-actions">
-          <button type="button" onClick={onCancel} disabled={isSaving}>
+          <Button type="button" onClick={onCancel} disabled={isSaving}>
             Cancel
-          </button>
-          <button type="submit" className="primary-button" disabled={isSaving}>
+          </Button>
+          <Button type="submit" variant="primary" disabled={isSaving}>
             {isSaving ? 'Saving…' : 'Save changes'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,3 +1,4 @@
+import { Button } from '../ui'
 import type { Transaction } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
@@ -48,17 +49,17 @@ export function TransactionDeleteDialog({
         </div>
 
         <div className="transaction-delete-dialog-actions">
-          <button type="button" onClick={onCancel} disabled={isDeleting}>
+          <Button type="button" onClick={onCancel} disabled={isDeleting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="transaction-delete-confirm-button"
+            variant="danger"
             onClick={onConfirm}
             disabled={isDeleting}
           >
             {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

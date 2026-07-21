@@ -1,5 +1,7 @@
+import { X } from 'lucide-react'
 import type { OwedSplitRowState } from './TransactionOwedSplitDialog'
 import { formatMoney } from '../../utils/format'
+import { Button, IconButton } from '../ui'
 
 type TransactionCreateOwedSectionProps = {
   isEnabled: boolean
@@ -106,14 +108,14 @@ export function TransactionCreateOwedSection({
                     </label>
 
                     {rows.length > 1 && (
-                      <button
+                      <IconButton
                         type="button"
-                        className="transaction-create-owed-remove"
+                        icon={X}
+                        label="Remove owed person"
+                        variant="danger"
+                        size="lg"
                         onClick={() => onRemoveRow(row.id)}
-                        aria-label="Remove owed person"
-                      >
-                        ×
-                      </button>
+                      />
                     )}
                   </div>
 
@@ -135,9 +137,11 @@ export function TransactionCreateOwedSection({
             })}
           </div>
 
-          <button type="button" className="transaction-create-owed-add" onClick={onAddRow}>
-            + Add person
-          </button>
+          <div className="transaction-create-owed-add">
+            <Button type="button" size="sm" onClick={onAddRow}>
+              + Add person
+            </Button>
+          </div>
         </div>
       )}
     </section>

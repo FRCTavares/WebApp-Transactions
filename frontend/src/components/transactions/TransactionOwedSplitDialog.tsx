@@ -1,6 +1,7 @@
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import type { TransactionTableRow } from '../TransactionTable'
+import { Button } from '../ui'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 export type OwedSplitRowState = {
@@ -97,9 +98,9 @@ export function TransactionOwedSplitDialog({
               Add who owes part of this expense. Optionally link matching Money In repayments now.
             </p>
           </div>
-          <button type="button" onClick={onClose}>
+          <Button type="button" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
 
         <div className="modal-transaction-summary">
@@ -290,29 +291,29 @@ export function TransactionOwedSplitDialog({
               </div>
 
               {rows.length > 1 && (
-                <button type="button" className="danger-button" onClick={() => onRemoveRow(row.id)}>
+                <Button type="button" variant="danger" onClick={() => onRemoveRow(row.id)}>
                   Remove person
-                </button>
+                </Button>
               )}
             </div>
           )
         })}
 
         <div className="modal-actions">
-          <button type="button" onClick={onAddRow}>
+          <Button type="button" onClick={onAddRow}>
             + Add person
-          </button>
-          <button type="button" onClick={onClose}>
+          </Button>
+          <Button type="button" onClick={onClose}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="primary-button"
+            variant="primary"
             onClick={onCreate}
             disabled={isCreating}
           >
             {isCreating ? 'Creating...' : 'Create owed split'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
