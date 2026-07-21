@@ -215,7 +215,7 @@
 }
 
 .investment-trend-window-selector button.active {
-  background: #ffffff;
+  background: var(--color-surface);
   color: #1d4ed8;
   box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
 }

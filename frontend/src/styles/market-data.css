@@ -37,7 +37,7 @@
 .market-data-holding-card {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--color-surface);
   padding: 12px;
 }
 
@@ -86,7 +86,7 @@
 
 .market-data-advanced[open] summary {
   border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .market-data-advanced[open] summary::after {

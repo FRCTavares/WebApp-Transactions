@@ -508,7 +508,7 @@
     padding: 12px;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--color-surface);
     text-align: left;
   }
 
@@ -545,7 +545,7 @@
     padding: 12px;
     border: 1px solid #d1d5db;
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--color-surface);
   }
 
   .dashboard-mobile-category-transaction-main {
@@ -593,7 +593,7 @@
   padding: 16px;
   border: 1px solid #d1d5db;
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .expense-chart-visual {
@@ -778,7 +778,7 @@
   padding: 4px;
   border: 1px solid #d1d5db;
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--color-surface);
 }
 
 .dashboard-chart-toggle button {

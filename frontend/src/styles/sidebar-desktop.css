@@ -98,7 +98,7 @@
 
   .sidebar button:hover {
     border-color: #e5e7eb;
-    background: #ffffff;
+    background: var(--color-surface);
   }
 
   .sidebar button.active {
@@ -174,7 +174,7 @@
   }
 
   .sidebar-theme-switch button.theme-option-active {
-    background: #ffffff !important;
+    background: var(--color-surface) !important;
     color: #2563eb;
     box-shadow:
       0 1px 4px rgb(15 23 42 / 0.12),

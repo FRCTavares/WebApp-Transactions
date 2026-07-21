@@ -74,7 +74,7 @@
 .wealth-modal-close {
   min-height: 2.35rem;
   border-radius: 0.85rem;
-  background: #ffffff;
+  background: var(--color-surface);
   color: #334155;
   font-weight: 800;
 }
@@ -224,7 +224,7 @@
 
 .wealth-modal-subaccount-row:hover {
   border-color: #dbeafe;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 10px 24px rgb(15 23 42 / 0.045);
 }
 

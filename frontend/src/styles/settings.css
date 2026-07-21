@@ -42,7 +42,7 @@
   overflow: hidden;
   border: 1px solid #e5e7eb;
   border-radius: 1.15rem;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 14px 34px rgb(15 23 42 / 0.045);
 }
 
