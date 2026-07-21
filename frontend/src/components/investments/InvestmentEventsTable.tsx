@@ -1,6 +1,9 @@
+import { TrendingUp } from 'lucide-react'
 import type { InvestmentEvent } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import type { ManualFundingFormState } from '../../utils/investmentsPageUtils'
+import { Badge, Button, EmptyState } from '../ui'
+import type { BadgeTone } from '../ui'
 
 type InvestmentEventsTableProps = {
   events: InvestmentEvent[]
@@ -30,16 +33,32 @@ function getFundingStatusLabel(event: InvestmentEvent) {
   return `${source} · ${status}`
 }
 
-function getFundingBadgeClass(event: InvestmentEvent) {
+function getFundingTone(event: InvestmentEvent): BadgeTone {
   if (event.funding_match_status === 'manual') {
-    return 'badge badge-status-completed'
+    return 'positive'
   }
 
   if (event.funding_match_status === 'unmatched') {
-    return 'badge badge-status-pending'
+    return 'warning'
   }
 
-  return 'badge badge-neutral'
+  return 'neutral'
+}
+
+/* Tones preserve the meaning the old per-event badge colours carried:
+   deposit blue, market buy violet, market sell orange, dividend/interest
+   green, withdrawal red. */
+const EVENT_TONE: Record<string, BadgeTone> = {
+  deposit: 'accent',
+  market_buy: 'investment',
+  market_sell: 'expense',
+  dividend: 'positive',
+  interest: 'positive',
+  withdrawal: 'negative',
+}
+
+function getEventTone(eventType: string): BadgeTone {
+  return EVENT_TONE[eventType] ?? 'neutral'
 }
 
 function canResolveManually(event: InvestmentEvent) {
@@ -75,9 +94,9 @@ export function InvestmentEventsTable({
             <tr key={event.id}>
               <td className="date-cell">{formatDate(event.date)}</td>
               <td>
-                <span className={`badge badge-event-${event.event_type.replaceAll('_', '-')}`}>
+                <Badge tone={getEventTone(event.event_type)} size="sm">
                   {getEventTypeLabel(event.event_type)}
-                </span>
+                </Badge>
               </td>
               <td className="description-cell">
                 <strong>{event.description}</strong>
@@ -134,12 +153,17 @@ export function InvestmentEventsTable({
                     </label>
 
                     <div className="action-group">
-                      <button type="button" onClick={() => onSubmitManualResolution(event)}>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => onSubmitManualResolution(event)}
+                      >
                         Save resolution
-                      </button>
-                      <button type="button" onClick={onCancelManualResolution}>
+                      </Button>
+                      <Button type="button" size="sm" onClick={onCancelManualResolution}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -155,9 +179,9 @@ export function InvestmentEventsTable({
                   <span className="muted">-</span>
                 ) : (
                   <>
-                    <span className={getFundingBadgeClass(event)}>
+                    <Badge tone={getFundingTone(event)} size="sm">
                       {getFundingStatusLabel(event)}
-                    </span>
+                    </Badge>
 
                     {event.matched_transaction && (
                       <span className="muted table-subtext">
@@ -173,17 +197,17 @@ export function InvestmentEventsTable({
                 )}
               </td>
               <td>
-                <span className="badge badge-source">{event.source}</span>
+                <Badge tone="neutral" size="sm">{event.source}</Badge>
               </td>
               <td className="actions-cell">
                 {canResolveManually(event) ? (
-                  <button
-                    className="small-button"
+                  <Button
+                    size="sm"
                     type="button"
                     onClick={() => onStartManualResolution(event)}
                   >
                     Resolve
-                  </button>
+                  </Button>
                 ) : (
                   <span className="muted">-</span>
                 )}
@@ -194,7 +218,12 @@ export function InvestmentEventsTable({
           {events.length === 0 && (
             <tr>
               <td colSpan={8} className="empty-state">
-                No investment events found.
+                <EmptyState
+                  size="sm"
+                  icon={TrendingUp}
+                  title="No investment events found."
+                  description="Events appear here once a statement is imported."
+                />
               </td>
             </tr>
           )}

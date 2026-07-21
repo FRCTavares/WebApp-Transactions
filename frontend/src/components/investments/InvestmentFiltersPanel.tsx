@@ -1,3 +1,4 @@
+import { Button } from '../ui'
 type InvestmentFiltersPanelProps = {
   activeFilterCount: number
   eventType: string
@@ -97,12 +98,12 @@ export function InvestmentFiltersPanel({
       </div>
 
       <div className="action-group">
-        <button type="button" onClick={onApplyFilters}>
+        <Button type="button" variant="primary" onClick={onApplyFilters}>
           Apply Filters
-        </button>
-        <button type="button" onClick={onClearFilters}>
+        </Button>
+        <Button type="button" onClick={onClearFilters}>
           Clear Filters
-        </button>
+        </Button>
       </div>
     </details>
   )

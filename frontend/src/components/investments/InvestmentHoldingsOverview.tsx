@@ -1,5 +1,7 @@
+import { TrendingUp } from 'lucide-react'
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
+import { EmptyState } from '../ui'
 
 type InvestmentHoldingsOverviewProps = {
   positions: InvestmentPosition[]
@@ -137,7 +139,12 @@ export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOver
 
         {positions.length === 0 && (
           <div className="empty-state">
-            No open positions found.
+            <EmptyState
+              size="sm"
+              icon={TrendingUp}
+              title="No open positions found."
+              description="Positions appear here once you import buy events."
+            />
           </div>
         )}
       </div>

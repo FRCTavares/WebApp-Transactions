@@ -3,7 +3,7 @@
    This file normalises both into one visual chart card. */
 
 /* One visual root card for both pages. */
-.investments-page-polished .investment-trend-card,
+.investments-page .investment-trend-card,
 .wealth-trend-panel {
   display: grid;
   gap: 1rem;

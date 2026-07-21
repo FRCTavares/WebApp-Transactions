@@ -1,7 +1,9 @@
+import { TrendingUp } from 'lucide-react'
 import type { InvestmentPosition, MarketPrice } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import { MarketPriceForm, type MarketPriceFormState } from './MarketPriceForm'
 import { MarketPricesTable } from './MarketPricesTable'
+import { Badge, Button, EmptyState } from '../ui'
 
 type MarketDataPanelProps = {
   positions: InvestmentPosition[]
@@ -71,14 +73,14 @@ export function MarketDataPanel({
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
-          className="primary-button"
+          variant="primary"
           disabled={isFetchingMarketData || positions.length === 0}
           onClick={onFetchAllLatest}
         >
           {isFetchingMarketData ? 'Updating...' : 'Update prices'}
-        </button>
+        </Button>
       </div>
 
       <details className="market-data-details">
@@ -92,14 +94,14 @@ export function MarketDataPanel({
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
-          className="primary-button"
+          variant="primary"
           disabled={isFetchingMarketData || positions.length === 0}
           onClick={onFetchAllLatest}
         >
           {isFetchingMarketData ? 'Updating...' : 'Update all prices'}
-        </button>
+        </Button>
       </div>
 
       <div className="market-data-holdings-grid">
@@ -117,9 +119,9 @@ export function MarketDataPanel({
               </div>
 
               <div className="market-data-holding-meta">
-                <span className="badge badge-neutral">
+                <Badge tone="neutral" size="sm">
                   {getDefaultYahooSymbol(position) || 'No symbol'}
-                </span>
+                </Badge>
                 <span>
                   {cachedPrice
                     ? formatMoney(cachedPrice.price, cachedPrice.currency)
@@ -132,7 +134,12 @@ export function MarketDataPanel({
 
         {positions.length === 0 && (
           <div className="empty-state">
-            No open positions found.
+            <EmptyState
+              size="sm"
+              icon={TrendingUp}
+              title="No open positions found."
+              description="Positions appear here once you import buy events."
+            />
           </div>
         )}
       </div>

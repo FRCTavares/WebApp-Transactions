@@ -127,12 +127,11 @@ main {
   color: #d1a35c;
 }
 
-@media (max-width: 800px) {
-  .investments-page .panel-card > .section-header p {
+@media (max-width: 800px) {.investments-page .panel-card > .section-header p {
     display: none;
   }
 
-  .investment-funding-mobile-summary {
+.investment-funding-mobile-summary {
     display: block;
     margin: 0;
     color: #111827;
@@ -140,16 +139,16 @@ main {
     font-weight: 700;
   }
 
-  .investment-funding-details {
+.investment-funding-details {
     margin-top: 12px;
   }
 
-  .market-data-details {
+.market-data-details {
     display: grid;
     gap: 12px;
   }
 
-  .backend-wake-notice {
+.backend-wake-notice {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.25rem;
@@ -157,7 +156,7 @@ main {
     padding: 0.75rem;
   }
 
-  .backend-wake-notice span {
+.backend-wake-notice span {
     font-size: 0.82rem;
   }
 }
@@ -199,9 +198,9 @@ main {
 }
 
 .content-card {
-  border: 1px solid #d1d5db;
-  border-radius: 0.95rem;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
@@ -225,47 +224,44 @@ main {
   margin: 0;
 }
 
-@media (max-width: 1100px) {
-  .summary-grid {
+@media (max-width: 1100px) {.summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 800px) {
-  .app-page {
+@media (max-width: 800px) {.app-page {
     gap: 0.85rem;
   }
 
-  .page-title-block p {
+.page-title-block p {
     font-size: 0.82rem;
   }
 
-  .page-title-block h1 {
+.page-title-block h1 {
     font-size: 1.55rem;
   }
 
-  .summary-grid {
+.summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .page-section-header {
+.page-section-header {
     align-items: stretch;
     flex-direction: column;
     margin-top: 0.35rem;
   }
 
-  .page-section-header h2 {
+.page-section-header h2 {
     font-size: 18px;
   }
 
-  .page-section-header p {
+.page-section-header p {
     display: none;
   }
 }
 
-@media (max-width: 420px) {
-  .summary-grid {
+@media (max-width: 420px) {.summary-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -456,8 +452,7 @@ main {
   background: #e2e8f0;
 }
 
-@media (max-width: 800px) {
-  .global-topbar {
+@media (max-width: 800px) {.global-topbar {
     position: static;
     justify-content: stretch;
     margin: 0 0 10px;
@@ -467,7 +462,7 @@ main {
     transform: none;
   }
 
-  .global-period-selector {
+.global-period-selector {
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr) 36px 62px;
     width: 100%;
@@ -479,7 +474,7 @@ main {
     box-shadow: none;
   }
 
-  .global-period-selector label {
+.global-period-selector label {
     position: relative;
     grid-column: 2;
     grid-row: 1;
@@ -487,11 +482,11 @@ main {
     min-height: 36px;
   }
 
-  .global-period-selector label span {
+.global-period-selector label span {
     display: none;
   }
 
-  .global-period-selector input {
+.global-period-selector input {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -501,7 +496,7 @@ main {
     opacity: 0;
   }
 
-  .global-period-selector strong {
+.global-period-selector strong {
     z-index: 1;
     display: flex;
     grid-column: 2;
@@ -520,7 +515,7 @@ main {
     pointer-events: none;
   }
 
-  .global-period-selector button {
+.global-period-selector button {
     min-width: 36px;
     height: 36px;
     min-height: 36px;
@@ -530,26 +525,26 @@ main {
     font-weight: 800;
   }
 
-  .dashboard-section-header,
-  .category-detail-header {
+.dashboard-section-header,
+.category-detail-header {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .dashboard-section-header {
+.dashboard-section-header {
     margin-top: 1rem;
   }
 
-  .dashboard-section-header h2 {
+.dashboard-section-header h2 {
     margin-bottom: 0;
     font-size: 17px;
   }
 
-  .dashboard-section-header p {
+.dashboard-section-header p {
     display: none;
   }
 
-  .category-detail-panel {
+.category-detail-panel {
     margin-right: -12px;
     margin-left: -12px;
     padding: 12px;
@@ -558,91 +553,89 @@ main {
     border-radius: 0;
   }
 
-  .unlock-page {
+.unlock-page {
     padding: 1rem;
   }
 
-  .unlock-card {
+.unlock-card {
     padding: 1.15rem;
     border-radius: 0.9rem;
   }
 
-  .unlock-card h1 {
+.unlock-card h1 {
     font-size: 24px;
     line-height: 1.15;
   }
 }
 
-@media (max-width: 800px) {
-  .wealth-summary-grid {
+@media (max-width: 800px) {.wealth-summary-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  .wealth-summary-card {
+.wealth-summary-card {
     min-height: auto;
     padding: 13px 14px;
     border-radius: 18px;
   }
 
-  .wealth-summary-card small {
+.wealth-summary-card small {
     display: none;
   }
 
-  .wealth-summary-card-primary {
+.wealth-summary-card-primary {
     gap: 8px;
     padding: 18px;
     background:
       linear-gradient(180deg, rgba(239, 246, 255, 0.9), rgba(255, 255, 255, 0.96));
   }
 
-  .wealth-summary-card-primary span {
+.wealth-summary-card-primary span {
     color: #64748b;
     font-size: 13px;
     font-weight: 800;
   }
 
-  .wealth-summary-card-primary strong {
+.wealth-summary-card-primary strong {
     font-size: 34px;
     line-height: 1;
     letter-spacing: -0.05em;
   }
 
-  .wealth-summary-card:not(.wealth-summary-card-primary) {
+.wealth-summary-card:not(.wealth-summary-card-primary) {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
   }
 
-  .wealth-summary-card:not(.wealth-summary-card-primary) span {
+.wealth-summary-card:not(.wealth-summary-card-primary) span {
     color: #64748b;
     font-size: 13px;
     font-weight: 800;
   }
 
-  .wealth-summary-card:not(.wealth-summary-card-primary) strong {
+.wealth-summary-card:not(.wealth-summary-card-primary) strong {
     font-size: 19px;
     letter-spacing: -0.03em;
   }
 }
 
-@media (max-width: 800px) {
-  .wealth-mobile-account-group {
+@media (max-width: 800px) {.wealth-mobile-account-group {
     overflow: hidden;
   }
 
-  .wealth-mobile-account-group-header {
+.wealth-mobile-account-group-header {
     cursor: pointer;
     list-style: none;
   }
 
-  .wealth-mobile-account-group-header::-webkit-details-marker {
+.wealth-mobile-account-group-header::-webkit-details-marker {
     display: none;
   }
 
-  .wealth-mobile-account-group-header::after {
+.wealth-mobile-account-group-header::after {
     content: "Show";
     margin-left: auto;
     color: #64748b;
@@ -650,21 +643,20 @@ main {
     font-weight: 800;
   }
 
-  .wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
+.wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
     content: "Hide";
   }
 
-  .wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
+.wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
     display: none;
   }
 
-  .wealth-mobile-account-group[open] .wealth-mobile-account-list {
+.wealth-mobile-account-group[open] .wealth-mobile-account-list {
     margin-top: 10px;
   }
 }
 
-@media (max-width: 800px) {
-  .wealth-owed-summary-card {
+@media (max-width: 800px) {.wealth-owed-summary-card {
     display: flex !important;
     order: 2;
     border-color: rgba(21, 128, 61, 0.18);
@@ -672,19 +664,19 @@ main {
       linear-gradient(180deg, rgba(240, 253, 244, 0.78), rgba(255, 255, 255, 0.96));
   }
 
-  .wealth-owed-summary-card strong {
+.wealth-owed-summary-card strong {
     color: #15803d;
   }
 
-  .wealth-investments-summary-card {
+.wealth-investments-summary-card {
     order: 3;
   }
 
-  .wealth-active-summary-card {
+.wealth-active-summary-card {
     display: none !important;
   }
 
-  .wealth-mobile-accounts {
+.wealth-mobile-accounts {
     order: 4;
   }
 }
@@ -701,89 +693,85 @@ main {
   margin-bottom: 0;
 }
 
-@media (max-width: 800px) {
-
-  .transactions-page .transaction-mobile-list {
+@media (max-width: 800px) {.transactions-page .transaction-mobile-list {
     margin-bottom: 0;
   }
 }
 
 /* Investments page alignment with the shared Dashboard baseline. */
-.investments-page-polished .investments-page-header {
+.investments-page .investments-page-header {
   margin-bottom: 0;
 }
 
-.investments-page-polished .page-title-block h1 {
+.investments-page .page-title-block h1 {
   margin-bottom: 0;
 }
 
-.investments-page-polished .portfolio-snapshot,
-.investments-page-polished .panel-card,
-.investments-page-polished .filter-panel {
+.investments-page .portfolio-snapshot,
+.investments-page .panel-card,
+.investments-page .filter-panel {
   margin-bottom: 0;
 }
 
-.investments-page-polished .portfolio-snapshot {
+.investments-page .portfolio-snapshot {
   border-radius: 0.95rem;
 }
 
-.investments-page-polished .panel-card {
+.investments-page .panel-card {
   border-radius: 0.95rem;
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
-.investments-page-polished .section-header {
+.investments-page .section-header {
   margin-bottom: 0.9rem;
 }
 
-.investments-page-polished .section-header h2 {
+.investments-page .section-header h2 {
   margin-top: 0;
 }
 
-.investments-page-polished .investment-funding-card,
-.investments-page-polished .market-data-panel {
+.investments-page .investment-funding-card,
+.investments-page .market-data-panel {
   padding: 1rem;
 }
 
-.investments-page-polished .investment-events-card {
+.investments-page .investment-events-card {
   padding: 1rem;
 }
 
-.investments-page-polished .investment-events-card > p {
+.investments-page .investment-events-card > p {
   margin-bottom: 0;
 }
 
-.investments-page-polished .investment-position-table-wrap,
-.investments-page-polished .investments-table-wrap {
+.investments-page .investment-position-table-wrap,
+.investments-page .investments-table-wrap {
   margin-bottom: 0;
 }
 
-@media (min-width: 900px) {
-  .investments-page-polished .investment-funding-card,
-  .investments-page-polished .market-data-panel,
-  .investments-page-polished .filter-panel,
-  .investments-page-polished .investment-events-card {
+@media (min-width: 900px) {.investments-page .investment-funding-card,
+.investments-page .market-data-panel,
+.investments-page .filter-panel,
+.investments-page .investment-events-card {
     border-radius: 0.95rem;
   }
 
-  .investments-page-polished .investment-funding-details,
-  .investments-page-polished .market-data-details {
+.investments-page .investment-funding-details,
+.investments-page .market-data-details {
     margin-top: 0.4rem;
   }
 }
 
-@media (max-width: 800px) {
-  .investments-page-polished {
+@media (max-width: 800px) {.investments-page {
     gap: 0.85rem;
   }
 
-  .investments-page-polished .investments-page-header {
+.investments-page .investments-page-header {
     gap: 0.75rem;
   }
 
-  .investments-page-polished .investment-funding-card,
-  .investments-page-polished .market-data-panel,
-  .investments-page-polished .investment-events-card {
+.investments-page .investment-funding-card,
+.investments-page .market-data-panel,
+.investments-page .investment-events-card {
     padding: 14px;
   }
 }
@@ -795,47 +783,45 @@ main {
   gap: 1.35rem;
 }
 
-.investments-page-polished .investment-tools-grid .panel-card {
+.investments-page .investment-tools-grid .panel-card {
   min-height: 0;
 }
 
-.investments-page-polished .investment-funding-card,
-.investments-page-polished .market-data-panel {
+.investments-page .investment-funding-card,
+.investments-page .market-data-panel {
   align-content: start;
 }
 
-.investments-page-polished .investment-events-card {
+.investments-page .investment-events-card {
   padding: 0.95rem 1rem;
 }
 
-.investments-page-polished .investment-events-card .section-header {
+.investments-page .investment-events-card .section-header {
   margin-bottom: 0;
 }
 
-.investments-page-polished .investment-events-card .section-header h2 {
+.investments-page .investment-events-card .section-header h2 {
   margin-bottom: 0.25rem;
 }
 
-.investments-page-polished .investment-events-card .action-group {
+.investments-page .investment-events-card .action-group {
   align-items: center;
 }
 
-.investments-page-polished .investment-events-card .small-button {
+.investments-page .investment-events-card .small-button {
   min-height: 2.25rem;
 }
 
-.investments-page-polished .investment-events-card:has(.investments-table-wrap) .section-header {
+.investments-page .investment-events-card:has(.investments-table-wrap) .section-header {
   margin-bottom: 0.9rem;
 }
 
-@media (max-width: 1100px) {
-  .investment-tools-grid {
+@media (max-width: 1100px) {.investment-tools-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 800px) {
-  .investment-tools-grid {
+@media (max-width: 800px) {.investment-tools-grid {
     gap: 0.85rem;
   }
 }

@@ -1,3 +1,4 @@
+import { Button } from '../ui'
 export type MarketPriceFormState = {
   ticker: string
   isin: string
@@ -95,14 +96,14 @@ export function MarketPriceForm({
       </div>
 
       <div className="action-group">
-        <button type="button" onClick={onSubmit}>
+        <Button type="button" variant="primary" onClick={onSubmit}>
           {isEditing ? 'Update market price' : 'Save market price'}
-        </button>
+        </Button>
 
         {isEditing && (
-          <button type="button" onClick={onCancelEdit}>
+          <Button type="button" onClick={onCancelEdit}>
             Cancel edit
-          </button>
+          </Button>
         )}
       </div>
     </section>

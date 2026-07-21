@@ -1,16 +1,16 @@
 /* Wealth page */
 
 .wealth-page {
-  --wealth-surface: #ffffff;
-  --wealth-border: #e5e7eb;
-  --wealth-muted: #6b7280;
-  --wealth-text: #111827;
-  --wealth-blue: #2563eb;
-  --wealth-blue-soft: #eff6ff;
-  --wealth-green: #16a34a;
-  --wealth-green-soft: #ecfdf3;
-  --wealth-red: #ef4444;
-  --wealth-red-soft: #fef2f2;
+  --wealth-surface: var(--color-surface);
+  --wealth-border: var(--color-border);
+  --wealth-muted: var(--color-text-muted);
+  --wealth-text: var(--color-text);
+  --wealth-blue: var(--color-accent);
+  --wealth-blue-soft: var(--color-accent-subtle);
+  --wealth-green: var(--color-positive);
+  --wealth-green-soft: var(--color-positive-subtle);
+  --wealth-red: var(--color-negative);
+  --wealth-red-soft: var(--color-negative-subtle);
 
   display: grid;
   gap: 0.9rem;

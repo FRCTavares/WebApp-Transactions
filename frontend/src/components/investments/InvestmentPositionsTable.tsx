@@ -1,5 +1,7 @@
+import { TrendingUp } from 'lucide-react'
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
+import { Badge, EmptyState } from '../ui'
 
 type InvestmentPositionsTableProps = {
   positions: InvestmentPosition[]
@@ -50,7 +52,7 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
                 <strong>{position.ticker ?? '-'}</strong>
                 <p className="muted small">{position.instrument_name ?? 'Unnamed holding'}</p>
               </div>
-              <span className="badge badge-neutral">{position.isin ?? '-'}</span>
+              <Badge tone="neutral" size="sm">{position.isin ?? '-'}</Badge>
             </div>
 
             <dl className="investment-position-mobile-details">
@@ -100,7 +102,12 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
 
         {positions.length === 0 && (
           <div className="empty-state">
-            No open positions found.
+            <EmptyState
+              size="sm"
+              icon={TrendingUp}
+              title="No open positions found."
+              description="Positions appear here once you import buy events."
+            />
           </div>
         )}
       </div>
@@ -170,7 +177,12 @@ export function InvestmentPositionsTable({ positions }: InvestmentPositionsTable
             {positions.length === 0 && (
               <tr>
                 <td colSpan={8} className="empty-state">
-                  No open positions found.
+                  <EmptyState
+                    size="sm"
+                    icon={TrendingUp}
+                    title="No open positions found."
+                    description="Positions appear here once you import buy events."
+                  />
                 </td>
               </tr>
             )}

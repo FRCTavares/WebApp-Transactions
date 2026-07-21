@@ -1,6 +1,7 @@
 import { InvestmentEventsTable } from './InvestmentEventsTable'
 import type { InvestmentEventSort, ManualFundingFormState } from '../../utils/investmentsPageUtils'
 import type { InvestmentEvent } from '../../types/api'
+import { Button } from '../ui'
 
 /**
  * The "Investment events" card (sort/pagination controls plus the events
@@ -73,13 +74,13 @@ export function InvestmentEventsPanel({
             </select>
           )}
 
-          <button
-            className="small-button"
+          <Button
+            size="sm"
             type="button"
             onClick={onToggleOpen}
           >
             {isOpen ? 'Hide events' : 'Show events'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -91,25 +92,25 @@ export function InvestmentEventsPanel({
             </p>
 
             <div className="action-group">
-              <button
-                className="small-button"
+              <Button
+                size="sm"
                 type="button"
                 disabled={currentEventPage <= 1}
                 onClick={onPreviousPage}
               >
                 Previous
-              </button>
+              </Button>
               <span className="muted small">
                 Page {currentEventPage} of {eventPageCount}
               </span>
-              <button
-                className="small-button"
+              <Button
+                size="sm"
                 type="button"
                 disabled={currentEventPage >= eventPageCount}
                 onClick={onNextPage}
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
 

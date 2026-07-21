@@ -235,7 +235,13 @@ section 6 for the authoritative record of each. Summary:
 
 #35 is closed.
 
-## 12. Frontend Design System (#36) — open
+## 12. Frontend Design System — open
+
+<!-- This section previously read "(#36)". That is wrong: #36 is a merged pull
+     request titled "Enforce formatting and improve accessibility", not an
+     issue tracking this work. There is no GitHub issue for the design system;
+     progress is tracked here and in docs/frontend-design-system.md. -->
+
 
 Full audit, target token system, and rationale:
 [`docs/frontend-design-system.md`](docs/frontend-design-system.md). Read it
@@ -694,9 +700,50 @@ row activation.
       name `Edit`/`Delete` — the mobile and desktop buttons would then be
       indistinguishable to `getByRole`. Worth doing as its own change, with
       the tests reworked to scope by row.
-- [ ] Investments — also delete the `investments-page-polished` class and the
-      per-page `margin-bottom: 0` patch blocks at the end of `index.css`;
-      polish becomes the default, not a per-page opt-in
+- [x] **Investments — migrated 2026-07-21.** `Button` (14 call sites),
+      `Badge` (all 8 legacy `.badge` spans) and `EmptyState` (6). Verified:
+      lint clean, 49/49 unit tests, build passing, 12/12 e2e, and a
+      dark-surface assertion across **all eight pages**.
+
+      **`investments-page-polished` is gone.** It was applied only ever
+      alongside `investments-page` on the same element, so it was a second
+      name for the same thing — "polish" as a per-page opt-in. Renaming
+      collapsed **131 rules** across 5 files into the base class; a rename
+      keeps specificity identical and preserves source order, so the cascade
+      is unchanged. Polish is now simply how the page looks.
+
+      This migration went **wider than the page**, deliberately. The page uses
+      the shared `.panel-card` / `.content-card` / `.portfolio-snapshot`
+      classes, all of which hardcoded `background: #ffffff` and were kept
+      readable in dark mode only by an `!important` override. Removing the
+      override alone would have broken four other pages, so the surfaces were
+      tokenised instead — which fixes Investments, Wealth, Owed, Import and
+      Export at once and let 16 dark-override entries be deleted.
+
+      That exposed two things the override had been masking:
+      - **Wealth rendered white panels in dark mode**, because its page-local
+        palette was still hardcoded. Caught by a cross-page assertion, not by
+        looking at Investments. `--wealth-*` and `--owed-*` are now aliased to
+        the semantic layer like the other pages, which also de-risks their own
+        migrations.
+      - **Six investments surfaces were already broken** in dark mode
+        (`#fbfbfd` / `#ffffff` with no override at all). Confirmed
+        pre-existing by stashing the branch and re-testing at `HEAD`. Now
+        tokenised.
+
+      **A colour audit that only reads `background-color` is not enough.**
+      After the hex sweep came back clean, the Portfolio summary band was
+      still white in dark mode — three hardcoded `linear-gradient`s, which
+      live in `background-image` and so were invisible to the probe. They are
+      now flat token surfaces; the gradients added almost nothing in light
+      mode and could not theme at all.
+
+      Also fixed: my own selector-dedupe script had stripped the blank lines
+      between CSS rules, producing `}.next-selector {`. Valid CSS, unreadable
+      diffs. Eight files reformatted.
+
+      Not adopted: `Card` (the page's panels are shared classes now tokenised,
+      so wrapping them buys nothing yet), `Table`, `Field`, `Skeleton`.
 - [ ] Wealth
 - [ ] Owed
 - [ ] Categories

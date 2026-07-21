@@ -383,18 +383,18 @@
 
 /* Owed page refined shell-aligned pass. */
 .owed-page-polished {
-  --owed-surface: #ffffff;
-  --owed-border: #e5e7eb;
-  --owed-muted: #6b7280;
-  --owed-text: #111827;
-  --owed-green: #16a34a;
-  --owed-green-soft: #ecfdf3;
-  --owed-blue: #2563eb;
-  --owed-blue-soft: #eff6ff;
-  --owed-orange: #f97316;
-  --owed-orange-soft: #fff7ed;
-  --owed-red: #ef4444;
-  --owed-red-soft: #fef2f2;
+  --owed-surface: var(--color-surface);
+  --owed-border: var(--color-border);
+  --owed-muted: var(--color-text-muted);
+  --owed-text: var(--color-text);
+  --owed-green: var(--color-positive);
+  --owed-green-soft: var(--color-positive-subtle);
+  --owed-blue: var(--color-accent);
+  --owed-blue-soft: var(--color-accent-subtle);
+  --owed-orange: var(--color-expense);
+  --owed-orange-soft: var(--color-expense-subtle);
+  --owed-red: var(--color-negative);
+  --owed-red-soft: var(--color-negative-subtle);
 
   gap: 1.1rem;
 }

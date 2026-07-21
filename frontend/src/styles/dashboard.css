@@ -482,7 +482,6 @@
   font-size: var(--text-xs);
 }
 
-
 /* Dashboard mobile category drilldown. */
 .dashboard-mobile-category-list,
 .dashboard-mobile-category-transactions {
@@ -583,7 +582,6 @@
     font-size: 18px;
   }
 }
-
 
 /* Dashboard expense chart. */
 .expense-chart-card {
