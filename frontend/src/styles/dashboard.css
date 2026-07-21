@@ -121,11 +121,11 @@
 
 .dashboard-metric-income strong,
 .dashboard-metric-positive strong {
-  color: #166534;
+  color: var(--color-positive-text);
 }
 
 .dashboard-metric-spent strong {
-  color: #be123c;
+  color: var(--color-negative-text);
 }
 
 .dashboard-metric-negative strong {
@@ -523,7 +523,7 @@
   }
 
   .dashboard-mobile-category-card strong {
-    color: #111827;
+    color: var(--color-text);
     font-size: 14px;
     line-height: 1.25;
   }
@@ -556,7 +556,7 @@
   }
 
   .dashboard-mobile-category-transaction-main strong {
-    color: #111827;
+    color: var(--color-text);
     font-size: 14px;
     line-height: 1.25;
   }
@@ -637,7 +637,7 @@
 }
 
 .expense-chart-centre strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 22px;
 }
 
@@ -684,7 +684,7 @@
 }
 
 .expense-chart-legend-row strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 14px;
 }
 
@@ -795,7 +795,7 @@
 }
 
 .dashboard-chart-toggle button.active {
-  background: #111827;
+  background: var(--color-text);
   color: #ffffff;
 }
 

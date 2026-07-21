@@ -30,6 +30,8 @@
   --color-surface-sunken: #202024;
   --color-surface-hover: #232429;
   --color-surface-subtle: #202024;
+  --color-surface-glass: rgb(24 25 29 / 0.96);
+  --color-border-glass: rgb(255 255 255 / 0.08);
 
   /* -- Borders --------------------------------------------------------------- */
   --color-border: #2f3037;

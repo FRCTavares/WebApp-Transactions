@@ -37,7 +37,7 @@
 
 .wealth-modal-header h2 {
   margin: 0.1rem 0 0.2rem;
-  color: #111827;
+  color: var(--color-text);
   font-size: 1.45rem;
   letter-spacing: -0.045em;
 }
@@ -65,7 +65,7 @@
 }
 
 .wealth-modal-total strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 1.25rem;
   letter-spacing: -0.04em;
   white-space: nowrap;
@@ -111,7 +111,7 @@
 
 .wealth-modal-subaccount-main strong {
   overflow: hidden;
-  color: #111827;
+  color: var(--color-text);
   font-size: 0.98rem;
   font-weight: 850;
   text-overflow: ellipsis;

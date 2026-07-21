@@ -108,7 +108,7 @@
 }
 
 .market-data-panel .panel-card {
-  border-color: #e5e7eb;
+  border-color: var(--color-border);
   box-shadow: none;
   margin-bottom: 0;
   padding: 12px;

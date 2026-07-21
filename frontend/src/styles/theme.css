@@ -5,7 +5,7 @@
   --theme-surface-muted: #fbfbfd;
   --theme-border: #e5e7eb;
   --theme-border-strong: #d1d5db;
-  --theme-text: #111827;
+  --theme-text: var(--color-text);
   --theme-muted: #6b7280;
   --theme-subtle: #94a3b8;
   --theme-primary: #2563eb;

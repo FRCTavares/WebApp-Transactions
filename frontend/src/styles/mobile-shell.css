@@ -86,7 +86,7 @@
 
   .mobile-more-hero h1 {
     margin: 0;
-    color: #111827;
+    color: var(--color-text);
     font-size: 2rem;
     line-height: 1.02;
     letter-spacing: -0.055em;
@@ -110,7 +110,7 @@
   }
 
   .mobile-more-section-header h2 {
-    color: #111827;
+    color: var(--color-text);
     font-size: 1rem;
     font-weight: 850;
     letter-spacing: -0.03em;
@@ -135,7 +135,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 1rem;
     background: #ffffff;
-    color: #111827;
+    color: var(--color-text);
     text-align: left;
     box-shadow: none;
   }
@@ -152,7 +152,7 @@
   }
 
   .mobile-more-actions strong {
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.92rem;
     font-weight: 850;
     letter-spacing: -0.02em;
@@ -288,7 +288,7 @@
   }
 
   .mobile-more-page {
-    --mobile-more-text: #111827;
+    --mobile-more-text: var(--color-text);
     --mobile-more-muted: #64748b;
     --mobile-more-row-bg: rgb(255 255 255 / 0.92);
     --mobile-more-row-hover-bg: #f8fbff;

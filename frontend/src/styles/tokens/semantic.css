@@ -40,6 +40,10 @@
   --color-surface-hover: #f8fafc;
   /* A faintly tinted surface that is not a hover: table headers, quiet toolbars. */
   --color-surface-subtle: var(--gray-50);
+  /* Translucent chrome with a backdrop blur - the sidebar, the global period
+     pill. Distinct from --color-surface because it must stay see-through. */
+  --color-surface-glass: rgb(251 251 253 / 0.86);
+  --color-border-glass: rgb(209 213 219 / 0.8);
 
   /* -- Borders --------------------------------------------------------------
      border        the default hairline

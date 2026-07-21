@@ -184,7 +184,7 @@
   .owed-person-item-title {
     display: block;
     overflow: hidden;
-    color: var(--theme-text, #111827);
+    color: var(--theme-text, var(--color-text));
     font-size: 0.9rem;
     font-weight: 850;
     line-height: 1.15;
@@ -194,7 +194,7 @@
 
   .owed-person-item-amount {
     display: block;
-    color: var(--theme-text, #111827);
+    color: var(--theme-text, var(--color-text));
     font-size: 0.92rem;
     font-weight: 950;
     white-space: nowrap;
@@ -371,7 +371,7 @@
   .owed-page-polished .owed-table-filter-card .segmented-control {
     border-color: rgb(209 213 219 / 0.9) !important;
     background: rgb(255 255 255 / 0.92) !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .owed-page-polished .owed-person-item {
@@ -395,12 +395,12 @@
   .owed-page-polished .owed-mobile-empty {
     border: 1px solid rgb(226 232 240 / 0.95) !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
     box-shadow: 0 10px 30px rgb(15 23 42 / 0.06) !important;
   }
 
   .owed-page-polished .owed-mobile-empty strong {
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .owed-page-polished .owed-mobile-empty p {

@@ -6,6 +6,14 @@ import {
   TrendingUp,
   Upload,
 } from 'lucide-react'
+import { SegmentedControl } from './ui/SegmentedControl'
+import { useTheme } from '../hooks/useTheme'
+import type { ResolvedTheme } from '../context/themeContextValue'
+
+const THEME_OPTIONS: { value: ResolvedTheme; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+]
 
 type AppMobileMorePageProps = {
   isAuthEnabled: boolean
@@ -26,6 +34,8 @@ export function AppMobileMorePage({
   onOpenSettings,
   onSignOut,
 }: AppMobileMorePageProps) {
+  const { resolvedTheme, setThemePreference } = useTheme()
+
   return (
     <section className="mobile-more-page">
       <div className="mobile-more-hero">
@@ -33,6 +43,20 @@ export function AppMobileMorePage({
         <h1>More</h1>
         <p>Tools, settings, imports, and secondary finance views.</p>
       </div>
+
+      <section className="mobile-more-section mobile-more-appearance">
+        <div className="mobile-more-section-header">
+          <h2>Appearance</h2>
+          <p>Choose how the app looks on this device.</p>
+        </div>
+
+        <SegmentedControl
+          label="Theme"
+          options={THEME_OPTIONS}
+          value={resolvedTheme}
+          onChange={setThemePreference}
+        />
+      </section>
 
       <section className="mobile-more-section">
         <div className="mobile-more-section-header">

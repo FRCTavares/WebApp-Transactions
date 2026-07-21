@@ -22,8 +22,8 @@ body {
     flex-direction: column;
     height: 100vh;
     padding: 1.05rem 0.75rem;
-    border-right: 1px solid rgb(209 213 219 / 0.8);
-    background: rgb(251 251 253 / 0.86);
+    border-right: 1px solid var(--color-border-glass);
+    background: var(--color-surface-glass);
     backdrop-filter: blur(20px);
   }
 
@@ -43,7 +43,7 @@ body {
   .account-greeting {
     overflow: hidden;
     margin: 0;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 850;
     letter-spacing: -0.02em;
@@ -106,7 +106,7 @@ body {
     border: 1px solid transparent;
     border-radius: 0.8rem;
     background: transparent;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.88rem;
     font-weight: 720;
     line-height: 1.15;
@@ -177,7 +177,7 @@ body {
     border-color: #dbe1ea;
     border-radius: 0.75rem;
     background: #ffffff;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 650;
   }
@@ -189,7 +189,7 @@ body {
     border-color: #dbe1ea;
     border-radius: 0.75rem;
     background: #ffffff;
-    color: #111827;
+    color: var(--color-text);
     font-weight: 750;
   }
 
@@ -296,7 +296,7 @@ body {
 
 .settings-card-header h2 {
   margin: 0;
-  color: #111827;
+  color: var(--color-text);
   font-size: 1rem;
   font-weight: 850;
   letter-spacing: -0.02em;
@@ -325,7 +325,7 @@ body {
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
   background: #ffffff;
-  color: #111827;
+  color: var(--color-text);
   text-align: left;
   box-shadow: none;
 }
@@ -342,7 +342,7 @@ body {
 }
 
 .settings-action-button strong {
-  color: #111827;
+  color: var(--color-text);
   font-size: 0.92rem;
   font-weight: 800;
 }
@@ -374,7 +374,7 @@ body {
 }
 
 .settings-status span {
-  color: #111827;
+  color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 800;
 }
@@ -455,7 +455,7 @@ body {
     gap: 0.62rem;
     padding: 0.52rem 0.7rem;
     border-radius: 0.82rem;
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.9rem;
     font-weight: 760;
     letter-spacing: -0.015em;
@@ -493,6 +493,32 @@ body {
   }
 }
 
+/* Dark-only nav accents below: bespoke tinted values with no clean semantic
+   token equivalent (light and dark use genuinely different hues here, not
+   just an inverted lightness), so they stay literal overrides colocated with
+   the light rules they pair with, rather than new tokens or a *dark*.css
+   file. */
+:root[data-theme='dark'] .sidebar {
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.035);
+}
+
+:root[data-theme='dark'] .sidebar button:hover {
+  border-color: rgb(255 255 255 / 0.105);
+  background: rgb(255 255 255 / 0.045);
+}
+
+:root[data-theme='dark'] .sidebar button.active {
+  border-color: rgb(138 180 248 / 0.48);
+  background: rgb(138 180 248 / 0.14);
+  color: #dbeafe;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .sidebar button.active::before {
+  background: #8ab4f8;
+  box-shadow: none;
+}
+
 /* Sidebar app brand. */
 @media (min-width: 801px) {
   .sidebar-brand {
@@ -517,7 +543,7 @@ body {
   }
 
   .sidebar-brand .account-greeting {
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.95rem;
     font-weight: 850;
   }
@@ -607,7 +633,7 @@ body {
   }
 
   .sidebar-profile .account-greeting {
-    color: #111827;
+    color: var(--color-text);
     font-size: 0.88rem;
     font-weight: 820;
   }
@@ -634,7 +660,7 @@ body {
   .sidebar-signout-button:hover {
     border-color: #cbd5e1 !important;
     background: #ffffff !important;
-    color: #111827 !important;
+    color: var(--color-text) !important;
   }
 
   .sidebar-signout-button::before {
