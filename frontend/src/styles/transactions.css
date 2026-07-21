@@ -217,6 +217,13 @@
   min-width: 960px;
 }
 
+/* Dates must not wrap. "10 Jun 2026" is wider than "9 Jun 2026", so
+   two-digit days broke onto a second line while single-digit ones did not,
+   giving rows inconsistent heights down the column. */
+.transactions-page .transaction-desktop-table-wrap td:first-child {
+  white-space: nowrap;
+}
+
 .transactions-page thead th {
   border-bottom: 1px solid var(--transaction-border);
   background: var(--color-surface-sunken);
@@ -471,19 +478,19 @@
 }
 
 .transactions-page tbody tr.transaction-row-fully-owed td {
-  background: #f8fbff;
+  background: var(--color-positive-subtle);
 }
 
 .transactions-page tbody tr.transaction-row-partly-owed td {
-  background: #fff8f9;
+  background: var(--color-warning-subtle);
 }
 
 .transactions-page tbody tr.transaction-row-fully-owed td:first-child {
-  border-left: 4px solid #60a5fa;
+  border-left: 4px solid var(--color-positive);
 }
 
 .transactions-page tbody tr.transaction-row-partly-owed td:first-child {
-  border-left: 4px solid #fb7185;
+  border-left: 4px solid var(--color-warning);
 }
 
 .transactions-page .transaction-mobile-card-fully-owed {
@@ -506,14 +513,6 @@
   border-color: rgb(251 113 133 / 0.42);
   background: rgb(251 113 133 / 0.14);
   color: #fecdd3;
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr.transaction-row.transaction-row-fully-owed td {
-  background: rgb(59 130 246 / 0.12) !important;
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr.transaction-row.transaction-row-partly-owed td {
-  background: rgb(244 63 94 / 0.10) !important;
 }
 
 :root[data-theme='dark'] .transactions-page .transaction-mobile-card-fully-owed {
