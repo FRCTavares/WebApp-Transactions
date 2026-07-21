@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getPersonalDataExport } from '../api/exportData'
 import { StatusMessage } from '../components/StatusMessage'
+import { Button, PageHeader } from '../components/ui'
 
 function getTimestampForFilename() {
   return new Date()
@@ -53,14 +54,10 @@ export function ExportPage() {
 
   return (
     <section>
-      <div className="page-header">
-        <div>
-          <h1>Export / Backup</h1>
-          <p className="muted small">
-            Download a JSON backup of your personal data from the production database.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Export / Backup"
+        description="Download a JSON backup of your personal data from the production database."
+      />
 
       <StatusMessage error={error} message={message} />
 
@@ -74,13 +71,15 @@ export function ExportPage() {
             </p>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="primary"
+            loading={isExporting}
             onClick={handleDownloadExport}
             disabled={isExporting}
           >
-            {isExporting ? 'Preparing export...' : 'Download JSON export'}
-          </button>
+            {isExporting ? 'Preparing export…' : 'Download JSON export'}
+          </Button>
         </div>
 
         <div className="table-wrap">

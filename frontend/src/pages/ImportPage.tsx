@@ -23,6 +23,9 @@ import type {
   Transaction,
 } from '../types/api'
 import { formatDate } from '../utils/format'
+import { Badge, Button, PageHeader } from '../components/ui'
+import type { BadgeTone } from '../components/ui'
+import { formatSource, toSentenceCase } from '../utils/badgeLabels'
 
 const SOURCES = ['revolut', 'activobank', 'trading212']
 const HIDDEN_BATCH_SOURCES = ['legacy_excel', 'legacy_excel_wealth']
@@ -33,8 +36,25 @@ const SOURCE_UPLOAD_HELP: Record<string, { accept: string; description: string }
   trading212: { accept: '.csv', description: 'Trading 212 CSV, maximum 5 MB' },
 }
 
-function getStatusBadgeClass(status: string) {
-  return `badge badge-status-${status.replaceAll('_', '-')}`
+/* Tones mirror the groupings `panels-import.css` already encoded: committed,
+   completed and imported were green; rolled back, deleted and failed were red.
+   `success` is the only value the backend actually writes (the ImportBatch
+   model default); the rest are kept because the CSS anticipated them. It was
+   missing from the green group, so every successful import rendered a neutral
+   grey badge. */
+const BATCH_STATUS_TONE: Record<string, BadgeTone> = {
+  success: 'positive',
+  committed: 'positive',
+  completed: 'positive',
+  imported: 'positive',
+  rolled_back: 'negative',
+  deleted: 'negative',
+  failed: 'negative',
+  pending: 'warning',
+}
+
+function getBatchStatusTone(status: string): BadgeTone {
+  return BATCH_STATUS_TONE[status] ?? 'neutral'
 }
 
 function hasPendingFx(
@@ -289,18 +309,15 @@ export function ImportPage() {
 
   return (
     <section>
-      <div className="page-header">
-        <div>
-          <h1>Import CSV/XLSX</h1>
-          <p className="muted small">
-            Preview first, check duplicates, then commit only the new rows.
-          </p>
-        </div>
-
-        <button type="button" onClick={loadBatches}>
-          Refresh history
-        </button>
-      </div>
+      <PageHeader
+        title="Import CSV/XLSX"
+        description="Preview first, check duplicates, then commit only the new rows."
+        actions={(
+          <Button type="button" size="sm" onClick={loadBatches}>
+            Refresh history
+          </Button>
+        )}
+      />
 
       <div className="panel-card import-upload-panel">
         <div className="section-header">
@@ -359,14 +376,14 @@ export function ImportPage() {
         </p>
 
         <div className="action-group">
-          <button
+          <Button
             type="button"
-            className="primary-button"
+            variant="primary"
             onClick={handlePreview}
             disabled={isCommitting}
           >
             Preview file
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -487,14 +504,15 @@ export function ImportPage() {
               />
               I reviewed this exact preview and understand that {rowsToImportCount} new rows will be saved.
             </label>
-            <button
+            <Button
               type="button"
-              className="primary-button"
+              variant="primary"
+              loading={isCommitting}
               onClick={handleCommit}
               disabled={!canCommit}
             >
-              {isCommitting ? 'Committing...' : `Commit ${rowsToImportCount} rows`}
-            </button>
+              {isCommitting ? 'Committing…' : `Commit ${rowsToImportCount} rows`}
+            </Button>
           </div>
         </section>
       )}
@@ -507,13 +525,15 @@ export function ImportPage() {
               Review committed imports, inspect their transactions, or rollback a batch if needed.
             </p>
           </div>
-          <button
+          <Button
             type="button"
+            size="sm"
+            loading={isBatchesLoading}
             onClick={loadBatches}
             disabled={isBatchesLoading}
           >
-            {isBatchesLoading ? 'Loading history...' : 'Refresh history'}
-          </button>
+            {isBatchesLoading ? 'Loading history…' : 'Refresh history'}
+          </Button>
         </div>
 
         {historyError && (
@@ -580,7 +600,7 @@ export function ImportPage() {
                 <tr key={batch.id}>
                   <td>#{batch.id}</td>
                   <td>
-                    <span className="badge badge-source">{batch.source}</span>
+                    <Badge>{formatSource(batch.source)}</Badge>
                   </td>
                   <td>
                     <span className="import-history-filename">{batch.filename}</span>
@@ -590,22 +610,24 @@ export function ImportPage() {
                   <td>{batch.rows_inserted}</td>
                   <td>{batch.rows_skipped}</td>
                   <td>
-                    <span className={getStatusBadgeClass(batch.status)}>
-                      {batch.status}
-                    </span>
+                    <Badge tone={getBatchStatusTone(batch.status)}>
+                      {toSentenceCase(batch.status)}
+                    </Badge>
                   </td>
                   <td>
                     <div className="action-group import-history-actions">
-                      <button type="button" onClick={() => handleSelectBatch(batch)}>
+                      <Button type="button" size="sm" onClick={() => handleSelectBatch(batch)}>
                         {selectedBatch?.id === batch.id ? 'Refresh' : 'View rows'}
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="danger-button import-history-rollback-button"
+                        size="sm"
+                        variant="danger"
+                        className="import-history-rollback-button"
                         onClick={() => handleDeleteBatch(batch)}
                       >
                         Rollback
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

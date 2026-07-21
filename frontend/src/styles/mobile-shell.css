@@ -233,26 +233,6 @@
   :root[data-theme='dark'] .transactions-page .transaction-mobile-card .transaction-mobile-raw {
     color: #858b98 !important;
   }
-
-  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-source {
-    border-color: rgb(255 255 255 / 0.14) !important;
-    background: rgb(255 255 255 / 0.07) !important;
-    color: #cbd5e1 !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-expense,
-  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-reimbursed-expense {
-    border-color: rgb(249 115 22 / 0.38) !important;
-    background: rgb(124 45 18 / 0.32) !important;
-    color: #fed7aa !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-income,
-  :root[data-theme='dark'] .transactions-page .transaction-mobile-card .badge-reimbursement {
-    border-color: rgb(34 197 94 / 0.34) !important;
-    background: rgb(20 83 45 / 0.32) !important;
-    color: #bbf7d0 !important;
-  }
 }
 
 /* Real iPhone viewport polish. */

@@ -39,43 +39,6 @@
   line-height: 1.2;
 }
 
-.badge-event-deposit {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: var(--color-accent-text);
-}
-
-.badge-event-market-buy {
-  border-color: #ddd6fe;
-  background: #f5f3ff;
-  color: #6d28d9;
-}
-
-.badge-event-market-sell {
-  border-color: #fed7aa;
-  background: #fff7ed;
-  color: #c2410c;
-}
-
-.badge-event-dividend,
-.badge-event-interest {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.badge-event-withdrawal {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.badge-status-pending {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
-}
-
 /* Investment allocation charts */
 .investment-breakdown-card {
   padding: 1rem;

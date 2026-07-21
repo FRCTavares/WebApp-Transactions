@@ -7,7 +7,7 @@ import {
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
-import { Button } from '../ui'
+import { Badge, Button } from '../ui'
 
 type WealthAccountDetailsModalProps = {
   group: WealthAccountGroup
@@ -166,9 +166,9 @@ export function WealthAccountDetailsModal({
                   <span>{latestSnapshot ? formatDate(latestSnapshot.snapshot_date) : 'No snapshot'}</span>
                 </div>
 
-                <span className={account.is_active ? 'badge badge-active' : 'badge badge-inactive'}>
+                <Badge tone={account.is_active ? 'positive' : 'neutral'}>
                   {account.is_active ? 'Active' : 'Inactive'}
-                </span>
+                </Badge>
 
                 <AccountActions
                   account={account}

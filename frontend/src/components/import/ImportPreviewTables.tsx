@@ -6,6 +6,12 @@ import type {
 } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import { formatFxStatus } from '../../utils/importPreview'
+import { Badge } from '../ui'
+import {
+  formatDirection,
+  getDirectionTone,
+  toSentenceCase,
+} from '../../utils/badgeLabels'
 
 /**
  * Read-only preview/history tables used by `ImportPage`. Split out of
@@ -55,19 +61,19 @@ export function PreviewTransactionsTable({
                 </td>
                 <td>
                   {transaction.category ? (
-                    <span className="badge badge-neutral">{transaction.category}</span>
+                    <Badge>{transaction.category}</Badge>
                   ) : (
                     <span className="muted">-</span>
                   )}
                 </td>
                 <td>
-                  <span className={`badge badge-direction-${transaction.direction}`}>
-                    {transaction.direction}
-                  </span>
+                  <Badge tone={getDirectionTone(transaction.direction)}>
+                    {formatDirection(transaction.direction)}
+                  </Badge>
                 </td>
                 <td>
                   {transaction.fx_rate_source === 'pending' ? (
-                    <span className="badge badge-status-failed">Pending</span>
+                    <Badge tone="warning">Pending</Badge>
                   ) : (
                     <span className="muted small">{formatFxStatus(transaction)}</span>
                   )}
@@ -119,7 +125,7 @@ export function PreviewInvestmentEventsTable({
                 <td>{event.row_number}</td>
                 <td>{event.date}</td>
                 <td>
-                  <span className="badge badge-neutral">{event.event_type}</span>
+                  <Badge>{toSentenceCase(event.event_type)}</Badge>
                 </td>
                 <td>
                   <div>{event.description}</div>
@@ -127,7 +133,7 @@ export function PreviewInvestmentEventsTable({
                 </td>
                 <td>
                   {event.fx_rate_source === 'pending' ? (
-                    <span className="badge badge-status-failed">Pending</span>
+                    <Badge tone="warning">Pending</Badge>
                   ) : (
                     <span className="muted small">{formatFxStatus(event)}</span>
                   )}
@@ -214,7 +220,7 @@ export function BatchInvestmentEventsTable({ events }: { events: InvestmentEvent
               <tr key={event.id}>
                 <td>{formatDate(event.date)}</td>
                 <td>
-                  <span className="badge badge-neutral">{event.event_type}</span>
+                  <Badge>{toSentenceCase(event.event_type)}</Badge>
                 </td>
                 <td>
                   <div>{event.description}</div>
@@ -234,9 +240,9 @@ export function BatchInvestmentEventsTable({ events }: { events: InvestmentEvent
                 </td>
                 <td>
                   {event.funding_match_status ? (
-                    <span className="badge badge-neutral">
+                    <Badge>
                       {event.funding_source ?? 'funding'} · {event.funding_match_status}
-                    </span>
+                    </Badge>
                   ) : (
                     <span className="muted">-</span>
                   )}

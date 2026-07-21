@@ -560,7 +560,8 @@ row activation.
 
 ### Phase 4 — Call-site migration, one commit per page
 
-**Current next task: Categories.** Complete and verify it before starting the next page. Preserve every existing accessible name, role, `aria-label`, and `data-testid`, and do not remove its TODO item until the full post-edit workflow succeeds.
+**Phase 4 is complete.** All nine pages are on the primitives. Next is Phase 5,
+the dark-mode collapse, which Phase 4 was the precondition for.
 
 - [x] **Dashboard — done and verified 2026-07-20 (pilot).**
       `npm run lint` clean, 49/49 unit tests pass (the 4 Dashboard state tests
@@ -973,10 +974,49 @@ row activation.
       `.transaction-category-empty-icon` — 11 rules plus 3 selectors. Note
       `.transaction-category-actions` (plural, the flex container) is still
       rendered; a substring match would have deleted it.
-- [ ] Import
-- [ ] Export
-- [ ] Settings
-- [ ] Privacy
+- [x] **Import, Settings, Export and Privacy — migrated 2026-07-21.**
+      `PageHeader` (3), `Button` (12) and `Badge` (19). Verified: lint clean,
+      49/49 unit tests, build passing, 12/12 e2e, all four pages screenshotted
+      in both themes at desktop and mobile, a real Revolut CSV driven through
+      preview and commit to see the preview and history badges, and every
+      control hit-tested for occlusion.
+
+      **The legacy badge system is gone.** These pages held the last 19 legacy
+      `.badge` spans (7 in the import preview, 9 across the three rules tables,
+      the import history status and source, and 2 in Wealth that a plainer grep
+      had missed during that migration). With no call sites left, all 30
+      `.badge*` classes were dead: **42 rules deleted across 13 stylesheets**,
+      plus their dark-mode overrides.
+
+      `SOURCE_LABEL` / `CASHFLOW_LABEL` moved out of `TransactionTable.tsx` into
+      `utils/badgeLabels.ts` and gained direction labels and tones. The same
+      source, direction and cashflow values are rendered by the transactions
+      table, the import preview and history, and three rules tables; duplicating
+      the maps four more times was the alternative. `CashflowRulesTable` also had
+      its own `formatCashflowType` that only replaced underscores, leaving
+      "money out" for CSS to capitalise.
+
+      Fixed while there:
+      - **Every successful import rendered a neutral grey badge.** The status
+        tone map is keyed on the values `panels-import.css` anticipated
+        (`committed`, `completed`, `imported`), but `success` — the only value
+        the backend actually writes, via the `ImportBatch` model default — was
+        in none of them. It is now `positive`.
+      - **Sign out stretched across its row in Settings.**
+        `.settings-account-row .danger-button` set `flex: 0 0 auto`, which does
+        nothing: the row is a grid. It is `justify-self: start` now, matching
+        the `<em>` that renders in its place when auth is disabled.
+
+      Privacy needed no change and deliberately keeps its own markup: it is a
+      public, unauthenticated legal document rendered outside the app shell,
+      not a page with a header and actions.
+
+      A process note: the first attempt at the Import header replacement sliced
+      from the header to `<StatusMessage>` and deleted the entire upload panel
+      with it — the source select, file input and Preview button. `tsc` caught
+      it as four unused symbols. The file was reverted and redone with a helper
+      that asserts each replacement matches exactly once, which is how the rest
+      of the file's edits were then applied safely.
 
 For each page: swap raw elements for primitives, delete that page's
 now-redundant CSS, delete that page's entries from the dark-mode override

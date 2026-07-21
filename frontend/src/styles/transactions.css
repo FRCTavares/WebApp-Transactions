@@ -268,33 +268,6 @@
   font-weight: 800;
 }
 
-.transactions-page .badge {
-  border-color: #e5e7eb;
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 800;
-}
-
-.transactions-page .badge-income,
-.transactions-page .badge-reimbursement {
-  border-color: #bbf7d0;
-  background: var(--transaction-green-soft);
-  color: #15803d;
-}
-
-.transactions-page .badge-expense,
-.transactions-page .badge-reimbursed-expense {
-  border-color: #fed7aa;
-  background: var(--transaction-orange-soft);
-  color: #c2410c;
-}
-
-.transactions-page .badge-source {
-  background: #f1f5f9;
-  color: #475569;
-}
-
 .transactions-page .actions-cell,
 .transactions-page td:last-child {
   white-space: nowrap;
@@ -456,23 +429,6 @@
   line-height: 1.2;
 }
 
-.transactions-page .badge {
-  vertical-align: middle;
-}
-
-/* Owed transaction coverage states. These rows stay visible because the bank movement exists. */
-.transactions-page .badge-owed-fully {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
-}
-
-.transactions-page .badge-owed-partial {
-  border-color: #fecdd3;
-  background: #fff1f2;
-  color: #be123c;
-}
-
 .transactions-page tbody tr.transaction-row-fully-owed td {
   background: var(--color-positive-subtle);
 }
@@ -497,18 +453,6 @@
 .transactions-page .transaction-mobile-card-partly-owed {
   border-color: rgb(251 113 133 / 0.42);
   background: rgb(251 113 133 / 0.08);
-}
-
-:root[data-theme='dark'] .transactions-page .badge-owed-fully {
-  border-color: rgb(138 180 248 / 0.42);
-  background: rgb(138 180 248 / 0.14);
-  color: #bfdbfe;
-}
-
-:root[data-theme='dark'] .transactions-page .badge-owed-partial {
-  border-color: rgb(251 113 133 / 0.42);
-  background: rgb(251 113 133 / 0.14);
-  color: #fecdd3;
 }
 
 :root[data-theme='dark'] .transactions-page .transaction-mobile-card-fully-owed {

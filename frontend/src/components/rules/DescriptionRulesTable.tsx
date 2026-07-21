@@ -1,4 +1,10 @@
 import type { DescriptionRule } from '../../types/api'
+import { Badge } from '../ui'
+import {
+  formatDirection,
+  formatSource,
+  getDirectionTone,
+} from '../../utils/badgeLabels'
 
 type DescriptionRulesTableProps = {
   rules: DescriptionRule[]
@@ -30,24 +36,24 @@ export function DescriptionRulesTable({ rules }: DescriptionRulesTableProps) {
               <td>{rule.cleaned_description}</td>
               <td>
                 {rule.direction ? (
-                  <span className={`badge badge-direction-${rule.direction}`}>
-                    {rule.direction}
-                  </span>
+                  <Badge tone={getDirectionTone(rule.direction)}>
+                    {formatDirection(rule.direction)}
+                  </Badge>
                 ) : (
                   <span className="muted">-</span>
                 )}
               </td>
               <td>
                 {rule.source ? (
-                  <span className="badge badge-source">{rule.source}</span>
+                  <Badge>{formatSource(rule.source)}</Badge>
                 ) : (
                   <span className="muted">-</span>
                 )}
               </td>
               <td>
-                <span className={`badge ${rule.is_active ? 'badge-active' : 'badge-inactive'}`}>
-                  {rule.is_active ? 'active' : 'inactive'}
-                </span>
+                <Badge tone={rule.is_active ? 'positive' : 'neutral'}>
+                  {rule.is_active ? 'Active' : 'Inactive'}
+                </Badge>
               </td>
             </tr>
           ))}

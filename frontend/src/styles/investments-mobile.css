@@ -3,7 +3,6 @@
   display: none;
 }
 
-
 .investment-gain-positive {
   color: #15803d;
 }
@@ -274,12 +273,6 @@
   .investment-position-mobile-list {
     display: grid;
     gap: 10px;
-  }
-
-  .investment-position-mobile-card .badge {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .investment-position-mobile-details > div:nth-child(2),
