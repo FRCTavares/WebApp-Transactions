@@ -93,7 +93,7 @@
 .settings-list-button {
   width: 100%;
   border: 0;
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid var(--color-border);
   border-radius: 0;
   text-align: left;
   box-shadow: none;
@@ -161,7 +161,7 @@
 }
 
 .settings-privacy-summary {
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Dark settings layout. */

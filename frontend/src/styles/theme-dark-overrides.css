@@ -252,22 +252,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
     );
 }
 
-/* Tables: slightly flatter and easier to scan. */ :root[data-theme='dark'] th,
-:root[data-theme='dark'] thead th,
-:root[data-theme='dark'] .transactions-page thead th,
-:root[data-theme='dark'] .wealth-table-wrap th,
-:root[data-theme='dark'] .owed-page-polished .owed-table th {
-  background: #232429 !important;
-  color: #aeb3bd;
-}
-
-:root[data-theme='dark'] tbody tr:hover td,
-:root[data-theme='dark'] .transactions-page tbody tr:hover td,
-:root[data-theme='dark'] .wealth-table-wrap tbody tr:hover td,
-:root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td {
-  background: #24262c !important;
-}
-
 /* Text hierarchy. */ :root[data-theme='dark'] .page-subtitle,
 :root[data-theme='dark'] .settings-card-header p:not(.eyebrow),
 :root[data-theme='dark'] .settings-action-button small,
@@ -295,42 +279,6 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   }
 }
 
-/* Dark theme table/readability repair. */ :root[data-theme='dark'] table {
-  background: transparent !important;
-}
-
-:root[data-theme='dark'] tr,
-:root[data-theme='dark'] td,
-:root[data-theme='dark'] th {
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] tbody tr,
-:root[data-theme='dark'] .transactions-page tbody tr,
-:root[data-theme='dark'] .owed-page-polished .owed-table tbody tr,
-:root[data-theme='dark'] .wealth-table-wrap tbody tr,
-:root[data-theme='dark'] .investments-table tbody tr {
-  background: transparent !important;
-}
-
-:root[data-theme='dark'] tbody tr td,
-:root[data-theme='dark'] .transactions-page tbody tr td,
-:root[data-theme='dark'] .owed-page-polished .owed-table tbody tr td,
-:root[data-theme='dark'] .wealth-table-wrap tbody tr td,
-:root[data-theme='dark'] .investments-table tbody tr td {
-  background: transparent !important;
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .transactions-page tbody tr:nth-child(even):not(.inline-create-row):not(.inline-edit-row) td,
-:root[data-theme='dark'] .fully-reimbursed-row,
-:root[data-theme='dark'] .fully-reimbursed-row td,
-:root[data-theme='dark'] .clickable-row,
-:root[data-theme='dark'] .clickable-row td {
-  background: #202126 !important;
-  color: var(--theme-text) !important;
-}
-
 :root[data-theme='dark'] .transactions-page tbody tr:nth-child(odd):not(.inline-create-row):not(.inline-edit-row) td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:nth-child(odd) td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr:nth-child(odd) td,
@@ -346,30 +294,9 @@ not floating glow. */ :root[data-theme='dark'] .global-period-selector {
   background: #262830 !important;
 }
 
-:root[data-theme='dark'] .inline-create-row td {
-  border-bottom-color: rgb(74 222 128 / 0.28);
-  background: rgb(22 163 74 / 0.13) !important;
-  color: var(--theme-text) !important;
-}
-
-:root[data-theme='dark'] .inline-edit-row td {
-  border-bottom-color: rgb(251 191 36 / 0.28);
-  background: rgb(245 158 11 / 0.13) !important;
-  color: var(--theme-text) !important;
-}
-
 :root[data-theme='dark'] .fully-reimbursed-row td:first-child::after {
   background: rgb(34 197 94 / 0.16);
   color: #bbf7d0;
-}
-
-:root[data-theme='dark'] .table-input,
-:root[data-theme='dark'] .table-input-secondary,
-:root[data-theme='dark'] .table-wrap input,
-:root[data-theme='dark'] .table-wrap select {
-  border-color: rgb(255 255 255 / 0.13);
-  background: #232429 !important;
-  color: var(--theme-text);
 }
 
 :root[data-theme='dark'] .table-action-group button,

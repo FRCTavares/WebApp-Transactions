@@ -187,14 +187,6 @@ since darkening against a near-black surface reads as the control going dead. */
   color: #fecaca;
 }
 
-:root[data-theme='dark'] table,
-:root[data-theme='dark'] th,
-:root[data-theme='dark'] td {
-  border-color: var(--theme-border);
-  background: transparent;
-  color: var(--theme-text);
-}
-
 :root[data-theme='dark'] th,
 :root[data-theme='dark'] thead th,
 :root[data-theme='dark'] .transactions-page thead th,
@@ -203,14 +195,6 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .investments-page .investment-position-table-wrap th {
   background: #202024;
   color: var(--theme-muted);
-}
-
-:root[data-theme='dark'] tbody tr:hover td,
-:root[data-theme='dark'] .clickable-row:hover,
-:root[data-theme='dark'] .transactions-page tbody tr:hover td,
-:root[data-theme='dark'] .wealth-table-wrap tbody tr:hover td,
-:root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td {
-  background: #202024;
 }
 
 :root[data-theme='dark'] .sidebar button {
@@ -454,23 +438,6 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .global-period-selector input,
 :root[data-theme='dark'] .global-period-selector button {
   background: rgb(255 255 255 / 0.055);
-}
-
-:root[data-theme='dark'] th,
-:root[data-theme='dark'] thead th,
-:root[data-theme='dark'] .transactions-page thead th,
-:root[data-theme='dark'] .wealth-table-wrap th,
-:root[data-theme='dark'] .owed-page-polished .owed-table th {
-  background: rgb(255 255 255 / 0.045);
-  color: #aeb4c0;
-}
-
-:root[data-theme='dark'] td,
-:root[data-theme='dark'] .transactions-page th,
-:root[data-theme='dark'] .transactions-page td,
-:root[data-theme='dark'] .wealth-table-wrap td,
-:root[data-theme='dark'] .owed-page-polished .owed-table td {
-  border-bottom-color: rgb(255 255 255 / 0.075);
 }
 
 :root[data-theme='dark'] tbody tr:hover td,
