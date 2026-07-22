@@ -621,16 +621,12 @@ the dark-mode collapse, which Phase 4 was the precondition for.
         omitted. Worth checking wherever else `getReasonText` is used.
 
       **Still open on this page:**
-      - *Card inside a card on the Spending breakdown panel.*
-        `ExpenseCategoryDonutChart` renders its own `.expense-chart-card`
-        surface and the Dashboard wraps it in a `Card` as well, so the donut
-        sits in a visibly lighter inset rectangle while `Monthly summary`
-        beside it is flat. Introduced by the Phase 4 migration. Fix: either
-        drop the wrapper to `padding="none"` and let the chart own its
-        surface, or strip `.expense-chart-card`'s border/background/radius and
-        let `Card` own it — the second is preferable, since it is the same
-        nesting problem `charts.css` currently papers over with 15
-        `!important` declarations for `WealthMonthlyChart`. Disposition: leave this open and resolve it in Phase 6 together with `WealthMonthlyChart`; do not include it in the Transactions migration unless it blocks verification.
+      - *Card inside a card on the Spending breakdown panel.* **Resolved
+        2026-07-22 — see the Phase 6 entry.** The second option was taken:
+        `.expense-chart-card` is now `.expense-chart-body` and owns no
+        surface. Its padding was deliberately kept, which the original note
+        did not anticipate; the reason is recorded in Phase 6 and in
+        `dashboard.css`.
       - *Fully-owed transactions render a column of `€0.00`* in the recent
         list (product decision, not styling). Arithmetically correct — the
         personal amount is zero once the whole sum is owed — but on real data
@@ -1024,18 +1020,108 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
-**State at 2026-07-22.** 901 -> 596 lines, 378 -> 211 selectors. Shipped in #81,
-#82, #84, #85. Everything still in the three dark sheets is chart internals, so
-**Phase 6's nested-card fix has to land before Phase 5 can finish** — tokenising
-that markup now would mean doing it twice. This reorders the plan as written.
+**State at 2026-07-22.** 901 -> 428 lines, 378 -> 139 selectors, **and three
+files are now two**. Shipped in #81, #82, #84, #85, plus 5 selectors from the
+wealth nested-card fix, 2 from the expense-chart one, 35 from deleting
+`investments-dark.css` outright, and 34 from a dead-selector sweep of the
+remaining two.
+
+**The dead-selector sweep: 34 of 173 selectors matched no markup.** They came
+down to 12 class names that no `.tsx` renders — `.settings-status`,
+`.settings-action-button`, `.theme-option-group`, `.theme-option-button`
+(the pre-`SegmentedControl` theme picker), `.danger-button` (replaced by
+`Button variant="danger"` in Phase 4), `.wealth-summary-card`,
+`.wealth-summary-card-primary`, `.wealth-owed-summary-card`,
+`.wealth-investments-summary-card`, `.wealth-subaccount-row`,
+`.wealth-subaccount-list` (the Wealth summary band, since removed) and
+`.fully-reimbursed-row`. Zero styling work; nothing was tokenised.
+
+**All 12 are still styled in the light sheets too** — 2 to 5 files each,
+depending on the class. Deleting that dead light CSS is a bigger and entirely
+separate diff, and worth doing: run the same
+`grep -rl <class> src --include='*.tsx'` check across `src/styles/` generally,
+not just the dark sheets.
+
+Verification for a pure dead-code deletion is not "the differences are
+explainable" but "there are none": all nine pages were screenshotted full-page
+in both themes at 375/800/1440 before and after. 46 of 54 came back
+byte-identical. The other 8 were run-to-run noise, and both causes were proved
+rather than assumed — the six Dashboard shots differ only inside the
+`Data refreshed at HH:MM` clock, and the two Categories shots differ by exactly
+the same 33 bytes they differ by when the same code is captured twice.
+
+**`investments-dark.css` is gone — and 21 of its 33 selectors were dead.**
+The file targeted 14 class names that are rendered nowhere in the app
+(`.investment-holding-name`, `-value`, `-price`, `-cost`, `-quantity`,
+`-label`, `-detail-label`, `-gain`, `-return-positive`, `-return-negative`,
+`-metrics`, `-fill`, `.metric-label`, `.metric-value`), plus a
+`[class*='quantity'|'price'|'cost'|'label']` "fallback for existing holding
+detail grids that use generic div/span markup" that matched nothing either.
+Four of its ten rules were entirely inert. The real markup renders
+`-ticker`, `-meta`, `-track`, `-details` and plain `dt`/`dd`/`small`/`span`,
+and the gain classes are `.investment-gain-positive` / `-negative`, which the
+file never mentioned.
+
+The 12 live selectors were repainting greys that the page already themed
+correctly on its own: `--investment-text`, `--investment-muted` and
+`--investment-border` were aliased onto the semantic layer during #74, so
+deleting the file just lets the holding cards converge on the zinc ramp
+(`#aeb3bd`/`#8f95a1` -> `--color-text-muted`, `#e8e9ed` -> `--color-text`).
+Only one value genuinely needed tokenising first: `.investment-holding-track`
+hardcoded `#e5e7eb` and now reads `--chart-track`, the role token Phase 1
+created for exactly this.
+
+Two visible changes in dark, both of them dark catching up with light:
+the primary holding's value is accent blue instead of white (light mode
+already renders it `--color-accent-text`), and the cost-currency spans inside
+`dd` are full text colour instead of muted (light mode already was).
+
+**Correction: "everything still in the three dark sheets is chart internals" was
+wrong, and so was the claim that the nested-card fix unblocks this phase.** That
+fix has now landed. It removed exactly 5 selectors — 596 -> 591 lines,
+211 -> 206 — because the chart elements were only ever *listed* in these sheets,
+never the bulk of them. What remains is broad and not chart-specific: the
+dashboard metric icons and summary-bar tracks, the entire
+`.investment-holding-card` family (33 selectors in `investments-dark.css` alone,
+several of them `[class*='...']` matches), `.expense-chart-card`,
+`.mobile-bottom-nav`, the market-data cards, the import panels, `.card`,
+`.manual-form`, `.table-wrap`, and odd/even row striping on three tables.
+Deleting these files is a per-component-family job, not one sweep.
+
+`.expense-chart-card` — the Dashboard twin — has now been done too, and took
+2 more selectors. **Both nested-card fixes together moved this phase by 7
+selectors out of 211.** That is the honest measure of how much of these files
+is chart-related: almost none of it. The remaining 204 are ordinary component
+surfaces, and each family needs its light values tokenised before its dark
+override can go, exactly as `transaction-categories.css` was done in Phase 4
+(54 selectors deleted by tokenising, not by overriding).
+
+That prediction held: `investments-dark.css` did go in one pass, and it went
+mostly because it was dead rather than because much was tokenised. **Expect the
+same of the other two — audit which selectors match live markup before planning
+any of it.** A quick way in: for each class name in the sheet,
+`grep -rl <name> src --include='*.tsx'`; anything returning zero files is
+deletable with no styling work at all.
 
 The original note that these files "should be nearly empty by now" was wrong and
 is corrected here: removing all three today still changes 113 of 117 measured
 selectors, and `.expense-chart-card` renders pure white in dark mode without
 them. Phase 4 tokenised page-level surfaces; component internals were untouched.
 
-- [ ] Delete `theme-dark.css` (618 lines), `theme-dark-overrides.css`, and
-      `investments-dark.css`. By this point they should be nearly empty.
+- [x] **`investments-dark.css` deleted — 2026-07-22.** 72 lines, 33 selectors,
+      plus 2 more pruned from `theme-dark-overrides.css`. Import removed from
+      `main.tsx`. Hex baseline 525 -> 514.
+- [x] **Dead-selector sweep of both remaining sheets — 2026-07-22.** 34 of 173
+      selectors deleted; `theme-dark.css` 260 -> 189, `theme-dark-overrides.css`
+      258 -> 239. Hex baseline 514 -> 512. A re-run of the audit reports 0 dead.
+- [ ] Delete `theme-dark.css` (189 lines) and `theme-dark-overrides.css` (239).
+      **The easy half is done — the remaining 120 selectors are all live**, so
+      from here it is per-component-family tokenising, the
+      `transaction-categories.css` method: move the light values onto the
+      semantic layer and the dark override becomes redundant. Largest families
+      left: `.investment-holding-*`, the dashboard metric icons and summary
+      bars, `.expense-chart-*`, `.mobile-bottom-nav`, `.card` / `.table-wrap` /
+      `.manual-form`, the market-data cards and the import panels.
       Acceptance: no file matching `*dark*.css` remains under
       `src/styles/`, and adding a new component requires no dark-mode work.
 - [ ] Add a theme transition on `background-color` and `color` so toggling
@@ -1049,42 +1135,102 @@ them. Phase 4 tokenised page-level surfaces; component internals were untouched.
 token references, so they theme correctly and a legend swatch and its slice are
 the same token by construction. A unit test locks that identity.
 
-**Do the nested-card fix next — it unblocks two phases.** It is Phase 6 work
-*and* the last thing standing between Phase 5 and deleting the dark sheets.
-Mapped in full here so it does not need re-discovery.
+- [x] **Fixed the `WealthMonthlyChart` nested card — 2026-07-22.** The inner
+      `<div>` is now `.wealth-chart-body`, all **15** `!important` declarations
+      are gone from `charts.css`, and the file no longer contains the word.
+      Nine files touched, 110 lines deleted against 12 added.
 
-- [ ] **Fix the `WealthMonthlyChart` nested card.** The component renders an
-      inner `<div class="wealth-chart-card">`, and its only call site is inside
-      `<section class="content-card panel-card wealth-trend-panel">`
-      (`WealthPage.tsx:613`). The inner div is therefore *always* inside a real
-      card, yet it is given card styling in two places and stripped again in
-      three — which is what the 15 `!important` declarations in `charts.css` do.
+      Verified: `npm run lint` clean, `npm run lint:css` at baseline,
+      52/52 unit tests, `npm run build` passes, 12/12 e2e on chromium and
+      mobile-chromium against a live backend, `git diff --check` clean.
+      Above all: **7,830 computed values across 12 page/theme/width
+      combinations were compared before and after, and all 24 screenshots are
+      byte-identical.** The only reported difference is the class name itself.
 
-      Given card styling by:
-      - `wealth.css:383` — border, radius, padding, background
-      - `wealth-chart.css:2` — padding plus a white gradient background
+      Three corrections to the map above, all of which cost time to find:
 
-      Stripped again by:
-      - `wealth-chart.css:99` — `.wealth-trend-panel .wealth-chart-card`
-      - `charts.css:14-22` — the `!important` block for the card
-      - `charts.css:79-95` — same treatment for `.wealth-chart-wrap` and
-        `.investment-trend-visual`
+      - **`wealth-mobile.css` was not in the plan and held four more
+        `.wealth-chart-card` selectors** (`:18`, `:158`, `:338`, `:363`),
+        including a `background: var(--color-surface) !important` that paints
+        the inner div as a card at ≤800px. It never rendered: `charts.css`
+        loads after `wealth-mobile.css` at equal specificity, so its
+        `background: transparent !important` won. Two of the four were selectors
+        inside lists that also target `.wealth-trend-panel` and had to be pruned,
+        not deleted.
+      - **The two `min-height` rules the plan said to keep were both dead.**
+        `wealth-chart.css:140` (`14.2rem`) is overridden by `:210` (`auto`), and
+        both lose to `charts.css`'s `min-height: 0` at higher specificity.
+        Measured `0px` before and after. Both deleted.
+      - **The 15 `!important`s were not all about the card.** Five were, four
+        were the same treatment for `.wealth-chart-wrap` /
+        `.investment-trend-visual`, three were the dark-mode repeat, and two
+        were `min-height`/`max-height` on the SVGs — which meant also deleting
+        the `min-height: 11.25rem` and `max-height` declarations in
+        `wealth-chart.css` and `investments.css` that they existed to defeat.
 
-      Fix: rename the inner div to `.wealth-chart-body` (it is not a card and
-      should not be named like one), delete both base-card rules and all three
-      override blocks, keep only the layout rules — the `min-height` at
-      `wealth-chart.css:140` and `:210`, renamed to match.
+      `.investment-trend-visual` did have the same shape and got the same pass:
+      `investments.css:692` gave it a radius and a `--color-surface-sunken`
+      background, invisible because `charts.css` overrode both. Rule deleted;
+      not renamed, since "visual" does not claim to be a card.
 
-      `.investment-trend-visual` shares the `charts.css` override block and
-      almost certainly has the same shape. Check it in the same pass.
+      One hex literal disappeared with `wealth.css`'s `.wealth-chart-card`
+      (`#fbfbfd`), so `.stylelint-hex-baseline.json` drops 527 -> 526.
 
-      **Verification is not optional.** This is a multi-file CSS deletion whose
-      only failure mode is a dark-mode regression, and three of those shipped
-      during Phase 5 — each invisible to assertions, each caught only by looking
-      at a screenshot. Required: seed data first, then compare computed styles
-      for the wealth chart and the investment trend chart before and after, in
-      both themes, at 375 / 800 / 1440, with screenshots.
+      **On the harness, for whoever does `.expense-chart-card` next.** Seeding
+      went through the API and asserted `/api/wealth/monthly` and
+      `/api/investment-events/monthly-series` were non-empty *before* any
+      probe ran; the capture then asserted each chart's path `d` was actually
+      drawn, so a blank page could not come back green. Probes listed both the
+      old and new class name in one selector, which is what let the same script
+      run unchanged on both sides. `backgroundImage` was read alongside
+      `backgroundColor` — two of the deleted backgrounds were gradients and a
+      `backgroundColor`-only probe would not have seen them at all.
 
+
+- [x] **Fixed the `ExpenseCategoryDonutChart` nested card — 2026-07-22.** The
+      twin of the wealth fix, and the last chart-shaped thing in the dark
+      sheets. `.expense-chart-card` is now `.expense-chart-body`; six files,
+      24 insertions against 28 deletions.
+
+      In dark mode the inner `<section>` painted `#1c1d21` inside a `Card` on
+      `#18181b`, plus an inset highlight and an `0 18px 42px` drop shadow —
+      the visibly lighter inset rectangle beside a flat `Monthly summary`.
+      In light mode it painted `#ffffff` inside a white card, which is why
+      nobody saw it there. Both surfaces are gone; the `Card` owns it.
+
+      Verified: lint clean, `lint:css` at baseline (526 -> 525, `#d1d5db`
+      went with the deleted border), 52/52 unit tests, build passing, 12/12
+      e2e on chromium and mobile-chromium. 9,792 computed values compared
+      across 18 page/theme/width combinations; **every remaining difference
+      is on the Dashboard, and 29 of the 36 screenshots are byte-identical.**
+      The 6 that changed are the dark Dashboard ones — the fix — and the
+      seventh is `dashboard-light-1440-page`, which differs only in the
+      "Data refreshed at HH:MM" clock (its panel crop is byte-identical).
+
+      **The padding is load-bearing, and removing it was a real regression.**
+      The first attempt also dropped the inner `padding: 1.15rem` on the
+      grounds that the `Card` already pads. Computed styles and screenshots
+      both looked fine. What caught it was a separate probe measuring the
+      *top offset* of each panel's heading: `Monthly summary`'s heading sits
+      35.4px below its card, and the donut's matched that only because
+      16px of card padding plus 18.4px of its own added up to the same
+      number. Without it the donut's heading rose 18.4px above its
+      neighbour's at 1440. Restored, with the reason in the stylesheet.
+
+      Worth generalising: the rect capture records width and height, so an
+      element sliding up or down relative to a sibling is invisible to it.
+      Anything checking alignment has to measure `top` explicitly.
+
+      Deliberately **not** touched: `.expense-chart-track`, `-slice`,
+      `-centre`, `-legend-row` and `-dot` are shared with
+      `InvestmentAllocationCharts` on a different page. The harness probes
+      the allocation donut for exactly this reason, and it came back
+      byte-identical.
+
+      Two accepted differences, both sub-perceptual: the body's `color` moves
+      `#f5f5f7` -> `#f4f4f5` (it now inherits the `Card`'s token instead of
+      `--theme-text`), and its `border-radius` goes 20px -> 0 on an element
+      with no background, no border and no clipping.
 
 - [ ] Add `frontend/src/components/charts/`: a `useChartScale` hook plus
       shared `ChartAxis`, `ChartGrid`, `ChartTooltip`, `ChartLegend`.
@@ -1092,12 +1238,6 @@ Mapped in full here so it does not need re-discovery.
       `.trend-chart-grid-line`, `.wealth-chart-area`,
       `.wealth-chart-edge-point`, and `.wealth-chart-value-label` while the
       markup still renders them. Render gridlines properly instead.
-- [ ] Move `SLICE_COLOURS` out of `ExpenseCategoryDonutChart.tsx` into
-      `--chart-1` … `--chart-8` semantic tokens so all four charts share one
-      theme-aware palette and legend swatches provably match their slices.
-- [ ] Fix the nested-card markup in `WealthMonthlyChart` so the 15
-      `!important` declarations in `charts.css` can be deleted rather than
-      preserved.
 - [ ] Add hover tooltips with a crosshair to both trend charts, and format
       y-axis labels as currency via the existing `utils/format.ts`.
 - [ ] Make donut interaction keyboard-accessible. Slices are `<circle>`
@@ -1153,6 +1293,21 @@ visibly broken output.
   Hand-written INSERTs failed on `transaction_categories.direction`,
   `transactions.raw_description`, `account_type: 'savings_account'` (not
   `savings`), and `investment_events.amount` needing `gt=0` even for buys.
+- **A 201 is not proof the seed worked.** `investment_events.event_type` is
+  typed as a free-form `str`, so `'buy'` is accepted and then counts for
+  nothing: cost basis, positions and valuation all filter on
+  `{'market_buy', 'market_sell'}`. The allocation donut rendered empty while
+  the trend line still drew, so the page looked populated. It must be
+  `'market_buy'`. Assert the *derived* endpoint, not the POST status.
+- **A rect capture that records only width and height cannot see alignment.**
+  An element sliding up or down relative to a sibling changes neither. The
+  expense-chart fix broke the Dashboard heading alignment by 18.4px with a
+  clean computed-style diff and plausible-looking screenshots; only an
+  explicit `getBoundingClientRect().top` comparison against the neighbouring
+  panel caught it.
+- **Padding on a nested element is not automatically redundant.** Where two
+  panels sit side by side, the inner padding may be what makes their headings
+  line up. Measure both panels before deleting either one's.
 - **Some states need a specific data shape.** The Wealth account modal only
   appears for a *group* — two or more accounts sharing an `institution`.
 - **The dark sheets are imported from `src/main.tsx`, not `index.css`.**
@@ -1168,6 +1323,32 @@ visibly broken output.
   it still produces false positives on the Owed person cards.
 - **Use exact selector matching when bulk-deleting CSS rules.** Substring
   matching made `'tr'` match `.expense-chart-track` and silently ate chart rules.
+- **A class can appear in more than one selector list in the same file.**
+  Pruning `.investment-holding-track` from the obvious "Dashboard bars and chart
+  tracks" rule left a second listing 150 lines earlier, so the newly tokenised
+  value was still being overridden. The computed capture caught it — the token
+  resolved to `rgb(255 255 255 / 0.045)` instead of the `#27272a` in `dark.css`,
+  which is what a stray override looks like. Grep for every occurrence, and if
+  a token does not resolve to the value you defined, something else is winning.
+- **Check the markup before styling anything in a dark sheet.**
+  `grep -rl <class> src --include='*.tsx'` returning zero files means the
+  selector is dead and can go with no styling work. That was 21 of the 33
+  selectors in `investments-dark.css` and 34 of the 173 in the other two.
+  **But a plain grep gives false "dead" verdicts:** class names are built as
+  `` `dashboard-metric-${getMetricTone(x)}` `` and `` `app-main-${page}` ``, so
+  `dashboard-metric-positive` appears nowhere as a literal and is very much
+  rendered. Check dash-delimited prefixes against template literals too.
+- **Prove a screenshot difference is yours before explaining it.** Capture the
+  same page twice on unchanged code first. The Categories page turned out to
+  differ from itself by exactly the 33 bytes it differed by across the change;
+  the Dashboard was stable within a run but not across runs, because
+  `Data refreshed at HH:MM` moves on the minute. Neither had anything to do
+  with the edit.
+- **BMP rows are stored bottom-up.** Mapping `cmp -l` byte offsets to pixel
+  rows without accounting for that put the Dashboard difference at the foot of
+  the page instead of in the header, and very nearly turned a clock into a
+  regression. Sanity-check the mapping with `elementFromPoint` before believing
+  a location.
 - **Assert your string replacements matched.** `str.replace` is a silent no-op
   when the target is not found; a helper that asserts exactly one match caught
   an edit that had deleted the entire Import upload panel.

@@ -24,9 +24,13 @@ export type CardProps = {
 
 /**
  * Replaces `.card`, `.panel-card`, `.content-card`, `.settings-card`,
- * `.summary-card`, `.dashboard-panel`, `.portfolio-snapshot` and
- * `.expense-chart-card`, which were six-plus separate definitions of the same
- * object with different borders, radii and shadows.
+ * `.summary-card`, `.dashboard-panel` and `.portfolio-snapshot`, which were
+ * six-plus separate definitions of the same object with different borders,
+ * radii and shadows.
+ *
+ * The Dashboard donut's `.expense-chart-card` was the last of them. Wrapping
+ * it in a `Card` without stripping its own surface left a card inside a card,
+ * visible in dark mode; it is now `.expense-chart-body` and owns no surface.
  */
 export function Card({
   padding = 'md',

@@ -97,7 +97,7 @@ export function ExpenseCategoryDonutChart({
 
   if (slices.length === 0) {
     return (
-      <section className="expense-chart-card">
+      <section className="expense-chart-body">
         <div>
           <h3>{title}</h3>
           <p className="muted small">{emptyMessage}</p>
@@ -107,7 +107,7 @@ export function ExpenseCategoryDonutChart({
   }
 
   return (
-    <section className="expense-chart-card">
+    <section className="expense-chart-body">
       <div className="expense-chart-visual">
         <svg viewBox="0 0 120 120" role="img" aria-label="Expense category split">
           <circle

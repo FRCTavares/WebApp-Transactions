@@ -380,17 +380,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.wealth-chart-card {
-  display: grid;
-  gap: 0.65rem;
-  margin: 0;
-  padding: 0.85rem;
-  border: 1px solid var(--wealth-border);
-  border-radius: 0.9rem;
-  background: #fbfbfd;
-  box-shadow: none;
-}
-
 .wealth-chart-header {
   display: flex;
   align-items: flex-start;

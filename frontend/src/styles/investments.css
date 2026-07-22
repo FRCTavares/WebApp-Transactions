@@ -365,7 +365,7 @@ which is why dark mode
   overflow: hidden;
   height: 0.5rem;
   border-radius: 999px;
-  background: #e5e7eb;
+  background: var(--chart-track);
 }
 
 .investment-holding-track span {
@@ -687,18 +687,6 @@ which is why dark mode
 
 .investment-trend-current small.negative {
   color: #dc2626;
-}
-
-.investment-trend-visual {
-  overflow: hidden;
-  border-radius: 1rem;
-  background: var(--color-surface-sunken);
-}
-
-.investment-trend-visual svg {
-  display: block;
-  width: 100%;
-  min-height: 11.25rem;
 }
 
 .investment-trend-baseline {

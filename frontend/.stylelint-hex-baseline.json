@@ -1,4 +1,4 @@
 {
   "note": "Raw hex colours outside tokens/primitives.css. A ratchet, not a target - see scripts/check-hex-ratchet.mjs. Lower this as hex is tokenised; never raise it.",
-  "maxHexColours": 527
+  "maxHexColours": 512
 }

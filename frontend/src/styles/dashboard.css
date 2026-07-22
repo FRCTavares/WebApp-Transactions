@@ -223,20 +223,22 @@
   border-radius: inherit;
 }
 
-.dashboard-spending-panel {
-  padding: 0;
-}
+/* The donut's own root. Its only call site is inside the `Card` above, so the
+   card owns the surface, border and radius and this is a layout body.
+   `.dashboard-spending-panel` used to carry `padding: 0` so the inner element
+   could pad instead; `.ui-card-pad-md` outranks it, so that never applied.
 
-.dashboard-spending-panel .expense-chart-card {
+   The padding here is deliberate and is *not* redundant with the card's. It
+   sits on top of it, and the total is what lines this panel's heading up with
+   Monthly summary's beside it - that heading carries its own ~19px offset, so
+   removing this drops the donut's heading 18.4px higher than its neighbour at
+   1440. Measured, not assumed. */
+.dashboard-spending-panel .expense-chart-body {
   display: grid;
   grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
   gap: 1.25rem;
   height: 100%;
-  margin: 0;
   padding: 1.15rem;
-  border: 0;
-  border-radius: inherit;
-  box-shadow: none;
 }
 
 .dashboard-spending-panel .expense-chart-list-header {
@@ -377,7 +379,7 @@
     border-radius: 1rem;
   }
 
-  .dashboard-spending-panel .expense-chart-card {
+  .dashboard-spending-panel .expense-chart-body {
     grid-template-columns: 1fr;
     gap: 1rem;
     padding: 1rem;
@@ -584,16 +586,11 @@
 }
 
 /* Dashboard expense chart. */
-.expense-chart-card {
+.expense-chart-body {
   display: grid;
   grid-template-columns: minmax(220px, 320px) 1fr;
   gap: 18px;
   align-items: center;
-  margin: 14px 0;
-  padding: 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-  background: var(--color-surface);
 }
 
 .expense-chart-visual {
@@ -700,12 +697,9 @@
 }
 
 @media (max-width: 800px) {
-  .expense-chart-card {
+  .expense-chart-body {
     grid-template-columns: 1fr;
     gap: 8px;
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 14px;
   }
 
   .expense-chart-visual {
