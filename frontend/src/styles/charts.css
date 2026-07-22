@@ -10,16 +10,13 @@
   padding: 1.15rem;
 }
 
-/* Wealth inner wrapper must not look like a second card. */
-.wealth-trend-panel .wealth-chart-card {
+/* The wealth chart's own root. It is always rendered inside the page card
+   above, so it is a layout body, not a second card - hence the name, and
+   hence no surface of its own. */
+.wealth-trend-panel .wealth-chart-body {
   display: grid;
   gap: 1rem;
   min-height: 0;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 .investment-trend-header,
@@ -78,10 +75,6 @@
 .investment-trend-visual,
 .wealth-chart-wrap {
   overflow: visible;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 .investment-trend-visual svg,
@@ -89,8 +82,7 @@
   display: block;
   width: 100%;
   height: auto;
-  min-height: 0 !important;
-  max-height: none !important;
+  min-height: 0;
   overflow: visible;
 }
 
@@ -220,18 +212,8 @@
   box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
 }
 
-/* Dark chart system. */
-:root[data-theme='dark'] .wealth-trend-panel .wealth-chart-card {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-:root[data-theme='dark'] .investment-trend-visual,
-:root[data-theme='dark'] .wealth-chart-wrap {
-  background: transparent !important;
-}
-
+/* Dark chart system. Neither the chart body nor the plot wrappers carry a
+   surface in either theme now, so there is nothing left here to repaint. */
 :root[data-theme='dark'] .investment-trend-baseline,
 :root[data-theme='dark'] .wealth-chart-baseline {
   stroke: rgb(174 179 189 / 0.42);

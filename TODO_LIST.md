@@ -1024,10 +1024,25 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
-**State at 2026-07-22.** 901 -> 596 lines, 378 -> 211 selectors. Shipped in #81,
-#82, #84, #85. Everything still in the three dark sheets is chart internals, so
-**Phase 6's nested-card fix has to land before Phase 5 can finish** — tokenising
-that markup now would mean doing it twice. This reorders the plan as written.
+**State at 2026-07-22.** 901 -> 591 lines, 378 -> 206 selectors. Shipped in #81,
+#82, #84, #85, plus the 5 selectors the Phase 6 nested-card fix took with it.
+
+**Correction: "everything still in the three dark sheets is chart internals" was
+wrong, and so was the claim that the nested-card fix unblocks this phase.** That
+fix has now landed. It removed exactly 5 selectors — 596 -> 591 lines,
+211 -> 206 — because the chart elements were only ever *listed* in these sheets,
+never the bulk of them. What remains is broad and not chart-specific: the
+dashboard metric icons and summary-bar tracks, the entire
+`.investment-holding-card` family (33 selectors in `investments-dark.css` alone,
+several of them `[class*='...']` matches), `.expense-chart-card`,
+`.mobile-bottom-nav`, the market-data cards, the import panels, `.card`,
+`.manual-form`, `.table-wrap`, and odd/even row striping on three tables.
+Deleting these files is a per-component-family job, not one sweep.
+
+The natural next tranche, and the twin of the fix just shipped, is
+`.expense-chart-card` — the same nested-card shape on the Dashboard, already
+recorded as open under Phase 4 and still carrying a `#1c1d21 !important`
+override in `theme-dark-overrides.css`.
 
 The original note that these files "should be nearly empty by now" was wrong and
 is corrected here: removing all three today still changes 113 of 117 measured
@@ -1049,41 +1064,56 @@ them. Phase 4 tokenised page-level surfaces; component internals were untouched.
 token references, so they theme correctly and a legend swatch and its slice are
 the same token by construction. A unit test locks that identity.
 
-**Do the nested-card fix next — it unblocks two phases.** It is Phase 6 work
-*and* the last thing standing between Phase 5 and deleting the dark sheets.
-Mapped in full here so it does not need re-discovery.
+- [x] **Fixed the `WealthMonthlyChart` nested card — 2026-07-22.** The inner
+      `<div>` is now `.wealth-chart-body`, all **15** `!important` declarations
+      are gone from `charts.css`, and the file no longer contains the word.
+      Nine files touched, 110 lines deleted against 12 added.
 
-- [ ] **Fix the `WealthMonthlyChart` nested card.** The component renders an
-      inner `<div class="wealth-chart-card">`, and its only call site is inside
-      `<section class="content-card panel-card wealth-trend-panel">`
-      (`WealthPage.tsx:613`). The inner div is therefore *always* inside a real
-      card, yet it is given card styling in two places and stripped again in
-      three — which is what the 15 `!important` declarations in `charts.css` do.
+      Verified: `npm run lint` clean, `npm run lint:css` at baseline,
+      52/52 unit tests, `npm run build` passes, 12/12 e2e on chromium and
+      mobile-chromium against a live backend, `git diff --check` clean.
+      Above all: **7,830 computed values across 12 page/theme/width
+      combinations were compared before and after, and all 24 screenshots are
+      byte-identical.** The only reported difference is the class name itself.
 
-      Given card styling by:
-      - `wealth.css:383` — border, radius, padding, background
-      - `wealth-chart.css:2` — padding plus a white gradient background
+      Three corrections to the map above, all of which cost time to find:
 
-      Stripped again by:
-      - `wealth-chart.css:99` — `.wealth-trend-panel .wealth-chart-card`
-      - `charts.css:14-22` — the `!important` block for the card
-      - `charts.css:79-95` — same treatment for `.wealth-chart-wrap` and
-        `.investment-trend-visual`
+      - **`wealth-mobile.css` was not in the plan and held four more
+        `.wealth-chart-card` selectors** (`:18`, `:158`, `:338`, `:363`),
+        including a `background: var(--color-surface) !important` that paints
+        the inner div as a card at ≤800px. It never rendered: `charts.css`
+        loads after `wealth-mobile.css` at equal specificity, so its
+        `background: transparent !important` won. Two of the four were selectors
+        inside lists that also target `.wealth-trend-panel` and had to be pruned,
+        not deleted.
+      - **The two `min-height` rules the plan said to keep were both dead.**
+        `wealth-chart.css:140` (`14.2rem`) is overridden by `:210` (`auto`), and
+        both lose to `charts.css`'s `min-height: 0` at higher specificity.
+        Measured `0px` before and after. Both deleted.
+      - **The 15 `!important`s were not all about the card.** Five were, four
+        were the same treatment for `.wealth-chart-wrap` /
+        `.investment-trend-visual`, three were the dark-mode repeat, and two
+        were `min-height`/`max-height` on the SVGs — which meant also deleting
+        the `min-height: 11.25rem` and `max-height` declarations in
+        `wealth-chart.css` and `investments.css` that they existed to defeat.
 
-      Fix: rename the inner div to `.wealth-chart-body` (it is not a card and
-      should not be named like one), delete both base-card rules and all three
-      override blocks, keep only the layout rules — the `min-height` at
-      `wealth-chart.css:140` and `:210`, renamed to match.
+      `.investment-trend-visual` did have the same shape and got the same pass:
+      `investments.css:692` gave it a radius and a `--color-surface-sunken`
+      background, invisible because `charts.css` overrode both. Rule deleted;
+      not renamed, since "visual" does not claim to be a card.
 
-      `.investment-trend-visual` shares the `charts.css` override block and
-      almost certainly has the same shape. Check it in the same pass.
+      One hex literal disappeared with `wealth.css`'s `.wealth-chart-card`
+      (`#fbfbfd`), so `.stylelint-hex-baseline.json` drops 527 -> 526.
 
-      **Verification is not optional.** This is a multi-file CSS deletion whose
-      only failure mode is a dark-mode regression, and three of those shipped
-      during Phase 5 — each invisible to assertions, each caught only by looking
-      at a screenshot. Required: seed data first, then compare computed styles
-      for the wealth chart and the investment trend chart before and after, in
-      both themes, at 375 / 800 / 1440, with screenshots.
+      **On the harness, for whoever does `.expense-chart-card` next.** Seeding
+      went through the API and asserted `/api/wealth/monthly` and
+      `/api/investment-events/monthly-series` were non-empty *before* any
+      probe ran; the capture then asserted each chart's path `d` was actually
+      drawn, so a blank page could not come back green. Probes listed both the
+      old and new class name in one selector, which is what let the same script
+      run unchanged on both sides. `backgroundImage` was read alongside
+      `backgroundColor` — two of the deleted backgrounds were gradients and a
+      `backgroundColor`-only probe would not have seen them at all.
 
 
 - [ ] Add `frontend/src/components/charts/`: a `useChartScale` hook plus
@@ -1092,12 +1122,6 @@ Mapped in full here so it does not need re-discovery.
       `.trend-chart-grid-line`, `.wealth-chart-area`,
       `.wealth-chart-edge-point`, and `.wealth-chart-value-label` while the
       markup still renders them. Render gridlines properly instead.
-- [ ] Move `SLICE_COLOURS` out of `ExpenseCategoryDonutChart.tsx` into
-      `--chart-1` … `--chart-8` semantic tokens so all four charts share one
-      theme-aware palette and legend swatches provably match their slices.
-- [ ] Fix the nested-card markup in `WealthMonthlyChart` so the 15
-      `!important` declarations in `charts.css` can be deleted rather than
-      preserved.
 - [ ] Add hover tooltips with a crosshair to both trend charts, and format
       y-axis labels as currency via the existing `utils/format.ts`.
 - [ ] Make donut interaction keyboard-accessible. Slices are `<circle>`

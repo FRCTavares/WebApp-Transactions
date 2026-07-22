@@ -1,11 +1,4 @@
 /* Wealth trend chart redesign. */
-.wealth-chart-card {
-  gap: 0.75rem;
-  padding: 0.95rem;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.96), rgb(248 250 252 / 0.92));
-}
-
 .wealth-chart-header {
   align-items: flex-start;
 }
@@ -39,10 +32,6 @@
 
 .wealth-chart-stat small.negative {
   color: #dc2626;
-}
-
-.wealth-chart-wrap {
-  overflow: hidden;
 }
 
 .wealth-chart-wrap svg {
@@ -96,16 +85,6 @@
   padding: 0.9rem;
 }
 
-.wealth-trend-panel .wealth-chart-card {
-  border: 0;
-  padding: 0;
-  background: transparent;
-}
-
-.wealth-trend-panel .wealth-chart-wrap svg {
-  max-height: 150px;
-}
-
 .wealth-accounts-panel {
   padding-top: 0.9rem;
 }
@@ -131,14 +110,6 @@
 /* Stronger wealth chart hero pass. */
 .wealth-trend-panel {
   padding: 1rem;
-}
-
-.wealth-trend-panel .wealth-chart-wrap svg {
-  max-height: none;
-}
-
-.wealth-chart-card {
-  min-height: 14.2rem;
 }
 
 .wealth-chart-header {
@@ -207,10 +178,6 @@
 }
 
 /* Wealth chart investment-style normalization. */
-.wealth-chart-card {
-  min-height: auto;
-}
-
 .wealth-chart-header {
   align-items: flex-start;
   gap: 1rem;
@@ -239,19 +206,6 @@
   font-size: 1.42rem;
   line-height: 1;
   letter-spacing: -0.05em;
-}
-
-.wealth-chart-wrap {
-  overflow: hidden;
-  border-radius: 1rem;
-  background:
-    linear-gradient(180deg, rgb(248 250 252 / 0.98), rgb(255 255 255 / 0.98));
-}
-
-.wealth-chart-wrap svg {
-  display: block;
-  width: 100%;
-  min-height: 11.25rem;
 }
 
 .wealth-chart-area,

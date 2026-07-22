@@ -153,7 +153,7 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
     return array.findIndex((item) => item.month === point.month) === index
   })
   return (
-    <div className="wealth-chart-card">
+    <div className="wealth-chart-body">
       <div className="wealth-chart-header">
         <div>
           <h3>Wealth trend</h3>

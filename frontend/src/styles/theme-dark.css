@@ -62,12 +62,9 @@ and this exclusion with it. */
 :root[data-theme='dark'] .wealth-account-card,
 :root[data-theme='dark'] .wealth-subaccount-row,
 :root[data-theme='dark'] .wealth-table-wrap,
-:root[data-theme='dark'] .wealth-chart-card,
-:root[data-theme='dark'] .wealth-chart-wrap,
 :root[data-theme='dark'] .wealth-modal-card,
 :root[data-theme='dark'] .wealth-modal-subaccount-row,
 :root[data-theme='dark'] .investment-holding-card,
-:root[data-theme='dark'] .investment-trend-visual,
 :root[data-theme='dark'] .market-data-refresh-card,
 :root[data-theme='dark'] .market-data-holding-card,
 :root[data-theme='dark'] .market-data-advanced,
@@ -213,7 +210,6 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .owed-table-filter-card,
 :root[data-theme='dark'] .owed-table-wrap,
 :root[data-theme='dark'] .wealth-summary-card,
-:root[data-theme='dark'] .wealth-chart-card,
 :root[data-theme='dark'] .card {
   border-color: rgb(255 255 255 / 0.105);
   background:

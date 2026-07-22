@@ -689,18 +689,6 @@ which is why dark mode
   color: #dc2626;
 }
 
-.investment-trend-visual {
-  overflow: hidden;
-  border-radius: 1rem;
-  background: var(--color-surface-sunken);
-}
-
-.investment-trend-visual svg {
-  display: block;
-  width: 100%;
-  min-height: 11.25rem;
-}
-
 .investment-trend-baseline {
   stroke: #dbe3ef;
   stroke-width: 1;
