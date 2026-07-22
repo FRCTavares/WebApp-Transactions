@@ -111,7 +111,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,
 :root[data-theme='dark'] .owed-table-wrap,
-:root[data-theme='dark'] .wealth-summary-card,
 :root[data-theme='dark'] .card,
 :root[data-theme='dark'] .manual-form,
 :root[data-theme='dark'] .table-wrap {
@@ -122,13 +121,10 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
     0 18px 42px rgb(0 0 0 / 0.18);
 }
 
-/* Nested cards should not look like full panels. */ :root[data-theme='dark'] .settings-action-button,
-:root[data-theme='dark'] .theme-option-button,
-:root[data-theme='dark'] .settings-status,
+/* Nested cards should not look like full panels. */
 :root[data-theme='dark'] .expense-chart-legend-row,
 :root[data-theme='dark'] .investment-holding-card,
 :root[data-theme='dark'] .wealth-account-card,
-:root[data-theme='dark'] .wealth-subaccount-row,
 :root[data-theme='dark'] .owed-person-card,
 :root[data-theme='dark'] .owed-person-item,
 :root[data-theme='dark'] .dashboard-recent-category,
@@ -138,7 +134,7 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   box-shadow: none;
 }
 
-/* Active controls: less electric blue. */ :root[data-theme='dark'] .theme-option-button.active,
+/* Active controls: less electric blue. */
 :root[data-theme='dark'] .mobile-bottom-nav button.active,
 :root[data-theme='dark'] .transaction-direction-switch button.active,
 :root[data-theme='dark'] .dashboard-chart-toggle button.active,
@@ -150,7 +146,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   box-shadow: none;
 }
 
-:root[data-theme='dark'] .theme-option-button:focus-visible,
 :root[data-theme='dark'] input:focus-visible,
 :root[data-theme='dark'] select:focus-visible,
 :root[data-theme='dark'] textarea:focus-visible {
@@ -163,12 +158,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   border-color: rgb(255 255 255 / 0.13);
   background: #232429;
   color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .settings-action-button:hover,
-:root[data-theme='dark'] .theme-option-button:hover {
-  border-color: rgb(138 180 248 / 0.35);
-  background: #292b31 !important;
 }
 
 /* Dashboard bars and chart tracks. `.investment-holding-track` is not here:
@@ -216,11 +205,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   background: #262830 !important;
 }
 
-:root[data-theme='dark'] .fully-reimbursed-row td:first-child::after {
-  background: rgb(34 197 94 / 0.16);
-  color: #bbf7d0;
-}
-
 :root[data-theme='dark'] .table-action-group button,
 :root[data-theme='dark'] .small-button {
   border-color: rgb(255 255 255 / 0.13);
@@ -237,7 +221,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 
 :root[data-theme='dark'] .dashboard-recent-row,
 :root[data-theme='dark'] .wealth-account-card-footer,
-:root[data-theme='dark'] .wealth-subaccount-list,
 :root[data-theme='dark'] .wealth-mobile-account-group-header,
 :root[data-theme='dark'] .wealth-mobile-account-item,
 :root[data-theme='dark'] .owed-person-card-header,
@@ -245,13 +228,11 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   border-color: rgb(255 255 255 / 0.075);
 }
 
-/* Summary cards that still had hardcoded light backgrounds. */ :root[data-theme='dark'] .investments-page .investment-summary-grid article,
+/* Summary cards that still had hardcoded light backgrounds. */
+:root[data-theme='dark'] .investments-page .investment-summary-grid article,
 :root[data-theme='dark'] .investments-page .investment-summary-market-value,
 :root[data-theme='dark'] .investments-page .investment-summary-gain,
-:root[data-theme='dark'] .import-summary-card-primary,
-:root[data-theme='dark'] .wealth-summary-card-primary,
-:root[data-theme='dark'] .wealth-owed-summary-card,
-:root[data-theme='dark'] .wealth-investments-summary-card {
+:root[data-theme='dark'] .import-summary-card-primary {
   border-color: rgb(255 255 255 / 0.105) !important;
   background: #202126 !important;
   color: var(--theme-text) !important;

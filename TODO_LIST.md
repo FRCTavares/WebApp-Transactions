@@ -1020,10 +1020,35 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
-**State at 2026-07-22.** 901 -> 518 lines, 378 -> 169 selectors, **and three
+**State at 2026-07-22.** 901 -> 428 lines, 378 -> 139 selectors, **and three
 files are now two**. Shipped in #81, #82, #84, #85, plus 5 selectors from the
-wealth nested-card fix, 2 from the expense-chart one, and 35 from deleting
-`investments-dark.css` outright.
+wealth nested-card fix, 2 from the expense-chart one, 35 from deleting
+`investments-dark.css` outright, and 34 from a dead-selector sweep of the
+remaining two.
+
+**The dead-selector sweep: 34 of 173 selectors matched no markup.** They came
+down to 12 class names that no `.tsx` renders — `.settings-status`,
+`.settings-action-button`, `.theme-option-group`, `.theme-option-button`
+(the pre-`SegmentedControl` theme picker), `.danger-button` (replaced by
+`Button variant="danger"` in Phase 4), `.wealth-summary-card`,
+`.wealth-summary-card-primary`, `.wealth-owed-summary-card`,
+`.wealth-investments-summary-card`, `.wealth-subaccount-row`,
+`.wealth-subaccount-list` (the Wealth summary band, since removed) and
+`.fully-reimbursed-row`. Zero styling work; nothing was tokenised.
+
+**All 12 are still styled in the light sheets too** — 2 to 5 files each,
+depending on the class. Deleting that dead light CSS is a bigger and entirely
+separate diff, and worth doing: run the same
+`grep -rl <class> src --include='*.tsx'` check across `src/styles/` generally,
+not just the dark sheets.
+
+Verification for a pure dead-code deletion is not "the differences are
+explainable" but "there are none": all nine pages were screenshotted full-page
+in both themes at 375/800/1440 before and after. 46 of 54 came back
+byte-identical. The other 8 were run-to-run noise, and both causes were proved
+rather than assumed — the six Dashboard shots differ only inside the
+`Data refreshed at HH:MM` clock, and the two Categories shots differ by exactly
+the same 33 bytes they differ by when the same code is captured twice.
 
 **`investments-dark.css` is gone — and 21 of its 33 selectors were dead.**
 The file targeted 14 class names that are rendered nowhere in the app
@@ -1086,9 +1111,17 @@ them. Phase 4 tokenised page-level surfaces; component internals were untouched.
 - [x] **`investments-dark.css` deleted — 2026-07-22.** 72 lines, 33 selectors,
       plus 2 more pruned from `theme-dark-overrides.css`. Import removed from
       `main.tsx`. Hex baseline 525 -> 514.
-- [ ] Delete `theme-dark.css` (260 lines) and `theme-dark-overrides.css` (258).
-      Audit for dead selectors first — that is where most of
-      `investments-dark.css` went.
+- [x] **Dead-selector sweep of both remaining sheets — 2026-07-22.** 34 of 173
+      selectors deleted; `theme-dark.css` 260 -> 189, `theme-dark-overrides.css`
+      258 -> 239. Hex baseline 514 -> 512. A re-run of the audit reports 0 dead.
+- [ ] Delete `theme-dark.css` (189 lines) and `theme-dark-overrides.css` (239).
+      **The easy half is done — the remaining 120 selectors are all live**, so
+      from here it is per-component-family tokenising, the
+      `transaction-categories.css` method: move the light values onto the
+      semantic layer and the dark override becomes redundant. Largest families
+      left: `.investment-holding-*`, the dashboard metric icons and summary
+      bars, `.expense-chart-*`, `.mobile-bottom-nav`, `.card` / `.table-wrap` /
+      `.manual-form`, the market-data cards and the import panels.
       Acceptance: no file matching `*dark*.css` remains under
       `src/styles/`, and adding a new component requires no dark-mode work.
 - [ ] Add a theme transition on `background-color` and `color` so toggling
@@ -1300,7 +1333,22 @@ visibly broken output.
 - **Check the markup before styling anything in a dark sheet.**
   `grep -rl <class> src --include='*.tsx'` returning zero files means the
   selector is dead and can go with no styling work. That was 21 of the 33
-  selectors in `investments-dark.css`.
+  selectors in `investments-dark.css` and 34 of the 173 in the other two.
+  **But a plain grep gives false "dead" verdicts:** class names are built as
+  `` `dashboard-metric-${getMetricTone(x)}` `` and `` `app-main-${page}` ``, so
+  `dashboard-metric-positive` appears nowhere as a literal and is very much
+  rendered. Check dash-delimited prefixes against template literals too.
+- **Prove a screenshot difference is yours before explaining it.** Capture the
+  same page twice on unchanged code first. The Categories page turned out to
+  differ from itself by exactly the 33 bytes it differed by across the change;
+  the Dashboard was stable within a run but not across runs, because
+  `Data refreshed at HH:MM` moves on the minute. Neither had anything to do
+  with the edit.
+- **BMP rows are stored bottom-up.** Mapping `cmp -l` byte offsets to pixel
+  rows without accounting for that put the Dashboard difference at the foot of
+  the page instead of in the header, and very nearly turned a clock into a
+  regression. Sanity-check the mapping with `elementFromPoint` before believing
+  a location.
 - **Assert your string replacements matched.** `str.replace` is a silent no-op
   when the target is not found; a helper that asserts exactly one match caught
   an edit that had deleted the entire Import upload panel.
