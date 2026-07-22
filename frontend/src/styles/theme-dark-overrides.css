@@ -19,7 +19,6 @@ and this exclusion with it. */
 }
 
 :root[data-theme='dark'] .dashboard-summary-bar-track,
-:root[data-theme='dark'] .investment-holding-track,
 :root[data-theme='dark'] .investment-trend-window-selector,
 :root[data-theme='dark'] .dashboard-chart-toggle,
 :root[data-theme='dark'] .transaction-direction-switch,
@@ -172,8 +171,10 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   background: #292b31 !important;
 }
 
-/* Dashboard bars and chart tracks. */ :root[data-theme='dark'] .dashboard-summary-bar-track,
-:root[data-theme='dark'] .investment-holding-track,
+/* Dashboard bars and chart tracks. `.investment-holding-track` is not here:
+   it reads `--chart-track`, which dark.css already themes. The other two
+   still hardcode a light value and need the same treatment. */
+:root[data-theme='dark'] .dashboard-summary-bar-track,
 :root[data-theme='dark'] .expense-chart-track {
   background: #2a2c32;
   stroke: #2a2c32;

@@ -1020,9 +1020,36 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
-**State at 2026-07-22.** 901 -> 589 lines, 378 -> 204 selectors. Shipped in #81,
-#82, #84, #85, plus the 5 selectors the wealth nested-card fix took with it and
-the 2 from the expense-chart one.
+**State at 2026-07-22.** 901 -> 518 lines, 378 -> 169 selectors, **and three
+files are now two**. Shipped in #81, #82, #84, #85, plus 5 selectors from the
+wealth nested-card fix, 2 from the expense-chart one, and 35 from deleting
+`investments-dark.css` outright.
+
+**`investments-dark.css` is gone — and 21 of its 33 selectors were dead.**
+The file targeted 14 class names that are rendered nowhere in the app
+(`.investment-holding-name`, `-value`, `-price`, `-cost`, `-quantity`,
+`-label`, `-detail-label`, `-gain`, `-return-positive`, `-return-negative`,
+`-metrics`, `-fill`, `.metric-label`, `.metric-value`), plus a
+`[class*='quantity'|'price'|'cost'|'label']` "fallback for existing holding
+detail grids that use generic div/span markup" that matched nothing either.
+Four of its ten rules were entirely inert. The real markup renders
+`-ticker`, `-meta`, `-track`, `-details` and plain `dt`/`dd`/`small`/`span`,
+and the gain classes are `.investment-gain-positive` / `-negative`, which the
+file never mentioned.
+
+The 12 live selectors were repainting greys that the page already themed
+correctly on its own: `--investment-text`, `--investment-muted` and
+`--investment-border` were aliased onto the semantic layer during #74, so
+deleting the file just lets the holding cards converge on the zinc ramp
+(`#aeb3bd`/`#8f95a1` -> `--color-text-muted`, `#e8e9ed` -> `--color-text`).
+Only one value genuinely needed tokenising first: `.investment-holding-track`
+hardcoded `#e5e7eb` and now reads `--chart-track`, the role token Phase 1
+created for exactly this.
+
+Two visible changes in dark, both of them dark catching up with light:
+the primary holding's value is accent blue instead of white (light mode
+already renders it `--color-accent-text`), and the cost-currency spans inside
+`dd` are full text colour instead of muted (light mode already was).
 
 **Correction: "everything still in the three dark sheets is chart internals" was
 wrong, and so was the claim that the nested-card fix unblocks this phase.** That
@@ -1044,17 +1071,24 @@ surfaces, and each family needs its light values tokenised before its dark
 override can go, exactly as `transaction-categories.css` was done in Phase 4
 (54 selectors deleted by tokenising, not by overriding).
 
-Biggest single win available: `investments-dark.css` is 33 selectors, all of
-them the `.investment-holding-card` family, several matching on
-`[class*='...']`. That file could plausibly go in one pass.
+That prediction held: `investments-dark.css` did go in one pass, and it went
+mostly because it was dead rather than because much was tokenised. **Expect the
+same of the other two — audit which selectors match live markup before planning
+any of it.** A quick way in: for each class name in the sheet,
+`grep -rl <name> src --include='*.tsx'`; anything returning zero files is
+deletable with no styling work at all.
 
 The original note that these files "should be nearly empty by now" was wrong and
 is corrected here: removing all three today still changes 113 of 117 measured
 selectors, and `.expense-chart-card` renders pure white in dark mode without
 them. Phase 4 tokenised page-level surfaces; component internals were untouched.
 
-- [ ] Delete `theme-dark.css` (618 lines), `theme-dark-overrides.css`, and
-      `investments-dark.css`. By this point they should be nearly empty.
+- [x] **`investments-dark.css` deleted — 2026-07-22.** 72 lines, 33 selectors,
+      plus 2 more pruned from `theme-dark-overrides.css`. Import removed from
+      `main.tsx`. Hex baseline 525 -> 514.
+- [ ] Delete `theme-dark.css` (260 lines) and `theme-dark-overrides.css` (258).
+      Audit for dead selectors first — that is where most of
+      `investments-dark.css` went.
       Acceptance: no file matching `*dark*.css` remains under
       `src/styles/`, and adding a new component requires no dark-mode work.
 - [ ] Add a theme transition on `background-color` and `color` so toggling
@@ -1256,6 +1290,17 @@ visibly broken output.
   it still produces false positives on the Owed person cards.
 - **Use exact selector matching when bulk-deleting CSS rules.** Substring
   matching made `'tr'` match `.expense-chart-track` and silently ate chart rules.
+- **A class can appear in more than one selector list in the same file.**
+  Pruning `.investment-holding-track` from the obvious "Dashboard bars and chart
+  tracks" rule left a second listing 150 lines earlier, so the newly tokenised
+  value was still being overridden. The computed capture caught it — the token
+  resolved to `rgb(255 255 255 / 0.045)` instead of the `#27272a` in `dark.css`,
+  which is what a stray override looks like. Grep for every occurrence, and if
+  a token does not resolve to the value you defined, something else is winning.
+- **Check the markup before styling anything in a dark sheet.**
+  `grep -rl <class> src --include='*.tsx'` returning zero files means the
+  selector is dead and can go with no styling work. That was 21 of the 33
+  selectors in `investments-dark.css`.
 - **Assert your string replacements matched.** `str.replace` is a silent no-op
   when the target is not found; a helper that asserts exactly one match caught
   an edit that had deleted the entire Import upload panel.
