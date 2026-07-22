@@ -621,16 +621,12 @@ the dark-mode collapse, which Phase 4 was the precondition for.
         omitted. Worth checking wherever else `getReasonText` is used.
 
       **Still open on this page:**
-      - *Card inside a card on the Spending breakdown panel.*
-        `ExpenseCategoryDonutChart` renders its own `.expense-chart-card`
-        surface and the Dashboard wraps it in a `Card` as well, so the donut
-        sits in a visibly lighter inset rectangle while `Monthly summary`
-        beside it is flat. Introduced by the Phase 4 migration. Fix: either
-        drop the wrapper to `padding="none"` and let the chart own its
-        surface, or strip `.expense-chart-card`'s border/background/radius and
-        let `Card` own it — the second is preferable, since it is the same
-        nesting problem `charts.css` currently papers over with 15
-        `!important` declarations for `WealthMonthlyChart`. Disposition: leave this open and resolve it in Phase 6 together with `WealthMonthlyChart`; do not include it in the Transactions migration unless it blocks verification.
+      - *Card inside a card on the Spending breakdown panel.* **Resolved
+        2026-07-22 — see the Phase 6 entry.** The second option was taken:
+        `.expense-chart-card` is now `.expense-chart-body` and owns no
+        surface. Its padding was deliberately kept, which the original note
+        did not anticipate; the reason is recorded in Phase 6 and in
+        `dashboard.css`.
       - *Fully-owed transactions render a column of `€0.00`* in the recent
         list (product decision, not styling). Arithmetically correct — the
         personal amount is zero once the whole sum is owed — but on real data
@@ -1024,8 +1020,9 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
-**State at 2026-07-22.** 901 -> 591 lines, 378 -> 206 selectors. Shipped in #81,
-#82, #84, #85, plus the 5 selectors the Phase 6 nested-card fix took with it.
+**State at 2026-07-22.** 901 -> 589 lines, 378 -> 204 selectors. Shipped in #81,
+#82, #84, #85, plus the 5 selectors the wealth nested-card fix took with it and
+the 2 from the expense-chart one.
 
 **Correction: "everything still in the three dark sheets is chart internals" was
 wrong, and so was the claim that the nested-card fix unblocks this phase.** That
@@ -1039,10 +1036,17 @@ several of them `[class*='...']` matches), `.expense-chart-card`,
 `.manual-form`, `.table-wrap`, and odd/even row striping on three tables.
 Deleting these files is a per-component-family job, not one sweep.
 
-The natural next tranche, and the twin of the fix just shipped, is
-`.expense-chart-card` — the same nested-card shape on the Dashboard, already
-recorded as open under Phase 4 and still carrying a `#1c1d21 !important`
-override in `theme-dark-overrides.css`.
+`.expense-chart-card` — the Dashboard twin — has now been done too, and took
+2 more selectors. **Both nested-card fixes together moved this phase by 7
+selectors out of 211.** That is the honest measure of how much of these files
+is chart-related: almost none of it. The remaining 204 are ordinary component
+surfaces, and each family needs its light values tokenised before its dark
+override can go, exactly as `transaction-categories.css` was done in Phase 4
+(54 selectors deleted by tokenising, not by overriding).
+
+Biggest single win available: `investments-dark.css` is 33 selectors, all of
+them the `.investment-holding-card` family, several matching on
+`[class*='...']`. That file could plausibly go in one pass.
 
 The original note that these files "should be nearly empty by now" was wrong and
 is corrected here: removing all three today still changes 113 of 117 measured
@@ -1116,6 +1120,51 @@ the same token by construction. A unit test locks that identity.
       `backgroundColor`-only probe would not have seen them at all.
 
 
+- [x] **Fixed the `ExpenseCategoryDonutChart` nested card — 2026-07-22.** The
+      twin of the wealth fix, and the last chart-shaped thing in the dark
+      sheets. `.expense-chart-card` is now `.expense-chart-body`; six files,
+      24 insertions against 28 deletions.
+
+      In dark mode the inner `<section>` painted `#1c1d21` inside a `Card` on
+      `#18181b`, plus an inset highlight and an `0 18px 42px` drop shadow —
+      the visibly lighter inset rectangle beside a flat `Monthly summary`.
+      In light mode it painted `#ffffff` inside a white card, which is why
+      nobody saw it there. Both surfaces are gone; the `Card` owns it.
+
+      Verified: lint clean, `lint:css` at baseline (526 -> 525, `#d1d5db`
+      went with the deleted border), 52/52 unit tests, build passing, 12/12
+      e2e on chromium and mobile-chromium. 9,792 computed values compared
+      across 18 page/theme/width combinations; **every remaining difference
+      is on the Dashboard, and 29 of the 36 screenshots are byte-identical.**
+      The 6 that changed are the dark Dashboard ones — the fix — and the
+      seventh is `dashboard-light-1440-page`, which differs only in the
+      "Data refreshed at HH:MM" clock (its panel crop is byte-identical).
+
+      **The padding is load-bearing, and removing it was a real regression.**
+      The first attempt also dropped the inner `padding: 1.15rem` on the
+      grounds that the `Card` already pads. Computed styles and screenshots
+      both looked fine. What caught it was a separate probe measuring the
+      *top offset* of each panel's heading: `Monthly summary`'s heading sits
+      35.4px below its card, and the donut's matched that only because
+      16px of card padding plus 18.4px of its own added up to the same
+      number. Without it the donut's heading rose 18.4px above its
+      neighbour's at 1440. Restored, with the reason in the stylesheet.
+
+      Worth generalising: the rect capture records width and height, so an
+      element sliding up or down relative to a sibling is invisible to it.
+      Anything checking alignment has to measure `top` explicitly.
+
+      Deliberately **not** touched: `.expense-chart-track`, `-slice`,
+      `-centre`, `-legend-row` and `-dot` are shared with
+      `InvestmentAllocationCharts` on a different page. The harness probes
+      the allocation donut for exactly this reason, and it came back
+      byte-identical.
+
+      Two accepted differences, both sub-perceptual: the body's `color` moves
+      `#f5f5f7` -> `#f4f4f5` (it now inherits the `Card`'s token instead of
+      `--theme-text`), and its `border-radius` goes 20px -> 0 on an element
+      with no background, no border and no clipping.
+
 - [ ] Add `frontend/src/components/charts/`: a `useChartScale` hook plus
       shared `ChartAxis`, `ChartGrid`, `ChartTooltip`, `ChartLegend`.
 - [ ] Stop hiding chart features. `charts.css` sets `display: none` on
@@ -1177,6 +1226,21 @@ visibly broken output.
   Hand-written INSERTs failed on `transaction_categories.direction`,
   `transactions.raw_description`, `account_type: 'savings_account'` (not
   `savings`), and `investment_events.amount` needing `gt=0` even for buys.
+- **A 201 is not proof the seed worked.** `investment_events.event_type` is
+  typed as a free-form `str`, so `'buy'` is accepted and then counts for
+  nothing: cost basis, positions and valuation all filter on
+  `{'market_buy', 'market_sell'}`. The allocation donut rendered empty while
+  the trend line still drew, so the page looked populated. It must be
+  `'market_buy'`. Assert the *derived* endpoint, not the POST status.
+- **A rect capture that records only width and height cannot see alignment.**
+  An element sliding up or down relative to a sibling changes neither. The
+  expense-chart fix broke the Dashboard heading alignment by 18.4px with a
+  clean computed-style diff and plausible-looking screenshots; only an
+  explicit `getBoundingClientRect().top` comparison against the neighbouring
+  panel caught it.
+- **Padding on a nested element is not automatically redundant.** Where two
+  panels sit side by side, the inner padding may be what makes their headings
+  line up. Measure both panels before deleting either one's.
 - **Some states need a specific data shape.** The Wealth account modal only
   appears for a *group* — two or more accounts sharing an `institution`.
 - **The dark sheets are imported from `src/main.tsx`, not `index.css`.**

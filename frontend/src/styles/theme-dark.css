@@ -51,7 +51,6 @@ and this exclusion with it. */
 :root[data-theme='dark'] .settings-status,
 :root[data-theme='dark'] .settings-action-button,
 :root[data-theme='dark'] .unlock-card,
-:root[data-theme='dark'] .expense-chart-card,
 :root[data-theme='dark'] .expense-chart-legend-row,
 :root[data-theme='dark'] .owed-toolbar,
 :root[data-theme='dark'] .owed-table-filter-card,

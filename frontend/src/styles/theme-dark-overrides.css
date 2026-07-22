@@ -114,7 +114,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .owed-table-wrap,
 :root[data-theme='dark'] .wealth-summary-card,
 :root[data-theme='dark'] .card,
-:root[data-theme='dark'] .expense-chart-card,
 :root[data-theme='dark'] .manual-form,
 :root[data-theme='dark'] .table-wrap {
   border-color: rgb(255 255 255 / 0.105);
