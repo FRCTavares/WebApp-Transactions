@@ -1024,6 +1024,16 @@ files, then run the full verification workflow.
 
 ### Phase 5 — Dark mode collapse
 
+**State at 2026-07-22.** 901 -> 596 lines, 378 -> 211 selectors. Shipped in #81,
+#82, #84, #85. Everything still in the three dark sheets is chart internals, so
+**Phase 6's nested-card fix has to land before Phase 5 can finish** — tokenising
+that markup now would mean doing it twice. This reorders the plan as written.
+
+The original note that these files "should be nearly empty by now" was wrong and
+is corrected here: removing all three today still changes 113 of 117 measured
+selectors, and `.expense-chart-card` renders pure white in dark mode without
+them. Phase 4 tokenised page-level surfaces; component internals were untouched.
+
 - [ ] Delete `theme-dark.css` (618 lines), `theme-dark-overrides.css`, and
       `investments-dark.css`. By this point they should be nearly empty.
       Acceptance: no file matching `*dark*.css` remains under
@@ -1033,6 +1043,48 @@ files, then run the full verification workflow.
 - [ ] Verify every page in both themes at 375px, 800px, and 1440px.
 
 ### Phase 6 — Charts and icons
+
+**State at 2026-07-22.** The shared chart palette is done (#87): both donuts read
+`chartSliceColour()` from `utils/chartColours.ts`, which returns `--chart-*`
+token references, so they theme correctly and a legend swatch and its slice are
+the same token by construction. A unit test locks that identity.
+
+**Do the nested-card fix next — it unblocks two phases.** It is Phase 6 work
+*and* the last thing standing between Phase 5 and deleting the dark sheets.
+Mapped in full here so it does not need re-discovery.
+
+- [ ] **Fix the `WealthMonthlyChart` nested card.** The component renders an
+      inner `<div class="wealth-chart-card">`, and its only call site is inside
+      `<section class="content-card panel-card wealth-trend-panel">`
+      (`WealthPage.tsx:613`). The inner div is therefore *always* inside a real
+      card, yet it is given card styling in two places and stripped again in
+      three — which is what the 15 `!important` declarations in `charts.css` do.
+
+      Given card styling by:
+      - `wealth.css:383` — border, radius, padding, background
+      - `wealth-chart.css:2` — padding plus a white gradient background
+
+      Stripped again by:
+      - `wealth-chart.css:99` — `.wealth-trend-panel .wealth-chart-card`
+      - `charts.css:14-22` — the `!important` block for the card
+      - `charts.css:79-95` — same treatment for `.wealth-chart-wrap` and
+        `.investment-trend-visual`
+
+      Fix: rename the inner div to `.wealth-chart-body` (it is not a card and
+      should not be named like one), delete both base-card rules and all three
+      override blocks, keep only the layout rules — the `min-height` at
+      `wealth-chart.css:140` and `:210`, renamed to match.
+
+      `.investment-trend-visual` shares the `charts.css` override block and
+      almost certainly has the same shape. Check it in the same pass.
+
+      **Verification is not optional.** This is a multi-file CSS deletion whose
+      only failure mode is a dark-mode regression, and three of those shipped
+      during Phase 5 — each invisible to assertions, each caught only by looking
+      at a screenshot. Required: seed data first, then compare computed styles
+      for the wealth chart and the investment trend chart before and after, in
+      both themes, at 375 / 800 / 1440, with screenshots.
+
 
 - [ ] Add `frontend/src/components/charts/`: a `useChartScale` hook plus
       shared `ChartAxis`, `ChartGrid`, `ChartTooltip`, `ChartLegend`.
@@ -1064,6 +1116,64 @@ files, then run the full verification workflow.
 - [ ] Add icons to table row actions, sort direction, status banner tones,
       empty states, import source rows, and page-header primary actions.
       Every icon-only button needs an `aria-label`.
+
+**State at 2026-07-22.** The CSS hex ratchet is live (#86). `npm run lint:css`
+runs in CI and enforces a baseline of **527** raw hex colours outside
+`tokens/primitives.css`. It fails when the count rises *and* when it falls
+without the committed baseline being lowered, so the number can only move
+toward zero. Lower `maxHexColours` in `.stylelint-hex-baseline.json` whenever
+you tokenise a file — that is how the 527 gets worked down, per file, safely.
+
+- [ ] **Extend the hex guard to TS/TSX.** The ratchet scans stylesheets only.
+      The chart palette removed in #87 was 12 raw hex values living in `.tsx`,
+      entirely unguarded. Add an ESLint `no-restricted-syntax` rule for hex
+      literals in JSX style/attribute positions, or widen the ratchet.
+
+- [ ] **Make the interactive audit a standing check, not an improvisation.**
+      The existing Phase 7 line says "every page, both themes, 375/800/1440" —
+      pages, which is not enough. Three dark-mode bugs shipped in surfaces that
+      only exist after a click: the Record Payment modal painted white under
+      near-white text, the category dropdown's active option was pale blue under
+      light text, and the Investments mobile funding summary was near-black on a
+      dark card. It should read: every page **and every dialog, menu, inline
+      form and disclosure**.
+
+---
+
+**Harness notes — read before writing any verification script.**
+
+These cost real time to learn, and most of them produced a *passing* check over
+visibly broken output.
+
+- **Seed data first, and assert the state actually opened.** An empty database
+  makes every check vacuous: pages render empty, dialogs cannot be reached, and
+  the run comes back green having proved nothing. Assert the dialog is visible,
+  not just that the click did not throw.
+- **Seed through the API, not raw SQL.** The API cannot drift from the schema.
+  Hand-written INSERTs failed on `transaction_categories.direction`,
+  `transactions.raw_description`, `account_type: 'savings_account'` (not
+  `savings`), and `investment_events.amount` needing `gt=0` even for buys.
+- **Some states need a specific data shape.** The Wealth account modal only
+  appears for a *group* — two or more accounts sharing an `institution`.
+- **The dark sheets are imported from `src/main.tsx`, not `index.css`.**
+  Removing the wrong imports once produced "0 of 104 selectors changed", which
+  was a build being diffed against itself.
+- **A selector-level snapshot only watches selectors the deleted rules name.**
+  It reported zero regressions while the spending-breakdown legend rendered
+  `#111827` on `#232429`. Screenshots caught it; the snapshot could not.
+- **`toBeInViewport()` passes for a control that is covered.** Hit-test the
+  centre point with `elementFromPoint` and require the element itself to answer.
+- **A colour audit that reads only `backgroundColor` is structurally blind.**
+  Gradients live in `background-image`. That hid the white Portfolio band, and
+  it still produces false positives on the Owed person cards.
+- **Use exact selector matching when bulk-deleting CSS rules.** Substring
+  matching made `'tr'` match `.expense-chart-track` and silently ate chart rules.
+- **Assert your string replacements matched.** `str.replace` is a silent no-op
+  when the target is not found; a helper that asserts exactly one match caught
+  an edit that had deleted the entire Import upload panel.
+- **Run e2e against a throwaway database.** `backend/scripts/start_e2e_backend.sh`
+  does this; `APP_ENV=e2e` refuses to serve `data/finance.db`.
+
 
 ### Phase 7 — Consistency sweep and guardrails
 
