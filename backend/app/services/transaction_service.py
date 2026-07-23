@@ -170,6 +170,27 @@ class TransactionService:
             transaction_id,
             current_user.id,
         )
+        linked_owed_items = (
+            self.repository.list_all_owed_items_for_transaction(
+                transaction.id
+            )
+        )
+        linked_owed_payments = (
+            self.repository.list_all_owed_payments_for_transaction(
+                transaction.id
+            )
+        )
+
+        if linked_owed_items or linked_owed_payments:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Transaction has linked owed records. "
+                    "Preview the relationship and choose an explicit "
+                    "deletion strategy."
+                ),
+            )
+
         self.repository.delete(transaction)
 
     def _get_transaction_model(
