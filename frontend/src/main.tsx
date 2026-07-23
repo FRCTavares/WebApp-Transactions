@@ -11,18 +11,18 @@ import { BrowserRouter } from 'react-router-dom'
      3. app     everything else, in its historical order (see the warning).
 
    Before this manifest existed, index.css @imported 29 sheets, main.tsx
-   imported 7 more, and shell.css - 701 lines defining :root, body, .app-shell
-   and .sidebar - was reachable only through an @import buried on line 1 of
-   dashboard.css. Dark mode rendered correctly purely because the override
-   sheets happened to land last in source order.
+   imported 7 more, and shell.css - the global :root, body, .app-shell and
+   .sidebar layer - was reachable only through an @import buried in
+   dashboard.css.
 
-   WARNING: the group 3 order below is load-bearing and is NOT yet the order it
-   should be. theme-dark.css and theme-dark-overrides.css patch components by
-   specificity rather than by role, so moving them breaks dark mode. Likewise
-   shell.css still loads from inside dashboard.css, which places the global app
-   chrome partway through index.css's cascade. Both are corrected in Phase 2/5,
-   once the sheets they fight with consume semantic tokens. Reordering them now
-   would change rendering, which is exactly what Phase 1 must not do.
+   shell.css is now declared explicitly in index.css immediately before
+   dashboard.css. That removes the page-level ownership mistake while preserving
+   its historical cascade position. Do not move it before or after index.css
+   without a visual cascade comparison.
+
+   WARNING: the remaining group 3 order is load-bearing.
+   theme-dark.css and theme-dark-overrides.css still patch components by
+   specificity rather than by role, so moving them can break dark mode.
    --------------------------------------------------------------------------- */
 
 import '@fontsource-variable/inter'

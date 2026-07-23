@@ -18,25 +18,12 @@ and this exclusion with it. */
   background: rgb(255 255 255 / 0.04);
 }
 
-:root[data-theme='dark'] .dashboard-summary-bar-track,
 :root[data-theme='dark'] .investment-trend-window-selector,
 :root[data-theme='dark'] .dashboard-chart-toggle,
 :root[data-theme='dark'] .transaction-direction-switch,
 :root[data-theme='dark'] .segmented-control {
   border-color: rgb(255 255 255 / 0.09);
   background: rgb(255 255 255 / 0.045);
-}
-
-:root[data-theme='dark'] .expense-chart-track {
-  stroke: rgb(255 255 255 / 0.1);
-}
-
-:root[data-theme='dark'] .expense-chart-centre span {
-  color: #9ca3af;
-}
-
-:root[data-theme='dark'] .expense-chart-centre strong {
-  color: #f5f5f7;
 }
 
 :root[data-theme='dark'] .dashboard-metric-neutral .dashboard-metric-icon,
@@ -158,28 +145,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
   border-color: rgb(255 255 255 / 0.13);
   background: #232429;
   color: var(--theme-text);
-}
-
-/* Dashboard bars and chart tracks. `.investment-holding-track` is not here:
-   it reads `--chart-track`, which dark.css already themes. The other two
-   still hardcode a light value and need the same treatment. */
-:root[data-theme='dark'] .dashboard-summary-bar-track,
-:root[data-theme='dark'] .expense-chart-track {
-  background: #2a2c32;
-  stroke: #2a2c32;
-}
-
-:root[data-theme='dark'] .dashboard-summary-bar-track-net {
-  background:
-    linear-gradient(
-      90deg,
-      #2a2c32 0%,
-      #2a2c32 calc(50% - 1.5px),
-      #8a909c calc(50% - 1.5px),
-      #8a909c calc(50% + 1.5px),
-      #2a2c32 calc(50% + 1.5px),
-      #2a2c32 100%
-    );
 }
 
 /* Mobile bottom nav should match the flat sidebar. */

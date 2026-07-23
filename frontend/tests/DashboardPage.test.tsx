@@ -78,6 +78,116 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
     ).toBeInTheDocument()
   })
 
+  it('excludes fully owed expenses and fills the five recent slots', async () => {
+    mocks.getMonthlySummary.mockResolvedValue(MONTHLY_SUMMARY)
+    mocks.getInvestmentMonthlyChange.mockResolvedValue({
+      unrealised_monthly_change: '10.00',
+      is_estimated: false,
+    })
+    mocks.getCategorySummary.mockResolvedValue({ items: [] })
+    mocks.listTransactions.mockResolvedValue([
+      {
+        id: 1,
+        date: '2026-07-20',
+        description: 'Fully owed expense',
+        raw_description: 'Fully owed expense',
+        amount: '40.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: true,
+        owed_amount_total: '40.00',
+      },
+      {
+        id: 2,
+        date: '2026-07-19',
+        description: 'Personal expense one',
+        raw_description: 'Personal expense one',
+        amount: '20.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: false,
+        owed_amount_total: null,
+      },
+      {
+        id: 3,
+        date: '2026-07-18',
+        description: 'Partially owed expense',
+        raw_description: 'Partially owed expense',
+        amount: '30.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: true,
+        owed_amount_total: '10.00',
+      },
+      {
+        id: 4,
+        date: '2026-07-17',
+        description: 'Personal expense two',
+        raw_description: 'Personal expense two',
+        amount: '12.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: false,
+        owed_amount_total: null,
+      },
+      {
+        id: 5,
+        date: '2026-07-16',
+        description: 'Personal expense three',
+        raw_description: 'Personal expense three',
+        amount: '13.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: false,
+        owed_amount_total: null,
+      },
+      {
+        id: 6,
+        date: '2026-07-15',
+        description: 'Personal expense four',
+        raw_description: 'Personal expense four',
+        amount: '14.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: false,
+        owed_amount_total: null,
+      },
+      {
+        id: 7,
+        date: '2026-07-14',
+        description: 'Sixth eligible expense',
+        raw_description: 'Sixth eligible expense',
+        amount: '15.00',
+        direction: 'out',
+        category: 'Other',
+        notes: null,
+        is_owed: false,
+        owed_amount_total: null,
+      },
+    ])
+
+    render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
+
+    expect(await screen.findByText('Personal expense one')).toBeInTheDocument()
+    expect(screen.getByText('Partially owed expense')).toBeInTheDocument()
+    expect(screen.getByText('Personal expense four')).toBeInTheDocument()
+    expect(screen.queryByText('Fully owed expense')).not.toBeInTheDocument()
+    expect(screen.queryByText('Sixth eligible expense')).not.toBeInTheDocument()
+
+    expect(mocks.listTransactions).toHaveBeenCalledWith({
+      direction: 'out',
+      date_from: '2026-07-01',
+      date_to: '2026-07-31',
+      limit: 500,
+    })
+  })
+
   it('shows a full error when required data fails to load', async () => {
     mocks.getMonthlySummary.mockRejectedValue(new Error('Summary unavailable'))
     mocks.getInvestmentMonthlyChange.mockResolvedValue({

@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
-test('replaces a category with linked transactions and deletes it', async ({ page }) => {
-  const categoryName = `E2E Category ${Date.now()}`
-  const replacementName = `E2E Replacement ${Date.now()}`
+test('replaces a category with linked transactions and deletes it', async ({ page }, testInfo) => {
+  const uniqueSuffix = `${testInfo.project.name}-${testInfo.workerIndex}-${Date.now()}`
+  const categoryName = `E2E Category ${uniqueSuffix}`
+  const replacementName = `E2E Replacement ${uniqueSuffix}`
 
   await page.goto('/categories')
 
@@ -37,8 +38,18 @@ test('replaces a category with linked transactions and deletes it', async ({ pag
   await expect(replacementDialog).toBeVisible()
   await expect(replacementDialog.getByText('1 linked transaction')).toBeVisible()
 
+  const replacementSelect = replacementDialog.getByRole('combobox', {
+    name: 'Replace with',
+  })
+  await replacementSelect.selectOption({ label: replacementName })
+  await expect(replacementSelect.locator('option:checked')).toHaveText(
+    replacementName,
+  )
+
   await replacementDialog.getByRole('button', { name: 'Replace all and delete' }).click()
 
-  await expect(page.getByText(/transaction was moved to/)).toBeVisible()
+  await expect(
+    page.getByText(`1 transaction was moved to ${replacementName}.`),
+  ).toBeVisible()
   await expect(page.getByText(categoryName, { exact: true })).not.toBeVisible()
 })

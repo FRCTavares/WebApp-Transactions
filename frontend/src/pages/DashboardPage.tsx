@@ -87,6 +87,18 @@ function getTransactionPersonalAmount(transaction: Transaction) {
   return Number(transaction.amount) - getTransactionOwedAmount(transaction)
 }
 
+function isFullyOwedTransaction(transaction: Transaction) {
+  const transactionAmount = Number(transaction.amount)
+  const owedAmount = getTransactionOwedAmount(transaction)
+
+  return (
+    transaction.direction === 'out'
+    && transaction.is_owed
+    && transactionAmount > 0
+    && owedAmount >= transactionAmount - 0.0001
+  )
+}
+
 function getRecentTransactionAmount(transaction: Transaction) {
   if (transaction.direction === 'out') {
     return -getTransactionPersonalAmount(transaction)
@@ -247,7 +259,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
           direction: 'out',
           date_from: startDate,
           date_to: endDate,
-          limit: 5,
+          limit: 500,
         }),
       ]).then(([
         summaryResult,
@@ -286,7 +298,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         }
 
         if (recentTransactionsResult.status === 'fulfilled') {
-          setRecentTransactions(recentTransactionsResult.value)
+          setRecentTransactions(
+            recentTransactionsResult.value
+              .filter((transaction) => !isFullyOwedTransaction(transaction))
+              .slice(0, 5),
+          )
         } else {
           requiredErrors.push(
             recentTransactionsResult.reason instanceof Error

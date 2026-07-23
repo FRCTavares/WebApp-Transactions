@@ -41,18 +41,6 @@ export function OwedStatusToolbar({
       </div>
 
       <div className="owed-toolbar-actions">
-        <Button type="button" size="sm" onClick={() => onStatusFilterChange('active')}>
-          Current
-        </Button>
-
-        <Button type="button" size="sm" onClick={() => onStatusFilterChange('paid')}>
-          Paid history
-        </Button>
-
-        <Button type="button" size="sm" onClick={() => onStatusFilterChange('')}>
-          All history
-        </Button>
-
         <Button type="button" size="sm" onClick={onRefresh}>
           Refresh
         </Button>

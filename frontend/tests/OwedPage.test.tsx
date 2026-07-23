@@ -49,6 +49,39 @@ describe('owed page payment workflow', () => {
     mocks.listOwedItems.mockReset().mockResolvedValue([OPEN_OWED_ITEM])
   })
 
+  it('uses the View selector for status filtering and keeps Refresh separate', async () => {
+    const user = userEvent.setup()
+    render(<OwedPage />)
+
+    const viewSelect = await screen.findByLabelText('View')
+
+    expect(screen.queryByRole('button', { name: 'Current' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Paid history' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'All history' })).not.toBeInTheDocument()
+
+    await user.selectOptions(viewSelect, 'paid')
+
+    await waitFor(() => {
+      expect(mocks.listOwedItems).toHaveBeenLastCalledWith({
+        status: 'paid',
+        limit: 100,
+      })
+    })
+
+    const callsBeforeRefresh = mocks.listOwedItems.mock.calls.length
+
+    await user.click(screen.getByRole('button', { name: 'Refresh' }))
+
+    await waitFor(() => {
+      expect(mocks.listOwedItems.mock.calls.length).toBeGreaterThan(callsBeforeRefresh)
+    })
+
+    expect(mocks.listOwedItems).toHaveBeenLastCalledWith({
+      status: 'paid',
+      limit: 100,
+    })
+  })
+
   it('records a payment with a manual allocation', async () => {
     mocks.createOwedPayment.mockResolvedValue({ unallocated_amount: '0.00' })
     const user = userEvent.setup()

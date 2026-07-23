@@ -1,5 +1,3 @@
-@import './shell.css';
-
 /* Dashboard redesign: clean native-app style. */
 
 /* These are aliases onto the semantic layer, not a private palette.
@@ -214,7 +212,7 @@
   height: 0.7rem;
   overflow: hidden;
   border-radius: 999px;
-  background: #f1f5f9;
+  background: var(--chart-track);
 }
 
 .dashboard-summary-bar {
@@ -428,12 +426,12 @@
   background:
     linear-gradient(
       90deg,
-      #f1f5f9 0%,
-      #f1f5f9 calc(50% - 1.5px),
-      #64748b calc(50% - 1.5px),
-      #64748b calc(50% + 1.5px),
-      #f1f5f9 calc(50% + 1.5px),
-      #f1f5f9 100%
+      var(--chart-track) 0%,
+      var(--chart-track) calc(50% - 1.5px),
+      var(--chart-axis) calc(50% - 1.5px),
+      var(--chart-axis) calc(50% + 1.5px),
+      var(--chart-track) calc(50% + 1.5px),
+      var(--chart-track) 100%
     );
 }
 
@@ -607,7 +605,7 @@
 }
 
 .expense-chart-track {
-  stroke: #e5e7eb;
+  stroke: var(--chart-track);
 }
 
 .expense-chart-slice {
@@ -627,7 +625,7 @@
 }
 
 .expense-chart-centre span {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
