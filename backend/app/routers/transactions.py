@@ -14,6 +14,9 @@ from app.schemas.financial_command import (
     ExistingTransactionOwedSplitCommand,
     ExistingTransactionOwedSplitRead,
     TransactionCreateWithOwedCommand,
+    TransactionDeletionPreviewRead,
+    TransactionLinkedOwedDeletionCommand,
+    TransactionLinkedOwedDeletionRead,
 )
 from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
 from app.services.financial_command_service import FinancialCommandService
@@ -219,6 +222,42 @@ def create_owed_split_for_transaction(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.create_owed_split_for_transaction(
+        transaction_id,
+        command,
+        current_user=current_user,
+    )
+
+
+@router.get(
+    "/{transaction_id}/deletion-preview",
+    response_model=TransactionDeletionPreviewRead,
+)
+def preview_transaction_deletion(
+    transaction_id: int,
+    service: FinancialCommandService = Depends(
+        get_financial_command_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.preview_transaction_deletion(
+        transaction_id,
+        current_user=current_user,
+    )
+
+
+@router.post(
+    "/{transaction_id}/commands/delete-linked-owed",
+    response_model=TransactionLinkedOwedDeletionRead,
+)
+def delete_transaction_with_linked_owed(
+    transaction_id: int,
+    command: TransactionLinkedOwedDeletionCommand,
+    service: FinancialCommandService = Depends(
+        get_financial_command_service
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.delete_transaction_with_linked_owed(
         transaction_id,
         command,
         current_user=current_user,

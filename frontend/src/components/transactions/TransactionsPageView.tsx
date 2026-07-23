@@ -18,6 +18,8 @@ import type {
   OwedItem,
   Transaction,
   TransactionCategory,
+  TransactionDeletionPreview,
+  TransactionLinkedOwedDeletionStrategy,
 } from "../../types/api"
 import { TransactionCreateOwedSection } from "./TransactionCreateOwedSection"
 import { TransactionCreateRepaymentSection } from "./TransactionCreateRepaymentSection"
@@ -41,6 +43,9 @@ export type TransactionsPageViewProps = {
   transactions: TransactionTableRow[]
   editingTransaction: Transaction | null
   deleteDraftTransaction: Transaction | null
+  deletePreview: TransactionDeletionPreview | null
+  deletePreviewError: string | null
+  isDeletePreviewLoading: boolean
   owedDraftTransaction: TransactionTableRow | null
   isCreateFormOpen: boolean
   isCreateOwedEnabled: boolean
@@ -63,7 +68,6 @@ export type TransactionsPageViewProps = {
   onExportCsv: () => void
   onResetCreateForm: () => void
   onSetCreateFormOpen: (isOpen: boolean) => void
-  onSetDeleteDraftTransaction: (transaction: Transaction | null) => void
   onFilterChange: (
     field: keyof TransactionFilterState,
     value: string | boolean,
@@ -100,7 +104,10 @@ export type TransactionsPageViewProps = {
   onSaveEdit: () => void
   onCancelEdit: () => void
   onCancelDelete: () => void
-  onConfirmDelete: () => void
+  onConfirmDelete: (
+    strategy: TransactionLinkedOwedDeletionStrategy | null,
+    replacementPerson: string | null,
+  ) => void
   onCloseOwedDialog: () => void
   onAddOwedRow: () => void
   onRemoveOwedRow: (rowId: string) => void
@@ -250,8 +257,11 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
       {props.deleteDraftTransaction && (
         <TransactionDeleteDialog
           transaction={props.deleteDraftTransaction}
+          preview={props.deletePreview}
+          previewError={props.deletePreviewError}
+          isPreviewLoading={props.isDeletePreviewLoading}
           isDeleting={props.isDeletingTransaction}
-          onCancel={() => props.onSetDeleteDraftTransaction(null)}
+          onCancel={props.onCancelDelete}
           onConfirm={props.onConfirmDelete}
         />
       )}

@@ -154,6 +154,28 @@ class TransactionRepository:
         )
         return self.db.scalar(statement)
 
+    def list_all_owed_items_for_transaction(
+        self,
+        transaction_id: int,
+    ) -> list[OwedItem]:
+        statement = (
+            select(OwedItem)
+            .where(OwedItem.linked_transaction_id == transaction_id)
+            .order_by(OwedItem.id.asc())
+        )
+        return list(self.db.scalars(statement).all())
+
+    def list_all_owed_payments_for_transaction(
+        self,
+        transaction_id: int,
+    ) -> list[OwedPayment]:
+        statement = (
+            select(OwedPayment)
+            .where(OwedPayment.linked_transaction_id == transaction_id)
+            .order_by(OwedPayment.id.asc())
+        )
+        return list(self.db.scalars(statement).all())
+
     def list_owed_items_by_transaction_ids(
         self,
         transaction_ids: list[int],
@@ -273,9 +295,18 @@ class TransactionRepository:
         self.db.add(transaction)
         return transaction
 
-    def delete(self, transaction: Transaction) -> None:
+    def delete(
+        self,
+        transaction: Transaction,
+        *,
+        commit: bool = True,
+    ) -> None:
         self.db.delete(transaction)
-        self.db.commit()
+
+        if commit:
+            self.db.commit()
+        else:
+            self.db.flush()
 
     def delete_by_import_batch(
         self,

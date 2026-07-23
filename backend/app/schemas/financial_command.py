@@ -1,5 +1,6 @@
 from datetime import date as DateType
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -64,3 +65,83 @@ class ExistingTransactionOwedSplitRead(BaseModel):
     transaction: TransactionRead
     owed_items_created: int
     payments_created: int
+
+TransactionLinkedOwedDeletionStrategy = Literal[
+    "delete_with_owed",
+    "preserve_owed",
+]
+
+
+class TransactionLinkedOwedItemRead(BaseModel):
+    id: int
+    person: str
+    amount_total: Decimal
+    amount_paid: Decimal
+    amount_remaining: Decimal
+    status: str
+    allocation_count: int
+    deleted: bool
+
+
+class TransactionDeletionPreviewRead(BaseModel):
+    transaction_id: int
+    normal_delete_allowed: bool
+    normal_delete_block_reason: str | None
+    has_linked_owed: bool
+    linked_owed_payment_count: int
+    linked_owed_items: list[TransactionLinkedOwedItemRead]
+    available_replacement_people: list[str]
+    delete_with_owed_allowed: bool
+    delete_with_owed_block_reason: str | None
+    preserve_owed_allowed: bool
+    preserve_owed_block_reason: str | None
+    relationship_version: str
+
+
+class TransactionLinkedOwedDeletionCommand(BaseModel):
+    strategy: TransactionLinkedOwedDeletionStrategy
+    expected_owed_item_ids: list[int] = Field(min_length=1)
+    expected_relationship_version: str = Field(
+        min_length=64,
+        max_length=64,
+    )
+    replacement_person: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+    )
+
+    @model_validator(mode="after")
+    def validate_strategy_fields(self):
+        if len(set(self.expected_owed_item_ids)) != len(
+            self.expected_owed_item_ids
+        ):
+            raise ValueError(
+                "Expected owed item IDs must be unique"
+            )
+
+        if (
+            self.strategy == "preserve_owed"
+            and self.replacement_person is None
+        ):
+            raise ValueError(
+                "A replacement person is required when preserving owed items"
+            )
+
+        if (
+            self.strategy == "delete_with_owed"
+            and self.replacement_person is not None
+        ):
+            raise ValueError(
+                "A replacement person is only valid when preserving owed items"
+            )
+
+        return self
+
+
+class TransactionLinkedOwedDeletionRead(BaseModel):
+    deleted_transaction_id: int
+    strategy: TransactionLinkedOwedDeletionStrategy
+    owed_items_deleted: int
+    owed_items_preserved: int
+    replacement_person: str | None

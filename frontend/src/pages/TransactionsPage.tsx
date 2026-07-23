@@ -4,7 +4,9 @@ import { useSearchParams } from 'react-router-dom'
 import {
   createTransactionWithOwed,
   deleteTransaction,
+  deleteTransactionWithLinkedOwed,
   exportTransactionsCsv,
+  getTransactionDeletionPreview,
   listTransactions,
   updateTransaction,
 } from '../api/transactions'
@@ -18,6 +20,8 @@ import type {
   Direction,
   Transaction,
   TransactionCategory,
+  TransactionDeletionPreview,
+  TransactionLinkedOwedDeletionStrategy,
 } from '../types/api'
 import { buildCreateTransactionWithOwedPayload } from '../utils/transactionFinancialCommandPayloads'
 import {
@@ -36,6 +40,7 @@ export function TransactionsPage() {
   const { monthKey } = usePeriod()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialSearchParamsRef = useRef(searchParams)
+  const deletePreviewRequestIdRef = useRef(0)
   const [direction, setDirection] = useState<Direction>(() =>
     searchParams.get('direction') === 'in' ? 'in' : 'out',
   )
@@ -53,6 +58,9 @@ export function TransactionsPage() {
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(true)
   const [categoryOptions, setCategoryOptions] = useState<TransactionCategory[]>([])
   const [deleteDraftTransaction, setDeleteDraftTransaction] = useState<Transaction | null>(null)
+  const [deletePreview, setDeletePreview] = useState<TransactionDeletionPreview | null>(null)
+  const [deletePreviewError, setDeletePreviewError] = useState<string | null>(null)
+  const [isDeletePreviewLoading, setIsDeletePreviewLoading] = useState(false)
   const [isDeletingTransaction, setIsDeletingTransaction] = useState(false)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
 
@@ -171,6 +179,11 @@ export function TransactionsPage() {
       setIsTransactionsLoading(true)
       setEditingTransaction(null)
       setIsCreateFormOpen(false)
+      deletePreviewRequestIdRef.current += 1
+      setDeleteDraftTransaction(null)
+      setDeletePreview(null)
+      setDeletePreviewError(null)
+      setIsDeletePreviewLoading(false)
       resetCreateOwedAndRepaymentState()
 
       listTransactions({
@@ -361,31 +374,132 @@ export function TransactionsPage() {
     }
   }
 
-  function handleDeleteTransaction(transaction: Transaction) {
-    setDeleteDraftTransaction(transaction)
+  function closeDeleteDialog() {
+    deletePreviewRequestIdRef.current += 1
+    setDeleteDraftTransaction(null)
+    setDeletePreview(null)
+    setDeletePreviewError(null)
+    setIsDeletePreviewLoading(false)
   }
 
-  async function confirmDeleteTransaction() {
-    if (!deleteDraftTransaction || isDeletingTransaction) {
+  async function handleDeleteTransaction(transaction: Transaction) {
+    const requestId = deletePreviewRequestIdRef.current + 1
+    deletePreviewRequestIdRef.current = requestId
+
+    setDeleteDraftTransaction(transaction)
+    setDeletePreview(null)
+    setDeletePreviewError(null)
+    setIsDeletePreviewLoading(true)
+    setError(null)
+    setMessage(null)
+
+    try {
+      const preview = await getTransactionDeletionPreview(
+        transaction.id,
+      )
+
+      if (deletePreviewRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setDeletePreview(preview)
+    } catch (caughtError: unknown) {
+      if (deletePreviewRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setDeletePreviewError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to inspect linked owed records',
+      )
+    } finally {
+      if (deletePreviewRequestIdRef.current === requestId) {
+        setIsDeletePreviewLoading(false)
+      }
+    }
+  }
+
+  async function confirmDeleteTransaction(
+    strategy: TransactionLinkedOwedDeletionStrategy | null,
+    replacementPerson: string | null,
+  ) {
+    if (
+      !deleteDraftTransaction ||
+      !deletePreview ||
+      isDeletingTransaction
+    ) {
+      return
+    }
+
+    if (
+      !deletePreview.normal_delete_allowed &&
+      strategy === null
+    ) {
+      setDeletePreviewError(
+        'Choose how to handle the linked owed obligations.',
+      )
+      return
+    }
+
+    if (
+      strategy === 'preserve_owed' &&
+      !replacementPerson?.trim()
+    ) {
+      setDeletePreviewError(
+        'Choose who should owe you after deletion.',
+      )
       return
     }
 
     setError(null)
     setMessage(null)
+    setDeletePreviewError(null)
     setIsDeletingTransaction(true)
 
     try {
-      await deleteTransaction(deleteDraftTransaction.id)
-      setMessage('Transaction deleted.')
+      if (deletePreview.normal_delete_allowed) {
+        await deleteTransaction(deleteDraftTransaction.id)
+        setMessage('Transaction deleted.')
+      } else if (strategy !== null) {
+        await deleteTransactionWithLinkedOwed(
+          deleteDraftTransaction.id,
+          {
+            strategy,
+            expected_owed_item_ids:
+              deletePreview.linked_owed_items.map(
+                (item) => item.id,
+              ),
+            expected_relationship_version:
+              deletePreview.relationship_version,
+            ...(strategy === 'preserve_owed'
+              ? {
+                  replacement_person:
+                    replacementPerson?.trim() ?? '',
+                }
+              : {}),
+          },
+        )
+
+        setMessage(
+          strategy === 'preserve_owed'
+            ? 'Transaction deleted and owed obligations preserved.'
+            : 'Transaction and linked owed obligations deleted.',
+        )
+      }
 
       if (editingTransaction?.id === deleteDraftTransaction.id) {
         setEditingTransaction(null)
       }
 
-      setDeleteDraftTransaction(null)
+      closeDeleteDialog()
       loadTransactions()
     } catch (caughtError: unknown) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to delete transaction')
+      setDeletePreviewError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to delete transaction',
+      )
     } finally {
       setIsDeletingTransaction(false)
     }
@@ -400,7 +514,8 @@ export function TransactionsPage() {
     direction, error, message, dataWarning, isTransactionsLoading,
     filters, categoryOptions, form, editForm,
     transactions: displayTransactions,
-    editingTransaction, deleteDraftTransaction, owedDraftTransaction,
+    editingTransaction, deleteDraftTransaction, deletePreview,
+    deletePreviewError, isDeletePreviewLoading, owedDraftTransaction,
     isCreateFormOpen, isCreateOwedEnabled, createOwedRows, owedPersonOptions,
     isCreateRepaymentEnabled, repaymentPerson, repaymentPersonOptions,
     repaymentItems, repaymentAllocations, repaymentUnallocatedCategory,
@@ -410,7 +525,6 @@ export function TransactionsPage() {
     onExportCsv: handleExportCsv,
     onResetCreateForm: resetCreateFormState,
     onSetCreateFormOpen: setIsCreateFormOpen,
-    onSetDeleteDraftTransaction: setDeleteDraftTransaction,
     onFilterChange: updateFilters,
     onApplyFilters: applyFilters,
     onClearFilters: clearFilters,
@@ -428,7 +542,7 @@ export function TransactionsPage() {
     onEditFormChange: updateEditForm,
     onSaveEdit: saveEditFromForm,
     onCancelEdit: cancelEdit,
-    onCancelDelete: () => setDeleteDraftTransaction(null),
+    onCancelDelete: closeDeleteDialog,
     onConfirmDelete: confirmDeleteTransaction,
     onCloseOwedDialog: closeOwedDialog,
     onAddOwedRow: addOwedRow, onRemoveOwedRow: removeOwedRow,

@@ -122,6 +122,51 @@ export type ExistingTransactionOwedSplitResponse = {
   payments_created: number
 }
 
+export type TransactionLinkedOwedDeletionStrategy =
+  | 'delete_with_owed'
+  | 'preserve_owed'
+
+export type TransactionLinkedOwedItem = {
+  id: number
+  person: string
+  amount_total: string
+  amount_paid: string
+  amount_remaining: string
+  status: string
+  allocation_count: number
+  deleted: boolean
+}
+
+export type TransactionDeletionPreview = {
+  transaction_id: number
+  normal_delete_allowed: boolean
+  normal_delete_block_reason: string | null
+  has_linked_owed: boolean
+  linked_owed_payment_count: number
+  linked_owed_items: TransactionLinkedOwedItem[]
+  available_replacement_people: string[]
+  delete_with_owed_allowed: boolean
+  delete_with_owed_block_reason: string | null
+  preserve_owed_allowed: boolean
+  preserve_owed_block_reason: string | null
+  relationship_version: string
+}
+
+export type TransactionLinkedOwedDeletionPayload = {
+  strategy: TransactionLinkedOwedDeletionStrategy
+  expected_owed_item_ids: number[]
+  expected_relationship_version: string
+  replacement_person?: string
+}
+
+export type TransactionLinkedOwedDeletionResponse = {
+  deleted_transaction_id: number
+  strategy: TransactionLinkedOwedDeletionStrategy
+  owed_items_deleted: number
+  owed_items_preserved: number
+  replacement_person: string | null
+}
+
 export type MatchedTransaction = {
   id: number
   date: string

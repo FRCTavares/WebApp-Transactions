@@ -5,7 +5,10 @@ import type {
   Transaction,
   TransactionCreatePayload,
   TransactionCreateWithOwedCommandPayload,
+  TransactionDeletionPreview,
   TransactionFilters,
+  TransactionLinkedOwedDeletionPayload,
+  TransactionLinkedOwedDeletionResponse,
   TransactionUpdatePayload,
 } from '../types/api'
 
@@ -36,6 +39,24 @@ export function createOwedSplitForTransaction(
 ) {
   return apiPostJson<ExistingTransactionOwedSplitResponse>(
     `/api/transactions/${transactionId}/commands/create-owed-split`,
+    payload,
+  )
+}
+
+export function getTransactionDeletionPreview(
+  transactionId: number,
+) {
+  return apiGet<TransactionDeletionPreview>(
+    `/api/transactions/${transactionId}/deletion-preview`,
+  )
+}
+
+export function deleteTransactionWithLinkedOwed(
+  transactionId: number,
+  payload: TransactionLinkedOwedDeletionPayload,
+) {
+  return apiPostJson<TransactionLinkedOwedDeletionResponse>(
+    `/api/transactions/${transactionId}/commands/delete-linked-owed`,
     payload,
   )
 }

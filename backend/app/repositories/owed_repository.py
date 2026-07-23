@@ -370,6 +370,58 @@ class OwedRepository:
 
         return Decimal(str(self.db.scalar(statement) or 0))
 
+    def list_allocation_relationships_for_owed_item_ids(
+        self,
+        owed_item_ids: list[int],
+    ) -> list[
+        tuple[OwedPaymentAllocation, OwedPayment | None]
+    ]:
+        if not owed_item_ids:
+            return []
+
+        statement = (
+            select(OwedPaymentAllocation, OwedPayment)
+            .outerjoin(
+                OwedPayment,
+                OwedPayment.id
+                == OwedPaymentAllocation.owed_payment_id,
+            )
+            .where(
+                OwedPaymentAllocation.owed_item_id.in_(
+                    owed_item_ids
+                )
+            )
+            .order_by(OwedPaymentAllocation.id.asc())
+        )
+
+        return list(self.db.execute(statement).all())
+
+    def list_known_people(
+        self,
+        user_id: str,
+    ) -> list[str]:
+        owed_item_people = self.db.scalars(
+            select(OwedItem.person)
+            .where(OwedItem.user_id == user_id)
+            .where(OwedItem.deleted_at.is_(None))
+        ).all()
+        payment_people = self.db.scalars(
+            select(OwedPayment.person)
+            .where(OwedPayment.user_id == user_id)
+        ).all()
+
+        return sorted(
+            {
+                person.strip()
+                for person in [
+                    *owed_item_people,
+                    *payment_people,
+                ]
+                if person.strip()
+            },
+            key=str.casefold,
+        )
+
     def get_allocated_total_for_owed_item(
         self,
         owed_item_id: int,

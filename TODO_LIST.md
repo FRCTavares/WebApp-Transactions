@@ -19,40 +19,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 3. Financial correctness and atomicity
 
-- [ ] **Handle linked owed obligations when deleting money-out transactions.**
-      When a money-out transaction is linked to an owed obligation, deletion
-      must not silently leave the owed data inconsistent. Before deletion, show
-      the linked obligation and require an explicit action:
-
-      1. delete the transaction and the linked owed obligation;
-      2. delete the transaction while preserving the obligation and selecting
-         who now owes the money; or
-      3. cancel without changing any records.
-
-      The backend, not the frontend, must determine the authoritative linked
-      records and validate that the transaction, owed item, allocations, and
-      selected replacement party all belong to the authenticated user. The
-      operation must be orchestrated by a service and committed atomically.
-
-      Define and test the behaviour for partially paid obligations, obligations
-      containing multiple linked transactions, transactions linked to multiple
-      allocations, invalid reassignment targets, stale records, and attempted
-      cross-user references. Destructive removal must be blocked whenever the
-      remaining accounting cannot be preserved correctly.
-
-      Acceptance:
-
-      - unlinked transaction deletion continues to use the normal flow;
-      - linked deletion always presents the relationship-aware decision;
-      - no mutation occurs before an explicit strategy is selected;
-      - deleting both removes only the correct owned records atomically;
-      - preserving or reassigning keeps the correct outstanding amount;
-      - cancellation and failed requests leave all records unchanged;
-      - user ownership is enforced entirely by the backend;
-      - service and repository tests cover each strategy and rollback;
-      - frontend tests cover the dialog, cancel path, each allowed action,
-        validation errors, and controlled backend failures.
-
 - [ ] **Clarify Dashboard investment cash flow and monthly investment goal.**
       The current Dashboard “Investments” metric displays unrealised monthly
       market gain or loss, and the Net metric adds that value to income minus
