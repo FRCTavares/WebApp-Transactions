@@ -15,6 +15,22 @@ specification; `TODO_LIST.md` holds the ordered, checkable tasks.
 
 These are settled. Do not reopen them mid-implementation.
 
+### Dark neutral palette decision
+
+The canonical dark neutral palette is the zinc ramp defined in
+`frontend/src/styles/tokens/primitives.css`.
+
+The former polished pages used a separate bespoke cool-grey set:
+`#1c1d21`, `#232429`, `#2a2c32`, `#aeb3bd`, and `#8f95a1`. Those values are
+legacy migration artefacts, not a second supported palette. They may remain
+temporarily in component CSS and the legacy dark override sheets while Phase 5
+moves each live component family onto semantic tokens, but no new code should
+introduce them.
+
+Phase 5 must remove the remaining bespoke values and leave zinc as the only dark
+neutral ramp. The semantic dark token file remains the source of truth for dark
+surfaces, borders, and text roles.
+
 ## 1. Why the app looks unpolished
 
 The symptom is "nothing quite matches". The cause is that there is no design

@@ -14,6 +14,18 @@ port="${1:-8000}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 env_file="${repo_root}/frontend/e2e/.env.e2e.local"
 
+if [[ -x "${repo_root}/backend/.venv/bin/python" ]]; then
+  python_bin="${repo_root}/backend/.venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+  python_bin="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+  python_bin="$(command -v python)"
+else
+  echo "No usable Python interpreter found." >&2
+  echo "Create backend/.venv or install python3." >&2
+  exit 1
+fi
+
 if [[ ! -f "${env_file}" ]]; then
   echo "Missing ${env_file}." >&2
   echo "It must define SUPABASE_JWT_SECRET, E2E_TEST_EMAIL and VITE_SUPABASE_URL." >&2
@@ -34,7 +46,7 @@ export CORS_ORIGINS="http://127.0.0.1:4173,http://localhost:4173"
 echo "Throwaway database: ${db_path}"
 
 cd "${repo_root}/backend"
-python -m alembic upgrade head >/dev/null
+"${python_bin}" -m alembic upgrade head >/dev/null
 
 # Refuse to serve the real database even if something above is edited later.
 if [[ "${DATABASE_URL}" == *"data/finance.db"* ]]; then
@@ -43,4 +55,4 @@ if [[ "${DATABASE_URL}" == *"data/finance.db"* ]]; then
 fi
 
 echo "Starting backend on http://127.0.0.1:${port}"
-exec python -m uvicorn app.main:app --host 127.0.0.1 --port "${port}"
+exec "${python_bin}" -m uvicorn app.main:app --host 127.0.0.1 --port "${port}"
