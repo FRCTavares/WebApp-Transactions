@@ -44,7 +44,7 @@
 
 .dashboard-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.9rem;
 }
 
@@ -207,6 +207,59 @@
   background: var(--dashboard-blue);
 }
 
+.dashboard-dot-invested,
+.dashboard-summary-bar-invested {
+  background: var(--dashboard-blue);
+}
+
+.dashboard-investment-goal {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.dashboard-investment-goal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dashboard-investment-goal-header h2,
+.dashboard-investment-goal-header p,
+.dashboard-investment-goal > p {
+  margin: 0;
+}
+
+.dashboard-investment-goal-header h2 {
+  color: var(--dashboard-text);
+  font-size: 1.05rem;
+}
+
+.dashboard-investment-goal-header p {
+  margin-top: var(--space-1);
+  color: var(--dashboard-muted);
+  font-size: 0.88rem;
+}
+
+.dashboard-investment-goal-header > strong {
+  color: var(--dashboard-text);
+  text-align: right;
+}
+
+.dashboard-investment-goal-track {
+  height: 0.75rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--chart-track);
+}
+
+.dashboard-investment-goal-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dashboard-green);
+}
+
 .dashboard-summary-bar-track {
   grid-column: 1 / -1;
   height: 0.7rem;
@@ -340,7 +393,7 @@
 
 @media (max-width: 1180px) {
   .dashboard-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .dashboard-main-grid {
@@ -371,6 +424,14 @@
 
   .dashboard-metric-card small {
     display: none;
+  }
+
+  .dashboard-investment-goal-header {
+    display: grid;
+  }
+
+  .dashboard-investment-goal-header > strong {
+    text-align: left;
   }
 
   .dashboard-panel {

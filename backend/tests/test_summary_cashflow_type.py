@@ -5,8 +5,14 @@ from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from decimal import Decimal
 
+from app.repositories.investment_event_repository import (
+    InvestmentEventRepository,
+)
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate
+from app.services.investment_cashflow_service import (
+    InvestmentCashflowService,
+)
 from app.services.summary_service import SummaryService
 from app.repositories.summary_repository import SummaryRepository
 
@@ -20,6 +26,10 @@ def test_summary_counts_income_and_expense_but_excludes_non_personal_cashflows(d
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     transaction_repository.create(
@@ -110,6 +120,10 @@ def test_summary_subtracts_owed_expenses_from_personal_money_out(db_session):
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     grocery_transaction = transaction_repository.create(
@@ -192,6 +206,10 @@ def test_summary_is_isolated_by_current_user(db_session):
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     transaction_repository.create(
@@ -239,6 +257,10 @@ def test_summary_treats_allocated_owed_payment_as_reimbursement_and_extra_as_inc
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     pizza_transaction = transaction_repository.create(
@@ -329,6 +351,10 @@ def test_summary_allows_multiple_people_to_fully_null_shared_expense(db_session)
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     pharmacy_transaction = transaction_repository.create(
@@ -393,6 +419,10 @@ def test_summary_does_not_double_count_income_transaction_linked_to_owed_payment
     service = SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=InvestmentCashflowService(
+            InvestmentEventRepository(db_session),
+            transaction_repository,
+        ),
     )
 
     pizza_transaction = transaction_repository.create(

@@ -14,6 +14,7 @@ test('formatters follow persisted presentation preferences', () => {
     time_zone: 'UTC',
     date_format: 'long',
     language: 'en',
+    monthly_investment_goal_eur: '100.00',
   })
 
   assert.equal(formatMoney(1234.5), '£1,234.50')
@@ -29,6 +30,7 @@ test('Portuguese locale changes currency and date presentation', () => {
     time_zone: 'Europe/Lisbon',
     date_format: 'short',
     language: 'pt',
+    monthly_investment_goal_eur: '100.00',
   })
 
   assert.match(formatMoney(1234.5), /1\.?234,50\s?€/)

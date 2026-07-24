@@ -36,6 +36,7 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_wealth_user_migrations(engine=engine)
     _run_wealth_value_source_migrations(engine=engine)
     _run_import_preview_migrations(engine=engine)
+    _run_user_preferences_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
     run_sqlite_foreign_key_migrations(engine)
 
@@ -745,6 +746,22 @@ def _run_import_preview_migrations(engine: Engine) -> None:
         ),
     )
 
+
+
+def _run_user_preferences_migrations(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="user_preferences"):
+        return
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="user_preferences",
+        column_name="monthly_investment_goal_eur",
+        sql=(
+            "ALTER TABLE user_preferences "
+            "ADD COLUMN monthly_investment_goal_eur "
+            "NUMERIC(12, 2) NOT NULL DEFAULT 100.00"
+        ),
+    )
 
 
 def _run_wealth_user_migrations(engine: Engine) -> None:

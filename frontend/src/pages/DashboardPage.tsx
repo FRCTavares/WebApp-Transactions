@@ -33,17 +33,52 @@ type CategoryRollup = {
   personalTotal: number
 }
 
-function calculateDashboardNet(
-  summary: MonthlySummary,
-  investmentMonthlyChange: InvestmentMonthlyChange | null,
-) {
-  const investmentChange = Number(investmentMonthlyChange?.unrealised_monthly_change ?? 0)
+function getInvestmentGoalMessage(summary: MonthlySummary) {
+  if (summary.investment_goal_status === 'unavailable') {
+    return 'Investment cash flow unavailable'
+  }
 
-  return (
-    Number(summary.money_in)
-    - Number(summary.personal_money_out)
-    + investmentChange
-  ).toFixed(2)
+  if (summary.investment_goal_status === 'exceeded') {
+    return `Goal exceeded by ${formatMoney(summary.investment_goal_over ?? '0.00')}`
+  }
+
+  if (summary.investment_goal_status === 'reached') {
+    return 'Goal reached'
+  }
+
+  return `${formatMoney(summary.investment_goal_remaining ?? '0.00')} remaining`
+}
+
+function getInvestmentGoalProgress(summary: MonthlySummary) {
+  if (
+    summary.net_invested_cash === null
+    || Number(summary.investment_goal_eur) <= 0
+  ) {
+    return 0
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      (
+        Number(summary.net_invested_cash)
+        / Number(summary.investment_goal_eur)
+      ) * 100,
+    ),
+  )
+}
+
+function getReconciliationMessage(summary: MonthlySummary) {
+  if (summary.investment_reconciliation_status === 'partial') {
+    return 'Some investment funding is not fully reconciled.'
+  }
+
+  if (summary.investment_reconciliation_status === 'complete') {
+    return 'Linked bank and broker records are counted once.'
+  }
+
+  return 'No linked bank reconciliation was required this month.'
 }
 
 function getMetricTone(value: string | number | null | undefined) {
@@ -356,13 +391,15 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   }
 
   const monthLabel = getMonthLabel(year, month)
-  const netAmount = summary ? calculateDashboardNet(summary, investmentMonthlyChange) : '0.00'
+  const availableNet = summary?.available_net ?? null
+  const investedAmount = summary?.net_invested_cash ?? null
   const investmentChange = investmentMonthlyChange?.unrealised_monthly_change ?? null
   const summaryMaxValue = summary
     ? Math.max(
         Number(summary.money_in),
         Number(summary.personal_money_out),
-        Math.abs(Number(netAmount)),
+        Math.abs(Number(investedAmount ?? 0)),
+        Math.abs(Number(availableNet ?? 0)),
       )
     : 0
 
@@ -403,7 +440,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
           {/* Skeletons stand at the real height of what replaces them, so
               nothing reflows when the data lands. */}
           <div className="dashboard-summary-grid" aria-hidden="true">
-            {Array.from({ length: 4 }, (_, index) => (
+            {Array.from({ length: 5 }, (_, index) => (
               <Card key={index} padding="md" className="dashboard-metric-card">
                 <Skeleton variant="text" width="45%" />
                 <Skeleton variant="text" width="70%" height="1.5rem" />
@@ -465,7 +502,61 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
             <Card
               as="article"
               padding="md"
-              aria-label={`Investment change: ${investmentChange ? formatMoney(investmentChange) : 'unavailable'}. ${investmentMonthlyChange?.is_estimated ? 'Estimated from the nearest available historical market and foreign exchange prices.' : 'Calculated from available market and foreign exchange prices.'}`}
+              aria-label={`Invested: ${
+                investedAmount === null
+                  ? 'unavailable'
+                  : formatMoney(investedAmount)
+              }. Net personal cash contributed to investments after withdrawals.`}
+              className={`dashboard-metric-card dashboard-metric-${getMetricTone(investedAmount)}`}
+              role="listitem"
+            >
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <TrendingUp size={16} />
+              </span>
+              <div>
+                <p>Invested</p>
+                <strong>
+                  {investedAmount === null
+                    ? '-'
+                    : formatMoney(investedAmount)}
+                </strong>
+                <small>Deposits minus qualifying withdrawals</small>
+              </div>
+            </Card>
+
+            <Card
+              as="article"
+              padding="md"
+              aria-label={`Available net: ${
+                availableNet === null
+                  ? 'unavailable'
+                  : formatMoney(availableNet)
+              }. Money in minus personal spending and invested cash.`}
+              className={`dashboard-metric-card dashboard-metric-${getMetricTone(availableNet)}`}
+              role="listitem"
+            >
+              <span className="dashboard-metric-icon" aria-hidden="true">
+                <Equal size={16} />
+              </span>
+              <div>
+                <p>Available Net</p>
+                <strong>
+                  {availableNet === null
+                    ? '-'
+                    : formatMoney(availableNet)}
+                </strong>
+                <small>Money In - Money Out - Invested</small>
+              </div>
+            </Card>
+
+            <Card
+              as="article"
+              padding="md"
+              aria-label={`Investment performance: ${
+                investmentChange === null
+                  ? 'unavailable'
+                  : formatMoney(investmentChange)
+              }. Unrealised market and foreign exchange gain or loss. Does not affect Available Net.`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(investmentChange)}`}
               role="listitem"
             >
@@ -473,40 +564,69 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 <TrendingUp size={16} />
               </span>
               <div>
-                <p>Investments</p>
-                <strong>{investmentChange ? formatMoney(investmentChange) : '-'}</strong>
+                <p>Investment performance</p>
+                <strong>
+                  {investmentChange === null
+                    ? '-'
+                    : formatMoney(investmentChange)}
+                </strong>
                 <small>
                   {investmentMonthlyChange?.is_estimated
-                    ? 'Estimated using nearest available historical market/FX prices'
-                    : 'Unrealised monthly gain/loss'}
+                    ? 'Estimated unrealised market/FX gain or loss; excluded from Available Net'
+                    : 'Unrealised market/FX gain or loss; excluded from Available Net'}
                 </small>
               </div>
             </Card>
-
-            <Card
-              as="article"
-              padding="md"
-              aria-label={`Net: ${formatMoney(netAmount)}. Income minus personal spending plus investment change.`}
-              className={`dashboard-metric-card dashboard-metric-${getMetricTone(netAmount)}`}
-              role="listitem"
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Equal size={16} />
-              </span>
-              <div>
-                <p>Net</p>
-                <strong>{formatMoney(netAmount)}</strong>
-                <small>Income - spent + investments</small>
-              </div>
-            </Card>
           </div>
+
+          <Card
+            as="section"
+            padding="md"
+            className="dashboard-investment-goal"
+            aria-label={`Monthly investment goal: ${getInvestmentGoalMessage(summary)}.`}
+          >
+            <div className="dashboard-investment-goal-header">
+              <div>
+                <h2>Monthly investment goal</h2>
+                <p>
+                  {investedAmount === null
+                    ? 'Invested amount is temporarily unavailable.'
+                    : `${formatMoney(investedAmount)} of ${formatMoney(summary.investment_goal_eur)}`}
+                </p>
+              </div>
+              <strong>{getInvestmentGoalMessage(summary)}</strong>
+            </div>
+
+            <div
+              className="dashboard-investment-goal-track"
+              role="progressbar"
+              aria-label="Monthly investment goal progress"
+              aria-valuemin={0}
+              aria-valuemax={Number(summary.investment_goal_eur)}
+              aria-valuenow={
+                investedAmount === null
+                  ? undefined
+                  : Math.max(0, Number(investedAmount))
+              }
+            >
+              <span
+                style={{
+                  width: `${getInvestmentGoalProgress(summary)}%`,
+                }}
+              />
+            </div>
+
+            <p className="muted small">
+              {getReconciliationMessage(summary)}
+            </p>
+          </Card>
 
           <div className="dashboard-main-grid">
             <Card as="section" padding="md" className="dashboard-monthly-summary">
               <div className="dashboard-panel-header">
                 <div>
                   <h2>Monthly summary</h2>
-                  <p>Income vs spending over {monthLabel}</p>
+                  <p>Personal cash flow over {monthLabel}</p>
                 </div>
               </div>
 
@@ -543,16 +663,48 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
                 <div className="dashboard-summary-bar-row">
                   <div>
-                    <span className="dashboard-dot dashboard-dot-net" />
-                    <span>Net</span>
+                    <span className="dashboard-dot dashboard-dot-invested" />
+                    <span>Invested</span>
                   </div>
-                  <strong>{formatMoney(netAmount)}</strong>
+                  <strong>
+                    {investedAmount === null
+                      ? '-'
+                      : formatMoney(investedAmount)}
+                  </strong>
+                  <div className="dashboard-summary-bar-track">
+                    <span
+                      className="dashboard-summary-bar dashboard-summary-bar-invested"
+                      style={{
+                        width: getSummaryBarWidth(
+                          investedAmount ?? 0,
+                          summaryMaxValue,
+                        ),
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="dashboard-summary-bar-row">
+                  <div>
+                    <span className="dashboard-dot dashboard-dot-net" />
+                    <span>Available Net</span>
+                  </div>
+                  <strong>
+                    {availableNet === null
+                      ? '-'
+                      : formatMoney(availableNet)}
+                  </strong>
                   <div className="dashboard-summary-bar-track dashboard-summary-bar-track-net">
                     <span
                       className={`dashboard-summary-bar dashboard-summary-bar-net ${
-                        Number(netAmount) < 0 ? 'dashboard-summary-bar-net-negative' : ''
+                        Number(availableNet ?? 0) < 0
+                          ? 'dashboard-summary-bar-net-negative'
+                          : ''
                       }`}
-                      style={getNetSummaryBarStyle(netAmount, summaryMaxValue)}
+                      style={getNetSummaryBarStyle(
+                        availableNet ?? 0,
+                        summaryMaxValue,
+                      )}
                     />
                   </div>
                 </div>

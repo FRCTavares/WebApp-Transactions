@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -19,6 +20,26 @@ class MonthlySummary(BaseModel):
     owed_payment_extra_income: Decimal
     net: Decimal
     personal_net: Decimal
+    net_invested_cash: Decimal | None
+    available_net: Decimal | None
+    investment_cashflow_status: Literal[
+        "available",
+        "unavailable",
+    ]
+    investment_reconciliation_status: Literal[
+        "not_applicable",
+        "complete",
+        "partial",
+    ]
+    investment_goal_eur: Decimal
+    investment_goal_remaining: Decimal | None
+    investment_goal_over: Decimal | None
+    investment_goal_status: Literal[
+        "in_progress",
+        "reached",
+        "exceeded",
+        "unavailable",
+    ]
     open_owed_amount: Decimal
     top_expense_categories: list[CategoryTotal]
 

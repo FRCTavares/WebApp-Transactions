@@ -35,7 +35,7 @@ def update_preferences(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> UserPreferences:
     preferences = get_or_create_preferences(db, current_user.id)
-    for field, value in payload.model_dump().items():
+    for field, value in payload.model_dump(exclude_none=True).items():
         setattr(preferences, field, value)
     db.commit()
     db.refresh(preferences)

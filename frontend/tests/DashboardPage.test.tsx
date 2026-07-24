@@ -33,8 +33,26 @@ vi.mock('../src/hooks/usePeriod', () => ({
 }))
 
 const MONTHLY_SUMMARY = {
+  month: '2026-07',
+  gross_money_in: '1000.00',
   money_in: '1000.00',
+  money_out: '400.00',
+  owed_expense_amount: '0.00',
   personal_money_out: '400.00',
+  reimbursement_received_amount: '0.00',
+  owed_payment_extra_income: '0.00',
+  net: '600.00',
+  personal_net: '600.00',
+  net_invested_cash: '100.00',
+  available_net: '500.00',
+  investment_cashflow_status: 'available',
+  investment_reconciliation_status: 'complete',
+  investment_goal_eur: '100.00',
+  investment_goal_remaining: '0.00',
+  investment_goal_over: '0.00',
+  investment_goal_status: 'reached',
+  open_owed_amount: '0.00',
+  top_expense_categories: [],
 }
 
 describe('dashboard page loading, empty, error, and partial-data states', () => {
@@ -186,6 +204,122 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
       date_to: '2026-07-31',
       limit: 500,
     })
+  })
+
+  it('uses authoritative Available Net and excludes unrealised performance', async () => {
+    mocks.getMonthlySummary.mockResolvedValue({
+      ...MONTHLY_SUMMARY,
+      available_net: '500.00',
+    })
+    mocks.getInvestmentMonthlyChange.mockResolvedValue({
+      unrealised_monthly_change: '999.00',
+      is_estimated: false,
+    })
+    mocks.getCategorySummary.mockResolvedValue({ items: [] })
+    mocks.listTransactions.mockResolvedValue([])
+
+    render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
+
+    expect(
+      (await screen.findAllByText('Available Net')).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getAllByText('€500.00').length).toBeGreaterThan(0)
+    expect(screen.getByText('Investment performance')).toBeInTheDocument()
+    expect(screen.getByText('€999.00')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Unrealised market/FX gain or loss; excluded from Available Net',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it.each([
+    {
+      status: 'in_progress',
+      invested: '60.00',
+      remaining: '40.00',
+      over: '0.00',
+      expected: '€40.00 remaining',
+    },
+    {
+      status: 'reached',
+      invested: '100.00',
+      remaining: '0.00',
+      over: '0.00',
+      expected: 'Goal reached',
+    },
+    {
+      status: 'exceeded',
+      invested: '130.00',
+      remaining: '0.00',
+      over: '30.00',
+      expected: 'Goal exceeded by €30.00',
+    },
+  ])(
+    'shows the $status monthly investment goal state',
+    async ({
+      status,
+      invested,
+      remaining,
+      over,
+      expected,
+    }) => {
+      mocks.getMonthlySummary.mockResolvedValue({
+        ...MONTHLY_SUMMARY,
+        net_invested_cash: invested,
+        investment_goal_remaining: remaining,
+        investment_goal_over: over,
+        investment_goal_status: status,
+      })
+      mocks.getInvestmentMonthlyChange.mockResolvedValue({
+        unrealised_monthly_change: '10.00',
+        is_estimated: false,
+      })
+      mocks.getCategorySummary.mockResolvedValue({ items: [] })
+      mocks.listTransactions.mockResolvedValue([])
+
+      render(
+        <DashboardPage
+          greeting="Good morning"
+          displayName="Francisco"
+        />,
+      )
+
+      expect(await screen.findByText(expected)).toBeInTheDocument()
+    },
+  )
+
+  it('shows unavailable investment cash flow without inventing Available Net', async () => {
+    mocks.getMonthlySummary.mockResolvedValue({
+      ...MONTHLY_SUMMARY,
+      net_invested_cash: null,
+      available_net: null,
+      investment_cashflow_status: 'unavailable',
+      investment_reconciliation_status: 'partial',
+      investment_goal_remaining: null,
+      investment_goal_over: null,
+      investment_goal_status: 'unavailable',
+    })
+    mocks.getInvestmentMonthlyChange.mockResolvedValue({
+      unrealised_monthly_change: '-20.00',
+      is_estimated: false,
+    })
+    mocks.getCategorySummary.mockResolvedValue({ items: [] })
+    mocks.listTransactions.mockResolvedValue([])
+
+    render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
+
+    expect(
+      await screen.findByText('Investment cash flow unavailable'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Some investment funding is not fully reconciled.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText(/Available net: unavailable/i),
+    ).toBeInTheDocument()
   })
 
   it('shows a full error when required data fails to load', async () => {

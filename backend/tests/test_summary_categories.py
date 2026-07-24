@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.models.investment_event import InvestmentEvent
 from app.models.transaction import Transaction
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
@@ -256,4 +257,134 @@ def test_summary_service_respects_explicit_cashflow_type_for_category_summary(db
 
     assert len(response.items) == 1
     assert response.items[0].category == "Investment"
+    assert response.items[0].total == Decimal("1000.00")
+
+
+def test_category_summary_excludes_reconciled_investment_funding(
+    db_session,
+):
+    groceries = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 1),
+        description="Groceries",
+        raw_description="Groceries",
+        amount=Decimal("25.00"),
+        direction="out",
+        source="manual",
+        category="Groceries",
+        currency="EUR",
+        cashflow_type="expense",
+    )
+    funding = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 2),
+        description="Trading 212 funding",
+        raw_description="Trading 212 funding",
+        amount=Decimal("100.00"),
+        direction="out",
+        source="manual",
+        category="Investments",
+        currency="EUR",
+        cashflow_type="expense",
+    )
+    db_session.add_all([groceries, funding])
+    db_session.flush()
+
+    db_session.add(
+        InvestmentEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            date=date(2026, 5, 2),
+            source="trading212",
+            event_type="deposit",
+            description="Trading 212 deposit",
+            raw_description="Trading 212 deposit",
+            amount=Decimal("100.00"),
+            currency="EUR",
+            funding_source="activobank",
+            funding_match_status="manual",
+            transaction_id=funding.id,
+            matched_transaction_id=funding.id,
+        )
+    )
+    db_session.commit()
+
+    service = SummaryService(
+        repository=SummaryRepository(db_session),
+        transaction_repository=TransactionRepository(db_session),
+    )
+
+    response = service.get_category_summary(
+        year=2026,
+        month=5,
+        direction="out",
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    assert len(response.items) == 1
+    assert response.items[0].category == "Groceries"
+    assert response.items[0].total == Decimal("25.00")
+
+
+def test_income_category_summary_excludes_linked_withdrawal(
+    db_session,
+):
+    salary = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 1),
+        description="Salary",
+        raw_description="Salary",
+        amount=Decimal("1000.00"),
+        direction="in",
+        source="manual",
+        category="Salary",
+        currency="EUR",
+        cashflow_type="income",
+    )
+    withdrawal = Transaction(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 2),
+        description="Trading 212 withdrawal",
+        raw_description="Trading 212 withdrawal",
+        amount=Decimal("40.00"),
+        direction="in",
+        source="manual",
+        category="Investment withdrawal",
+        currency="EUR",
+        cashflow_type="income",
+    )
+    db_session.add_all([salary, withdrawal])
+    db_session.flush()
+
+    db_session.add(
+        InvestmentEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            date=date(2026, 5, 2),
+            source="trading212",
+            event_type="withdrawal",
+            description="Trading 212 withdrawal",
+            raw_description="Trading 212 withdrawal",
+            amount=Decimal("40.00"),
+            currency="EUR",
+            funding_source="activobank",
+            funding_match_status="manual",
+            transaction_id=withdrawal.id,
+            matched_transaction_id=withdrawal.id,
+        )
+    )
+    db_session.commit()
+
+    service = SummaryService(
+        repository=SummaryRepository(db_session),
+        transaction_repository=TransactionRepository(db_session),
+    )
+
+    response = service.get_category_summary(
+        year=2026,
+        month=5,
+        direction="in",
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    assert len(response.items) == 1
+    assert response.items[0].category == "Salary"
     assert response.items[0].total == Decimal("1000.00")

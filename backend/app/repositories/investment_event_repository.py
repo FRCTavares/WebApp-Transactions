@@ -176,10 +176,38 @@ class InvestmentEventRepository:
         )
         return self.db.scalar(statement)
 
+    def get_by_transaction_link(
+        self,
+        transaction_id: int,
+        *,
+        user_id: str,
+        exclude_event_id: int | None = None,
+    ) -> InvestmentEvent | None:
+        statement = (
+            select(InvestmentEvent)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(
+                or_(
+                    InvestmentEvent.transaction_id == transaction_id,
+                    InvestmentEvent.matched_transaction_id
+                    == transaction_id,
+                )
+            )
+        )
+
+        if exclude_event_id is not None:
+            statement = statement.where(
+                InvestmentEvent.id != exclude_event_id
+            )
+
+        return self.db.scalar(statement)
+
     def update(
         self,
         event: InvestmentEvent,
         event_data: InvestmentEventUpdate,
+        *,
+        commit: bool = True,
     ) -> InvestmentEvent:
         update_data = event_data.model_dump(exclude_unset=True)
 
@@ -187,8 +215,13 @@ class InvestmentEventRepository:
             setattr(event, field, value)
 
         self.db.add(event)
-        self.db.commit()
-        self.db.refresh(event)
+
+        if commit:
+            self.db.commit()
+            self.db.refresh(event)
+        else:
+            self.db.flush()
+
         return event
 
     def delete(self, event: InvestmentEvent) -> None:
