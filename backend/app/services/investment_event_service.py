@@ -62,6 +62,7 @@ class InvestmentEventService(InvestmentValuationMixin):
         validate_investment_transaction_links(
             event_data,
             transaction_repository=self.transaction_repository,
+            investment_event_repository=self.repository,
             user_id=user_id,
         )
         validate_market_event_candidate(candidate)
@@ -144,7 +145,13 @@ class InvestmentEventService(InvestmentValuationMixin):
         validate_investment_transaction_links(
             event_data,
             transaction_repository=self.transaction_repository,
+            investment_event_repository=self.repository,
             user_id=user_id,
+            existing_event_id=event.id,
+            existing_transaction_id=event.transaction_id,
+            existing_matched_transaction_id=(
+                event.matched_transaction_id
+            ),
         )
         validate_market_event_candidate(candidate)
         validate_market_sell_timeline(
@@ -212,38 +219,59 @@ class InvestmentEventService(InvestmentValuationMixin):
                 detail="Only unmatched funding events can be manually resolved",
             )
 
-        transaction = self.transaction_repository.create(
-            TransactionCreate(
-                date=resolution_data.date,
-                description=resolution_data.description,
-                raw_description=(
-                    f"Manual funding resolution for investment event {event.id}: "
-                    f"{event.raw_description}"
-                ),
-                amount=resolution_data.eur_amount,
-                original_amount=event.amount,
-                original_currency=event.currency,
-                fx_rate_to_eur=resolution_data.eur_amount / event.amount,
-                fx_rate_source="manual",
-                direction="out",
-                cashflow_type="transfer",
-                source="manual",
-                account="ActivoBank",
-                currency="EUR",
-                notes=resolution_data.notes,
-            ),
-            user_id=current_user.id,
-        )
+        db = self.repository.db
 
-        updated_event = self.repository.update(
-            event,
-            InvestmentEventUpdate(
-                transaction_id=transaction.id,
-                matched_transaction_id=transaction.id,
-                funding_match_status="manual",
-                fx_rate_to_eur=resolution_data.eur_amount / event.amount,
-                fx_rate_source="manual",
-            ),
-        )
+        if self.transaction_repository.db is not db:
+            raise RuntimeError(
+                "Investment and transaction repositories must share a session"
+            )
+
+        try:
+            transaction = self.transaction_repository.create(
+                TransactionCreate(
+                    date=resolution_data.date,
+                    description=resolution_data.description,
+                    raw_description=(
+                        "Manual funding resolution for investment "
+                        f"event {event.id}: {event.raw_description}"
+                    ),
+                    amount=resolution_data.eur_amount,
+                    original_amount=event.amount,
+                    original_currency=event.currency,
+                    fx_rate_to_eur=(
+                        resolution_data.eur_amount / event.amount
+                    ),
+                    fx_rate_source="manual",
+                    direction="out",
+                    cashflow_type="transfer",
+                    source="manual",
+                    account="ActivoBank",
+                    currency="EUR",
+                    notes=resolution_data.notes,
+                ),
+                user_id=current_user.id,
+                commit=False,
+            )
+
+            updated_event = self.repository.update(
+                event,
+                InvestmentEventUpdate(
+                    transaction_id=transaction.id,
+                    matched_transaction_id=transaction.id,
+                    funding_match_status="manual",
+                    fx_rate_to_eur=(
+                        resolution_data.eur_amount / event.amount
+                    ),
+                    fx_rate_source="manual",
+                ),
+                commit=False,
+            )
+
+            db.commit()
+            db.refresh(transaction)
+            db.refresh(updated_event)
+        except Exception:
+            db.rollback()
+            raise
 
         return updated_event, transaction.id

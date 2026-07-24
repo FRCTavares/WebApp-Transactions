@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -12,6 +14,10 @@ class UserPreferencesUpdate(BaseModel):
     time_zone: str = Field(min_length=1, max_length=64)
     date_format: str
     language: str
+    monthly_investment_goal_eur: Decimal | None = Field(
+        default=None,
+        gt=0,
+    )
 
     @field_validator("locale")
     @classmethod
@@ -56,3 +62,5 @@ class UserPreferencesUpdate(BaseModel):
 
 class UserPreferencesRead(UserPreferencesUpdate):
     model_config = ConfigDict(from_attributes=True)
+
+    monthly_investment_goal_eur: Decimal = Field(gt=0)

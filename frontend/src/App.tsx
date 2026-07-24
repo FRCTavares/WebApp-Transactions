@@ -286,7 +286,7 @@ function App() {
           {page === 'export' && <ExportPage />}
           {page === 'settings' && (
             <SettingsPage
-              key={`${presentation.preferences.language}-${presentation.preferences.locale}-${presentation.preferences.currency}-${presentation.preferences.time_zone}-${presentation.preferences.date_format}`}
+              key={`${presentation.preferences.language}-${presentation.preferences.locale}-${presentation.preferences.currency}-${presentation.preferences.time_zone}-${presentation.preferences.date_format}-${presentation.preferences.monthly_investment_goal_eur}`}
               isAuthEnabled={isAuthEnabled}
               displayName={displayName}
               accountEmail={user?.email ?? ''}

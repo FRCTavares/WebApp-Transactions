@@ -3,9 +3,15 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import CurrentUser, get_current_user
 from app.database import get_db
+from app.repositories.investment_event_repository import (
+    InvestmentEventRepository,
+)
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.summary import CategorySummaryResponse, MonthlySummary
+from app.services.investment_cashflow_service import (
+    InvestmentCashflowService,
+)
 from app.services.summary_service import SummaryService
 
 
@@ -15,10 +21,15 @@ router = APIRouter(prefix="/api/summary", tags=["summary"])
 def get_summary_service(db: Session = Depends(get_db)) -> SummaryService:
     summary_repository = SummaryRepository(db)
     transaction_repository = TransactionRepository(db)
+    investment_cashflow_service = InvestmentCashflowService(
+        InvestmentEventRepository(db),
+        transaction_repository,
+    )
 
     return SummaryService(
         repository=summary_repository,
         transaction_repository=transaction_repository,
+        investment_cashflow_service=investment_cashflow_service,
     )
 
 

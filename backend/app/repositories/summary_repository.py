@@ -1,12 +1,14 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.models.investment_event import InvestmentEvent
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
+from app.models.user_preferences import UserPreferences
 
 
 class SummaryRepository:
@@ -29,6 +31,13 @@ class SummaryRepository:
             .where(Transaction.date < end_date)
         )
 
+        if cashflow_type in {"income", "expense"}:
+            statement = statement.where(
+                ~self._linked_investment_cashflow_exists(
+                    user_id=user_id,
+                )
+            )
+
         return Decimal(str(self.db.scalar(statement)))
 
     def get_transaction_income_excluding_linked_owed_payments(
@@ -50,6 +59,11 @@ class SummaryRepository:
             .where(Transaction.cashflow_type == "income")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
+            .where(
+                ~self._linked_investment_cashflow_exists(
+                    user_id=user_id,
+                )
+            )
             .where(Transaction.id.not_in(linked_owed_payment_transaction_ids))
         )
 
@@ -165,6 +179,11 @@ class SummaryRepository:
             .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
+            .where(
+                ~self._linked_investment_cashflow_exists(
+                    user_id=user_id,
+                )
+            )
             .group_by(category_label)
             .having(personal_total > 0)
             .order_by(personal_total.desc())
@@ -190,10 +209,29 @@ class SummaryRepository:
             .where(Transaction.cashflow_type == "expense")
             .where(Transaction.date >= start_date)
             .where(Transaction.date < end_date)
+            .where(
+                ~self._linked_investment_cashflow_exists(
+                    user_id=user_id,
+                )
+            )
             .where(OwedItem.status != "cancelled")
         )
 
         return Decimal(str(self.db.scalar(statement)))
+
+    def get_monthly_investment_goal_eur(
+        self,
+        *,
+        user_id: str,
+    ) -> Decimal:
+        preferences = self.db.get(UserPreferences, user_id)
+
+        if preferences is None:
+            return Decimal("100.00")
+
+        return Decimal(
+            str(preferences.monthly_investment_goal_eur)
+        )
 
     def get_open_owed_amount(
         self,
@@ -208,3 +246,25 @@ class SummaryRepository:
         )
 
         return Decimal(str(self.db.scalar(statement)))
+
+    def _linked_investment_cashflow_exists(
+        self,
+        *,
+        user_id: str,
+    ):
+        return (
+            select(InvestmentEvent.id)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(
+                InvestmentEvent.event_type.in_(
+                    ("deposit", "withdrawal")
+                )
+            )
+            .where(
+                or_(
+                    InvestmentEvent.transaction_id == Transaction.id,
+                    InvestmentEvent.matched_transaction_id
+                    == Transaction.id,
+                )
+            )
+        ).exists()

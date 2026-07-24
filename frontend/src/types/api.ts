@@ -490,6 +490,21 @@ export type MonthlySummary = {
   owed_payment_extra_income: string
   net: string
   personal_net: string
+  net_invested_cash: string | null
+  available_net: string | null
+  investment_cashflow_status: 'available' | 'unavailable'
+  investment_reconciliation_status:
+    | 'not_applicable'
+    | 'complete'
+    | 'partial'
+  investment_goal_eur: string
+  investment_goal_remaining: string | null
+  investment_goal_over: string | null
+  investment_goal_status:
+    | 'in_progress'
+    | 'reached'
+    | 'exceeded'
+    | 'unavailable'
   open_owed_amount: string
   top_expense_categories: CategoryTotal[]
 }

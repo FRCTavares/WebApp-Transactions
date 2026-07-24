@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { PresentationPreferences } from '../utils/format'
 import { translate } from '../i18n/messages'
-import { Button, PageHeader } from '../components/ui'
+import { Button, Field, PageHeader } from '../components/ui'
 
 const PRIVACY_CONTACT =
   import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
@@ -66,9 +66,22 @@ export function SettingsPage({
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const investmentGoalValue = Number(draft.monthly_investment_goal_eur)
+  const investmentGoalError =
+    draft.monthly_investment_goal_eur.trim() === ''
+    || !Number.isFinite(investmentGoalValue)
+    || investmentGoalValue <= 0
+      ? t('investmentGoalInvalid')
+      : null
 
   async function handleSavePreferences(event: FormEvent) {
     event.preventDefault()
+
+    if (investmentGoalError) {
+      setSaveState(null)
+      return
+    }
+
     setSaveState(t('saving'))
     try {
       await onSavePreferences(draft)
@@ -107,12 +120,40 @@ export function SettingsPage({
             <label>{t('defaultCurrency')}<input value={draft.currency} maxLength={3} onChange={(event) => setDraft({ ...draft, currency: event.target.value.toUpperCase() })} /></label>
             <label>{t('timeZone')}<select value={draft.time_zone} onChange={(event) => setDraft({ ...draft, time_zone: event.target.value })}><option value="Europe/Lisbon">Europe/Lisbon</option><option value="Atlantic/Azores">Atlantic/Azores</option><option value="UTC">UTC</option></select></label>
             <label>{t('dateFormat')}<select value={draft.date_format} onChange={(event) => setDraft({ ...draft, date_format: event.target.value as PresentationPreferences['date_format'] })}><option value="short">{t('short')}</option><option value="medium">{t('medium')}</option><option value="long">{t('long')}</option></select></label>
+            <Field
+              label={t('monthlyInvestmentGoal')}
+              hint={t('monthlyInvestmentGoalHint')}
+              error={investmentGoalError}
+              required
+            >
+              {(controlProps) => (
+                <input
+                  {...controlProps}
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  value={draft.monthly_investment_goal_eur}
+                  onChange={(event) => {
+                    setDraft({
+                      ...draft,
+                      monthly_investment_goal_eur: event.target.value,
+                    })
+                    setSaveState(null)
+                  }}
+                />
+              )}
+            </Field>
             {(preferencesError || saveState) && <p className={preferencesError ? 'error-text' : 'muted'} role="status">{preferencesError ?? saveState}</p>}
             <Button
               type="submit"
               variant="primary"
               loading={preferencesLoading}
-              disabled={preferencesLoading || draft.currency.length !== 3}
+              disabled={
+                preferencesLoading
+                || draft.currency.length !== 3
+                || investmentGoalError !== null
+              }
             >
               {t('savePreferences')}
             </Button>

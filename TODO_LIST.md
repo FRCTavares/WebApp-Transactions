@@ -19,56 +19,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 3. Financial correctness and atomicity
 
-- [ ] **Clarify Dashboard investment cash flow and monthly investment goal.**
-      The current Dashboard “Investments” metric displays unrealised monthly
-      market gain or loss, and the Net metric adds that value to income minus
-      personal spending. This incorrectly mixes investment performance with
-      spendable cash.
-
-      Replace that model with explicitly separated monthly measures:
-
-      - `Money In`: personal cash income received;
-      - `Money Out`: personal consumption and other spend, excluding amounts
-        recoverable through owed obligations;
-      - `Invested`: net personal cash contributed to investments during the
-        selected month;
-      - `Available Net`: Money In minus Money Out minus net invested cash; and
-      - `Investment performance`: unrealised market and FX gain or loss,
-        displayed separately and excluded from Available Net.
-
-      Add a configurable monthly investment goal, initially EUR 100. The
-      Dashboard must show the amount invested against that goal, the remaining
-      amount, and whether the goal was reached. Automatic investment activity
-      must update this progress from authoritative stored financial records.
-
-      Define authoritative contribution semantics before implementation.
-      Investment purchases funded from an investment account, broker deposits,
-      withdrawals, sales, fees, dividends, and internal account transfers must
-      not be treated interchangeably. Net invested cash must represent external
-      personal cash committed to investments, less qualifying withdrawals,
-      without treating unrealised gains as cash.
-
-      Prevent double-counting when the same EUR 100 movement appears both as a
-      bank money-out transaction and as a Trading 212 deposit or investment
-      event. Add an explicit reconciliation or provenance relationship rather
-      than relying on matching descriptions. Services must validate user
-      ownership and apply any multi-record linking atomically.
-
-      Acceptance:
-
-      - the existing investment pill's current calculation is documented in
-        code and replaced with unambiguous labels;
-      - unrealised gain or loss no longer changes Available Net;
-      - investing EUR 100 reduces Available Net by exactly EUR 100;
-      - the EUR 100 is not included in ordinary spending-category totals;
-      - the goal shows invested, remaining, reached, and over-goal states;
-      - withdrawals and reversed or corrected events have defined behaviour;
-      - one economic movement represented in two sources is counted once;
-      - all authoritative calculations use Decimal values, not floating point;
-      - backend tests cover contributions, withdrawals, gains, losses,
-        reconciliation, ownership boundaries, and rollback;
-      - frontend tests cover all goal states, unavailable partial data, and
-        explanatory labels.
 
 ## 4. Frontend design system
 

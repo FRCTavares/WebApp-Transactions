@@ -1,8 +1,12 @@
 from datetime import date
+from decimal import Decimal
 
 from app.auth.current_user import CurrentUser
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.services.investment_cashflow_service import (
+    InvestmentCashflowService,
+)
 from app.schemas.summary import (
     CategorySummaryItem,
     CategorySummaryResponse,
@@ -16,9 +20,11 @@ class SummaryService:
         self,
         repository: SummaryRepository,
         transaction_repository: TransactionRepository | None = None,
+        investment_cashflow_service: InvestmentCashflowService | None = None,
     ) -> None:
         self.repository = repository
         self.transaction_repository = transaction_repository
+        self.investment_cashflow_service = investment_cashflow_service
 
     def get_monthly_summary(
         self,
@@ -37,6 +43,11 @@ class SummaryService:
 
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
+
+        if self.investment_cashflow_service is None:
+            raise RuntimeError(
+                "Investment cashflow service is required for monthly summary"
+            )
 
         user_id = current_user.id
         gross_money_in = self.repository.get_gross_money_in(
@@ -72,6 +83,45 @@ class SummaryService:
             user_id=user_id,
         )
         personal_money_out = money_out - owed_expense_amount
+        personal_net = money_in - personal_money_out
+        investment_cashflow = (
+            self.investment_cashflow_service.calculate_month(
+                start_date=start_date,
+                end_date=end_date,
+                user_id=user_id,
+            )
+        )
+        investment_goal_eur = (
+            self.repository.get_monthly_investment_goal_eur(
+                user_id=user_id,
+            )
+        )
+
+        if investment_cashflow.net_invested_cash is None:
+            net_invested_cash = None
+            available_net = None
+            investment_goal_remaining = None
+            investment_goal_over = None
+            investment_goal_status = "unavailable"
+        else:
+            net_invested_cash = investment_cashflow.net_invested_cash
+            available_net = personal_net - net_invested_cash
+            investment_goal_remaining = max(
+                investment_goal_eur - net_invested_cash,
+                Decimal("0.00"),
+            )
+            investment_goal_over = max(
+                net_invested_cash - investment_goal_eur,
+                Decimal("0.00"),
+            )
+
+            if net_invested_cash > investment_goal_eur:
+                investment_goal_status = "exceeded"
+            elif net_invested_cash == investment_goal_eur:
+                investment_goal_status = "reached"
+            else:
+                investment_goal_status = "in_progress"
+
         open_owed_amount = self.repository.get_open_owed_amount(user_id=user_id)
 
         top_categories = [
@@ -94,7 +144,19 @@ class SummaryService:
             reimbursement_received_amount=reimbursement_received_amount,
             owed_payment_extra_income=owed_payment_extra_income,
             net=money_in - money_out,
-            personal_net=money_in - personal_money_out,
+            personal_net=personal_net,
+            net_invested_cash=net_invested_cash,
+            available_net=available_net,
+            investment_cashflow_status=(
+                investment_cashflow.cashflow_status
+            ),
+            investment_reconciliation_status=(
+                investment_cashflow.reconciliation_status
+            ),
+            investment_goal_eur=investment_goal_eur,
+            investment_goal_remaining=investment_goal_remaining,
+            investment_goal_over=investment_goal_over,
+            investment_goal_status=investment_goal_status,
             open_owed_amount=open_owed_amount,
             top_expense_categories=top_categories,
         )

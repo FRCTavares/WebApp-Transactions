@@ -6,6 +6,7 @@ from decimal import Decimal
 from sqlalchemy import delete as sqlalchemy_delete, extract, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.models.investment_event import InvestmentEvent
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
@@ -440,7 +441,16 @@ class TransactionRepository:
             statement = statement.where(Transaction.direction == direction)
 
         if cashflow_type is not None:
-            statement = statement.where(Transaction.cashflow_type == cashflow_type)
+            statement = statement.where(
+                Transaction.cashflow_type == cashflow_type
+            )
+
+        if cashflow_type in {"income", "expense"}:
+            statement = statement.where(
+                ~self._linked_investment_cashflow_exists(
+                    user_id=user_id,
+                )
+            )
 
         return [
             (
@@ -522,3 +532,25 @@ class TransactionRepository:
             statement = statement.where(Transaction.direction == direction)
 
         return list(self.db.execute(statement).all())
+
+    def _linked_investment_cashflow_exists(
+        self,
+        *,
+        user_id: str,
+    ):
+        return (
+            select(InvestmentEvent.id)
+            .where(InvestmentEvent.user_id == user_id)
+            .where(
+                InvestmentEvent.event_type.in_(
+                    ("deposit", "withdrawal")
+                )
+            )
+            .where(
+                or_(
+                    InvestmentEvent.transaction_id == Transaction.id,
+                    InvestmentEvent.matched_transaction_id
+                    == Transaction.id,
+                )
+            )
+        ).exists()
