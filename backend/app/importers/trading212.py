@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from io import StringIO
 
 from app.importers.base import (
+    ImportParseInvalidRow,
     ImportParseResult,
     NormalisedInvestmentEvent,
     NormalisedTransaction,
@@ -21,23 +22,44 @@ class Trading212Importer:
         reader = csv.DictReader(StringIO(csv_content))
         transactions: list[NormalisedTransaction] = []
         investment_events: list[NormalisedInvestmentEvent] = []
+        invalid_rows: list[ImportParseInvalidRow] = []
 
-        for row in reader:
-            action = self._get_optional_value(row, "Action")
-            description = self._get_description(row)
+        for row_number, row in enumerate(reader, start=2):
+            try:
+                action = self._get_optional_value(row, "Action")
+                description = self._get_description(row)
 
-            if self._is_investment_event(action=action, description=description):
-                investment_events.append(self._parse_investment_event(row))
-            else:
-                transactions.append(self._parse_transaction(row))
+                if self._is_investment_event(
+                    action=action,
+                    description=description,
+                ):
+                    investment_events.append(self._parse_investment_event(row))
+                elif self._is_transaction(
+                    action=action,
+                    description=description,
+                ):
+                    transactions.append(self._parse_transaction(row))
+                else:
+                    unsupported_action = action or description
+                    raise ValueError(
+                        f"Unsupported Trading 212 action: {unsupported_action}"
+                    )
+            except ValueError as error:
+                invalid_rows.append(
+                    ImportParseInvalidRow(
+                        row_number=row_number,
+                        error=str(error),
+                    )
+                )
 
         return ImportParseResult(
             transactions=transactions,
             investment_events=investment_events,
+            invalid_rows=invalid_rows,
         )
 
     def _parse_transaction(self, row: dict[str, str]) -> NormalisedTransaction:
-        time = self._get_required_value(row, "Time")
+        time = self._get_time_value(row)
         amount_text = self._get_required_value(row, "Total")
         currency = self._get_required_value(row, "Currency (Total)").upper()
         external_id = self._get_optional_value(row, "ID")
@@ -81,7 +103,7 @@ class Trading212Importer:
         )
 
     def _parse_investment_event(self, row: dict[str, str]) -> NormalisedInvestmentEvent:
-        time = self._get_required_value(row, "Time")
+        time = self._get_time_value(row)
         amount_text = self._get_required_value(row, "Total")
         currency = self._get_required_value(row, "Currency (Total)").upper()
         external_id = self._get_optional_value(row, "ID")
@@ -166,6 +188,25 @@ class Trading212Importer:
             any(marker in combined_text for marker in investment_markers)
             or description_text.startswith("transaction id:")
         )
+
+    def _is_transaction(
+        self,
+        action: str | None,
+        description: str,
+    ) -> bool:
+        action_text = (action or "").strip().lower()
+        description_text = description.strip().lower()
+        combined_text = f"{action_text} {description_text}"
+
+        transaction_markers = (
+            "card debit",
+            "spending cashback",
+            "cashback",
+            "débito cartão",
+            "debito cartao",
+        )
+
+        return any(marker in combined_text for marker in transaction_markers)
 
     def _get_event_type(
         self,
@@ -323,6 +364,15 @@ class Trading212Importer:
                 return value.strip()
 
         raise ValueError("Missing required Trading 212 description")
+
+    def _get_time_value(self, row: dict[str, str]) -> str:
+        for field_name in ("Time (UTC)", "Time"):
+            value = self._get_optional_value(row, field_name)
+
+            if value is not None:
+                return value
+
+        raise ValueError("Missing required Trading 212 field: Time or Time (UTC)")
 
     def _get_required_value(self, row: dict[str, str], field_name: str) -> str:
         value = row.get(field_name)

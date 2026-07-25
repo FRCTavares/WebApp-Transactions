@@ -13,6 +13,7 @@ backend/data/*.sqlite3
 
 # Private bank/export files
 *.csv
+!backend/tests/fixtures/trading212/current_history.csv
 *.xlsx
 *.xls
 *.pdf

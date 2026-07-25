@@ -1,4 +1,5 @@
 from decimal import Decimal
+from pathlib import Path
 
 from app.importers.trading212 import Trading212Importer
 
@@ -83,6 +84,7 @@ Interest on cash,2026-05-02 14:00:00,Interest on cash,interest-1,0.03,EUR,,,,,,
     assert result.investment_events[4].description == "Interest on cash"
     assert result.investment_events[4].event_type == "interest"
 
+
 def test_trading212_importer_handles_portuguese_and_crypto_rows():
     csv_content = """Action,Time,Notes,ID,Total,Currency (Total),Charge amount,Currency (Charge amount),Deposit fee,Currency (Deposit fee),Merchant name,Merchant category,Name,Ticker,ISIN,No. of shares,Price / share
 Ações compradas,2026-06-01 09:00:00,CSPX buy,pt-market-1,123.45,EUR,,,,,,,iShares Core S&P 500,CSPX,IE00B5BMR087,0.10,1234.50
@@ -121,3 +123,39 @@ Cashback,2026-06-05 09:00:00,Cashback,card-cashback-1,0.01,EUR,,,,,,,,,,
     assert result.transactions[1].cashflow_type == "income"
     assert result.transactions[1].amount == Decimal("0.01")
 
+
+def test_trading212_importer_parses_current_history_export_fixture():
+    fixture_path = (
+        Path(__file__).parent / "fixtures" / "trading212" / "current_history.csv"
+    )
+    result = Trading212Importer().parse_full(fixture_path.read_text())
+
+    assert len(result.transactions) == 0
+    assert len(result.investment_events) == 4
+    assert len(result.invalid_rows) == 1
+
+    buy, sell, interest, dividend = result.investment_events
+
+    assert buy.date.isoformat() == "2026-07-20"
+    assert buy.event_type == "market_buy"
+    assert buy.external_id == "current-buy-1"
+    assert buy.raw_description == "Current market buy | ID: current-buy-1"
+    assert buy.notes == "Market buy"
+
+    assert sell.date.isoformat() == "2026-07-21"
+    assert sell.event_type == "market_sell"
+    assert sell.external_id == "current-sell-1"
+
+    assert interest.date.isoformat() == "2026-07-22"
+    assert interest.event_type == "interest"
+    assert interest.amount == Decimal("0.05")
+    assert interest.external_id == "current-interest-1"
+
+    assert dividend.date.isoformat() == "2026-07-23"
+    assert dividend.event_type == "dividend"
+    assert dividend.external_id == "current-dividend-1"
+
+    assert result.invalid_rows[0].row_number == 6
+    assert result.invalid_rows[0].error == (
+        "Unsupported Trading 212 action: Unsupported broker action"
+    )

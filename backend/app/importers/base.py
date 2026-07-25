@@ -53,9 +53,16 @@ class NormalisedInvestmentEvent:
 
 
 @dataclass(frozen=True)
+class ImportParseInvalidRow:
+    row_number: int
+    error: str
+
+
+@dataclass(frozen=True)
 class ImportParseResult:
     transactions: list[NormalisedTransaction] = field(default_factory=list)
     investment_events: list[NormalisedInvestmentEvent] = field(default_factory=list)
+    invalid_rows: list[ImportParseInvalidRow] = field(default_factory=list)
 
 
 class TransactionImporter(Protocol):
