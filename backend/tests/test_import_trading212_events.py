@@ -1,4 +1,5 @@
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
@@ -130,3 +131,67 @@ Bank Transfer,2026-05-02 11:00:00,Bank Transfer,transfer-1,100.00,EUR,,,,,,
     assert db_session.query(ImportBatch).count() == 0
     assert db_session.query(Transaction).count() == 0
     assert db_session.query(InvestmentEvent).count() == 0
+
+
+def test_trading212_current_history_preview_commit_and_reimport(db_session):
+    fixture_path = (
+        Path(__file__).parent / "fixtures" / "trading212" / "current_history.csv"
+    )
+    csv_content = fixture_path.read_text()
+
+    transaction_repository = TransactionRepository(db_session)
+    investment_event_repository = InvestmentEventRepository(db_session)
+    service = ImportService(
+        transaction_repository=transaction_repository,
+        import_batch_repository=ImportBatchRepository(db_session),
+        investment_event_repository=investment_event_repository,
+    )
+
+    preview = service.preview_import(
+        source="trading212",
+        csv_content=csv_content,
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    assert preview.rows_total == 5
+    assert preview.rows_valid == 4
+    assert preview.rows_duplicates == 0
+    assert preview.rows_invalid == 1
+    assert len(preview.transactions) == 0
+    assert len(preview.investment_events) == 4
+    assert preview.invalid_rows[0].row_number == 6
+
+    first_result = service.commit_import(
+        source="trading212",
+        csv_content=csv_content,
+        filename="current_history.csv",
+        current_user=LOCAL_CURRENT_USER,
+    )
+    second_result = service.commit_import(
+        source="trading212",
+        csv_content=csv_content,
+        filename="current_history.csv",
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    assert first_result["rows_total"] == 5
+    assert first_result["rows_inserted"] == 4
+    assert first_result["rows_skipped"] == 1
+    assert first_result["investment_events_inserted"] == 4
+
+    assert second_result["rows_total"] == 5
+    assert second_result["rows_inserted"] == 0
+    assert second_result["rows_skipped"] == 5
+    assert second_result["investment_events_inserted"] == 0
+
+    events = investment_event_repository.list(
+        source="trading212",
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+    assert len(events) == 4
+    assert {event.event_type for event in events} == {
+        "market_buy",
+        "market_sell",
+        "interest",
+        "dividend",
+    }

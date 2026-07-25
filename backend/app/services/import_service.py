@@ -389,7 +389,13 @@ class ImportService:
     ) -> ImportPreviewResponse:
         preview_transactions: list[ImportPreviewTransaction] = []
         preview_investment_events: list[ImportPreviewInvestmentEvent] = []
-        invalid_rows: list[ImportInvalidRow] = []
+        invalid_rows = [
+            ImportInvalidRow(
+                row_number=invalid_row.row_number,
+                error=invalid_row.error,
+            )
+            for invalid_row in parse_result.invalid_rows
+        ]
         seen_transaction_hashes: set[str] = set()
         seen_event_hashes: set[str] = set()
 
@@ -437,7 +443,11 @@ class ImportService:
             1 for event in preview_investment_events if event.is_duplicate
         )
 
-        rows_total = len(parse_result.transactions) + len(parse_result.investment_events)
+        rows_total = (
+            len(parse_result.transactions)
+            + len(parse_result.investment_events)
+            + len(parse_result.invalid_rows)
+        )
         rows_valid = len(preview_transactions) + len(preview_investment_events)
 
         return ImportPreviewResponse(

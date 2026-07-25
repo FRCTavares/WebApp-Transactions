@@ -1,0 +1,6 @@
+Action,Time (UTC),Notes,ID,Total,Currency (Total),Charge amount,Currency (Charge amount),Deposit fee,Currency (Deposit fee),Merchant name,Merchant category,Name,Ticker,ISIN,No. of shares,Price / share
+Market buy,2026-07-20 23:30:00,Current market buy,current-buy-1,100.00,EUR,,,,,,,iShares Core S&P 500,CSPX,IE00B5BMR087,0.08,1250.00
+Market sell,2026-07-21 00:15:00,Current market sell,current-sell-1,50.00,EUR,,,,,,,iShares Core S&P 500,CSPX,IE00B5BMR087,0.04,1250.00
+Interest on cash,2026-07-22 12:00:00,Interest on cash,current-interest-1,0.05,EUR,,,,,,,,,,
+Dividend,2026-07-23 15:00:00,Dividend payment,current-dividend-1,1.25,EUR,,,,,,,iShares Core S&P 500,CSPX,IE00B5BMR087,,
+Unsupported broker action,2026-07-24 16:00:00,Unsupported broker action,current-unsupported-1,2.00,EUR,,,,,,,,,,

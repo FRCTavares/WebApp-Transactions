@@ -44,6 +44,7 @@ class ImportFxResolutionService:
                 self._resolve_row(event)
                 for event in parse_result.investment_events
             ],
+            invalid_rows=parse_result.invalid_rows,
         )
 
     def _resolve_row(self, row: NormalisedRow) -> NormalisedRow:
