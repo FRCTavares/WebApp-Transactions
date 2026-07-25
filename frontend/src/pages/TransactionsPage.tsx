@@ -1,6 +1,6 @@
 import { TransactionsPageView } from '../components/transactions/TransactionsPageView'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import {
   createTransactionWithOwed,
   deleteTransaction,

@@ -5,7 +5,7 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TransactionsPage } from '../src/pages/TransactionsPage'
 
