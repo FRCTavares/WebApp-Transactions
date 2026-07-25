@@ -18,7 +18,6 @@ and this exclusion with it. */
   background: rgb(255 255 255 / 0.04);
 }
 
-:root[data-theme='dark'] .investment-trend-window-selector,
 :root[data-theme='dark'] .dashboard-chart-toggle,
 :root[data-theme='dark'] .transaction-direction-switch,
 :root[data-theme='dark'] .segmented-control {
@@ -110,7 +109,6 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 
 /* Nested cards should not look like full panels. */
 :root[data-theme='dark'] .expense-chart-legend-row,
-:root[data-theme='dark'] .investment-holding-card,
 :root[data-theme='dark'] .wealth-account-card,
 :root[data-theme='dark'] .owed-person-card,
 :root[data-theme='dark'] .owed-person-item,
@@ -125,8 +123,7 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .mobile-bottom-nav button.active,
 :root[data-theme='dark'] .transaction-direction-switch button.active,
 :root[data-theme='dark'] .dashboard-chart-toggle button.active,
-:root[data-theme='dark'] .segmented-control button.active,
-:root[data-theme='dark'] .investment-trend-window-selector button.active {
+:root[data-theme='dark'] .segmented-control button.active {
   border-color: rgb(138 180 248 / 0.5);
   background: rgb(138 180 248 / 0.13) !important;
   color: #dbeafe;
@@ -157,15 +154,13 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 
 :root[data-theme='dark'] .transactions-page tbody tr:nth-child(odd):not(.inline-create-row):not(.inline-edit-row) td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:nth-child(odd) td,
-:root[data-theme='dark'] .wealth-table-wrap tbody tr:nth-child(odd) td,
-:root[data-theme='dark'] .investments-table tbody tr:nth-child(odd) td {
+:root[data-theme='dark'] .wealth-table-wrap tbody tr:nth-child(odd) td {
   background: #1c1d21 !important;
 }
 
 :root[data-theme='dark'] .transactions-page tbody tr:hover td,
 :root[data-theme='dark'] .owed-page-polished .owed-table tbody tr:hover td,
 :root[data-theme='dark'] .wealth-table-wrap tbody tr:hover td,
-:root[data-theme='dark'] .investments-table tbody tr:hover td,
 :root[data-theme='dark'] .clickable-row:hover td {
   background: #262830 !important;
 }
@@ -188,15 +183,11 @@ more native dark-panel feel. */ :root[data-theme='dark'] .settings-card,
 :root[data-theme='dark'] .wealth-account-card-footer,
 :root[data-theme='dark'] .wealth-mobile-account-group-header,
 :root[data-theme='dark'] .wealth-mobile-account-item,
-:root[data-theme='dark'] .owed-person-card-header,
-:root[data-theme='dark'] .investment-position-mobile-details > div {
+:root[data-theme='dark'] .owed-person-card-header {
   border-color: rgb(255 255 255 / 0.075);
 }
 
-/* Summary cards that still had hardcoded light backgrounds. */
-:root[data-theme='dark'] .investments-page .investment-summary-grid article,
-:root[data-theme='dark'] .investments-page .investment-summary-market-value,
-:root[data-theme='dark'] .investments-page .investment-summary-gain,
+/* Import summary still has a hardcoded light background. */
 :root[data-theme='dark'] .import-summary-card-primary {
   border-color: rgb(255 255 255 / 0.105) !important;
   background: #202126 !important;

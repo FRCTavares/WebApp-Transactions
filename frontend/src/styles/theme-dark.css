@@ -59,7 +59,6 @@ and this exclusion with it. */
 :root[data-theme='dark'] .wealth-table-wrap,
 :root[data-theme='dark'] .wealth-modal-card,
 :root[data-theme='dark'] .wealth-modal-subaccount-row,
-:root[data-theme='dark'] .investment-holding-card,
 :root[data-theme='dark'] .market-data-refresh-card,
 :root[data-theme='dark'] .market-data-holding-card,
 :root[data-theme='dark'] .market-data-advanced,
@@ -94,8 +93,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] thead th,
 :root[data-theme='dark'] .transactions-page thead th,
 :root[data-theme='dark'] .wealth-table-wrap th,
-:root[data-theme='dark'] .owed-page-polished .owed-table th,
-:root[data-theme='dark'] .investments-page .investment-position-table-wrap th {
+:root[data-theme='dark'] .owed-page-polished .owed-table th {
   background: #202024;
   color: var(--theme-muted);
 }
@@ -103,8 +101,7 @@ since darkening against a near-black surface reads as the control going dead. */
 :root[data-theme='dark'] .mobile-bottom-nav button.active,
 :root[data-theme='dark'] .transaction-direction-switch button.active,
 :root[data-theme='dark'] .dashboard-chart-toggle button.active,
-:root[data-theme='dark'] .segmented-control button.active,
-:root[data-theme='dark'] .investment-trend-window-selector button.active {
+:root[data-theme='dark'] .segmented-control button.active {
   border-color: rgb(96 165 250 / 0.55);
   background: rgb(37 99 235 / 0.22);
   color: #bfdbfe;
@@ -169,7 +166,6 @@ since darkening against a near-black surface reads as the control going dead. */
 
 :root[data-theme='dark'] .expense-chart-legend-row,
 :root[data-theme='dark'] .dashboard-recent-category,
-:root[data-theme='dark'] .investment-holding-card,
 :root[data-theme='dark'] .wealth-account-card,
 :root[data-theme='dark'] .owed-person-card,
 :root[data-theme='dark'] .owed-person-item {
