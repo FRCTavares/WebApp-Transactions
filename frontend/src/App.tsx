@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { OwedPage } from './pages/OwedPage'
