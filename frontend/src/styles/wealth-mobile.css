@@ -78,7 +78,7 @@
   }
 
   .wealth-page .wealth-chart-label {
-    fill: var(--theme-muted, #aeb5c2) !important;
+    fill: var(--chart-axis-text) !important;
     font-size: 15px !important;
     font-weight: 900 !important;
   }
@@ -92,9 +92,9 @@
     width: 100%;
     min-height: 2.5rem !important;
     padding: 0.18rem !important;
-    border: 1px solid rgb(255 255 255 / 0.12);
+    border: 1px solid var(--color-border);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.045);
+    background: var(--color-surface-sunken);
     box-shadow: none;
   }
 
@@ -105,14 +105,14 @@
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: var(--theme-muted, #aeb5c2);
+    color: var(--color-text-muted);
     font-size: 0.84rem !important;
     font-weight: 900;
   }
 
   .wealth-page .investment-trend-window-selector button.active {
-    background: rgb(96 165 250 / 0.16);
-    color: var(--theme-text, #f8fafc);
+    background: var(--color-accent-subtle);
+    color: var(--color-accent-text);
     box-shadow: none;
   }
 
@@ -179,7 +179,7 @@
   }
 
   .wealth-page .wealth-chart-label {
-    fill: var(--theme-muted, #aeb5c2) !important;
+    fill: var(--chart-axis-text) !important;
     font-size: 16px !important;
     font-weight: 900 !important;
   }
@@ -232,7 +232,7 @@
   }
 
   .wealth-page .wealth-chart-label {
-    fill: var(--theme-muted, #aeb5c2) !important;
+    fill: var(--chart-axis-text) !important;
     font-size: 18px !important;
     font-weight: 900 !important;
   }
@@ -280,40 +280,23 @@
 /* Wealth mobile theme safety pass. */
 @media (max-width: 800px) {
   .wealth-page .investment-trend-window-selector {
-    border-color: rgb(209 213 219 / 0.9) !important;
-    background: rgb(255 255 255 / 0.92) !important;
+    border-color: var(--color-border) !important;
+    background: var(--color-surface-sunken) !important;
   }
 
   .wealth-page .investment-trend-window-selector button {
-    color: #64748b !important;
+    color: var(--color-text-muted) !important;
   }
 
   .wealth-page .investment-trend-window-selector button.active {
-    background: #eaf2ff !important;
-    color: #1d4ed8 !important;
+    background: var(--color-accent-subtle) !important;
+    color: var(--color-accent-text) !important;
   }
 
   .wealth-page .wealth-chart-label {
-    fill: #64748b !important;
+    fill: var(--chart-axis-text) !important;
   }
 
-  :root[data-theme='dark'] .wealth-page .investment-trend-window-selector {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.045) !important;
-  }
-
-  :root[data-theme='dark'] .wealth-page .investment-trend-window-selector button {
-    color: var(--theme-muted, #aeb5c2) !important;
-  }
-
-  :root[data-theme='dark'] .wealth-page .investment-trend-window-selector button.active {
-    background: rgb(96 165 250 / 0.16) !important;
-    color: var(--theme-text, #f8fafc) !important;
-  }
-
-  :root[data-theme='dark'] .wealth-page .wealth-chart-label {
-    fill: var(--theme-muted, #aeb5c2) !important;
-  }
 }
 
 /* Wealth mobile light-mode repair. */
@@ -331,17 +314,17 @@
   }
 
   .wealth-page .wealth-trend-panel {
-    border-color: rgb(226 232 240 / 0.95) !important;
+    border-color: var(--color-border) !important;
     background: var(--color-surface) !important;
-    box-shadow: 0 10px 30px rgb(15 23 42 / 0.06) !important;
+    box-shadow: var(--elevation-sm) !important;
   }
 
   .wealth-page .wealth-mobile-account-card,
   .wealth-page .wealth-mobile-account-group,
   .wealth-page .wealth-account-card {
-    border: 1px solid rgb(226 232 240 / 0.95) !important;
+    border: 1px solid var(--color-border) !important;
     background: var(--color-surface) !important;
-    box-shadow: 0 8px 24px rgb(15 23 42 / 0.045) !important;
+    box-shadow: var(--elevation-sm) !important;
   }
 
   .wealth-page .wealth-mobile-account-card summary,
@@ -350,23 +333,6 @@
     background: transparent !important;
   }
 
-  :root[data-theme='dark'] .app-main-wealth {
-    padding-top: calc(1.05rem + env(safe-area-inset-top)) !important;
-  }
-
-  :root[data-theme='dark'] .wealth-page .wealth-trend-panel {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.045) !important;
-    box-shadow: none !important;
-  }
-
-  :root[data-theme='dark'] .wealth-page .wealth-mobile-account-card,
-  :root[data-theme='dark'] .wealth-page .wealth-mobile-account-group,
-  :root[data-theme='dark'] .wealth-page .wealth-account-card {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: #181a20 !important;
-    box-shadow: none !important;
-  }
 }
 
 @media (max-width: 430px) {

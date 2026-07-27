@@ -7,7 +7,7 @@
   display: grid;
   place-items: center;
   padding: 2rem;
-  background: rgb(15 23 42 / 0.28);
+  background: var(--color-scrim);
   backdrop-filter: blur(12px);
 }
 
@@ -18,12 +18,12 @@
   max-height: min(82vh, 52rem);
   overflow: auto;
   padding: 1rem;
-  border: 1px solid rgb(226 232 240 / 0.95);
+  border: 1px solid var(--color-border-glass);
   border-radius: 1.35rem;
-  background: rgb(255 255 255 / 0.96);
+  background: var(--color-surface-glass);
   box-shadow:
-    0 28px 80px rgb(15 23 42 / 0.22),
-    inset 0 0 0 1px rgb(255 255 255 / 0.85);
+    var(--elevation-lg),
+    inset 0 0 0 1px var(--color-border-glass);
 }
 
 .wealth-modal-header {
@@ -44,7 +44,7 @@
 
 .wealth-modal-header p:not(.eyebrow) {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   font-weight: 650;
 }
@@ -57,7 +57,7 @@
 }
 
 .wealth-modal-total span {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -75,7 +75,7 @@
   min-height: 2.35rem;
   border-radius: 0.85rem;
   background: var(--color-surface);
-  color: #334155;
+  color: var(--color-text);
   font-weight: 800;
 }
 
@@ -90,9 +90,9 @@
   gap: 0.85rem;
   align-items: center;
   padding: 0.85rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
-  background: #fbfbfd;
+  background: var(--color-surface-sunken);
 }
 
 .wealth-modal-subaccount-main {
@@ -102,7 +102,7 @@
 }
 
 .wealth-modal-subaccount-main span {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -121,7 +121,7 @@
 .wealth-modal-subaccount-main p {
   margin: 0;
   overflow: hidden;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.82rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -223,9 +223,9 @@
 }
 
 .wealth-modal-subaccount-row:hover {
-  border-color: #dbeafe;
+  border-color: var(--color-accent-border);
   background: var(--color-surface);
-  box-shadow: 0 10px 24px rgb(15 23 42 / 0.045);
+  box-shadow: var(--elevation-sm);
 }
 
 .wealth-modal-subaccount-main strong {
@@ -233,7 +233,7 @@
 }
 
 .wealth-modal-subaccount-main p {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .wealth-modal-balance .wealth-quick-snapshot .small-button {

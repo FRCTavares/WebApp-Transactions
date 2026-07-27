@@ -39,22 +39,22 @@
 }
 
 .wealth-page .primary-button {
-  border-color: #15803d;
-  background: #16a34a;
-  color: #ffffff;
+  border-color: var(--color-positive);
+  background: var(--color-positive);
+  color: var(--color-text-inverse);
   font-weight: 850;
 }
 
 /* See the equivalent note in owed.css - this page-scoped rule would otherwise
    defeat base.css's .primary-button:hover on source order. */
 .wealth-page .primary-button:hover {
-  border-color: #166534;
-  background: #15803d;
+  border-color: var(--color-positive-hover);
+  background: var(--color-positive-hover);
 }
 
 .wealth-page .primary-button:active:not(:disabled) {
-  border-color: #14532d;
-  background: #166534;
+  border-color: var(--color-positive-active);
+  background: var(--color-positive-active);
 }
 
 .wealth-summary-grid {
@@ -69,25 +69,22 @@
   border: 1px solid var(--wealth-border);
   border-radius: 1.25rem;
   background: var(--wealth-surface);
-  box-shadow: 0 10px 28px rgb(15 23 42 / 0.035);
+  box-shadow: var(--elevation-sm);
 }
 
 .wealth-summary-card-primary {
-  border-color: #bfdbfe;
-  background:
-    linear-gradient(180deg, rgb(239 246 255 / 0.95), rgb(255 255 255 / 0.96));
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
 }
 
 .wealth-owed-summary-card {
-  border-color: #bbf7d0;
-  background:
-    linear-gradient(180deg, rgb(236 253 243 / 0.75), rgb(255 255 255 / 0.96));
+  border-color: var(--color-positive-border);
+  background: var(--color-positive-subtle);
 }
 
 .wealth-investments-summary-card {
-  border-color: #dbeafe;
-  background:
-    linear-gradient(180deg, rgb(239 246 255 / 0.65), rgb(255 255 255 / 0.96));
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
 }
 
 .wealth-summary-card span {
@@ -111,11 +108,11 @@
 }
 
 .wealth-summary-card-primary strong {
-  color: #1d4ed8;
+  color: var(--color-accent-text);
 }
 
 .wealth-owed-summary-card strong {
-  color: #166534;
+  color: var(--color-positive-text);
 }
 
 .wealth-summary-card small {
@@ -129,8 +126,8 @@
 }
 
 .wealth-summary-card-button:hover {
-  border-color: #bfdbfe;
-  background: #f8fbff;
+  border-color: var(--color-accent-border);
+  background: var(--color-surface-hover);
 }
 
 .wealth-page .panel-card {
@@ -138,7 +135,7 @@
   border: 1px solid var(--wealth-border);
   border-radius: 1.25rem;
   background: var(--wealth-surface);
-  box-shadow: 0 10px 28px rgb(15 23 42 / 0.035);
+  box-shadow: var(--elevation-sm);
 }
 
 .wealth-page .section-header {
@@ -177,7 +174,7 @@
   padding: 0.75rem 0.85rem;
   border: 1px solid var(--wealth-border);
   border-radius: 0.9rem;
-  background: #fbfbfd;
+  background: var(--color-surface-sunken);
 }
 
 .wealth-account-card-main {
@@ -298,27 +295,27 @@
   padding: 0 0.58rem;
   border-radius: 0.75rem;
   background: var(--color-surface);
-  color: #334155;
+  color: var(--color-text);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .wealth-account-actions button:hover,
 .wealth-page .small-button:hover {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
 }
 
 .wealth-page .danger-button {
-  border-color: #fecaca;
-  color: #dc2626;
+  border-color: var(--color-negative-border);
+  color: var(--color-negative-text);
 }
 
 .wealth-page .danger-button:hover {
-  border-color: #fca5a5;
-  background: var(--wealth-red-soft);
-  color: #b91c1c;
+  border-color: var(--color-negative-border);
+  background: var(--color-negative-subtle);
+  color: var(--color-negative-text);
 }
 
 .wealth-quick-snapshot {
@@ -354,8 +351,8 @@
 
 .wealth-table-wrap th {
   border-bottom: 1px solid var(--wealth-border);
-  background: #fbfbfd;
-  color: #475569;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
   font-size: 0.82rem;
   font-weight: 850;
 }
@@ -372,7 +369,7 @@
 }
 
 .wealth-table-wrap tbody tr:hover td {
-  background: #fbfbfd;
+  background: var(--color-surface-hover);
 }
 
 .wealth-page td.right {
@@ -428,7 +425,7 @@
 }
 
 .wealth-chart-axis {
-  stroke: #cbd5e1;
+  stroke: var(--chart-axis);
   stroke-width: 1;
 }
 
@@ -441,8 +438,8 @@
 }
 
 .wealth-chart-point {
-  fill: #ffffff;
-  stroke: var(--wealth-blue);
+  fill: var(--color-surface);
+  stroke: var(--chart-1);
   stroke-width: 2;
 }
 
@@ -532,7 +529,7 @@
     border: 1px solid var(--wealth-border);
     border-radius: 1rem;
     background: var(--color-surface);
-    box-shadow: 0 8px 20px rgb(15 23 42 / 0.035);
+    box-shadow: var(--elevation-sm);
   }
 
   .wealth-mobile-account-group-header,
@@ -574,7 +571,7 @@
     align-items: center;
     min-height: 2.6rem;
     padding: 0.45rem 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .wealth-mobile-account-item:last-child {
@@ -705,7 +702,7 @@
 
   .wealth-mobile-accounts h2 {
     margin: 0.65rem 0 0.34rem !important;
-    color: var(--theme-text, #f8fafc) !important;
+    color: var(--color-text) !important;
     font-size: 1.45rem !important;
     line-height: 1.05;
     letter-spacing: -0.06em;
@@ -714,16 +711,16 @@
   .wealth-mobile-account-group {
     overflow: hidden;
     padding: 0.85rem 0.9rem !important;
-    border: 1px solid rgb(255 255 255 / 0.12) !important;
+    border: 1px solid var(--color-border) !important;
     border-radius: 1rem !important;
-    background: rgb(255 255 255 / 0.045) !important;
-    color: var(--theme-text, #f8fafc) !important;
-    box-shadow: none !important;
+    background: var(--color-surface-sunken) !important;
+    color: var(--color-text) !important;
+    box-shadow: var(--elevation-sm) !important;
   }
 
   .wealth-mobile-account-group-receivable {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.045) !important;
+    border-color: var(--color-border) !important;
+    background: var(--color-surface-sunken) !important;
   }
 
   .wealth-mobile-account-group-header {
@@ -747,7 +744,7 @@
 
   .wealth-mobile-account-group-header strong,
   .wealth-mobile-account-item strong {
-    color: var(--theme-text, #f8fafc) !important;
+    color: var(--color-text) !important;
   }
 
   .wealth-mobile-account-group-header > div strong {
@@ -763,11 +760,11 @@
   .wealth-mobile-account-group-header span,
   .wealth-mobile-account-group span,
   .wealth-mobile-account-item span {
-    color: var(--theme-muted, #aeb5c2) !important;
+    color: var(--color-text-muted) !important;
   }
 
   .wealth-mobile-account-group-header > strong {
-    color: var(--theme-text, #f8fafc) !important;
+    color: var(--color-text) !important;
     font-size: 1.08rem;
     font-weight: 950;
     letter-spacing: -0.04em;
@@ -782,17 +779,17 @@
     min-width: 3.8rem;
     min-height: 2rem;
     padding: 0 0.75rem;
-    border: 1px solid rgb(255 255 255 / 0.14);
+    border: 1px solid var(--color-border-strong);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.065);
-    color: var(--theme-text, #f8fafc);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
     font-size: 0.78rem;
     font-weight: 900;
   }
 
   .wealth-mobile-account-group[open] .wealth-mobile-account-group-header {
     padding-bottom: 0.6rem !important;
-    border-bottom: 1px solid rgb(255 255 255 / 0.09) !important;
+    border-bottom: 1px solid var(--color-border) !important;
   }
 
   .wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
@@ -813,7 +810,7 @@
     align-items: center;
     min-height: 2.5rem !important;
     padding: 0.45rem 0 !important;
-    border-bottom: 1px solid rgb(255 255 255 / 0.075) !important;
+    border-bottom: 1px solid var(--color-border) !important;
   }
 
   .wealth-mobile-account-item:last-child {
@@ -825,7 +822,7 @@
   }
 
   .wealth-mobile-account-item > div:last-child {
-    color: var(--theme-text, #f8fafc) !important;
+    color: var(--color-text) !important;
     font-weight: 900;
     text-align: right;
     white-space: nowrap;

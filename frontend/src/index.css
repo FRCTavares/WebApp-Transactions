@@ -59,22 +59,18 @@
 }
 
 .global-period-selector label span {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
 }
 
 .global-period-selector input {
   width: 8.5rem;
   height: 2.25rem;
-  background: var(--color-surface);
 }
 
-/* This input/button wash is a subtle highlight distinguishing the control
-   from the pill's own surface - not a semantic surface role on its own, so
-   it stays a literal dark override here rather than a new token. */
-:root[data-theme='dark'] .global-period-selector input,
-:root[data-theme='dark'] .global-period-selector button {
-  background: rgb(255 255 255 / 0.055);
+.global-period-selector input,
+.global-period-selector button {
+  background: var(--color-surface-subtle);
 }
 
 .global-period-selector button {
@@ -100,11 +96,11 @@ main {
   margin-top: 4rem;
   margin-bottom: 1rem;
   padding: 0.75rem 0.9rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--color-accent-border);
   border-radius: 0.85rem;
-  background: #eff6ff;
-  color: #1e3a8a;
-  box-shadow: 0 10px 24px rgb(37 99 235 / 0.12);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
+  box-shadow: var(--elevation-sm);
 }
 
 .backend-wake-notice strong {
@@ -112,28 +108,18 @@ main {
 }
 
 .backend-wake-notice span {
-  color: #1d4ed8;
+  color: var(--color-accent-text);
   font-size: 0.9rem;
 }
 
 .backend-wake-notice.offline-notice {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
 }
 
 .backend-wake-notice.offline-notice span {
-  color: #b45309;
-}
-
-:root[data-theme='dark'] .backend-wake-notice.offline-notice {
-  border-color: rgb(251 191 36 / 0.35);
-  background: #201c14;
-  color: #fbbf24;
-}
-
-:root[data-theme='dark'] .backend-wake-notice.offline-notice span {
-  color: #d1a35c;
+  color: var(--color-warning-text);
 }
 
 @media (max-width: 800px) {.investments-page .panel-card > .section-header p {
@@ -344,12 +330,12 @@ main {
 }
 
 .amount-muted {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
 .fully-reimbursed-row {
-  background: #f8fafc;
+  background: var(--color-surface-subtle);
 }
 
 .fully-reimbursed-row td:first-child::after {
@@ -368,7 +354,7 @@ main {
 }
 
 .clickable-row:hover {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
 }
 
 .category-drilldown-button {
@@ -388,7 +374,7 @@ main {
 .category-detail-panel {
   margin-top: 1rem;
   padding: 1rem;
-  border: 1px solid var(--theme-border);
+  border: 1px solid var(--color-border);
   border-radius: 0.8rem;
   background: var(--color-surface);
 }
@@ -414,16 +400,17 @@ main {
   min-height: 100vh;
   place-items: center;
   padding: 1.5rem;
-  background: #f8fafc;
+  background: var(--color-bg-subtle);
 }
 
 .unlock-card {
   width: min(26rem, 100%);
   padding: 1.5rem;
-  border: 1px solid var(--theme-border);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
   background: var(--color-surface);
-  box-shadow: 0 18px 45px rgb(15 23 42 / 0.12);
+  color: var(--color-text);
+  box-shadow: var(--elevation-md);
 }
 
 .unlock-card h1 {
@@ -432,7 +419,7 @@ main {
 
 .unlock-card p {
   margin-bottom: 1rem;
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
 }
 
 .unlock-card label {
@@ -453,13 +440,13 @@ main {
 .lock-button {
   width: 100%;
   margin-top: 0.85rem;
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  color: #475569;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-muted);
 }
 
 .lock-button:hover {
-  background: #e2e8f0;
+  background: var(--color-surface-hover);
 }
 
 @media (max-width: 800px) {.global-topbar {

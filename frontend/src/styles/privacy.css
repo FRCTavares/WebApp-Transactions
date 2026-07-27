@@ -3,18 +3,18 @@
   display: flex;
   justify-content: center;
   padding: 48px 24px;
-  background: var(--theme-bg);
-  color: var(--theme-text);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .privacy-page-card {
   width: 100%;
   max-width: 720px;
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 40px;
-  box-shadow: 0 1px 2px var(--theme-shadow);
+  box-shadow: var(--elevation-xs);
 }
 
 .privacy-page-card h1 {
@@ -28,10 +28,10 @@
 
 .privacy-page-card p,
 .privacy-page-card li {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   line-height: 1.6;
 }
 
 .privacy-page-card a {
-  color: var(--theme-primary);
+  color: var(--color-accent-text);
 }

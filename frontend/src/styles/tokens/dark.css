@@ -6,11 +6,10 @@
    component's CSS (by making it use a semantic token) or in semantic.css (by
    adding the missing role) - not here.
 
-   That constraint is the entire point. The file this replaces, theme-dark.css,
-   is 631 lines and opens with a list of ~25 comma-separated component
-   selectors, because the light rules hardcoded their colours instead of using
-   roles. Every new component had to be manually added to that list or it
-   rendered light-on-dark. Nothing needs to be added here, ever.
+   This replaces the former component-specific dark-theme compatibility
+   styles. Those files repeated selectors because light styles used hardcoded
+   colours instead of semantic roles. Nothing component-specific needs to be
+   added here.
    --------------------------------------------------------------------------- */
 
 :root[data-theme='dark'] {

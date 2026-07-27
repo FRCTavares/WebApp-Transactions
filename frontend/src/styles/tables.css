@@ -465,16 +465,16 @@ td[colspan] {
   text-overflow: ellipsis;
 }
 
-:root[data-theme='dark'] .modal-card.transaction-owed-split-dialog {
-  border-color: var(--theme-border);
-  background: var(--theme-surface);
-  color: var(--theme-text);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 0.38);
+.modal-card.transaction-owed-split-dialog {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-lg);
 }
 
-:root[data-theme='dark'] .transaction-owed-split-dialog .modal-transaction-summary {
-  border-color: var(--theme-border);
-  background: var(--theme-surface-muted);
+.transaction-owed-split-dialog .modal-transaction-summary {
+  border-color: var(--color-border);
+  background: var(--color-surface-sunken);
 }
 
 @media (max-width: 800px) {

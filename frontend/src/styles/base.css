@@ -232,6 +232,8 @@ main {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-sm);
   padding: 14px;
 }
 
@@ -272,6 +274,8 @@ main {
   border-radius: var(--radius-md);
   overflow-x: auto;
   background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-sm);
   margin-bottom: 20px;
 }
 
@@ -344,6 +348,8 @@ main {
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-sm);
   padding: 16px;
   margin-bottom: 20px;
 }
@@ -693,8 +699,8 @@ main {
     grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-border);
-    background: rgb(255 255 255 / 0.97);
+    border-top: 1px solid var(--color-border-glass);
+    background: var(--color-surface-glass);
     backdrop-filter: blur(14px);
   }
 
@@ -719,8 +725,8 @@ main {
     outline: none;
   }
 
-  /* Was `outline: none` plus a 1px inset #cbd5e1 ring: too low-contrast to
-     serve as a focus indicator on white, and invisible in dark mode. The bar
+  /* The previous custom inset ring was too low-contrast on light surfaces
+     and invisible in dark mode. The bar
      is only 40px tall, so the ring is inset rather than offset to avoid it
      being clipped by the fixed nav. */
   .mobile-bottom-nav button:focus-visible {

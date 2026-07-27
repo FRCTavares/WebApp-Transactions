@@ -12,8 +12,8 @@ import {
 
 const THEME_STORAGE_KEY = 'finance-theme-preference'
 
-// Must stay in sync with --theme-bg in styles/theme.css and styles/theme-dark.css,
-// and with the pre-JS fallback <meta name="theme-color"> pair in index.html.
+// Must stay in sync with the light and dark application background tokens and
+// with the pre-JS fallback <meta name="theme-color"> pair in index.html.
 const THEME_COLOURS: Record<ResolvedTheme, string> = {
   light: '#f5f5f7',
   dark: '#09090b',

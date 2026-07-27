@@ -20,9 +20,8 @@ import { BrowserRouter } from 'react-router'
    its historical cascade position. Do not move it before or after index.css
    without a visual cascade comparison.
 
-   WARNING: the remaining group 3 order is load-bearing.
-   theme-dark.css and theme-dark-overrides.css still patch components by
-   specificity rather than by role, so moving them can break dark mode.
+   Theme behaviour is token-driven. Component styles must consume semantic
+   tokens rather than adding theme-specific selectors.
    --------------------------------------------------------------------------- */
 
 import '@fontsource-variable/inter'
@@ -32,9 +31,6 @@ import './styles/tokens/semantic.css'
 import './styles/tokens/dark.css'
 
 import './index.css'
-import './styles/theme.css'
-import './styles/theme-dark.css'
-import './styles/theme-dark-overrides.css'
 import './styles/settings.css'
 import './styles/charts.css'
 import './styles/privacy.css'

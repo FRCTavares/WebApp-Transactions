@@ -264,13 +264,13 @@ which is why dark mode
 }
 
 .investments-page .investment-summary-market-value {
-  border-color: #bfdbfe !important;
-  background: #eff6ff !important;
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
 }
 
 .investments-page .investment-summary-gain {
-  border-color: #bbf7d0 !important;
-  background: #f0fdf4 !important;
+  border-color: var(--color-positive-border);
+  background: var(--color-positive-subtle);
 }
 
 .investments-page .investment-summary-grid span {
@@ -319,8 +319,8 @@ which is why dark mode
 }
 
 .investment-holding-card:first-child {
-  border-color: #bfdbfe;
-  background: #eff6ff;
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
 }
 
 .investment-holding-header {
@@ -405,7 +405,7 @@ which is why dark mode
 }
 
 .investments-page .investment-gain-positive {
-  color: #15803d;
+  color: var(--color-positive-text);
 }
 
 .investments-page .investment-gain-negative {
@@ -599,11 +599,11 @@ which is why dark mode
 }
 
 .investment-holding-card-primary .investment-holding-track span {
-  background: #2563eb;
+  background: var(--color-accent);
 }
 
 .investment-holding-card:not(.investment-holding-card-primary) .investment-holding-track span {
-  background: #94a3b8;
+  background: var(--color-text-subtle);
 }
 
 .investment-holding-header h3 {
@@ -682,15 +682,15 @@ which is why dark mode
 }
 
 .investment-trend-current small.positive {
-  color: #15803d;
+  color: var(--color-positive-text);
 }
 
 .investment-trend-current small.negative {
-  color: #dc2626;
+  color: var(--color-negative-text);
 }
 
 .investment-trend-baseline {
-  stroke: #dbe3ef;
+  stroke: var(--chart-baseline);
   stroke-width: 1;
 }
 
@@ -702,24 +702,24 @@ which is why dark mode
 }
 
 .investment-trend-value-line {
-  stroke: #2563eb;
+  stroke: var(--chart-1);
   stroke-width: 2.25;
 }
 
 .investment-trend-allocated-line {
-  stroke: #94a3b8;
+  stroke: var(--chart-axis);
   stroke-dasharray: 5 6;
   stroke-width: 1.75;
 }
 
 .investment-trend-current-point {
-  fill: #ffffff;
-  stroke: #2563eb;
+  fill: var(--color-surface);
+  stroke: var(--chart-1);
   stroke-width: 2;
 }
 
 .investment-trend-label {
-  fill: #64748b;
+  fill: var(--chart-axis-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -756,11 +756,11 @@ which is why dark mode
 }
 
 .investment-trend-legend-value {
-  background: #2563eb;
+  background: var(--chart-1);
 }
 
 .investment-trend-legend-allocated {
-  background: #94a3b8;
+  background: var(--chart-axis);
 }
 
 .investment-trend-window-selector {
@@ -786,7 +786,7 @@ which is why dark mode
 .investment-trend-window-selector button.active {
   background: var(--investment-surface);
   color: var(--color-accent-text);
-  box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
+  box-shadow: var(--elevation-xs);
 }
 
 @media (max-width: 760px) {.investment-trend-header {

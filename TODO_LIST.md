@@ -43,18 +43,6 @@ Each implementation must finish with:
 
 ### Phase 5 — Dark-mode collapse
 
-- [ ] Delete `frontend/src/styles/theme-dark.css` and
-      `frontend/src/styles/theme-dark-overrides.css`. The remaining live
-      selectors require per-component-family tokenisation before their
-      overrides can be removed. Start with the largest remaining families:
-      investment holdings, Dashboard metric icons and summary bars,
-      expense-chart internals, mobile bottom navigation, generic cards,
-      table wraps, manual forms, market-data cards, and import panels.
-
-      Acceptance: no file matching `*dark*.css` remains under
-      `frontend/src/styles/`, and adding a component requires no separate
-      dark-mode styling.
-
 - [ ] Add a theme transition for `background-color` and `color` so changing
       themes no longer flashes. Respect `prefers-reduced-motion`.
 
