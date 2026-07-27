@@ -43,7 +43,6 @@ Each implementation must finish with:
 
 ### Phase 5 — Dark-mode collapse
 
-- [ ] Verify every page in both themes at 375px, 800px, and 1440px.
 
 ### Phase 6 — Charts and icons
 
