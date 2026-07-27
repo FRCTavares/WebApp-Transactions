@@ -2,12 +2,12 @@
 
 /* These are aliases onto the semantic layer, not a private palette.
 
-   They previously held hardcoded light values (#ffffff, #e5e7eb, #6b7280 ...)
+   They previously held hardcoded light surface, border, and text values
    and were never re-themed for dark - which is the direct reason dark mode
    needed a component-by-component override list. Every dashboard rule using
    var(--dashboard-*) now follows the theme for free.
 
-   `--dashboard-orange` (#e11d48) and `--dashboard-red` (#ef4444) were two
+   `--dashboard-orange` and `--dashboard-red` were two
    near-identical reds for the same "money out" idea; they collapse to one
    role here. `--dashboard-surface` and `--dashboard-border` were dropped
    because the Card primitive now owns every surface on this page. */
@@ -53,7 +53,7 @@
   align-items: flex-start;
   gap: 0.9rem;
   min-height: 6.5rem;
-  box-shadow: 0 10px 28px rgb(15 23 42 / 0.035);
+  box-shadow: var(--elevation-sm);
 }
 
 .dashboard-metric-icon {
@@ -62,7 +62,9 @@
   height: 2.1rem;
   flex: 0 0 auto;
   place-items: center;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
+  box-shadow: inset 0 1px 0 var(--color-border-glass);
   font-size: 1rem;
   font-weight: 800;
 }
@@ -96,10 +98,14 @@
   line-height: 1.35;
 }
 
-.dashboard-metric-income .dashboard-metric-icon,
-.dashboard-metric-positive .dashboard-metric-icon {
+.dashboard-metric-income .dashboard-metric-icon {
   background: var(--dashboard-green-soft);
   color: var(--dashboard-green);
+}
+
+.dashboard-metric-positive .dashboard-metric-icon {
+  background: var(--dashboard-blue-soft);
+  color: var(--dashboard-blue);
 }
 
 .dashboard-metric-spent .dashboard-metric-icon {
@@ -108,8 +114,8 @@
 }
 
 .dashboard-metric-neutral .dashboard-metric-icon {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
 }
 
 .dashboard-metric-negative .dashboard-metric-icon {
@@ -127,7 +133,7 @@
 }
 
 .dashboard-metric-negative strong {
-  color: #dc2626;
+  color: var(--color-negative-text);
 }
 
 .dashboard-main-grid {
@@ -315,14 +321,14 @@
 .dashboard-spending-panel .expense-chart-legend-row {
   min-height: 3.1rem;
   padding: 0.7rem 0.8rem;
-  border-color: #edf0f4;
+  border-color: var(--color-border);
   border-radius: 0.9rem;
-  background: #fbfbfd;
+  background: var(--color-surface-sunken);
 }
 
 .dashboard-spending-panel .expense-chart-legend-row:hover:not(:disabled) {
-  border-color: #dbeafe;
-  background: #f8fbff;
+  border-color: var(--color-accent-border);
+  background: var(--color-surface-hover);
 }
 
 .dashboard-recent-panel {
@@ -340,7 +346,7 @@
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .dashboard-recent-row:last-child {
@@ -373,10 +379,10 @@
 .dashboard-recent-category {
   justify-self: start;
   padding: 0.22rem 0.55rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -467,7 +473,7 @@
   bottom: 0.12rem;
   left: 50%;
   width: 1px;
-  background: #cbd5e1;
+  background: var(--chart-axis);
 }
 
 .dashboard-summary-bar-track-net .dashboard-summary-bar {
@@ -501,8 +507,8 @@
   bottom: -0.3rem;
   width: 3px;
   border-radius: 999px;
-  background: #475569;
-  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.95);
+  background: var(--chart-axis);
+  box-shadow: 0 0 0 3px var(--color-surface);
   transform: translateX(-1.5px);
   z-index: 1;
 }
@@ -567,7 +573,7 @@
     gap: 12px;
     width: 100%;
     padding: 12px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
     text-align: left;
@@ -590,7 +596,7 @@
   }
 
   .dashboard-mobile-category-card span {
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 12px;
   }
 
@@ -604,7 +610,7 @@
     display: grid;
     gap: 8px;
     padding: 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -624,7 +630,7 @@
 
   .dashboard-mobile-category-transaction-main p {
     margin: 3px 0 0;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 12px;
   }
 
@@ -719,9 +725,9 @@
   align-items: center;
   width: 100%;
   padding: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #f9fafb;
+  background: var(--color-surface-sunken);
   text-align: left;
 }
 
@@ -745,7 +751,7 @@
 }
 
 .expense-chart-legend-row small {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -829,9 +835,9 @@
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: var(--color-surface);
+  background: var(--color-surface-sunken);
 }
 
 .dashboard-chart-toggle button {
@@ -840,7 +846,7 @@
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 600;
   text-align: center;
@@ -848,8 +854,8 @@
 }
 
 .dashboard-chart-toggle button.active {
-  background: var(--color-text);
-  color: #ffffff;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
 }
 
 @media (max-width: 800px) {

@@ -40,10 +40,10 @@
 
 .settings-group {
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 1.15rem;
   background: var(--color-surface);
-  box-shadow: 0 14px 34px rgb(15 23 42 / 0.045);
+  box-shadow: var(--elevation-sm);
 }
 
 .settings-group-access {
@@ -56,7 +56,7 @@
 
 .settings-group-header h2 {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   font-weight: 850;
   letter-spacing: 0.12em;
@@ -85,7 +85,7 @@
 }
 
 .settings-list-row small {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 0.86rem;
   line-height: 1.35;
 }
@@ -100,13 +100,13 @@
 }
 
 .settings-list-button:hover {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
 }
 
 .settings-list-button em,
 .settings-account-row > em {
   flex: 0 0 auto;
-  color: #2563eb;
+  color: var(--color-accent-text);
   font-size: 0.8rem;
   font-style: normal;
   font-weight: 850;
@@ -132,20 +132,20 @@
 
 .settings-delete-trigger strong,
 .settings-delete-trigger em {
-  color: #b91c1c;
+  color: var(--color-negative-text);
 }
 
 .settings-delete-panel {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
-  border-top: 1px solid #fecaca;
-  background: #fff7f7;
+  border-top: 1px solid var(--color-negative-border);
+  background: var(--color-negative-subtle);
 }
 
 .settings-delete-panel p {
   margin: 0;
-  color: #4b5563;
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -162,51 +162,6 @@
 
 .settings-privacy-summary {
   border-top: 1px solid var(--color-border);
-}
-
-/* Dark settings layout. */
-:root[data-theme='dark'] .settings-hero h1,
-:root[data-theme='dark'] .settings-list-row strong {
-  color: var(--theme-text);
-}
-
-:root[data-theme='dark'] .settings-group {
-  border-color: rgb(255 255 255 / 0.105);
-  background: #1c1d21;
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.035) inset,
-    0 18px 42px rgb(0 0 0 / 0.16);
-}
-
-:root[data-theme='dark'] .settings-group-header h2 {
-  color: #8f95a1;
-}
-
-:root[data-theme='dark'] .settings-list-row,
-:root[data-theme='dark'] .settings-list-button {
-  border-top-color: rgb(255 255 255 / 0.075);
-}
-
-:root[data-theme='dark'] .settings-list-row small {
-  color: #aeb3bd;
-}
-
-:root[data-theme='dark'] .settings-list-button:hover {
-  background: #232429;
-}
-
-:root[data-theme='dark'] .settings-list-button em,
-:root[data-theme='dark'] .settings-account-row > em {
-  color: #8ab4f8;
-}
-
-:root[data-theme='dark'] .settings-delete-panel {
-  border-top-color: rgb(248 113 113 / 0.35);
-  background: rgb(127 29 29 / 0.16);
-}
-
-:root[data-theme='dark'] .settings-delete-panel p {
-  color: #d1d5db;
 }
 
 @media (max-width: 1100px) {

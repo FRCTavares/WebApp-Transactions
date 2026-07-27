@@ -29,15 +29,9 @@
 }
 
 .transaction-repayment-person-options button.active {
-  border-color: #16a34a;
-  background: #dcfce7;
-  color: #166534;
-}
-
-:root[data-theme='dark'] .transaction-repayment-person-options button.active {
-  border-color: rgb(34 197 94 / 0.45);
-  background: rgb(34 197 94 / 0.16);
-  color: #bbf7d0;
+  border-color: var(--color-positive-border);
+  background: var(--color-positive-subtle);
+  color: var(--color-positive-text);
 }
 
 /* Compact Money In repayment section. */
@@ -72,9 +66,9 @@
   gap: 0.75rem;
   align-items: center;
   padding: 0.8rem;
-  border: 1px solid var(--theme-border);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
-  background: var(--theme-surface);
+  background: var(--color-surface);
 }
 
 .transaction-repayment-allocation-copy {
@@ -92,7 +86,7 @@
 }
 
 .transaction-repayment-allocation-copy span {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.2;
@@ -130,9 +124,9 @@
   display: grid;
   gap: 0.95rem;
   padding: 1rem;
-  border: 1px solid var(--theme-border);
+  border: 1px solid var(--color-border);
   border-radius: 1.25rem;
-  background: var(--theme-surface);
+  background: var(--color-surface);
 }
 
 .transaction-repayment-toggle {
@@ -160,7 +154,7 @@
 }
 
 .transaction-repayment-toggle small {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.25;
@@ -182,13 +176,13 @@
   gap: 0.15rem;
   padding: 0.7rem;
   border-radius: 1rem;
-  background: var(--theme-surface-muted);
+  background: var(--color-surface-sunken);
 }
 
 .transaction-repayment-totals span,
 .transaction-repayment-section-label {
   margin: 0;
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.01em;
@@ -226,9 +220,9 @@
   gap: 0.65rem;
   align-items: center;
   padding: 0.7rem;
-  border: 1px solid var(--theme-border);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
-  background: var(--theme-surface-muted);
+  background: var(--color-surface-sunken);
 }
 
 .transaction-repayment-expense-copy {
@@ -246,7 +240,7 @@
 }
 
 .transaction-repayment-expense-copy span {
-  color: var(--theme-muted);
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   font-weight: 750;
   line-height: 1.2;
@@ -274,15 +268,9 @@
 }
 
 .transaction-repayment-category-options button.active {
-  border-color: #16a34a;
-  background: #dcfce7;
-  color: #166534;
-}
-
-:root[data-theme='dark'] .transaction-repayment-category-options button.active {
-  border-color: rgb(34 197 94 / 0.45);
-  background: rgb(34 197 94 / 0.16);
-  color: #bbf7d0;
+  border-color: var(--color-positive-border);
+  background: var(--color-positive-subtle);
+  color: var(--color-positive-text);
 }
 
 @media (max-width: 800px) {
@@ -334,9 +322,9 @@
   min-height: 2.25rem;
   padding: 0 0.8rem;
   border-radius: 999px;
-  border: 1px solid var(--theme-border);
-  background: color-mix(in srgb, var(--theme-surface) 92%, transparent);
-  color: var(--theme-text);
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  color: var(--color-text);
   font-size: 0.86rem;
   font-weight: 700;
   white-space: nowrap;

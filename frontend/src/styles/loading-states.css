@@ -3,17 +3,12 @@
 .backend-wake-notice {
   width: min(100%, 78rem);
   margin: 0 auto 1rem;
+  border-color: var(--color-accent-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-md);
 }
 
-:root[data-theme='dark'] .backend-wake-notice {
-  border-color: rgb(138 180 248 / 0.32);
-  background: #1c1d21;
-  color: var(--theme-text);
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.04) inset,
-    0 18px 42px rgb(0 0 0 / 0.22);
-}
-
-:root[data-theme='dark'] .backend-wake-notice span {
-  color: var(--theme-muted);
+.backend-wake-notice span {
+  color: var(--color-text-muted);
 }

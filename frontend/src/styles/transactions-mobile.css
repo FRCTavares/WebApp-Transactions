@@ -127,9 +127,9 @@
   display: grid;
   gap: 0.65rem;
   padding: 0.7rem;
-  border: 1px solid var(--theme-border, #e5e7eb);
+  border: 1px solid var(--color-border);
   border-radius: 1rem;
-  background: var(--theme-surface-muted, #f8fafc);
+  background: var(--color-surface-sunken);
 }
 
 .transaction-create-owed-toggle {
@@ -155,14 +155,14 @@
 }
 
 .transaction-create-owed-toggle strong {
-  color: var(--theme-text, var(--color-text));
+  color: var(--color-text);
   font-size: 0.92rem;
   line-height: 1.2;
 }
 
 .transaction-create-owed-toggle small,
 .transaction-create-owed-summary {
-  color: var(--theme-muted, #6b7280);
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   font-weight: 750;
   line-height: 1.35;
@@ -242,7 +242,7 @@
     width: fit-content;
     min-height: 2.15rem;
     padding: 0 0.8rem;
-    border-color: rgb(255 255 255 / 0.14);
+    border-color: var(--color-border-strong);
     border-radius: 999px;
     background: rgb(255 255 255 / 0.04);
     color: #d7dce5;
@@ -280,7 +280,7 @@
     z-index: 40;
     max-height: min(72vh, 35rem);
     overflow-y: auto;
-    border-color: rgb(255 255 255 / 0.14);
+    border-color: var(--color-border-strong);
     background: #181a20;
     box-shadow: 0 24px 70px rgb(0 0 0 / 0.48);
   }
@@ -374,9 +374,9 @@
   .transaction-filter-mobile-header {
     min-height: 2.75rem;
     padding: 0 0.85rem;
-    border: 1px solid rgb(255 255 255 / 0.14);
+    border: 1px solid var(--color-border-strong);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.055);
+    background: var(--color-surface-subtle);
   }
 
   .transaction-filter-mobile-header strong {
@@ -390,16 +390,16 @@
   .transaction-filter-mobile-header button:not(:where(.ui-button)) {
     min-height: 2.05rem;
     padding: 0 0.8rem;
-    border-color: rgb(255 255 255 / 0.12);
-    background: rgb(255 255 255 / 0.055);
+    border-color: var(--color-border);
+    background: var(--color-surface-subtle);
   }
 
   .transaction-filter-card-open .transaction-filter-body {
     margin-top: 0.65rem;
     padding: 0.75rem;
-    border: 1px solid rgb(255 255 255 / 0.12);
+    border: 1px solid var(--color-border);
     border-radius: 1rem;
-    background: rgb(255 255 255 / 0.035);
+    background: var(--color-surface-sunken);
   }
 
   .transaction-filter-card-open {
@@ -496,24 +496,15 @@
     box-shadow: none !important;
   }
 
-  :root[data-theme='dark'] .transactions-page .transaction-filter-card,
-  :root[data-theme='dark'] .transactions-page .filter-panel.transaction-filter-card,
-  :root[data-theme='dark'] .transactions-page .content-card.transaction-filter-card,
-  :root[data-theme='dark'] .transactions-page .panel-card.transaction-filter-card {
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
   .transactions-page .transaction-filter-mobile-header {
-    border: 1px solid rgb(255 255 255 / 0.14) !important;
-    background: rgb(255 255 255 / 0.055) !important;
+    border: 1px solid var(--color-border-strong) !important;
+    background: var(--color-surface-subtle) !important;
     box-shadow: none !important;
   }
 
   .transactions-page .transaction-filter-card-open .transaction-filter-body {
-    border: 1px solid rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.035) !important;
+    border: 1px solid var(--color-border) !important;
+    background: var(--color-surface-sunken) !important;
     box-shadow: none !important;
   }
 }
@@ -521,58 +512,32 @@
 /* Activity mobile theme safety pass. */
 @media (max-width: 800px) {
   .transactions-page .transaction-filter-mobile-header {
-    border-color: rgb(209 213 219 / 0.9) !important;
-    background: rgb(255 255 255 / 0.92) !important;
+    border-color: var(--color-border-strong) !important;
+    background: var(--color-surface) !important;
   }
 
   .transactions-page .transaction-filter-mobile-header button:not(:where(.ui-button)) {
-    border-color: rgb(209 213 219 / 0.9) !important;
+    border-color: var(--color-border-strong) !important;
     background: var(--color-surface) !important;
     color: var(--color-text) !important;
   }
 
   .transactions-page .transaction-filter-card-open .transaction-filter-body {
-    border-color: rgb(226 232 240 / 0.95) !important;
-    background: rgb(255 255 255 / 0.92) !important;
+    border-color: var(--color-border) !important;
+    background: var(--color-surface) !important;
   }
 
   .transactions-page .transaction-form-more-toggle {
-    border-color: rgb(209 213 219 / 0.9) !important;
+    border-color: var(--color-border-strong) !important;
     background: var(--color-surface) !important;
     color: var(--color-text) !important;
   }
 
   .transactions-page .transaction-form {
-    border-color: rgb(209 213 219 / 0.9) !important;
+    border-color: var(--color-border-strong) !important;
     background: var(--color-surface) !important;
   }
 
-  :root[data-theme='dark'] .transactions-page .transaction-filter-mobile-header {
-    border-color: rgb(255 255 255 / 0.14) !important;
-    background: rgb(255 255 255 / 0.055) !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-filter-mobile-header button:not(:where(.ui-button)) {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.055) !important;
-    color: var(--theme-text, #f8fafc) !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-filter-card-open .transaction-filter-body {
-    border-color: rgb(255 255 255 / 0.12) !important;
-    background: rgb(255 255 255 / 0.035) !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-form-more-toggle {
-    border-color: rgb(255 255 255 / 0.14) !important;
-    background: rgb(255 255 255 / 0.04) !important;
-    color: #d7dce5 !important;
-  }
-
-  :root[data-theme='dark'] .transactions-page .transaction-form {
-    border-color: rgb(255 255 255 / 0.14) !important;
-    background: #181a20 !important;
-  }
 }
 
 /* Mobile transaction form overflow safety pass. */
