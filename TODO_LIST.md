@@ -43,9 +43,6 @@ Each implementation must finish with:
 
 ### Phase 5 — Dark-mode collapse
 
-- [ ] Add a theme transition for `background-color` and `color` so changing
-      themes no longer flashes. Respect `prefers-reduced-motion`.
-
 - [ ] Verify every page in both themes at 375px, 800px, and 1440px.
 
 ### Phase 6 — Charts and icons

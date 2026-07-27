@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -11,6 +12,8 @@ import {
 } from './themeContextValue'
 
 const THEME_STORAGE_KEY = 'finance-theme-preference'
+const THEME_TRANSITION_CLASS = 'theme-transitioning'
+const THEME_TRANSITION_DURATION_MS = 180
 
 // Must stay in sync with the light and dark application background tokens and
 // with the pre-JS fallback <meta name="theme-color"> pair in index.html.
@@ -69,6 +72,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     getStoredThemePreference,
   )
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme)
+  const previousResolvedTheme = useRef<ResolvedTheme | null>(null)
+  const transitionTimeout = useRef<number | null>(null)
 
   const resolvedTheme = themePreference === 'system' ? systemTheme : themePreference
 
@@ -80,11 +85,43 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, [])
 
   useEffect(() => {
-    document.documentElement.dataset.theme = resolvedTheme
-    document.documentElement.dataset.themePreference = themePreference
-    document.documentElement.style.colorScheme = resolvedTheme
+    const root = document.documentElement
+    const themeChanged =
+      previousResolvedTheme.current !== null &&
+      previousResolvedTheme.current !== resolvedTheme
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches
+
+    if (transitionTimeout.current !== null) {
+      window.clearTimeout(transitionTimeout.current)
+      transitionTimeout.current = null
+    }
+
+    root.classList.remove(THEME_TRANSITION_CLASS)
+
+    if (themeChanged && !reducedMotion) {
+      root.classList.add(THEME_TRANSITION_CLASS)
+      transitionTimeout.current = window.setTimeout(() => {
+        root.classList.remove(THEME_TRANSITION_CLASS)
+        transitionTimeout.current = null
+      }, THEME_TRANSITION_DURATION_MS)
+    }
+
+    root.dataset.theme = resolvedTheme
+    root.dataset.themePreference = themePreference
+    root.style.colorScheme = resolvedTheme
     applyThemeColour(resolvedTheme)
     window.localStorage.setItem(THEME_STORAGE_KEY, themePreference)
+    previousResolvedTheme.current = resolvedTheme
+
+    return () => {
+      if (transitionTimeout.current !== null) {
+        window.clearTimeout(transitionTimeout.current)
+        transitionTimeout.current = null
+      }
+      root.classList.remove(THEME_TRANSITION_CLASS)
+    }
   }, [themePreference, resolvedTheme])
 
   function setThemePreference(nextThemePreference: ThemePreference) {
