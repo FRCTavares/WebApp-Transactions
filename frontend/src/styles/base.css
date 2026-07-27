@@ -14,7 +14,27 @@
   box-sizing: border-box;
 }
 
+/* Theme changes are the only time this broad transition is active. Keeping the
+   class short-lived avoids changing normal component interaction motion. */
+:root.theme-transitioning,
+:root.theme-transitioning body,
+:root.theme-transitioning body *,
+:root.theme-transitioning body *::before,
+:root.theme-transitioning body *::after {
+  transition-property: background-color, color;
+  transition-duration: var(--duration-base);
+  transition-timing-function: var(--ease-in-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  :root.theme-transitioning,
+  :root.theme-transitioning body,
+  :root.theme-transitioning body *,
+  :root.theme-transitioning body *::before,
+  :root.theme-transitioning body *::after {
+    transition: none;
+  }
+
   *,
   *::before,
   *::after {
