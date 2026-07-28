@@ -124,6 +124,44 @@ Cashback,2026-06-05 09:00:00,Cashback,card-cashback-1,0.01,EUR,,,,,,,,,,
     assert result.transactions[1].amount == Decimal("0.01")
 
 
+def test_trading212_importer_accepts_iso_8601_timezone_timestamps():
+    csv_content = """Action,Time (UTC),Notes,ID,Total,Currency (Total)
+Interest on cash,2026-06-15 01:05:15+00:00,Interest on cash,offset-1,0.01,EUR
+Market buy,2026-06-16T07:00:31Z,Market buy,offset-2,11.06,EUR
+"""
+
+    result = Trading212Importer().parse_full(csv_content)
+
+    assert len(result.transactions) == 0
+    assert len(result.investment_events) == 2
+    assert len(result.invalid_rows) == 0
+
+    interest, market_buy = result.investment_events
+
+    assert interest.date.isoformat() == "2026-06-15"
+    assert interest.event_type == "interest"
+    assert interest.amount == Decimal("0.01")
+
+    assert market_buy.date.isoformat() == "2026-06-16"
+    assert market_buy.event_type == "market_buy"
+    assert market_buy.amount == Decimal("11.06")
+
+
+def test_trading212_importer_rejects_an_invalid_timezone_timestamp():
+    csv_content = """Action,Time (UTC),Notes,ID,Total,Currency (Total)
+Interest on cash,not-a-timestamp,Interest on cash,invalid-time-1,0.01,EUR
+"""
+
+    result = Trading212Importer().parse_full(csv_content)
+
+    assert len(result.investment_events) == 0
+    assert len(result.invalid_rows) == 1
+    assert result.invalid_rows[0].row_number == 2
+    assert result.invalid_rows[0].error == (
+        "Unsupported Trading 212 date format: not-a-timestamp"
+    )
+
+
 def test_trading212_importer_parses_current_history_export_fixture():
     fixture_path = (
         Path(__file__).parent / "fixtures" / "trading212" / "current_history.csv"

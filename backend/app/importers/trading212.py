@@ -391,12 +391,19 @@ class Trading212Importer:
         return value.strip()
 
     def _parse_date(self, value: str):
+        iso_value = value.strip()
+
+        if iso_value.endswith("Z"):
+            iso_value = f"{iso_value[:-1]}+00:00"
+
+        try:
+            return datetime.fromisoformat(iso_value).date()
+        except ValueError:
+            pass
+
         formats = (
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M:%S.%f",
             "%d/%m/%Y %H:%M:%S",
             "%d/%m/%Y",
-            "%Y-%m-%d",
         )
 
         for date_format in formats:
