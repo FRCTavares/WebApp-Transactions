@@ -8,6 +8,7 @@ import {
   Card,
   EmptyState,
   Field,
+  Icon,
   IconButton,
   Modal,
   PageHeader,
@@ -20,6 +21,26 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../src/components/ui'
+
+describe('Icon', () => {
+  it('renders only the supported fixed icon size requested by the caller', () => {
+    const { container } = render(
+      <Icon icon={Plus} size={24} aria-label="Add" />,
+    )
+
+    const icon = container.querySelector('svg')
+    expect(icon).toHaveAttribute('width', '24')
+    expect(icon).toHaveAttribute('height', '24')
+  })
+
+  it('defaults to the shared 16px size', () => {
+    const { container } = render(<Icon icon={Plus} aria-hidden="true" />)
+
+    const icon = container.querySelector('svg')
+    expect(icon).toHaveAttribute('width', '16')
+    expect(icon).toHaveAttribute('height', '16')
+  })
+})
 
 describe('Button', () => {
   it('defaults to type="button" so it does not submit an enclosing form', () => {

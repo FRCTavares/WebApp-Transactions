@@ -46,8 +46,6 @@ Each implementation must finish with:
 
 ### Phase 6 — Charts and icons
 
-- [ ] Standardise icons on `lucide-react`. Add `ui/Icon.tsx` with fixed
-      14px, 16px, 20px, and 24px sizes and no call-site inline sizing.
 
 - [ ] Replace the CSS-generated “Show” and “Hide” text in the compact filter
       panel and Wealth mobile account-group header with a rotating chevron,

@@ -12,6 +12,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Icon,
   PageHeader,
   Skeleton,
   Table,
@@ -478,7 +479,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}
             >
               <span className="dashboard-metric-icon" aria-hidden="true">
-                <ArrowDownLeft size={16} />
+                <Icon icon={ArrowDownLeft} size={16} />
               </span>
               <div>
                 <p>Money In</p>
@@ -495,7 +496,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}
             >
               <span className="dashboard-metric-icon" aria-hidden="true">
-                <ArrowUpRight size={16} />
+                <Icon icon={ArrowUpRight} size={16} />
               </span>
               <div>
                 <p>Money Out</p>
@@ -516,7 +517,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">
-                <TrendingUp size={16} />
+                <Icon icon={TrendingUp} size={16} />
               </span>
               <div>
                 <p>Invested</p>
@@ -541,7 +542,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">
-                <Equal size={16} />
+                <Icon icon={Equal} size={16} />
               </span>
               <div>
                 <p>Available Net</p>
@@ -566,7 +567,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               role="listitem"
             >
               <span className="dashboard-metric-icon" aria-hidden="true">
-                <TrendingUp size={16} />
+                <Icon icon={TrendingUp} size={16} />
               </span>
               <div>
                 <p>Investment performance</p>

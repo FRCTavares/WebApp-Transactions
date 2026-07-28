@@ -6,6 +6,13 @@ import './visually-hidden.css'
 export { Button } from './Button'
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button'
 
+export { Icon } from './Icon'
+export type {
+  IconComponent,
+  IconProps,
+  IconSize,
+} from './Icon'
+
 export { IconButton } from './IconButton'
 export type { IconButtonProps } from './IconButton'
 

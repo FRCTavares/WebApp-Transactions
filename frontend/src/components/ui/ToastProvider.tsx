@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { ToastContext, type Toast, type ToastInput, type ToastTone } from './toastContext'
+import { Icon, type IconComponent } from './Icon'
 import { IconButton } from './IconButton'
 import './Toast.css'
 
-const TONE_ICON: Record<ToastTone, LucideIcon> = {
+const TONE_ICON: Record<ToastTone, IconComponent> = {
   positive: CheckCircle2,
   negative: XCircle,
   warning: AlertTriangle,
@@ -71,7 +71,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className="ui-toast-region" role="region" aria-label="Notifications">
         {toasts.map((toast) => {
-          const Icon = TONE_ICON[toast.tone]
+          const ToneIcon = TONE_ICON[toast.tone]
           return (
             <div
               key={toast.id}
@@ -79,7 +79,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               role={toast.tone === 'negative' ? 'alert' : 'status'}
               aria-live={toast.tone === 'negative' ? 'assertive' : 'polite'}
             >
-              <Icon className="ui-toast-icon" size={16} aria-hidden="true" />
+              <Icon
+                icon={ToneIcon}
+                className="ui-toast-icon"
+                size={16}
+                aria-hidden="true"
+              />
               <div className="ui-toast-copy">
                 <p className="ui-toast-title">{toast.title}</p>
                 {toast.description ? (

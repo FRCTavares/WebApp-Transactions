@@ -1,7 +1,7 @@
 import { ChevronDown, HandCoins } from 'lucide-react'
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
-import { Badge, Button, EmptyState } from '../ui'
+import { Badge, Button, EmptyState, Icon } from '../ui'
 import type { BadgeTone } from '../ui'
 
 import { OwedInlineForm } from './OwedInlineForm'
@@ -183,9 +183,10 @@ export function OwedItemsTable({
                         </span>
                         <span className="owed-person-item-more">
                           <span className="ui-visually-hidden">Details</span>
-                          <ChevronDown
-                            className="owed-person-item-chevron"
+                          <Icon
+                            icon={ChevronDown}
                             size={16}
+                            className="owed-person-item-chevron"
                             aria-hidden="true"
                           />
                         </span>
