@@ -632,18 +632,6 @@ main {
     display: none;
   }
 
-.wealth-mobile-account-group-header::after {
-    content: "Show";
-    margin-left: auto;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 800;
-  }
-
-.wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
-    content: "Hide";
-  }
-
 .wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
     display: none;
   }

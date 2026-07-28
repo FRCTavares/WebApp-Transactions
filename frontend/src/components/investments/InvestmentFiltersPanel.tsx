@@ -1,4 +1,6 @@
-import { Button } from '../ui'
+import { ChevronDown } from 'lucide-react'
+import { Button, Icon } from '../ui'
+
 type InvestmentFiltersPanelProps = {
   activeFilterCount: number
   eventType: string
@@ -37,6 +39,12 @@ export function InvestmentFiltersPanel({
         {activeFilterCount > 0 && (
           <span className="filter-count">{activeFilterCount} active</span>
         )}
+        <Icon
+          aria-hidden="true"
+          className="disclosure-chevron"
+          icon={ChevronDown}
+          size={16}
+        />
       </summary>
 
       <div className="form-row">

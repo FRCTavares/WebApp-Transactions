@@ -47,10 +47,6 @@ Each implementation must finish with:
 ### Phase 6 — Charts and icons
 
 
-- [ ] Replace the CSS-generated “Show” and “Hide” text in the compact filter
-      panel and Wealth mobile account-group header with a rotating chevron,
-      while preserving `aria-expanded`.
-
 - [ ] Add icons to table row actions, sort direction, status-banner tones,
       empty states, import-source rows, and page-header primary actions.
       Every icon-only button must have an `aria-label`.
