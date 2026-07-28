@@ -476,15 +476,15 @@ main {
   display: none;
 }
 
-.compact-filter-panel summary::after {
-  content: "Show";
+.compact-filter-panel summary .disclosure-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
   color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
+  transition: transform 160ms ease;
 }
 
-.compact-filter-panel[open] summary::after {
-  content: "Hide";
+.compact-filter-panel[open] summary .disclosure-chevron {
+  transform: rotate(180deg);
 }
 
 .compact-filter-panel .form-row,

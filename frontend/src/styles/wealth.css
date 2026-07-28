@@ -771,20 +771,10 @@
     white-space: nowrap;
   }
 
-  .wealth-mobile-account-group-header::after {
-    content: "Show";
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 3.8rem;
-    min-height: 2rem;
-    padding: 0 0.75rem;
-    border: 1px solid var(--color-border-strong);
-    border-radius: 999px;
-    background: var(--color-surface-hover);
-    color: var(--color-text);
-    font-size: 0.78rem;
-    font-weight: 900;
+  .wealth-mobile-account-group-header .disclosure-chevron {
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+    transition: transform 160ms ease;
   }
 
   .wealth-mobile-account-group[open] .wealth-mobile-account-group-header {
@@ -792,8 +782,10 @@
     border-bottom: 1px solid var(--color-border) !important;
   }
 
-  .wealth-mobile-account-group[open] .wealth-mobile-account-group-header::after {
-    content: "Hide";
+  .wealth-mobile-account-group[open]
+    .wealth-mobile-account-group-header
+    .disclosure-chevron {
+    transform: rotate(180deg);
   }
 
   .wealth-mobile-account-group:not([open]) .wealth-mobile-account-list {
@@ -843,8 +835,8 @@
     font-size: 1rem;
   }
 
-  .wealth-mobile-account-group-header::after {
-    min-width: 3.4rem;
-    padding: 0 0.6rem;
+  .wealth-mobile-account-group-header .disclosure-chevron {
+    width: 1rem;
+    height: 1rem;
   }
 }

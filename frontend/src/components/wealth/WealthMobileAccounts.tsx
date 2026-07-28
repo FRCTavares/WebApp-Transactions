@@ -4,8 +4,8 @@ import {
   getAccountTypeLabel,
   getDerivedInvestmentValue,
 } from '../../utils/wealthPageUtils'
-import { Landmark } from 'lucide-react'
-import { EmptyState } from '../ui'
+import { ChevronDown, Landmark } from 'lucide-react'
+import { EmptyState, Icon } from '../ui'
 
 type WealthAccountGroup = {
   key: string
@@ -134,6 +134,12 @@ export function WealthMobileAccounts({
               </span>
             </div>
             <strong>{formatMoney(owedReceivableTotal.toFixed(2))}</strong>
+            <Icon
+              aria-hidden="true"
+              className="disclosure-chevron"
+              icon={ChevronDown}
+              size={16}
+            />
           </summary>
 
           <div className="wealth-mobile-account-list">
@@ -158,6 +164,12 @@ export function WealthMobileAccounts({
               <span>{group.accounts.length} account{group.accounts.length === 1 ? '' : 's'}</span>
             </div>
             <strong>{formatMoney(getGroupTotal(group.accounts, latestByAccount, investmentPositions))}</strong>
+            <Icon
+              aria-hidden="true"
+              className="disclosure-chevron"
+              icon={ChevronDown}
+              size={16}
+            />
           </summary>
 
           <div className="wealth-mobile-account-list">
