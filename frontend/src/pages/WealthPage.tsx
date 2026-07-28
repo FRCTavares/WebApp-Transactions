@@ -560,12 +560,6 @@ export function WealthPage(_props: WealthPageProps) {
         </p>
       )}
 
-      {historyError && (
-        <p className="status status-info" role="status">
-          Wealth history could not be refreshed: {historyError}
-        </p>
-      )}
-
       {isCurrentDataLoading && accounts.length === 0 && snapshots.length === 0 ? (
         <p className="status status-info" role="status" aria-live="polite">
           Loading wealth data...
@@ -611,15 +605,11 @@ export function WealthPage(_props: WealthPageProps) {
 
 
       <section className="content-card panel-card wealth-monthly-panel wealth-trend-panel">
-        {isHistoryLoading && monthlyTotals.length === 0 ? (
-          <p className="status status-info" role="status" aria-live="polite">
-            Loading wealth history...
-          </p>
-        ) : historyError && monthlyTotals.length === 0 ? (
-          <p className="muted">Wealth history is currently unavailable.</p>
-        ) : (
-          <WealthMonthlyChart monthlyTotals={monthlyTotals} />
-        )}
+        <WealthMonthlyChart
+          monthlyTotals={monthlyTotals}
+          error={historyError}
+          isLoading={isHistoryLoading}
+        />
       </section>
 
       {isCurrentDataLoading && accounts.length === 0 && snapshots.length === 0 ? null : (
