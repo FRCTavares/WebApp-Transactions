@@ -46,25 +46,6 @@ Each implementation must finish with:
 
 ### Phase 6 — Charts and icons
 
-- [ ] Add `frontend/src/components/charts/` with a `useChartScale` hook and
-      shared `ChartAxis`, `ChartGrid`, `ChartTooltip`, and `ChartLegend`
-      components.
-
-- [ ] Stop hiding chart features. Render the existing trend-chart gridlines,
-      wealth-chart area, edge point, and value label instead of suppressing
-      them with `display: none`.
-
-- [ ] Add hover tooltips with a crosshair to both trend charts and format
-      y-axis labels as currency through the existing `utils/format.ts`.
-
-- [ ] Make donut interaction keyboard-accessible. The `<circle>` slices
-      currently have `onClick` without a role, `tabIndex`, or keyboard
-      handler. Either make the slices fully interactive or move interaction
-      to the existing legend buttons.
-
-- [ ] Give every chart loading, empty, and error states. Loading skeletons
-      must reserve the chart's final height.
-
 - [ ] Standardise icons on `lucide-react`. Add `ui/Icon.tsx` with fixed
       14px, 16px, 20px, and 24px sizes and no call-site inline sizing.
 

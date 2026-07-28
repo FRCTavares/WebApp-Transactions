@@ -72,6 +72,22 @@
   font-weight: 700;
 }
 
+
+.wealth-chart-state {
+  display: grid;
+  min-height: 13rem;
+  place-items: center;
+  padding: 1rem;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 1rem;
+  background: var(--color-surface-sunken);
+  text-align: center;
+}
+
+.wealth-chart-state > .ui-skeleton-block {
+  width: 100%;
+}
+
 /* Wealth simplified overview layout. */
 .wealth-page {
   gap: 0.8rem;
@@ -206,12 +222,6 @@
   font-size: 1.42rem;
   line-height: 1;
   letter-spacing: -0.05em;
-}
-
-.wealth-chart-area,
-.wealth-chart-edge-point,
-.wealth-chart-value-label {
-  display: none;
 }
 
 .wealth-chart-baseline {

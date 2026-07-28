@@ -254,6 +254,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
   const [categories, setCategories] = useState<CategorySummaryResponse | null>(null)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categoryTransactions, setCategoryTransactions] = useState<Transaction[]>([])
@@ -283,6 +284,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       setSummary(null)
       setInvestmentMonthlyChange(null)
       setCategories(null)
+      setCategoryError(null)
       setRecentTransactions([])
       setIsDashboardLoading(true)
 
@@ -324,12 +326,15 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
         if (categoryResult.status === 'fulfilled') {
           setCategories(categoryResult.value)
+          setCategoryError(null)
         } else {
-          requiredErrors.push(
+          const categoryMessage =
             categoryResult.reason instanceof Error
               ? categoryResult.reason.message
-              : 'Failed to load category summary',
-          )
+              : 'Failed to load category summary'
+
+          setCategoryError(categoryMessage)
+          requiredErrors.push(categoryMessage)
         }
 
         if (recentTransactionsResult.status === 'fulfilled') {
@@ -712,15 +717,15 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
             </Card>
 
             <Card as="section" padding="md" className="dashboard-spending-panel">
-              {categories && (
-                <ExpenseCategoryDonutChart
-                  items={sortedCategoryRollups}
-                  title="Spending breakdown"
-                  description="Personal spending by category."
-                  emptyMessage="No personal spending found for this month."
-                  onSelectCategory={handleCategoryClick}
-                />
-              )}
+              <ExpenseCategoryDonutChart
+                items={sortedCategoryRollups}
+                title="Spending breakdown"
+                description="Personal spending by category."
+                emptyMessage="No personal spending found for this month."
+                error={categoryError}
+                isLoading={isDashboardLoading && categories === null}
+                onSelectCategory={handleCategoryClick}
+              />
             </Card>
           </div>
 

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { EmptyState, Skeleton } from '../ui'
 import { formatMoney } from '../../utils/format'
 import { chartSliceColour } from '../../utils/chartColours'
 
@@ -22,6 +23,8 @@ type ExpenseCategoryDonutChartProps = {
   description: string
   emptyMessage: string
   actions?: ReactNode
+  error?: string | null
+  isLoading?: boolean
   onSelectCategory?: (category: string) => void
 }
 
@@ -87,6 +90,8 @@ export function ExpenseCategoryDonutChart({
   description,
   emptyMessage,
   actions,
+  error = null,
+  isLoading = false,
   onSelectCategory,
 }: ExpenseCategoryDonutChartProps) {
   const slices = buildChartSlices(items)
@@ -95,13 +100,39 @@ export function ExpenseCategoryDonutChart({
     0,
   )
 
+  if (isLoading) {
+    return (
+      <section
+        className="expense-chart-body expense-chart-state"
+        aria-busy="true"
+        aria-label={`Loading ${title}`}
+      >
+        <Skeleton variant="block" height="22rem" />
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section
+        className="expense-chart-body expense-chart-state"
+        role="alert"
+      >
+        <EmptyState
+          title={`${title} unavailable`}
+          description={error}
+        />
+      </section>
+    )
+  }
+
   if (slices.length === 0) {
     return (
-      <section className="expense-chart-body">
-        <div>
-          <h3>{title}</h3>
-          <p className="muted small">{emptyMessage}</p>
-        </div>
+      <section className="expense-chart-body expense-chart-state">
+        <EmptyState
+          title={emptyMessage}
+          description="Spending recorded for this month will appear here."
+        />
       </section>
     )
   }
@@ -119,8 +150,9 @@ export function ExpenseCategoryDonutChart({
             strokeWidth={STROKE_WIDTH}
           />
 
-          {slices.map((slice, index) => (
-            <circle
+          <g aria-hidden="true">
+            {slices.map((slice, index) => (
+              <circle
               key={slice.id}
               className="expense-chart-slice"
               cx="60"
@@ -131,13 +163,9 @@ export function ExpenseCategoryDonutChart({
               strokeWidth={STROKE_WIDTH}
               strokeDasharray={slice.dashArray}
               strokeDashoffset={slice.dashOffset}
-              onClick={() => {
-                if (!slice.isOther && onSelectCategory) {
-                  onSelectCategory(slice.category)
-                }
-              }}
             />
-          ))}
+            ))}
+          </g>
         </svg>
 
         <div className="expense-chart-centre">

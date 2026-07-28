@@ -614,12 +614,6 @@ export function InvestmentsPage() {
         </p>
       )}
 
-      {monthlySeriesError && (
-        <p className="status status-info" role="status">
-          Investment trend could not be refreshed: {monthlySeriesError}
-        </p>
-      )}
-
       {isInitialDataLoading && events.length === 0 && positions.length === 0 && (
         <p className="status status-info" role="status" aria-live="polite">
           Loading investment data...
@@ -629,6 +623,7 @@ export function InvestmentsPage() {
       <InvestmentPortfolioTrendChart
         months={chartMonths}
         series={monthlySeries}
+        error={monthlySeriesError}
         isLoading={isMonthlySeriesLoading}
         onMonthsChange={setChartMonths}
       />

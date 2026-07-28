@@ -1,9 +1,19 @@
 import { useState, type MouseEvent } from 'react'
+import {
+  ChartAxis,
+  ChartGrid,
+  ChartLegend,
+  ChartTooltip,
+  useChartScale,
+} from '../charts'
+import { EmptyState, Skeleton } from '../ui'
 import type { WealthMonthlyTotal } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 
 type WealthMonthlyChartProps = {
   monthlyTotals: WealthMonthlyTotal[]
+  error?: string | null
+  isLoading?: boolean
 }
 
 type WealthChartPoint = {
@@ -60,24 +70,19 @@ function formatMonthLabel(month: string) {
   return `${monthNames[monthIndex]} ${year}`
 }
 
-function getChartPoints(monthlyTotals: WealthMonthlyTotal[]): WealthChartPoint[] {
-  const values = monthlyTotals.map((row) => Number(row.total_wealth_eur))
-  const minValue = Math.min(...values)
-  const maxValue = Math.max(...values)
-  const valueRange = Math.max(maxValue - minValue, 1)
-
-  const usableWidth = chartWidth - paddingLeft - paddingRight
-  const usableHeight = chartHeight - paddingTop - paddingBottom
-
+function getChartPoints(
+  monthlyTotals: WealthMonthlyTotal[],
+  getX: (index: number) => number,
+  getY: (value: number) => number,
+): WealthChartPoint[] {
   return monthlyTotals.map((row, index) => {
-    const x = paddingLeft + (index / Math.max(monthlyTotals.length - 1, 1)) * usableWidth
-    const y = paddingTop + ((maxValue - Number(row.total_wealth_eur)) / valueRange) * usableHeight
+    const value = Number(row.total_wealth_eur)
 
     return {
       month: row.month,
-      value: Number(row.total_wealth_eur),
-      x,
-      y,
+      value,
+      x: getX(index),
+      y: getY(value),
     }
   })
 }
@@ -124,16 +129,75 @@ function getTooltipY(point: WealthChartPoint) {
   return Math.max(8, Math.min(preferredY, maxY))
 }
 
-export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
+export function WealthMonthlyChart({
+  monthlyTotals,
+  error = null,
+  isLoading = false,
+}: WealthMonthlyChartProps) {
   const [months, setMonths] = useState(24)
   const [hoveredPoint, setHoveredPoint] = useState<WealthChartPoint | null>(null)
+  const visibleTotals = monthlyTotals.slice(-months)
+  const values = visibleTotals.map((row) => Number(row.total_wealth_eur))
+  const minValue = values.length > 0 ? Math.min(...values) : 0
+  const maxValue = values.length > 0 ? Math.max(...values) : 1
+  const chartScale = useChartScale({
+    width: chartWidth,
+    height: chartHeight,
+    padding: {
+      top: paddingTop,
+      right: paddingRight,
+      bottom: paddingBottom,
+      left: paddingLeft,
+    },
+    pointCount: visibleTotals.length,
+    minValue,
+    maxValue,
+  })
+  const gridValues = [
+    maxValue - (maxValue - minValue) * 0.25,
+    maxValue - (maxValue - minValue) * 0.5,
+    maxValue - (maxValue - minValue) * 0.75,
+  ]
 
   if (monthlyTotals.length === 0) {
-    return null
+    if (isLoading) {
+      return (
+        <div
+          className="wealth-chart-body wealth-chart-state"
+          aria-busy="true"
+          aria-label="Loading wealth history"
+        >
+          <Skeleton variant="block" height="13rem" />
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <div className="wealth-chart-body wealth-chart-state" role="alert">
+          <EmptyState
+            title="Wealth history unavailable"
+            description={error}
+          />
+        </div>
+      )
+    }
+
+    return (
+      <div className="wealth-chart-body wealth-chart-state">
+        <EmptyState
+          title="No wealth history yet"
+          description="Add account snapshots to start building your monthly wealth trend."
+        />
+      </div>
+    )
   }
 
-  const visibleTotals = monthlyTotals.slice(-months)
-  const points = getChartPoints(visibleTotals)
+  const points = getChartPoints(
+    visibleTotals,
+    chartScale.getX,
+    chartScale.getY,
+  )
   const firstPoint = points[0]
   const lastPoint = points[points.length - 1]
   const activePoint = hoveredPoint ?? lastPoint
@@ -206,12 +270,21 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
         >
           <path d={areaPathData} className="wealth-chart-area" />
 
-          <line
+          <ChartGrid
             x1={paddingLeft}
-            y1={chartHeight - paddingBottom}
             x2={chartWidth - paddingRight}
-            y2={chartHeight - paddingBottom}
+            labelX={paddingLeft - 8}
+            rows={gridValues.map((value) => ({
+              label: formatMoney(value.toFixed(0)),
+              y: chartScale.getY(value),
+            }))}
+          />
+
+          <ChartAxis
             className="wealth-chart-baseline"
+            x1={paddingLeft}
+            x2={chartWidth - paddingRight}
+            y={chartScale.baselineY}
           />
 
           <path d={pathData} className="wealth-chart-line" />
@@ -237,41 +310,31 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
           {hoveredPoint && (
             <>
               <line
+                className="trend-chart-crosshair"
                 x1={activePoint.x}
                 y1={paddingTop}
                 x2={activePoint.x}
                 y2={chartHeight - paddingBottom}
-                stroke="#94a3b8"
-                strokeWidth="1"
-                strokeDasharray="4 5"
-                opacity="0.72"
               />
               <circle
+                className="trend-chart-active-point trend-chart-active-point-primary"
                 cx={activePoint.x}
                 cy={activePoint.y}
                 r="4.8"
-                fill="#ffffff"
-                stroke="#2563eb"
-                strokeWidth="2.3"
               />
-              <g
-                transform={`translate(${getTooltipX(activePoint)}, ${getTooltipY(activePoint)})`}
-                pointerEvents="none"
+              <ChartTooltip
+                x={getTooltipX(activePoint)}
+                y={getTooltipY(activePoint)}
+                width={tooltipWidth}
+                height={tooltipHeight}
               >
-                <rect
-                  width={tooltipWidth}
-                  height={tooltipHeight}
-                  rx="10"
-                  fill="#ffffff"
-                  stroke="#dbe3ef"
-                />
                 <text x="12" y="20" fill="#64748b" fontSize="11" fontWeight="800">
                   {formatMonthLabel(activePoint.month)}
                 </text>
                 <text x="12" y="39" fill="#111827" fontSize="14" fontWeight="850">
                   {formatMoney(activePoint.value.toFixed(2))}
                 </text>
-              </g>
+              </ChartTooltip>
             </>
           )}
 
@@ -308,12 +371,14 @@ export function WealthMonthlyChart({ monthlyTotals }: WealthMonthlyChartProps) {
       </div>
 
       <div className="investment-trend-footer wealth-chart-footer">
-        <div className="investment-trend-legend">
-          <span>
-            <i className="investment-trend-legend-value" />
-            Net worth: manual + derived
-          </span>
-        </div>
+        <ChartLegend
+          items={[
+            {
+              className: 'investment-trend-legend-value',
+              label: 'Net worth: manual + derived',
+            },
+          ]}
+        />
 
         <div className="investment-trend-window-selector" aria-label="Wealth trend time window">
           {chartWindowOptions.map((option) => (

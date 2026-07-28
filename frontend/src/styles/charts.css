@@ -87,7 +87,9 @@
 }
 
 .trend-chart-grid-line {
-  display: none;
+  stroke: var(--chart-grid);
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
 }
 
 .investment-trend-baseline,
@@ -126,12 +128,6 @@
   stroke-width: 1.9;
   filter: none;
   vector-effect: non-scaling-stroke;
-}
-
-.wealth-chart-area,
-.wealth-chart-edge-point,
-.wealth-chart-value-label {
-  display: none;
 }
 
 .investment-trend-label,
@@ -234,4 +230,38 @@
   .investment-trend-window-selector {
     width: 100%;
   }
+}
+
+.chart-tooltip-surface {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+}
+
+.trend-chart-axis-label {
+  fill: var(--chart-axis-text);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.trend-chart-crosshair {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+  stroke-dasharray: 4 5;
+  opacity: 0.72;
+  vector-effect: non-scaling-stroke;
+}
+
+.trend-chart-active-point {
+  fill: var(--color-surface);
+  vector-effect: non-scaling-stroke;
+}
+
+.trend-chart-active-point-primary {
+  stroke: var(--chart-1);
+  stroke-width: 2.3;
+}
+
+.trend-chart-active-point-secondary {
+  stroke: var(--chart-axis);
+  stroke-width: 2;
 }

@@ -1,10 +1,19 @@
 import { useState, type MouseEvent } from 'react'
+import {
+  ChartAxis,
+  ChartGrid,
+  ChartLegend,
+  ChartTooltip,
+  useChartScale,
+} from '../charts'
+import { EmptyState, Skeleton } from '../ui'
 import type { InvestmentMonthlySeriesPoint } from '../../types/api'
 import { formatMoney, formatMonthLabel } from '../../utils/format'
 
 type InvestmentPortfolioTrendChartProps = {
   months: number
   series: InvestmentMonthlySeriesPoint[]
+  error?: string | null
   isLoading?: boolean
   onMonthsChange: (months: number) => void
 }
@@ -76,21 +85,12 @@ function buildPoints(series: InvestmentMonthlySeriesPoint[]): ChartPoint[] {
     )
 }
 
-function getPointX(index: number, pointCount: number) {
-  const usableWidth = chartWidth - paddingLeft - paddingRight
-
-  return paddingLeft + (index / Math.max(pointCount - 1, 1)) * usableWidth
-}
-
 function getCoordinates(
   points: ChartPoint[],
-  minValue: number,
-  maxValue: number,
   getValue: (point: ChartPoint) => number | null,
+  getX: (index: number) => number,
+  getY: (value: number) => number,
 ): TrendCoordinate[] {
-  const usableHeight = chartHeight - paddingTop - paddingBottom
-  const valueRange = Math.max(maxValue - minValue, 1)
-
   return points
     .map((point, index) => {
       const value = getValue(point)
@@ -102,8 +102,8 @@ function getCoordinates(
       return {
         month: point.month,
         value,
-        x: getPointX(index, points.length),
-        y: paddingTop + ((maxValue - value) / valueRange) * usableHeight,
+        x: getX(index),
+        y: getY(value),
       }
     })
     .filter((point) => point !== null)
@@ -117,14 +117,18 @@ function buildPath(coordinates: TrendCoordinate[]) {
     .join(' ')
 }
 
-function getNearestPointFromMouse(event: MouseEvent<SVGSVGElement>, points: ChartPoint[]) {
+function getNearestPointFromMouse(
+  event: MouseEvent<SVGSVGElement>,
+  points: ChartPoint[],
+  getX: (index: number) => number,
+) {
   const svgBounds = event.currentTarget.getBoundingClientRect()
   const mouseX = ((event.clientX - svgBounds.left) / svgBounds.width) * chartWidth
 
   return points.reduce((nearestPoint, point, index) => {
     const nearestIndex = points.indexOf(nearestPoint)
-    const nearestDistance = Math.abs(getPointX(nearestIndex, points.length) - mouseX)
-    const pointDistance = Math.abs(getPointX(index, points.length) - mouseX)
+    const nearestDistance = Math.abs(getX(nearestIndex) - mouseX)
+    const pointDistance = Math.abs(getX(index) - mouseX)
 
     return pointDistance < nearestDistance ? point : nearestPoint
   }, points[0])
@@ -169,10 +173,12 @@ function ChartWindowSelector({
 }
 
 function InvestmentPortfolioTrendPlaceholder({
+  error,
   isLoading,
   months,
   onMonthsChange,
 }: {
+  error: string | null
   isLoading: boolean
   months: number
   onMonthsChange: (months: number) => void
@@ -190,30 +196,29 @@ function InvestmentPortfolioTrendPlaceholder({
         <ChartWindowSelector months={months} onMonthsChange={onMonthsChange} />
       </div>
 
-      <div className={isLoading ? 'investment-trend-skeleton' : 'investment-trend-empty'}>
-        {isLoading ? (
-          <>
-            <div className="investment-trend-skeleton-header">
-              <span />
-              <strong />
-            </div>
-            <div className="investment-trend-skeleton-chart" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
-            <p>Loading portfolio trend…</p>
-          </>
-        ) : (
-          <>
-            <strong>No portfolio trend yet</strong>
-            <p>
-              Add investment events and valuation prices to show the portfolio trend.
-            </p>
-          </>
-        )}
-      </div>
+      {isLoading ? (
+        <div
+          className="investment-trend-state"
+          aria-busy="true"
+          aria-label="Loading portfolio trend"
+        >
+          <Skeleton variant="block" height="11rem" />
+        </div>
+      ) : error ? (
+        <div className="investment-trend-state" role="alert">
+          <EmptyState
+            title="Portfolio trend unavailable"
+            description={error}
+          />
+        </div>
+      ) : (
+        <div className="investment-trend-state">
+          <EmptyState
+            title="No portfolio trend yet"
+            description="Add investment events and valuation prices to show the portfolio trend."
+          />
+        </div>
+      )}
     </section>
   )
 }
@@ -221,15 +226,42 @@ function InvestmentPortfolioTrendPlaceholder({
 export function InvestmentPortfolioTrendChart({
   months,
   series,
+  error = null,
   isLoading = false,
   onMonthsChange,
 }: InvestmentPortfolioTrendChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null)
   const points = buildPoints(series)
+  const allValues = points.flatMap((point) =>
+    [point.allocated, point.marketValue].filter(
+      (value): value is number => value !== null,
+    ),
+  )
+  const minValue = allValues.length > 0 ? Math.min(...allValues) * 0.96 : 0
+  const maxValue = allValues.length > 0 ? Math.max(...allValues) * 1.04 : 1
+  const chartScale = useChartScale({
+    width: chartWidth,
+    height: chartHeight,
+    padding: {
+      top: paddingTop,
+      right: paddingRight,
+      bottom: paddingBottom,
+      left: paddingLeft,
+    },
+    pointCount: points.length,
+    minValue,
+    maxValue,
+  })
+  const gridValues = [
+    maxValue - (maxValue - minValue) * 0.25,
+    maxValue - (maxValue - minValue) * 0.5,
+    maxValue - (maxValue - minValue) * 0.75,
+  ]
 
   if (points.length === 0) {
     return (
       <InvestmentPortfolioTrendPlaceholder
+        error={error}
         isLoading={isLoading}
         months={months}
         onMonthsChange={onMonthsChange}
@@ -237,15 +269,18 @@ export function InvestmentPortfolioTrendChart({
     )
   }
 
-  const allValues = points.flatMap((point) =>
-    [point.allocated, point.marketValue].filter(
-      (value): value is number => value !== null,
-    ),
+  const allocatedCoordinates = getCoordinates(
+    points,
+    (point) => point.allocated,
+    chartScale.getX,
+    chartScale.getY,
   )
-  const minValue = Math.min(...allValues) * 0.96
-  const maxValue = Math.max(...allValues) * 1.04
-  const allocatedCoordinates = getCoordinates(points, minValue, maxValue, (point) => point.allocated)
-  const marketValueCoordinates = getCoordinates(points, minValue, maxValue, (point) => point.marketValue)
+  const marketValueCoordinates = getCoordinates(
+    points,
+    (point) => point.marketValue,
+    chartScale.getX,
+    chartScale.getY,
+  )
   const allocatedPath = buildPath(allocatedCoordinates)
   const marketValuePath = buildPath(marketValueCoordinates)
   const latestPoint = [...points].reverse().find((point) => point.marketValue !== null) ?? points[points.length - 1]
@@ -253,7 +288,7 @@ export function InvestmentPortfolioTrendChart({
   const latestGain = latestPoint.gain
   const activePoint = hoveredPoint ?? latestPoint
   const activeIndex = points.findIndex((point) => point.month === activePoint.month)
-  const activeX = getPointX(activeIndex, points.length)
+  const activeX = chartScale.getX(activeIndex)
   const activeAllocatedCoordinate = allocatedCoordinates.find((coordinate) => coordinate.month === activePoint.month)
   const activeMarketValueCoordinate = marketValueCoordinates.find((coordinate) => coordinate.month === activePoint.month)
   const activeY = activeMarketValueCoordinate?.y ?? activeAllocatedCoordinate?.y ?? paddingTop
@@ -321,15 +356,26 @@ export function InvestmentPortfolioTrendChart({
             event.preventDefault()
             setHoveredPoint(points[nextIndex])
           }}
-          onMouseMove={(event) => setHoveredPoint(getNearestPointFromMouse(event, points))}
+          onMouseMove={(event) =>
+            setHoveredPoint(getNearestPointFromMouse(event, points, chartScale.getX))
+          }
           onMouseLeave={() => setHoveredPoint(null)}
         >
-          <line
+          <ChartGrid
             x1={paddingLeft}
-            y1={chartHeight - paddingBottom}
             x2={chartWidth - paddingRight}
-            y2={chartHeight - paddingBottom}
+            labelX={paddingLeft - 8}
+            rows={gridValues.map((value) => ({
+              label: formatMoney(value.toFixed(0)),
+              y: chartScale.getY(value),
+            }))}
+          />
+
+          <ChartAxis
             className="investment-trend-baseline"
+            x1={paddingLeft}
+            x2={chartWidth - paddingRight}
+            y={chartScale.baselineY}
           />
 
           <path d={allocatedPath} className="investment-trend-allocated-line" />
@@ -347,46 +393,34 @@ export function InvestmentPortfolioTrendChart({
           {hoveredPoint && (
             <>
               <line
+                className="trend-chart-crosshair"
                 x1={activeX}
                 y1={paddingTop}
                 x2={activeX}
                 y2={chartHeight - paddingBottom}
-                stroke="#94a3b8"
-                strokeWidth="1"
-                strokeDasharray="4 5"
-                opacity="0.72"
               />
               {activeAllocatedCoordinate && (
                 <circle
+                  className="trend-chart-active-point trend-chart-active-point-secondary"
                   cx={activeAllocatedCoordinate.x}
                   cy={activeAllocatedCoordinate.y}
                   r="4"
-                  fill="#ffffff"
-                  stroke="#94a3b8"
-                  strokeWidth="2"
                 />
               )}
               {activeMarketValueCoordinate && (
                 <circle
+                  className="trend-chart-active-point trend-chart-active-point-primary"
                   cx={activeMarketValueCoordinate.x}
                   cy={activeMarketValueCoordinate.y}
                   r="4.8"
-                  fill="#ffffff"
-                  stroke="#2563eb"
-                  strokeWidth="2.3"
                 />
               )}
-              <g
-                transform={`translate(${getTooltipX(activeX)}, ${getTooltipY(activeY)})`}
-                pointerEvents="none"
+              <ChartTooltip
+                x={getTooltipX(activeX)}
+                y={getTooltipY(activeY)}
+                width={tooltipWidth}
+                height={tooltipHeight}
               >
-                <rect
-                  width={tooltipWidth}
-                  height={tooltipHeight}
-                  rx="10"
-                  fill="#ffffff"
-                  stroke="#dbe3ef"
-                />
                 <text x="12" y="20" fill="#64748b" fontSize="11" fontWeight="800">
                   {formatMonth(activePoint.month)}
                   {activePoint.isEstimated ? ' · estimated' : ''}
@@ -399,14 +433,14 @@ export function InvestmentPortfolioTrendChart({
                     ? '-'
                     : formatMoney(activePoint.allocated.toFixed(2))}
                 </text>
-              </g>
+              </ChartTooltip>
             </>
           )}
 
           {labelPoints.map((point) => (
             <text
               key={point.month}
-              x={getPointX(points.indexOf(point), points.length)}
+              x={chartScale.getX(points.indexOf(point))}
               y={chartHeight - 8}
               textAnchor={point.month === points[0].month ? 'start' : point.month === points[points.length - 1].month ? 'end' : 'middle'}
               className="investment-trend-label"
@@ -418,16 +452,18 @@ export function InvestmentPortfolioTrendChart({
       </div>
 
       <div className="investment-trend-footer">
-        <div className="investment-trend-legend">
-          <span>
-            <i className="investment-trend-legend-value" />
-            Portfolio value
-          </span>
-          <span>
-            <i className="investment-trend-legend-allocated" />
-            Allocated capital
-          </span>
-        </div>
+        <ChartLegend
+          items={[
+            {
+              className: 'investment-trend-legend-value',
+              label: 'Portfolio value',
+            },
+            {
+              className: 'investment-trend-legend-allocated',
+              label: 'Allocated capital',
+            },
+          ]}
+        />
 
         <ChartWindowSelector months={months} onMonthsChange={onMonthsChange} />
       </div>
