@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
-import type { LucideIcon } from 'lucide-react'
+import { Icon, type IconComponent } from './Icon'
 import './EmptyState.css'
 
 export type EmptyStateProps = {
-  icon?: LucideIcon
+  icon?: IconComponent
   title: string
   description?: ReactNode
   /** Usually a <Button>. Give the user the action that fills the emptiness. */
@@ -17,7 +17,7 @@ export type EmptyStateProps = {
  * resolves it - which matters most on first run, when every surface is empty.
  */
 export function EmptyState({
-  icon: Icon,
+  icon: IconGraphic,
   title,
   description,
   action,
@@ -25,9 +25,13 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={`ui-empty-state ui-empty-state-${size}`}>
-      {Icon ? (
+      {IconGraphic ? (
         <span className="ui-empty-state-icon" aria-hidden="true">
-          <Icon size={size === 'sm' ? 20 : 24} />
+          <Icon
+            icon={IconGraphic}
+            size={size === 'sm' ? 20 : 24}
+            aria-hidden="true"
+          />
         </span>
       ) : null}
       <p className="ui-empty-state-title">{title}</p>

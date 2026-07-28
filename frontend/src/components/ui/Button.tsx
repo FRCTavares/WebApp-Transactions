@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import type { LucideIcon } from 'lucide-react'
+import { Icon, type IconComponent, type IconSize } from './Icon'
 import './Button.css'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -10,8 +10,8 @@ export type ButtonProps = {
   size?: ButtonSize
   /** Renders a spinner and blocks interaction without changing the button's width. */
   loading?: boolean
-  iconLeft?: LucideIcon
-  iconRight?: LucideIcon
+  iconLeft?: IconComponent
+  iconRight?: IconComponent
   fullWidth?: boolean
   /**
    * Appended, not replaced. For concerns the button cannot know about -
@@ -22,7 +22,7 @@ export type ButtonProps = {
   children?: ReactNode
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>
 
-const ICON_SIZE: Record<ButtonSize, number> = { sm: 14, md: 16, lg: 18 }
+const ICON_SIZE: Record<ButtonSize, IconSize> = { sm: 14, md: 16, lg: 20 }
 
 /**
  * The single definition of what a button looks like.
@@ -71,11 +71,11 @@ export function Button({
     >
       {loading ? <span className="ui-button-spinner" aria-hidden="true" /> : null}
       {!loading && IconLeft ? (
-        <IconLeft size={ICON_SIZE[size]} aria-hidden="true" />
+        <Icon icon={IconLeft} size={ICON_SIZE[size]} aria-hidden="true" />
       ) : null}
       {children ? <span className="ui-button-label">{children}</span> : null}
       {!loading && IconRight ? (
-        <IconRight size={ICON_SIZE[size]} aria-hidden="true" />
+        <Icon icon={IconRight} size={ICON_SIZE[size]} aria-hidden="true" />
       ) : null}
     </button>
   )

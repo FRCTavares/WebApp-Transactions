@@ -5,10 +5,10 @@ import {
   PiggyBank,
   ReceiptText,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import type { Page } from '../routing/appRoutes'
+import { Icon, type IconComponent } from './ui'
 
-const MOBILE_NAV_ITEMS: { id: Page; label: string; icon: LucideIcon }[] = [
+const MOBILE_NAV_ITEMS: { id: Page; label: string; icon: IconComponent }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { id: 'transactions', label: 'Activity', icon: ReceiptText },
   { id: 'owed', label: 'Owed', icon: HandCoins },
@@ -52,7 +52,12 @@ export function AppMobileNav({ currentPage, onPageChange }: AppMobileNavProps) {
           className={getMobileButtonClass(currentPage, item.id)}
           onClick={() => onPageChange(item.id)}
         >
-          <item.icon className="mobile-bottom-nav-icon" aria-hidden="true" />
+          <Icon
+            icon={item.icon}
+            size={20}
+            className="mobile-bottom-nav-icon"
+            aria-hidden="true"
+          />
           <span>{item.label}</span>
         </button>
       ))}

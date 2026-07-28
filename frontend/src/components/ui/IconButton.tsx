@@ -1,10 +1,10 @@
 import type { ButtonHTMLAttributes } from 'react'
-import type { LucideIcon } from 'lucide-react'
 import './IconButton.css'
 import type { ButtonSize, ButtonVariant } from './Button'
+import { Icon, type IconComponent, type IconSize } from './Icon'
 
 export type IconButtonProps = {
-  icon: LucideIcon
+  icon: IconComponent
   /**
    * Required, and becomes the button's accessible name.
    *
@@ -20,10 +20,10 @@ export type IconButtonProps = {
   showLabel?: boolean
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'aria-label'>
 
-const ICON_SIZE: Record<ButtonSize, number> = { sm: 14, md: 16, lg: 20 }
+const ICON_SIZE: Record<ButtonSize, IconSize> = { sm: 14, md: 16, lg: 20 }
 
 export function IconButton({
-  icon: Icon,
+  icon: IconGraphic,
   label,
   variant = 'ghost',
   size = 'md',
@@ -48,7 +48,7 @@ export function IconButton({
       aria-label={showLabel ? undefined : label}
       title={showLabel ? undefined : label}
     >
-      <Icon size={ICON_SIZE[size]} aria-hidden="true" />
+      <Icon icon={IconGraphic} size={ICON_SIZE[size]} aria-hidden="true" />
       {showLabel ? <span>{label}</span> : null}
     </button>
   )

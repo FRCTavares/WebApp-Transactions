@@ -1,5 +1,6 @@
 import type { ReactNode, ThHTMLAttributes, TdHTMLAttributes } from 'react'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import { Icon } from './Icon'
 import './Table.css'
 
 export type SortDirection = 'asc' | 'desc'
@@ -119,7 +120,7 @@ export function TableHeaderCell({
     >
       <button type="button" className="ui-table-sort" onClick={sort.onSort}>
         <span>{children}</span>
-        <SortIcon size={13} aria-hidden="true" />
+        <Icon icon={SortIcon} size={14} aria-hidden="true" />
       </button>
     </th>
   )

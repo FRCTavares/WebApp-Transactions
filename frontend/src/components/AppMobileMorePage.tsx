@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Upload,
 } from 'lucide-react'
+import { Icon } from './ui'
 import { SegmentedControl } from './ui/SegmentedControl'
 import { useTheme } from '../hooks/useTheme'
 import type { ResolvedTheme } from '../context/themeContextValue'
@@ -67,7 +68,7 @@ export function AppMobileMorePage({
         <div className="mobile-more-actions">
           <button type="button" onClick={onOpenInvestments}>
             <span className="mobile-more-action-icon" aria-hidden="true">
-              <TrendingUp />
+              <Icon icon={TrendingUp} size={20} />
             </span>
             <span>
               <strong>Investments</strong>
@@ -86,7 +87,7 @@ export function AppMobileMorePage({
         <div className="mobile-more-actions">
           <button type="button" onClick={onOpenImport}>
             <span className="mobile-more-action-icon" aria-hidden="true">
-              <Upload />
+              <Icon icon={Upload} size={20} />
             </span>
             <span>
               <strong>Import CSV</strong>
@@ -96,7 +97,7 @@ export function AppMobileMorePage({
 
           <button type="button" onClick={onOpenCategories}>
             <span className="mobile-more-action-icon" aria-hidden="true">
-              <FolderCog />
+              <Icon icon={FolderCog} size={20} />
             </span>
             <span>
               <strong>Categories / Rules</strong>
@@ -106,7 +107,7 @@ export function AppMobileMorePage({
 
           <button type="button" onClick={onOpenExport}>
             <span className="mobile-more-action-icon" aria-hidden="true">
-              <Download />
+              <Icon icon={Download} size={20} />
             </span>
             <span>
               <strong>Export</strong>
@@ -116,7 +117,7 @@ export function AppMobileMorePage({
 
           <button type="button" onClick={onOpenSettings}>
             <span className="mobile-more-action-icon" aria-hidden="true">
-              <Settings />
+              <Icon icon={Settings} size={20} />
             </span>
             <span>
               <strong>Settings</strong>
@@ -135,7 +136,7 @@ export function AppMobileMorePage({
               onClick={onSignOut}
             >
               <span className="mobile-more-action-icon" aria-hidden="true">
-                <LogOut />
+                <Icon icon={LogOut} size={20} />
               </span>
               <span>
                 <strong>Sign out</strong>

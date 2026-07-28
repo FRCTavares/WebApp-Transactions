@@ -10,11 +10,11 @@ import {
   Upload,
   UserRound,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import type { Page } from '../routing/appRoutes'
 import { useTheme } from '../hooks/useTheme'
+import { Icon, type IconComponent } from './ui'
 
-const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: LucideIcon }[] }[] = [
+const NAV_GROUPS: { title: string; items: { id: Page; label: string; icon: IconComponent }[] }[] = [
   {
     title: 'Overview',
     items: [
@@ -103,7 +103,12 @@ export function AppSidebar({
                   className={getSidebarButtonClass(currentPage, item.id)}
                   onClick={() => onPageChange(item.id)}
                 >
-                  <item.icon className="nav-icon" aria-hidden="true" />
+                  <Icon
+                    icon={item.icon}
+                    size={16}
+                    className="nav-icon"
+                    aria-hidden="true"
+                  />
                   <span className="nav-label">{item.label}</span>
                 </button>
               ))}
@@ -123,7 +128,12 @@ export function AppSidebar({
               title="Light mode"
               onClick={() => setThemePreference('light')}
             >
-              <Sun className="sidebar-theme-switch-icon" aria-hidden="true" />
+              <Icon
+                icon={Sun}
+                size={14}
+                className="sidebar-theme-switch-icon"
+                aria-hidden="true"
+              />
             </button>
 
             <button
@@ -134,7 +144,12 @@ export function AppSidebar({
               title="Dark mode"
               onClick={() => setThemePreference('dark')}
             >
-              <Moon className="sidebar-theme-switch-icon" aria-hidden="true" />
+              <Icon
+                icon={Moon}
+                size={14}
+                className="sidebar-theme-switch-icon"
+                aria-hidden="true"
+              />
             </button>
           </div>
         </div>
@@ -151,7 +166,12 @@ export function AppSidebar({
             />
           ) : (
             <div className="sidebar-profile-avatar sidebar-profile-avatar-fallback" aria-hidden="true">
-              <UserRound className="sidebar-profile-avatar-icon" />
+              <Icon
+                icon={UserRound}
+                size={20}
+                className="sidebar-profile-avatar-icon"
+                aria-hidden="true"
+              />
             </div>
           )}
           <div className="account-summary">
