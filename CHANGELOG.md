@@ -77,6 +77,10 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Trading 212 current-history imports now accept ISO-8601 timestamps with
+  explicit timezone offsets, including the broker's `+00:00` UTC format and
+  trailing `Z`, instead of classifying every affected row as invalid.
+
 - Corrected the recorded market-data ownership decision
   (`docs/production-roadmap.md`) to match the actual shared/admin-maintained
   implementation, instead of the stale "user-specific" recorded decision
