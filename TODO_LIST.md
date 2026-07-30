@@ -13,25 +13,6 @@ Work remains ordered by the project's priorities: security, ownership,
 financial correctness, atomicity, backup and recovery, data integrity,
 CI/deployment reliability, accessibility, and UI maintainability.
 
-## Recovered local branch state — 2026-07-29
-
-- [ ] Review, verify, commit, and publish the recovered
-      `phase-6-remaining-icons` work. This branch is not currently present on
-      GitHub; it starts at `origin/main` commit `66561d` and arrived with an
-      uncommitted 19-file working-tree diff (244 insertions, 40 deletions) before
-      this recovery note was added. The recovered implementation adds icons and
-      accessible supporting treatment across
-      table actions, status messages, chart empty states, import-source rows,
-      page actions, and the associated frontend tests. The exact recovered diff
-      was preserved when moving from iCloud to `~/Developer/WebApp-Transactions`.
-      Dependencies were reinstalled, the production frontend build passed, and
-      the private ignored environment files were restored locally. Before
-      publication, run the Phase 6 verification set (`npm run lint`,
-      `npm run lint:css`, `npm run test`, relevant Playwright tests,
-      `npm run build`, `git diff --check`, and final diff/status review), then
-      commit, push, and open a PR. Do not reset or discard the working tree
-      before that commit exists.
-
 ## 1. Dependency and release risks
 
 ## 2. Outstanding verification and product decisions
