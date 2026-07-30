@@ -34,7 +34,7 @@ export default defineConfig({
     {
       command: '../backend/scripts/start_e2e_backend.sh 8000',
       url: 'http://127.0.0.1:8000/api/health',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 4173',
