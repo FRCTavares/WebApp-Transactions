@@ -30,15 +30,23 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'mobile-webkit', use: { ...devices['iPhone 14'] } },
   ],
-  webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-    env: {
-      NODE_ENV: 'development',
-      VITE_SUPABASE_AUTH_ENABLED: 'true',
-      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? '',
-      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? '',
+  webServer: [
+    {
+      command: '../backend/scripts/start_e2e_backend.sh 8000',
+      url: 'http://127.0.0.1:8000/api/health',
+      reuseExistingServer: true,
     },
-  },
+    {
+      command: 'npm run dev -- --host 127.0.0.1 --port 4173',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env.CI,
+      env: {
+        NODE_ENV: 'development',
+        VITE_API_BASE_URL: 'http://127.0.0.1:8000',
+        VITE_SUPABASE_AUTH_ENABLED: 'true',
+        VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? '',
+        VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? '',
+      },
+    },
+  ],
 })

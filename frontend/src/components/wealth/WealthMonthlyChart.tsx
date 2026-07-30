@@ -331,10 +331,22 @@ export function WealthMonthlyChart({
                 width={tooltipWidth}
                 height={tooltipHeight}
               >
-                <text x="12" y="20" fill="#64748b" fontSize="11" fontWeight="800">
+                <text
+                  className="chart-tooltip-label"
+                  x="12"
+                  y="20"
+                  fontSize="11"
+                  fontWeight="800"
+                >
                   {formatMonthLabel(activePoint.month)}
                 </text>
-                <text x="12" y="39" fill="#111827" fontSize="14" fontWeight="850">
+                <text
+                  className="chart-tooltip-value"
+                  x="12"
+                  y="39"
+                  fontSize="14"
+                  fontWeight="850"
+                >
                   {formatMoney(activePoint.value.toFixed(2))}
                 </text>
               </ChartTooltip>

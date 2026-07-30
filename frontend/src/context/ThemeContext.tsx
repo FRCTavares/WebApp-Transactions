@@ -15,18 +15,20 @@ const THEME_STORAGE_KEY = 'finance-theme-preference'
 const THEME_TRANSITION_CLASS = 'theme-transitioning'
 const THEME_TRANSITION_DURATION_MS = 180
 
-// Must stay in sync with the light and dark application background tokens and
-// with the pre-JS fallback <meta name="theme-color"> pair in index.html.
-const THEME_COLOURS: Record<ResolvedTheme, string> = {
-  light: '#f5f5f7',
-  dark: '#09090b',
-}
-
 // index.html ships two media-scoped theme-color tags so the browser chrome is
 // correct before React mounts. Once the resolved theme is known those are
 // replaced by a single unscoped tag, otherwise an explicit light/dark choice
 // that disagrees with the OS preference would be ignored by the browser.
-function applyThemeColour(resolvedTheme: ResolvedTheme) {
+function applyThemeColour() {
+  const themeColour = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue('--color-bg')
+    .trim()
+
+  if (!themeColour) {
+    return
+  }
+
   const head = document.head
   head
     .querySelectorAll('meta[name="theme-color"]')
@@ -34,7 +36,7 @@ function applyThemeColour(resolvedTheme: ResolvedTheme) {
 
   const meta = document.createElement('meta')
   meta.name = 'theme-color'
-  meta.content = THEME_COLOURS[resolvedTheme]
+  meta.content = themeColour
   head.appendChild(meta)
 }
 
@@ -111,7 +113,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     root.dataset.theme = resolvedTheme
     root.dataset.themePreference = themePreference
     root.style.colorScheme = resolvedTheme
-    applyThemeColour(resolvedTheme)
+    applyThemeColour()
     window.localStorage.setItem(THEME_STORAGE_KEY, themePreference)
     previousResolvedTheme.current = resolvedTheme
 
