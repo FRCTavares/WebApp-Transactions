@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react'
+import { CircleCheck, TrendingUp } from 'lucide-react'
 import type { InvestmentEvent } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import type { ManualFundingFormState } from '../../utils/investmentsPageUtils'
@@ -204,6 +204,7 @@ export function InvestmentEventsTable({
                   <Button
                     size="sm"
                     type="button"
+                    iconLeft={CircleCheck}
                     onClick={() => onStartManualResolution(event)}
                   >
                     Resolve

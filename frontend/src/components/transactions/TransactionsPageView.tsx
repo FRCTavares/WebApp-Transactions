@@ -1,4 +1,5 @@
 import type { FormEvent } from "react"
+import { Download, Plus } from 'lucide-react'
 import { StatusMessage } from "../StatusMessage"
 import { Button, PageHeader, SegmentedControl } from "../ui"
 import {
@@ -150,13 +151,18 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
         actions={
           <>
             <span className="desktop-only">
-              <Button type="button" onClick={props.onExportCsv}>
+              <Button
+                type="button"
+                iconLeft={Download}
+                onClick={props.onExportCsv}
+              >
                 Export CSV
               </Button>
             </span>
             <Button
               type="button"
               variant="primary"
+              iconLeft={props.isCreateFormOpen ? undefined : Plus}
               onClick={() => {
                 if (props.isCreateFormOpen) {
                   props.onResetCreateForm()

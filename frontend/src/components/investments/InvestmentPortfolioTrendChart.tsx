@@ -1,4 +1,5 @@
 import { useState, type MouseEvent } from 'react'
+import { CircleAlert, TrendingUp } from 'lucide-react'
 import {
   ChartAxis,
   ChartGrid,
@@ -207,6 +208,7 @@ function InvestmentPortfolioTrendPlaceholder({
       ) : error ? (
         <div className="investment-trend-state" role="alert">
           <EmptyState
+            icon={CircleAlert}
             title="Portfolio trend unavailable"
             description={error}
           />
@@ -214,6 +216,7 @@ function InvestmentPortfolioTrendPlaceholder({
       ) : (
         <div className="investment-trend-state">
           <EmptyState
+            icon={TrendingUp}
             title="No portfolio trend yet"
             description="Add investment events and valuation prices to show the portfolio trend."
           />

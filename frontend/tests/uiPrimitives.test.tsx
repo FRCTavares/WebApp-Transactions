@@ -21,6 +21,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '../src/components/ui'
+import { StatusMessage } from '../src/components/StatusMessage'
 
 describe('Icon', () => {
   it('renders only the supported fixed icon size requested by the caller', () => {
@@ -39,6 +40,33 @@ describe('Icon', () => {
     const icon = container.querySelector('svg')
     expect(icon).toHaveAttribute('width', '16')
     expect(icon).toHaveAttribute('height', '16')
+  })
+})
+
+
+describe('StatusMessage', () => {
+  it('renders a decorative success icon without changing the message name', () => {
+    const { container } = render(
+      <StatusMessage message="Transaction saved." />,
+    )
+
+    const icon = container.querySelector('svg')
+
+    expect(screen.getByRole('status')).toHaveTextContent('Transaction saved.')
+    expect(icon).toBeInTheDocument()
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('renders a decorative error icon and keeps alert semantics', () => {
+    const { container } = render(
+      <StatusMessage error="Transaction failed." />,
+    )
+
+    const icon = container.querySelector('svg')
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Transaction failed.')
+    expect(icon).toBeInTheDocument()
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
   })
 })
 

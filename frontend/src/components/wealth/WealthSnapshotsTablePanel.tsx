@@ -2,7 +2,7 @@ import { getAccountName } from '../../utils/wealthPageUtils'
 import type { WealthAccount, WealthSnapshot } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import { Button, EmptyState } from '../ui'
-import { CalendarClock } from 'lucide-react'
+import { CalendarClock, Pencil, Trash2 } from 'lucide-react'
 
 /**
  * The manual snapshots history table. Split out of `WealthPage.tsx`
@@ -70,10 +70,21 @@ export function WealthSnapshotsTablePanel({
                 <td>{snapshot.notes ?? '-'}</td>
                 <td>
                   <div className="table-action-group">
-                    <Button type="button" size="sm" onClick={() => onStartEdit(snapshot)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      iconLeft={Pencil}
+                      onClick={() => onStartEdit(snapshot)}
+                    >
                       Edit
                     </Button>
-                    <Button type="button" size="sm" variant="danger" onClick={() => onRemove(snapshot)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="danger"
+                      iconLeft={Trash2}
+                      onClick={() => onRemove(snapshot)}
+                    >
                       Delete
                     </Button>
                   </div>

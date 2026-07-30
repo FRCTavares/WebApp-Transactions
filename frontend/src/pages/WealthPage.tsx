@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { listInvestmentPositions } from '../api/investmentEvents'
@@ -520,7 +520,12 @@ export function WealthPage(_props: WealthPageProps) {
         description="Bank, cash, savings, and other balances are manual snapshots. Owed money and investments are derived automatically."
         actions={(
           <>
-            <Button type="button" size="sm" onClick={() => refreshWealthData(true)}>
+            <Button
+              type="button"
+              size="sm"
+              iconLeft={RefreshCw}
+              onClick={() => refreshWealthData(true)}
+            >
               Refresh
             </Button>
             <Button

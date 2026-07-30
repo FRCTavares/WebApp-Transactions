@@ -1,4 +1,5 @@
 import { useState, type MouseEvent } from 'react'
+import { CircleAlert, Landmark } from 'lucide-react'
 import {
   ChartAxis,
   ChartGrid,
@@ -176,6 +177,7 @@ export function WealthMonthlyChart({
       return (
         <div className="wealth-chart-body wealth-chart-state" role="alert">
           <EmptyState
+            icon={CircleAlert}
             title="Wealth history unavailable"
             description={error}
           />
@@ -186,6 +188,7 @@ export function WealthMonthlyChart({
     return (
       <div className="wealth-chart-body wealth-chart-state">
         <EmptyState
+          icon={Landmark}
           title="No wealth history yet"
           description="Add account snapshots to start building your monthly wealth trend."
         />

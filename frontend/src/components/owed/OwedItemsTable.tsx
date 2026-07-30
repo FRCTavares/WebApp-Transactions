@@ -1,4 +1,10 @@
-import { ChevronDown, HandCoins } from 'lucide-react'
+import {
+  ChevronDown,
+  CircleDollarSign,
+  HandCoins,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import { Badge, Button, EmptyState, Icon } from '../ui'
@@ -213,6 +219,7 @@ export function OwedItemsTable({
                           <Button
                             type="button"
                             size="sm"
+                            iconLeft={Pencil}
                             onClick={() => onStartEdit(item)}
                             aria-label={`Edit ${item.reason}`}
                           >
@@ -222,6 +229,7 @@ export function OwedItemsTable({
                             <Button
                               type="button"
                               size="sm"
+                              iconLeft={CircleDollarSign}
                               onClick={() => onMarkPaid(item)}
                               aria-label={`Mark ${item.reason} as paid`}
                             >
@@ -232,6 +240,7 @@ export function OwedItemsTable({
                             type="button"
                             size="sm"
                             variant="danger"
+                            iconLeft={Trash2}
                             onClick={() => onDelete(item)}
                             aria-label={`Delete ${item.reason}`}
                           >
@@ -337,6 +346,7 @@ export function OwedItemsTable({
                       <Button
                         type="button"
                         size="sm"
+                        iconLeft={Pencil}
                         onClick={() => onStartEdit(item)}
                         aria-label={`Edit ${item.reason}`}
                       >
@@ -346,6 +356,7 @@ export function OwedItemsTable({
                         <Button
                           type="button"
                           size="sm"
+                          iconLeft={CircleDollarSign}
                           onClick={() => onMarkPaid(item)}
                           aria-label={`Mark ${item.reason} as paid`}
                         >
@@ -356,6 +367,7 @@ export function OwedItemsTable({
                         type="button"
                         size="sm"
                         variant="danger"
+                        iconLeft={Trash2}
                         onClick={() => onDelete(item)}
                         aria-label={`Delete ${item.reason}`}
                       >
