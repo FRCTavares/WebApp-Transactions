@@ -237,6 +237,14 @@
   stroke: var(--color-border);
 }
 
+.chart-tooltip-label {
+  fill: var(--color-text-muted);
+}
+
+.chart-tooltip-value {
+  fill: var(--color-text);
+}
+
 .trend-chart-axis-label {
   fill: var(--chart-axis-text);
   font-size: 9px;

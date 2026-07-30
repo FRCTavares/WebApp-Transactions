@@ -68,10 +68,6 @@ Each implementation must finish with:
 
 ### Phase 7 — Consistency sweep and guardrails
 
-- [ ] Extend the raw-colour guard to TypeScript and TSX. The current Stylelint
-      ratchet covers stylesheets but does not catch hex literals in JSX style
-      or attribute positions.
-
 - [ ] Extend Stylelint enforcement beyond the existing raw-hex ratchet to ban
       raw `rgb()` and `hsl()` colour values outside the primitive token file,
       and ban `!important` outside a narrowly documented allowlist.

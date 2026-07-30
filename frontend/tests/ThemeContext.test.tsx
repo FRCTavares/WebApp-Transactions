@@ -51,8 +51,28 @@ describe('ThemeProvider transitions', () => {
     vi.runOnlyPendingTimers()
     vi.useRealTimers()
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     window.localStorage.clear()
     document.documentElement.classList.remove('theme-transitioning')
+  })
+
+  it('sets the browser theme colour from the semantic background token', () => {
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: vi.fn().mockReturnValue('rgb(245, 245, 247)'),
+    } as unknown as CSSStyleDeclaration)
+    window.localStorage.setItem(STORAGE_KEY, 'light')
+
+    renderHook(() => useTheme(), { wrapper })
+
+    const themeColourTags = document.head.querySelectorAll(
+      'meta[name="theme-color"]',
+    )
+
+    expect(themeColourTags).toHaveLength(1)
+    expect(themeColourTags[0]).toHaveAttribute(
+      'content',
+      'rgb(245, 245, 247)',
+    )
   })
 
   it('does not transition during the initial theme application', () => {
