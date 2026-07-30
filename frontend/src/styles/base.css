@@ -312,9 +312,17 @@ main {
 }
 
 .status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
   border-radius: var(--radius-md);
   margin: 12px 0;
   padding: 10px 12px;
+}
+
+.status > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1em;
 }
 
 .status-error {

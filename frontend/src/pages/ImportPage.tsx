@@ -23,9 +23,21 @@ import type {
   Transaction,
 } from '../types/api'
 import { formatDate } from '../utils/format'
-import { Badge, Button, PageHeader } from '../components/ui'
+import { Badge, Button, EmptyState, Icon, PageHeader } from '../components/ui'
 import type { BadgeTone } from '../components/ui'
 import { formatSource, toSentenceCase } from '../utils/badgeLabels'
+import {
+  Building2,
+  Eye,
+  FileSearch,
+  History,
+  RefreshCw,
+  Smartphone,
+  TrendingUp,
+  Undo2,
+  Upload,
+} from 'lucide-react'
+import type { IconComponent } from '../components/ui'
 
 const SOURCES = ['revolut', 'activobank', 'trading212']
 const HIDDEN_BATCH_SOURCES = ['legacy_excel', 'legacy_excel_wealth']
@@ -34,6 +46,12 @@ const SOURCE_UPLOAD_HELP: Record<string, { accept: string; description: string }
   revolut: { accept: '.csv', description: 'Revolut CSV, maximum 5 MB' },
   activobank: { accept: '.xlsx', description: 'ActivoBank XLSX, maximum 10 MB' },
   trading212: { accept: '.csv', description: 'Trading 212 CSV, maximum 5 MB' },
+}
+
+const SOURCE_ICON: Record<string, IconComponent> = {
+  revolut: Smartphone,
+  activobank: Building2,
+  trading212: TrendingUp,
 }
 
 /* Tones mirror the groupings `panels-import.css` already encoded: committed,
@@ -313,7 +331,12 @@ export function ImportPage() {
         title="Import CSV/XLSX"
         description="Preview first, check duplicates, then commit only the new rows."
         actions={(
-          <Button type="button" size="sm" onClick={loadBatches}>
+          <Button
+            type="button"
+            size="sm"
+            iconLeft={RefreshCw}
+            onClick={loadBatches}
+          >
             Refresh history
           </Button>
         )}
@@ -379,6 +402,7 @@ export function ImportPage() {
           <Button
             type="button"
             variant="primary"
+            iconLeft={FileSearch}
             onClick={handlePreview}
             disabled={isCommitting}
           >
@@ -507,6 +531,7 @@ export function ImportPage() {
             <Button
               type="button"
               variant="primary"
+              iconLeft={Upload}
               loading={isCommitting}
               onClick={handleCommit}
               disabled={!canCommit}
@@ -528,6 +553,7 @@ export function ImportPage() {
           <Button
             type="button"
             size="sm"
+            iconLeft={RefreshCw}
             loading={isBatchesLoading}
             onClick={loadBatches}
             disabled={isBatchesLoading}
@@ -588,10 +614,12 @@ export function ImportPage() {
               {!isBatchesLoading && !historyError && visibleBatches.length === 0 && (
                 <tr>
                   <td colSpan={9}>
-                    <div className="import-history-empty">
-                      <strong>No import history yet.</strong>
-                      <span>Preview and commit a CSV/XLSX file to create the first batch.</span>
-                    </div>
+                    <EmptyState
+                      size="sm"
+                      icon={History}
+                      title="No import history yet."
+                      description="Preview and commit a CSV/XLSX file to create the first batch."
+                    />
                   </td>
                 </tr>
               )}
@@ -600,7 +628,14 @@ export function ImportPage() {
                 <tr key={batch.id}>
                   <td>#{batch.id}</td>
                   <td>
-                    <Badge>{formatSource(batch.source)}</Badge>
+                    <span className="import-source-row">
+                      <Icon
+                        icon={SOURCE_ICON[batch.source] ?? Upload}
+                        size={16}
+                        aria-hidden="true"
+                      />
+                      <Badge>{formatSource(batch.source)}</Badge>
+                    </span>
                   </td>
                   <td>
                     <span className="import-history-filename">{batch.filename}</span>
@@ -616,13 +651,19 @@ export function ImportPage() {
                   </td>
                   <td>
                     <div className="action-group import-history-actions">
-                      <Button type="button" size="sm" onClick={() => handleSelectBatch(batch)}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        iconLeft={selectedBatch?.id === batch.id ? RefreshCw : Eye}
+                        onClick={() => handleSelectBatch(batch)}
+                      >
                         {selectedBatch?.id === batch.id ? 'Refresh' : 'View rows'}
                       </Button>
                       <Button
                         type="button"
                         size="sm"
                         variant="danger"
+                        iconLeft={Undo2}
                         className="import-history-rollback-button"
                         onClick={() => handleDeleteBatch(batch)}
                       >

@@ -183,6 +183,28 @@ describe('transactions page workflows', () => {
     })
   })
 
+
+  it('announces transaction sort direction through the column headers', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const dateHeader = await screen.findByRole('columnheader', {
+      name: /Date/,
+    })
+
+    expect(dateHeader).toHaveAttribute('aria-sort', 'none')
+
+    await user.click(
+      within(dateHeader).getByRole('button', { name: /Date/ }),
+    )
+    expect(dateHeader).toHaveAttribute('aria-sort', 'ascending')
+
+    await user.click(
+      within(dateHeader).getByRole('button', { name: /Date/ }),
+    )
+    expect(dateHeader).toHaveAttribute('aria-sort', 'descending')
+  })
+
   it('creates a new transaction from the add form', async () => {
     mocks.createTransactionWithOwed.mockResolvedValue({})
     const user = userEvent.setup()

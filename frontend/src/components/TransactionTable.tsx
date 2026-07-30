@@ -1,8 +1,16 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Receipt } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  HandCoins,
+  Pencil,
+  Receipt,
+  Trash2,
+} from 'lucide-react'
 import type { Transaction } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
-import { Badge, Button, EmptyState } from './ui'
+import { Badge, Button, EmptyState, Icon } from './ui'
 import type { BadgeTone } from './ui'
 import {
   formatCashflowType,
@@ -171,12 +179,20 @@ export function TransactionTable({
     setSortDirection('asc')
   }
 
-  function getSortLabel(field: SortField) {
+  function getSortIcon(field: SortField) {
     if (sortField !== field) {
-      return '↕'
+      return ChevronsUpDown
     }
 
-    return sortDirection === 'asc' ? '↑' : '↓'
+    return sortDirection === 'asc' ? ArrowUp : ArrowDown
+  }
+
+  function getAriaSort(field: SortField) {
+    if (sortField !== field) {
+      return 'none' as const
+    }
+
+    return sortDirection === 'asc' ? 'ascending' as const : 'descending' as const
   }
 
   const sortedTransactions = useMemo(() => {
@@ -267,7 +283,9 @@ export function TransactionTable({
                     {onEdit && (
                       <Button
                         type="button"
-                        size="sm" fullWidth
+                        size="sm"
+                        fullWidth
+                        iconLeft={Pencil}
                         onClick={() => onEdit(transaction)}
                       >
                         Edit
@@ -276,7 +294,9 @@ export function TransactionTable({
                     {onMarkOwed && canCreateOwedShare(transaction) && (
                       <Button
                         type="button"
-                        size="sm" fullWidth
+                        size="sm"
+                        fullWidth
+                        iconLeft={HandCoins}
                         onClick={() => onMarkOwed(transaction)}
                         aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                       >
@@ -286,7 +306,10 @@ export function TransactionTable({
                     {onDelete && (
                       <Button
                         type="button"
-                        size="sm" variant="danger" fullWidth
+                        size="sm"
+                        variant="danger"
+                        fullWidth
+                        iconLeft={Trash2}
                         onClick={() => onDelete(transaction)}
                       >
                         Delete
@@ -313,26 +336,28 @@ export function TransactionTable({
         <table>
         <thead>
           <tr>
-            <th>
+            <th aria-sort={getAriaSort('date')}>
               <button
                 type="button"
                 className="table-sort-button"
                 onClick={() => toggleSort('date')}
               >
-                Date <span>{getSortLabel('date')}</span>
+                <span>Date</span>
+                <Icon icon={getSortIcon('date')} size={14} aria-hidden="true" />
               </button>
             </th>
             <th>Description</th>
             <th>Type</th>
             <th>Category</th>
             <th>Source</th>
-            <th className="right">
+            <th className="right" aria-sort={getAriaSort('amount')}>
               <button
                 type="button"
                 className="table-sort-button table-sort-button-right"
                 onClick={() => toggleSort('amount')}
               >
-                Amount <span>{getSortLabel('amount')}</span>
+                <span>Amount</span>
+                <Icon icon={getSortIcon('amount')} size={14} aria-hidden="true" />
               </button>
             </th>
             {showActions && <th>Actions</th>}
@@ -431,6 +456,7 @@ export function TransactionTable({
                         <Button
                           type="button"
                           size="sm"
+                          iconLeft={Pencil}
                           onClick={() => onEdit(transaction)}
                           aria-label={`Edit ${transaction.description}`}
                         >
@@ -441,6 +467,7 @@ export function TransactionTable({
                         <Button
                           type="button"
                           size="sm"
+                          iconLeft={HandCoins}
                           onClick={() => onMarkOwed(transaction)}
                           aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                         >
@@ -450,7 +477,9 @@ export function TransactionTable({
                       {!transaction.is_grouped && onDelete && (
                         <Button
                           type="button"
-                          size="sm" variant="danger"
+                          size="sm"
+                          variant="danger"
+                          iconLeft={Trash2}
                           onClick={() => onDelete(transaction)}
                           aria-label={`Delete ${transaction.description}`}
                         >

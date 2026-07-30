@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ChartPie, CircleAlert } from 'lucide-react'
 import { EmptyState, Skeleton } from '../ui'
 import { formatMoney } from '../../utils/format'
 import { chartSliceColour } from '../../utils/chartColours'
@@ -119,6 +120,7 @@ export function ExpenseCategoryDonutChart({
         role="alert"
       >
         <EmptyState
+          icon={CircleAlert}
           title={`${title} unavailable`}
           description={error}
         />
@@ -130,6 +132,7 @@ export function ExpenseCategoryDonutChart({
     return (
       <section className="expense-chart-body expense-chart-state">
         <EmptyState
+          icon={ChartPie}
           title={emptyMessage}
           description="Spending recorded for this month will appear here."
         />

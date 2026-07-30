@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react'
+import { Pencil, Trash2, TrendingUp } from 'lucide-react'
 import type { MarketPrice } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import { Badge, Button, EmptyState } from '../ui'
@@ -55,6 +55,7 @@ export function MarketPricesTable({
                   <Button
                     type="button"
                     size="sm"
+                    iconLeft={Pencil}
                     onClick={() => onEdit(marketPrice)}
                     aria-label={`Edit cached price for ${marketPrice.ticker}`}
                   >
@@ -64,6 +65,7 @@ export function MarketPricesTable({
                     type="button"
                     size="sm"
                     variant="danger"
+                    iconLeft={Trash2}
                     onClick={() => onDelete(marketPrice)}
                     aria-label={`Delete cached price for ${marketPrice.ticker}`}
                   >

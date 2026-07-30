@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CircleCheck, History, RefreshCw } from 'lucide-react'
 import {
   previewPendingFx,
   resolveManualFunding,
@@ -579,6 +580,7 @@ export function InvestmentsPage() {
             <Button
               type="button"
               size="sm"
+              iconLeft={CircleCheck}
               loading={isResolvingFx}
               onClick={resolvePendingFxRates}
               title="Resolve FX rates left pending on stored events, which block historical valuation"
@@ -588,6 +590,7 @@ export function InvestmentsPage() {
             <Button
               type="button"
               size="sm"
+              iconLeft={History}
               loading={isBackfillingHistory}
               onClick={backfillMarketHistory}
               title="Fetch daily closing prices for the charted window so the portfolio trend reflects real market movement"
@@ -597,6 +600,7 @@ export function InvestmentsPage() {
             <Button
               type="button"
               size="sm"
+              iconLeft={RefreshCw}
               loading={isFetchingMarketData}
               onClick={refreshAllMarketData}
             >

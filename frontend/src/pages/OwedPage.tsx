@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { CircleDollarSign, Download, Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import {
   createOwedItem,
@@ -463,13 +463,20 @@ export function OwedPage() {
         title="Owed To Me"
         actions={(
           <>
-            <Button className="desktop-only" size="sm" type="button" onClick={handleExportCsv}>
+            <Button
+              className="desktop-only"
+              size="sm"
+              type="button"
+              iconLeft={Download}
+              onClick={handleExportCsv}
+            >
               Export CSV
             </Button>
             <Button
               type="button"
               size="sm"
               className="desktop-only"
+              iconLeft={CircleDollarSign}
               onClick={() => {
                 setPaymentForm(getInitialPaymentFormState())
                 setIsPaymentModalOpen(true)

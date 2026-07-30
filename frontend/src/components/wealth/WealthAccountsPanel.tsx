@@ -8,7 +8,13 @@ import {
 } from '../../utils/wealthPageUtils'
 import { WealthAccountDetailsModal } from './WealthAccountDetailsModal'
 import { Badge, Button, EmptyState } from '../ui'
-import { Landmark } from 'lucide-react'
+import {
+  Archive,
+  ArchiveRestore,
+  Landmark,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 
 type WealthAccountsPanelProps = {
   accountGroups: WealthAccountGroup[]
@@ -81,16 +87,27 @@ function AccountActions({
 }) {
   return (
     <div className="wealth-account-actions">
-      <Button type="button" size="sm" onClick={() => onStartAccountEdit(account)}>
+      <Button
+        type="button"
+        size="sm"
+        iconLeft={Pencil}
+        onClick={() => onStartAccountEdit(account)}
+      >
         Edit
       </Button>
-      <Button type="button" size="sm" onClick={() => onToggleAccountActive(account)}>
+      <Button
+        type="button"
+        size="sm"
+        iconLeft={account.is_active ? Archive : ArchiveRestore}
+        onClick={() => onToggleAccountActive(account)}
+      >
         {account.is_active ? 'Archive' : 'Restore'}
       </Button>
       <Button
         type="button"
         size="sm"
         variant="danger"
+        iconLeft={Trash2}
         onClick={() => onRemoveAccount(account)}
       >
         Delete
