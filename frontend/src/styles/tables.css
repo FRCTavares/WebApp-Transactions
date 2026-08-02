@@ -66,7 +66,7 @@ td[colspan] {
 }
 
 .month-navigator button {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-slate);
   border-radius: 8px;
   background: var(--color-surface);
   padding: 8px 12px;
@@ -77,7 +77,7 @@ td[colspan] {
 }
 
 .month-navigator button:hover {
-  background: #f8fafc;
+  background: var(--color-surface-hover);
 }
 
 .month-navigator-current {
@@ -86,10 +86,10 @@ td[colspan] {
   gap: 10px;
   min-height: 38px;
   padding: 0 12px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--color-accent-border);
   border-radius: 8px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text-strong);
 }
 
 .month-navigator-current strong {
@@ -101,7 +101,7 @@ td[colspan] {
   width: 130px;
   border: 0;
   background: transparent;
-  color: #1e3a8a;
+  color: var(--color-accent-text-strong);
   font-size: 13px;
 }
 
@@ -118,7 +118,7 @@ td[colspan] {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(15 23 42 / 0.35);
+  background: var(--color-scrim);
   padding: 1rem;
 }
 
@@ -127,7 +127,7 @@ td[colspan] {
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);
   border-radius: 0.75rem;
-  box-shadow: var(--shadow-lg, 0 20px 40px rgb(15 23 42 / 0.2));
+  box-shadow: var(--shadow-lg, 0 20px 40px var(--shadow-color-deep));
   padding: 1rem;
   color: var(--color-text);
 }
@@ -146,8 +146,8 @@ td[colspan] {
 }
 
 .modal-transaction-summary {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -275,7 +275,7 @@ td[colspan] {
     display: grid;
     gap: 7px;
     padding: 10px 11px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -296,7 +296,7 @@ td[colspan] {
 
   .transaction-mobile-card-main p {
     margin: 4px 0 0;
-    color: #6b7280;
+    color: var(--color-text-muted);
     font-size: 12px;
   }
 

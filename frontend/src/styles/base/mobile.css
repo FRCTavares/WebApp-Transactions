@@ -1,0 +1,427 @@
+@media (max-width: 800px) {
+  .sidebar {
+    padding: 10px 12px 12px;
+    background: var(--color-surface);
+  }
+
+  .sidebar-header {
+    grid-template-columns: 1fr auto;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-header h2 {
+    font-size: 18px;
+  }
+
+  .sidebar-header p {
+    font-size: 12px;
+  }
+
+  .lock-button {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+    font-size: 22px;
+  }
+
+  .page-header {
+    min-height: 0;
+    margin-bottom: 12px;
+  }
+
+  .toolbar {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .toolbar button,
+  .page-header button {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+
+  .cards {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .card span {
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .card strong {
+    font-size: 19px;
+  }
+
+  .card p {
+    margin-top: 6px;
+    margin-bottom: 0;
+  }
+
+  .filter-panel,
+  .manual-form {
+    padding: 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .compact-filter-panel summary {
+    padding: 10px 12px;
+  }
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+.account-summary {
+  min-width: 0;
+}
+
+.account-greeting {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.account-subtitle {
+  margin: 3px 0 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    padding-bottom: 68px;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .sidebar-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 0;
+  }
+
+  .account-greeting {
+    overflow: hidden;
+    font-size: 17px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-subtitle {
+    font-size: 11px;
+  }
+
+  .lock-button {
+    width: auto;
+    min-height: 32px;
+    margin-top: 0;
+    padding: 5px 9px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .sidebar-nav {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-border-glass);
+    background: var(--color-surface-glass);
+    backdrop-filter: blur(14px);
+  }
+
+  .mobile-bottom-nav button {
+    min-height: 40px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .mobile-bottom-nav button.active {
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+  }
+
+  .mobile-bottom-nav button:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* The previous custom inset ring was too low-contrast on light surfaces
+     and invisible in dark mode. The bar
+     is only 40px tall, so the ring is inset rather than offset to avoid it
+     being clipped by the fixed nav. */
+  .mobile-bottom-nav button:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: calc(-1 * var(--focus-ring-width));
+  }
+
+  main {
+    padding: 8px 10px 14px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    min-height: 76px;
+  }
+
+  .card strong {
+    font-size: 17px;
+  }
+
+  .card .small {
+    font-size: 11px;
+  }
+}
+
+.desktop-only {
+  display: initial;
+}
+
+@media (max-width: 800px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .page-header .action-group {
+    justify-content: flex-start;
+  }
+
+  .page-header .primary-button {
+    min-width: 86px;
+  }
+}
+
+.dashboard-hero {
+  margin-bottom: 20px;
+}
+
+.dashboard-hero p {
+  margin: 0 0 4px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-hero h1 {
+  margin-bottom: 0;
+}
+
+@media (max-width: 800px) {
+  .dashboard-hero {
+    margin-bottom: 8px;
+  }
+
+  .dashboard-hero p {
+    font-size: 12px;
+  }
+
+  .account-greeting {
+    font-size: 14px;
+  }
+
+  .account-subtitle {
+    display: none;
+  }
+}
+
+.mobile-segmented-control {
+  display: none;
+}
+
+.mobile-more-page {
+  display: grid;
+  gap: 12px;
+}
+
+.mobile-more-section {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.mobile-more-section-header {
+  display: grid;
+  gap: 2px;
+}
+
+.mobile-more-section-header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.mobile-more-section-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.mobile-more-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-more-danger {
+  color: var(--color-negative-text);
+}
+
+@media (max-width: 800px) {
+  .mobile-segmented-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 4px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+  }
+
+  .mobile-segmented-control button {
+    min-height: 38px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .mobile-segmented-control button.active {
+    background: var(--color-text);
+    color: var(--color-text-inverse);
+  }
+
+  .mobile-more-actions button {
+    min-height: 42px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .mobile-more-actions button:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  .mobile-more-danger {
+    border-color: var(--color-negative-border);
+    background: var(--color-negative-subtle) !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    display: none;
+  }
+
+  .app-shell {
+    padding-bottom: 62px;
+  }
+
+  main {
+    padding-top: 12px;
+  }
+
+  .global-period-selector {
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (max-width: 800px) {
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .manual-form {
+    display: grid;
+    gap: 12px;
+    margin-right: 0;
+    margin-left: 0;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+  }
+
+  .manual-form h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .manual-form .form-row {
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .manual-form .action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .manual-form .action-group button {
+    width: 100%;
+    min-height: 44px;
+  }
+}

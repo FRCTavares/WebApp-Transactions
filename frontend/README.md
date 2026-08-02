@@ -64,6 +64,32 @@ skip (the offline test).
 - `tests/` — Vitest unit tests
 - `e2e/` — Playwright end-to-end tests
 
+## Adding a new component
+
+1. **Start from an existing `src/components/ui/` primitive** (`Button`,
+   `Card`, `Badge`, `Field`, `Modal`, `IconButton`, `SegmentedControl`,
+   `Table`, `EmptyState`, `PageHeader`, `Skeleton`, `Toast`, ...) instead of
+   writing a new one from scratch. Most screen-level needs are a composition
+   of these, not a new primitive.
+2. **Reference semantic tokens only.** Use `var(--color-*)`, `var(--space-*)`,
+   `var(--radius-*)`, `var(--shadow-*)` / `var(--elevation-*)` from
+   `src/styles/tokens/semantic.css` — never a raw hex, `rgb()`/`hsl()` value,
+   or a `var(--gray-*)`/`var(--blue-*)`/etc. primitive straight from
+   `src/styles/tokens/primitives.css`. If the role you need doesn't exist yet,
+   add it to `semantic.css` (and `dark.css` if the dark-theme value differs)
+   rather than reaching past it. `npm run lint:css` enforces this for colour;
+   there is no exception process.
+3. **Never write a component-specific `[data-theme='dark']` selector.** If a
+   component looks wrong in dark mode, a semantic role is missing or mapped
+   incorrectly in `semantic.css`/`dark.css` — fix it there, not in the
+   component's stylesheet.
+4. **Avoid `!important`.** The codebase carries a grandfathered baseline
+   (`frontend/.stylelint-important-baseline.json`) that new work must not
+   grow; if a new component needs one, you're almost always fighting
+   specificity that should be fixed at the selector level instead.
+5. Preserve existing accessible names, ARIA roles/attributes, and
+   `data-testid` values on anything you touch or wrap.
+
 ## Linting
 
 The current ESLint config uses `tseslint.configs.recommended`. For stricter

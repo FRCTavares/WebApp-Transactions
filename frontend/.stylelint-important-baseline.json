@@ -1,0 +1,19 @@
+{
+  "note": "Ratchet for !important declarations in src/**/*.css - see scripts/check-important-ratchet.mjs. Total and per-file counts below are inherited technical debt, overwhelmingly from dense mobile-specific stylesheets (wealth-mobile.css, owed-mobile.css, mobile-shell.css, transactions-mobile.css, wealth-mobile-spacing.css) plus the desktop sidebar/shell and a handful of accessibility and layout-toggle overrides. This ratchet is already at its ceiling: new !important declarations are not permitted anywhere, including in the files listed below - lower a file's count as it gets cleaned up, never raise it, and do not add new entries for files that aren't already listed.",
+  "policy": "Four legitimate uses of !important going forward, and nothing else: (a) the prefers-reduced-motion accessibility override block in styles/base/reset.css, which must always win regardless of component specificity; (b) print/utility display toggles (e.g. responsive show/hide helpers in index.css and rules.css) that are declared exactly to override component specificity by design; (c) anything already present today, grandfathered via the baseline below; (d) nothing else. New component work must fix specificity (e.g. increase selector precision, reorder cascade, use :where()/:is()) instead of reaching for !important. If a new use is genuinely unavoidable under (a) or (b), it must be added to the relevant file's count below in the same commit, with a comment in the CSS explaining why.",
+  "maxImportantByFile": {
+    "src/index.css": 3,
+    "src/styles/base/reset.css": 4,
+    "src/styles/base/mobile.css": 2,
+    "src/styles/mobile-shell.css": 64,
+    "src/styles/owed-mobile.css": 80,
+    "src/styles/panels-import.css": 3,
+    "src/styles/rules.css": 2,
+    "src/styles/shell.css": 13,
+    "src/styles/sidebar-desktop.css": 11,
+    "src/styles/transactions-mobile.css": 34,
+    "src/styles/wealth-mobile-spacing.css": 6,
+    "src/styles/wealth-mobile.css": 91,
+    "src/styles/wealth.css": 38
+  }
+}

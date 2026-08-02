@@ -160,7 +160,7 @@
   }
 
   .owed-mobile-empty {
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -169,7 +169,7 @@
     display: grid;
     gap: 8px;
     padding: 10px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -180,7 +180,7 @@
     justify-content: space-between;
     gap: 10px;
     padding-bottom: 8px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .owed-person-card-header h2 {
@@ -209,9 +209,9 @@
     display: grid;
     gap: 7px;
     padding: 9px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border);
     border-radius: 11px;
-    background: #f9fafb;
+    background: var(--color-surface-subtle);
   }
 
   .owed-person-item-main {
@@ -264,9 +264,9 @@
   }
 
   .owed-person-item-actions .danger-button {
-    border-color: #fecaca;
-    background: #fff7f7;
-    color: #991b1b;
+    border-color: var(--color-negative-border);
+    background: var(--color-negative-subtle-soft);
+    color: var(--color-negative-text);
   }
 
   .owed-desktop-table-wrap {
@@ -402,23 +402,23 @@
 }
 
 .owed-page-polished .primary-button {
-  border-color: #15803d;
-  background: #16a34a;
-  color: #ffffff;
+  border-color: var(--color-positive-hover);
+  background: var(--color-positive);
+  color: var(--color-text-inverse);
   font-weight: 850;
 }
 
-/* Needed because the rule above matches base.css's .primary-button:hover at
+/* Needed because the rule above matches base/shell.css's .primary-button:hover at
    equal specificity and wins on source order, which would otherwise leave this
    page's primary action with no hover feedback. */
 .owed-page-polished .primary-button:hover {
-  border-color: #166534;
-  background: #15803d;
+  border-color: var(--color-positive-active);
+  background: var(--color-positive-hover);
 }
 
 .owed-page-polished .primary-button:active:not(:disabled) {
-  border-color: #14532d;
-  background: #166534;
+  border-color: var(--color-positive-pressed);
+  background: var(--color-positive-active);
 }
 
 .owed-page-polished .owed-toolbar {

@@ -1,0 +1,197 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  margin-bottom: 24px;
+}
+
+.sidebar-header h2 {
+  margin: 0 0 4px;
+}
+
+.sidebar-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 20px;
+}
+
+.nav-group h3 {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav-items {
+  display: grid;
+  gap: 4px;
+}
+
+.sidebar button {
+  width: 100%;
+  text-align: left;
+  font-weight: 500;
+}
+
+.sidebar button.active {
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+main {
+  width: 100%;
+  max-width: 1440px;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-sm);
+  padding: 14px;
+}
+
+.card span {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.card strong {
+  font-size: 22px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+  margin-bottom: 20px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.table-wrap {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--elevation-sm);
+  margin-bottom: 20px;
+}
+
+.right {
+  text-align: right;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  border-radius: var(--radius-md);
+  margin: 12px 0;
+  padding: 10px 12px;
+}
+
+.status > svg {
+  flex: 0 0 auto;
+  margin-top: 0.1em;
+}
+
+.status-error {
+  border: 1px solid var(--color-negative-border);
+  background: var(--color-negative-subtle);
+  color: var(--color-negative-text);
+}
+
+.status-ok {
+  border: 1px solid var(--color-positive-border);
+  background: var(--color-positive-subtle);
+  color: var(--color-positive-text);
+}
+
+/* `.status-info` was used in 10 places across 5 pages but defined in no
+   stylesheet, so every info banner in the app rendered as bare padded text
+   with no background, border or colour. */
+.status-info {
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
+}
+
+@media (max-width: 800px) {
+  body {
+    background: var(--color-surface-subtle);
+  }
+
+  button {
+    min-height: 38px;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  h2 {
+    margin-top: 20px;
+  }
+
+  .app-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+}

@@ -11,7 +11,7 @@
     "test:watch": "NODE_ENV=test vitest",
     "test:e2e": "playwright test",
     "preview": "vite preview",
-    "lint:css": "node scripts/check-hex-ratchet.mjs"
+    "lint:css": "node scripts/check-hex-ratchet.mjs && node scripts/check-color-function-ratchet.mjs && node scripts/check-important-ratchet.mjs && node scripts/check-spacing-ratchet.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
