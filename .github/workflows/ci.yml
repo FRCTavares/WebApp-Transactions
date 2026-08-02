@@ -146,9 +146,15 @@ jobs:
   e2e-tests:
     name: Frontend e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     # Promoted to a required check 2026-07-20 after proving stable across
     # every CI run since it was introduced (#32). See TODO_LIST.md.
+    #
+    # Raised from 15 to 30 minutes on 2026-08-02: the Phase 7 visual-audit
+    # suite (theme-page-coverage.spec.ts + interactive-state-coverage.spec.ts,
+    # 100 tests each run across all 5 browser projects) pushed the full run to
+    # 546 tests on a 2-worker runner. A run observed at 73% complete after
+    # 13.5 minutes projected to ~19 minutes total; 30 minutes leaves headroom.
 
     steps:
       - name: Check out repository
