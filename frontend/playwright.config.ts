@@ -24,11 +24,16 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'mobile-webkit', use: { ...devices['iPhone 14'] } },
+    {
+      name: 'seed',
+      testMatch: /seed\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, dependencies: ['seed'] },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] }, dependencies: ['seed'] },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, dependencies: ['seed'] },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] }, dependencies: ['seed'] },
+    { name: 'mobile-webkit', use: { ...devices['iPhone 14'] }, dependencies: ['seed'] },
   ],
   webServer: [
     {

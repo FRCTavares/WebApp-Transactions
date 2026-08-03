@@ -116,6 +116,44 @@
 
   --white: #ffffff;
   --black: #000000;
+
+  /* -- Neutral (light UI) - bespoke near-white surfaces -----------------------
+     Three near-white tones used only by semantic.css's surface roles. Too
+     close to white to land cleanly on the gray-50 step, and not present in
+     Tailwind's default scale, so they get their own small ramp instead of
+     being folded into --gray-*. */
+  --mist-50: #fbfbfd;
+  --mist-100: #f8fafc;
+  --mist-200: #f5f5f7;
+
+  /* -- Slate (bespoke, still used directly in a couple of components) -------
+     A few components use Tailwind's slate swatches instead of gray. Recorded
+     verbatim; consolidating these onto the gray ramp is future work. */
+  --slate-300: #cbd5e1;
+  --slate-500: #64748b;
+
+  /* -- Accent tints (bespoke, finer steps than the blue ramp provides) ------ */
+  --blue-25: #f8fbff;
+  --blue-150: #dbe1ea;
+
+  /* -- Negative tint (bespoke, lighter than red-50) -------------------------- */
+  --red-25: #fff7f7;
+
+  /* -- Neutral (dark UI) - bespoke elevation & line steps --------------------
+     The zinc ramp above doesn't have fine enough steps for dark-mode surface
+     elevation and hairlines, so dark.css uses these bespoke in-between tones
+     instead. Recorded verbatim; do not round these onto the nearest zinc
+     step, it would change the rendered surface hierarchy. */
+  --ink-350: #8f95a1;
+  --ink-550: #4a4c55;
+  --ink-650: #3f414a;
+  --ink-750: #2f3037;
+  --ink-850: #232429;
+  --ink-900: #202024;
+  --ink-950: #111113;
+
+  /* -- Accent (dark UI) - one bespoke step lighter than blue-400 ------------- */
+  --blue-450: #6f98f7;
 }
 
 /* ---------------------------------------------------------------------------
@@ -193,7 +231,7 @@
   --tracking-wide: 0.04em;
 
   /* -- Motion ---------------------------------------------------------------
-     The app currently has no transitions at all. base.css already honours
+     The app currently has no transitions at all. base/reset.css already honours
      prefers-reduced-motion globally, so these need no per-use guard. */
   --duration-fast: 120ms;
   --duration-base: 180ms;

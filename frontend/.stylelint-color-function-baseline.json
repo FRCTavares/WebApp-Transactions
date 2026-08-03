@@ -1,0 +1,4 @@
+{
+  "note": "Raw rgb()/hsl() colour functions outside tokens/primitives.css, tokens/semantic.css and tokens/dark.css. A ratchet, not a target - see scripts/check-color-function-ratchet.mjs. The three token files are exempt: semantic.css and dark.css legitimately alpha-blend colours (rgb(r g b / a)) for translucent chrome - glass surfaces, scrims, shadow colours - documented inline where each token is defined. Every other stylesheet must reference one of those tokens instead of writing rgb()/hsl() directly. Lower this as colour functions are tokenised; never raise it.",
+  "maxColorFunctionUses": 0
+}

@@ -1,8 +1,29 @@
 from datetime import date
 from decimal import Decimal
 
+from dateutil.relativedelta import relativedelta
+
 from app.auth.current_user import LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
+
+# `/api/investment-events/monthly-series` windows relative to the real
+# `date.today()`: with `months=N`, the earliest (and therefore always
+# present) point is `N - 1` months before the current month. The tests below
+# anchor their fixture dates to that earliest point instead of a fixed
+# calendar month, so they stay evergreen instead of breaking once real time
+# passes the month they were written against.
+_TARGET_MONTH_START = date.today().replace(day=1) - relativedelta(months=2)
+TARGET_MONTH_KEY = _TARGET_MONTH_START.strftime("%Y-%m")
+
+
+def _target_day(day: int) -> date:
+    """A date in the always-included target month, clamped to a valid day."""
+    return _TARGET_MONTH_START + relativedelta(day=day)
+
+
+def _month_after_target(day: int) -> date:
+    """A date in the month immediately after the target month."""
+    return _TARGET_MONTH_START + relativedelta(months=1, day=day)
 
 
 def test_monthly_change_uses_price_movement_not_buys(client, db_session):
@@ -155,7 +176,7 @@ def test_monthly_series_uses_historical_cost_basis_for_allocated_money(client, d
         [
             InvestmentEvent(
                 user_id=LOCAL_DEFAULT_USER_ID,
-                date=date(2026, 5, 10),
+                date=_target_day(10),
                 source="trading212",
                 account="Invest",
                 event_type="market_buy",
@@ -173,7 +194,7 @@ def test_monthly_series_uses_historical_cost_basis_for_allocated_money(client, d
             MarketPriceHistory(
                 ticker="CSPX",
                 isin="IE00B5BMR087",
-                price_date=date(2026, 5, 31),
+                price_date=_target_day(31),
                 close_price=Decimal("120"),
                 currency="USD",
                 source="manual",
@@ -187,7 +208,7 @@ def test_monthly_series_uses_historical_cost_basis_for_allocated_money(client, d
     assert response.status_code == 200
 
     data = response.json()
-    may_point = next(point for point in data if point["month"] == "2026-05")
+    may_point = next(point for point in data if point["month"] == TARGET_MONTH_KEY)
 
     assert may_point["allocated_eur"] == "180.00"
     assert may_point["market_value_eur"] == "216.00"
@@ -199,7 +220,7 @@ def test_monthly_series_uses_trade_price_when_market_history_is_missing(client, 
     db_session.add(
         InvestmentEvent(
             user_id=LOCAL_DEFAULT_USER_ID,
-            date=date(2026, 5, 10),
+            date=_target_day(10),
             source="trading212",
             account="Invest",
             event_type="market_buy",
@@ -222,7 +243,7 @@ def test_monthly_series_uses_trade_price_when_market_history_is_missing(client, 
     assert response.status_code == 200
 
     data = response.json()
-    may_point = next(point for point in data if point["month"] == "2026-05")
+    may_point = next(point for point in data if point["month"] == TARGET_MONTH_KEY)
 
     assert may_point["allocated_eur"] == "210.00"
     assert may_point["market_value_eur"] == "210.00"
@@ -240,7 +261,7 @@ def test_historical_valuation_prefers_exact_date_fx_rate(
         [
             InvestmentEvent(
                 user_id=LOCAL_DEFAULT_USER_ID,
-                date=date(2026, 5, 10),
+                date=_target_day(10),
                 source="trading212",
                 account="Invest",
                 event_type="market_buy",
@@ -258,7 +279,7 @@ def test_historical_valuation_prefers_exact_date_fx_rate(
             ),
             InvestmentEvent(
                 user_id=LOCAL_DEFAULT_USER_ID,
-                date=date(2026, 5, 31),
+                date=_target_day(31),
                 source="trading212",
                 account="Invest",
                 event_type="interest",
@@ -272,7 +293,7 @@ def test_historical_valuation_prefers_exact_date_fx_rate(
             MarketPriceHistory(
                 ticker="CSPX",
                 isin="IE00B5BMR087",
-                price_date=date(2026, 5, 31),
+                price_date=_target_day(31),
                 close_price=Decimal("120"),
                 currency="USD",
                 source="manual",
@@ -290,7 +311,7 @@ def test_historical_valuation_prefers_exact_date_fx_rate(
     may_point = next(
         point
         for point in response.json()
-        if point["month"] == "2026-05"
+        if point["month"] == TARGET_MONTH_KEY
     )
 
     assert may_point["allocated_eur"] == "160.00"
@@ -307,7 +328,7 @@ def test_future_fx_rate_does_not_change_historical_valuation(
 
     historical_buy = InvestmentEvent(
         user_id=LOCAL_DEFAULT_USER_ID,
-        date=date(2026, 5, 10),
+        date=_target_day(10),
         source="trading212",
         account="Invest",
         event_type="market_buy",
@@ -325,7 +346,7 @@ def test_future_fx_rate_does_not_change_historical_valuation(
     )
     future_fx_event = InvestmentEvent(
         user_id=LOCAL_DEFAULT_USER_ID,
-        date=date(2026, 6, 15),
+        date=_month_after_target(15),
         source="trading212",
         account="Invest",
         event_type="interest",
@@ -344,7 +365,7 @@ def test_future_fx_rate_does_not_change_historical_valuation(
             MarketPriceHistory(
                 ticker="CSPX",
                 isin="IE00B5BMR087",
-                price_date=date(2026, 5, 31),
+                price_date=_target_day(31),
                 close_price=Decimal("120"),
                 currency="USD",
                 source="manual",
@@ -362,7 +383,7 @@ def test_future_fx_rate_does_not_change_historical_valuation(
     first_may_point = next(
         point
         for point in first_response.json()
-        if point["month"] == "2026-05"
+        if point["month"] == TARGET_MONTH_KEY
     )
 
     future_fx_event.fx_rate_to_eur = Decimal("0.25")
@@ -378,7 +399,7 @@ def test_future_fx_rate_does_not_change_historical_valuation(
     second_may_point = next(
         point
         for point in second_response.json()
-        if point["month"] == "2026-05"
+        if point["month"] == TARGET_MONTH_KEY
     )
 
     assert first_may_point == second_may_point
@@ -398,7 +419,7 @@ def test_historical_valuation_returns_null_when_fx_is_missing(
         [
             InvestmentEvent(
                 user_id=LOCAL_DEFAULT_USER_ID,
-                date=date(2026, 5, 10),
+                date=_target_day(10),
                 source="trading212",
                 account="Invest",
                 event_type="market_buy",
@@ -416,7 +437,7 @@ def test_historical_valuation_returns_null_when_fx_is_missing(
             MarketPriceHistory(
                 ticker="CSPX",
                 isin="IE00B5BMR087",
-                price_date=date(2026, 5, 31),
+                price_date=_target_day(31),
                 close_price=Decimal("120"),
                 currency="USD",
                 source="manual",
@@ -434,7 +455,7 @@ def test_historical_valuation_returns_null_when_fx_is_missing(
     may_point = next(
         point
         for point in response.json()
-        if point["month"] == "2026-05"
+        if point["month"] == TARGET_MONTH_KEY
     )
 
     assert may_point["allocated_eur"] is None

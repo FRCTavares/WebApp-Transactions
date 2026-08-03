@@ -46,7 +46,7 @@
 }
 
 /* See the equivalent note in owed.css - this page-scoped rule would otherwise
-   defeat base.css's .primary-button:hover on source order. */
+   defeat base/forms.css's .primary-button:hover on source order. */
 .wealth-page .primary-button:hover {
   border-color: var(--color-positive-hover);
   background: var(--color-positive-hover);

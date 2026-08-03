@@ -40,7 +40,7 @@
   }
 }
 
-/* base.css already neutralises animation globally under reduced motion, but
+/* base/reset.css already neutralises animation globally under reduced motion, but
    a shimmering placeholder is the exact thing that should hold still, so it
    is stated here too rather than relying on that. */
 @media (prefers-reduced-motion: reduce) {

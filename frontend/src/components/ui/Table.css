@@ -61,9 +61,10 @@
   white-space: nowrap;
 }
 
-/* Row striping is deliberately absent. The old table striped with #fdfdfd on
-   a #ffffff surface - a one-step difference that is invisible on most
-   displays, so it cost a rule and bought nothing. Hover is the affordance. */
+/* Row striping is deliberately absent. The old table striped with a near-
+   white tint on a white surface - a one-step difference that is invisible on
+   most displays, so it cost a rule and bought nothing. Hover is the
+   affordance. */
 .ui-table tbody tr:hover .ui-table-td {
   background: var(--color-surface-hover);
 }

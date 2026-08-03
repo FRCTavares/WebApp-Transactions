@@ -18,7 +18,7 @@ export type PageHeaderProps = {
 
 /**
  * Resolves the two competing page scaffolds that coexisted in the codebase:
- * `.page-header` (base.css) and `.page-title-block` (index.css), the latter
+ * `.page-header` (base/forms.css) and `.page-title-block` (index.css), the latter
  * described in its own comment as "Dashboard is the first page using this
  * visual baseline". Pages used one or the other, and `.page-header` carried a
  * `min-height: 3.5rem` that only made sense for the older one.

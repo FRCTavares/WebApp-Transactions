@@ -20,7 +20,7 @@
   /* -- Backgrounds ----------------------------------------------------------
      bg          the page canvas behind everything
      bg-subtle   a recessed area on the canvas (sunken wells, table stripes) */
-  --color-bg: #f5f5f7;
+  --color-bg: var(--mist-200);
   --color-bg-subtle: var(--gray-100);
   /* The full page-canvas background, including its tint. A single token
      because the light and dark canvases use different gradients, and a
@@ -36,8 +36,8 @@
      surface-hover  the hover wash for rows and list items */
   --color-surface: var(--white);
   --color-surface-raised: var(--white);
-  --color-surface-sunken: #fbfbfd;
-  --color-surface-hover: #f8fafc;
+  --color-surface-sunken: var(--mist-50);
+  --color-surface-hover: var(--mist-100);
   /* A faintly tinted surface that is not a hover: table headers, quiet toolbars. */
   --color-surface-subtle: var(--gray-50);
   /* Translucent chrome with a backdrop blur - the sidebar, the global period
@@ -54,6 +54,9 @@
   /* The edge of a control being hovered - one step darker than border-strong. */
   --color-border-hover: var(--gray-400);
   --color-border-focus: var(--blue-600);
+  /* Bespoke slate border used by the month navigator; consolidate onto
+     --color-border-strong in a future pass. */
+  --color-border-slate: var(--slate-300);
 
   /* -- Text -----------------------------------------------------------------
      text         body and headings
@@ -61,7 +64,14 @@
      text-subtle  the quietest tier - placeholders, disabled captions
      text-inverse text on a filled accent/positive/negative surface */
   --color-text: var(--gray-900);
+  /* One step darker than --color-text-muted - account name labels and other
+     copy that needs to read less prominent than body text but stronger than
+     muted text. */
+  --color-text-secondary: var(--gray-600);
   --color-text-muted: var(--gray-500);
+  /* Bespoke slate muted text used by the wealth summary cards; consolidate
+     onto --color-text-muted in a future pass. */
+  --color-text-muted-slate: var(--slate-500);
   --color-text-subtle: var(--gray-400);
   --color-text-inverse: var(--white);
 
@@ -70,8 +80,17 @@
   --color-accent-hover: var(--blue-700);
   --color-accent-active: var(--blue-800);
   --color-accent-subtle: var(--blue-50);
+  /* Lighter than --color-accent-subtle - the hover wash for tinted accent
+     controls (period selector, settings action buttons). */
+  --color-accent-subtle-hover: var(--blue-25);
+  /* Lighter than --color-accent-border - the resting edge of the same
+     controls before hover. */
+  --color-accent-border-subtle: var(--blue-150);
   --color-accent-border: var(--blue-200);
   --color-accent-text: var(--blue-700);
+  /* A stronger accent text tone for large glanceable numbers on tinted
+     backgrounds (the month navigator's current-month badge). */
+  --color-accent-text-strong: var(--blue-900);
 
   /* -- Positive (money in, success, confirmation) ---------------------------
      Also the resting/hover/active ramp for .primary-button. */
@@ -79,8 +98,17 @@
   --color-positive-hover: var(--green-700);
   --color-positive-active: var(--green-800);
   --color-positive-subtle: var(--green-50);
+  /* A stronger tint than --color-positive-subtle, for badges on light
+     backgrounds (e.g. the "reimbursed" tag). */
+  --color-positive-subtle-strong: var(--green-100);
   --color-positive-border: var(--green-200);
   --color-positive-text: var(--green-800);
+  /* The :active state of an already-pressed positive button, one step past
+     --color-positive-active. */
+  --color-positive-pressed: var(--green-900);
+  /* Bespoke translucent border for the "owed" wealth summary card - green-700
+     at low alpha, distinct from --color-positive-border's solid green-200. */
+  --color-positive-border-wash: rgb(21 128 61 / 0.18);
 
   /* -- Negative (destructive, errors) --------------------------------------- */
   --color-negative: var(--red-600);
@@ -89,6 +117,9 @@
   --color-negative-subtle: var(--red-50);
   /* The pressed state of a tinted (not filled) destructive control. */
   --color-negative-subtle-hover: var(--red-100);
+  /* Lighter than --color-negative-subtle - a background tint for text/danger
+     buttons on white surfaces. */
+  --color-negative-subtle-soft: var(--red-25);
   --color-negative-border: var(--red-200);
   --color-negative-text: var(--red-800);
 
@@ -104,6 +135,9 @@
   --color-expense-subtle: var(--orange-50);
   --color-expense-border: var(--orange-200);
   --color-expense-text: var(--orange-800);
+  /* A darker expense tone for badge text, mirroring --color-accent-hover /
+     --color-positive-hover. */
+  --color-expense-hover: var(--orange-700);
 
   /* -- Investment ----------------------------------------------------------- */
   --color-investment: var(--violet-600);
@@ -120,6 +154,24 @@
   --elevation-sm: var(--shadow-sm) var(--shadow-color);
   --elevation-md: var(--shadow-md) var(--shadow-color-strong);
   --elevation-lg: var(--shadow-lg) var(--shadow-color-strong);
+
+  /* -- Shadow colour ramp (bespoke alphas) -----------------------------------
+     Component box-shadows that use a custom shape (so --elevation-* doesn't
+     apply) but still key off the same slate-900 shadow hue as --shadow-color
+     above, at alphas of their own. Recorded verbatim from the pre-migration
+     literals; consolidating these onto fewer steps is future work. Ordered
+     lightest to darkest. */
+  --shadow-color-faint: rgb(15 23 42 / 0.04);
+  --shadow-color-soft: rgb(15 23 42 / 0.035);
+  --shadow-color-hairline: rgb(15 23 42 / 0.045);
+  --shadow-color-medium: rgb(15 23 42 / 0.08);
+  --shadow-color-elevated: rgb(15 23 42 / 0.12);
+  --shadow-color-deep: rgb(15 23 42 / 0.2);
+  --shadow-color-deeper: rgb(15 23 42 / 0.24);
+  --shadow-color-deepest: rgb(15 23 42 / 0.3);
+  /* The one bespoke shadow that keys off true black instead of slate-900 -
+     the mobile add-transaction bottom sheet. */
+  --shadow-color-black: rgb(0 0 0 / 0.48);
 
   /* -- Charts ---------------------------------------------------------------
      Categorical series colours. These replace the hardcoded SLICE_COLOURS
@@ -146,9 +198,47 @@
      The dimming layer behind a modal. Darker in dark mode, because a 35%
      black veil over a near-black canvas separates nothing. */
   --color-scrim: rgb(15 23 42 / 0.35);
+  /* Heavier scrim variants used by the category replacement/migration
+     dialogs, which sit above other overlays and need to read as more
+     opaque. Recorded verbatim from the pre-migration literals. */
+  --color-scrim-strong: rgb(15 23 42 / 0.48);
+  --color-scrim-heavy: rgb(15 23 42 / 0.55);
 
   /* -- Focus ring ----------------------------------------------------------- */
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --focus-ring: var(--focus-ring-width) solid var(--color-border-focus);
+  /* The desktop sidebar's focus-visible ring uses a translucent accent wash
+     instead of --focus-ring's solid outline. Recorded verbatim. */
+  --color-accent-focus-ring: rgb(37 99 235 / 0.16);
+
+  /* -- Overlay chrome (bespoke glass alphas) ---------------------------------
+     Additional translucent surfaces/borders in the same spirit as
+     --color-surface-glass and --color-border-glass above, used by the
+     desktop topbar period selector, the desktop sidebar hover states, and
+     the mobile "more" section cards. Recorded verbatim from the
+     pre-migration literals; consolidating these onto the existing glass
+     tokens is future work. */
+  --color-surface-glass-wash: rgb(255 255 255 / 0.75);
+  --color-surface-glass-ring: rgb(255 255 255 / 0.7);
+  --color-surface-glass-elevated: rgb(255 255 255 / 0.86);
+  --color-surface-glass-opaque: rgb(255 255 255 / 0.92);
+  --color-surface-glass-faint: rgb(255 255 255 / 0.04);
+  --color-border-glass-strong: rgb(209 213 219 / 0.9);
+  --color-border-glass-mist: rgb(229 231 235 / 0.95);
+
+  /* -- Card gradients (bespoke tints) -----------------------------------------
+     Full gradients, not just colour stops, because the two stops are only
+     ever used together for these two wealth summary cards. Recorded
+     verbatim from the pre-migration literals. */
+  --wealth-card-accent-gradient: linear-gradient(
+    180deg,
+    rgb(239 246 255 / 0.9),
+    rgb(255 255 255 / 0.96)
+  );
+  --wealth-card-positive-gradient: linear-gradient(
+    180deg,
+    rgb(240 253 244 / 0.78),
+    rgb(255 255 255 / 0.96)
+  );
 }

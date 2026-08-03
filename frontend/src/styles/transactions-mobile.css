@@ -244,8 +244,8 @@
     padding: 0 0.8rem;
     border-color: var(--color-border-strong);
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.04);
-    color: #d7dce5;
+    background: var(--color-surface-glass-faint);
+    color: var(--color-text);
     font-size: 0.8rem;
     font-weight: 850;
   }
@@ -264,8 +264,8 @@
   }
 
   .transactions-page .transaction-form .action-group button[type="submit"]:not(:where(.ui-button)) {
-    background: #16a34a;
-    color: #ffffff;
+    background: var(--color-positive);
+    color: var(--color-text-inverse);
     font-weight: 900;
   }
 }
@@ -281,8 +281,8 @@
     max-height: min(72vh, 35rem);
     overflow-y: auto;
     border-color: var(--color-border-strong);
-    background: #181a20;
-    box-shadow: 0 24px 70px rgb(0 0 0 / 0.48);
+    background: var(--color-surface);
+    box-shadow: 0 24px 70px var(--shadow-color-black);
   }
 
   .transactions-page .page-header > .action-group .primary-button {

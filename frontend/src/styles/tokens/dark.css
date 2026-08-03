@@ -15,7 +15,7 @@
 :root[data-theme='dark'] {
   /* -- Backgrounds ---------------------------------------------------------- */
   --color-bg: var(--zinc-950);
-  --color-bg-subtle: #111113;
+  --color-bg-subtle: var(--ink-950);
   --bg-canvas:
     radial-gradient(circle at top left, rgb(37 99 235 / 0.16), transparent 30rem),
     var(--color-bg);
@@ -25,16 +25,16 @@
      so surface-sunken is *lighter* than surface here - the inverse of light
      mode. This is why these are roles and not "grey-100". */
   --color-surface: var(--zinc-900);
-  --color-surface-raised: #202024;
-  --color-surface-sunken: #202024;
-  --color-surface-hover: #232429;
-  --color-surface-subtle: #202024;
+  --color-surface-raised: var(--ink-900);
+  --color-surface-sunken: var(--ink-900);
+  --color-surface-hover: var(--ink-850);
+  --color-surface-subtle: var(--ink-900);
   --color-surface-glass: rgb(24 25 29 / 0.96);
   --color-border-glass: rgb(255 255 255 / 0.08);
 
   /* -- Borders --------------------------------------------------------------- */
-  --color-border: #2f3037;
-  --color-border-strong: #3f414a;
+  --color-border: var(--ink-750);
+  --color-border-strong: var(--ink-650);
   --color-border-focus: var(--blue-400);
 
   /* -- Text ------------------------------------------------------------------ */
@@ -98,7 +98,7 @@
   /* -- Charts ---------------------------------------------------------------
      Series colours shift one step lighter so they hold up against the dark
      canvas. Order is preserved, so a category keeps its slot across themes. */
-  --chart-1: #6f98f7;
+  --chart-1: var(--blue-450);
   --chart-2: var(--green-400);
   --chart-3: var(--orange-400);
   --chart-4: var(--violet-400);
@@ -107,9 +107,9 @@
   --chart-7: var(--red-400);
   --chart-8: var(--green-300);
 
-  --chart-grid: #2f3037;
-  --chart-axis: #4a4c55;
-  --chart-axis-text: #8f95a1;
+  --chart-grid: var(--ink-750);
+  --chart-axis: var(--ink-550);
+  --chart-axis-text: var(--ink-350);
   --chart-baseline: rgb(174 179 189 / 0.42);
-  --chart-track: #27272a;
+  --chart-track: var(--zinc-800);
 }
