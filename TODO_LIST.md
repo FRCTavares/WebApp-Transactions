@@ -15,31 +15,24 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 1. Dependency and release risks
 
-- [ ] Merge the five open Dependabot backend PRs, in this order to keep
-      each rebase small:
-
-      - #90 `peewee` 4.2.3 -> 4.2.6
-      - #91 `fastapi` 0.139.0 -> 0.139.2
-      - #92 `websockets` 16.1 -> 16.1.1
-      - #93 `platformdirs` 4.10.0 -> 4.11.0
-      - #94 `certifi` 2026.6.17 -> 2026.7.22
-
-      All five currently show "Frontend e2e" and "Required checks" as
-      failing, but those CI runs predate the 2026-08-03 Phase 7 merge
-      (job IDs ~29.9M vs current ~308M) and the e2e failure completed in
-      1-2 minutes - too fast to be the 546-test suite actually running,
-      let alone timing out. That status is stale, not a real signal.
-
-      For each PR: rebase onto current `main` (or close it and let
-      Dependabot recreate it against `main`), then let CI run fresh
-      before trusting the result. All five already pass the backend
-      pytest suite on their stale runs, so if a rebased run still fails
-      e2e specifically, suspect a startup-only regression in that
-      package - e2e's `webServer` step boots a real `uvicorn` process
-      that plain `pytest` never exercises, so a bump that breaks server
-      startup (as opposed to request handling) would show up there and
-      nowhere else. Investigate before merging rather than assuming it's
-      another stale-CI false alarm.
+- [ ] Shard the `Frontend e2e` CI job. It now runs 546 tests across 5
+      Playwright browser projects with only 2 GitHub Actions workers,
+      taking 16-18 minutes per run (`.github/workflows/ci.yml`,
+      `e2e-tests` job, `timeout-minutes: 30`). Every PR pays this cost
+      even for changes that can't affect the frontend (a pure backend
+      dependency bump blocked five separate merges behind five separate
+      17-minute waits on 2026-08-03/04 before they were batched into one
+      PR as a workaround). Fix properly with Playwright's built-in
+      sharding (`--shard=1/N`) split across N parallel GitHub Actions
+      matrix jobs, rather than relying on Playwright's own in-process
+      worker parallelism inside a single job. Consider also skipping the
+      job entirely (or running a reduced subset) on PRs that only touch
+      `backend/requirements.txt` or other files with no possible
+      frontend impact, using `paths`/`paths-ignore` filters - but note
+      the `webServer` step boots a real backend process, so a pure
+      Python dependency bump can still legitimately need e2e coverage if
+      it could break server startup; any skip rule must not silently
+      hide that case.
 
 ## 2. Outstanding verification and product decisions
 
