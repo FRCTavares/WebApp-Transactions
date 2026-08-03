@@ -408,7 +408,7 @@
   font-weight: 850;
 }
 
-/* Needed because the rule above matches base/shell.css's .primary-button:hover at
+/* Needed because the rule above matches base/forms.css's .primary-button:hover at
    equal specificity and wins on source order, which would otherwise leave this
    page's primary action with no hover feedback. */
 .owed-page-polished .primary-button:hover {
