@@ -57,21 +57,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 3. Financial correctness and atomicity
 
-- [ ] Monthly investment goal on the Dashboard does not update after
-      importing Trading 212 contributions that exceed the goal (a
-      July 2026 import went well over €100, but "Monthly investment
-      goal" still showed €0 of €100 / €100.00 remaining). The goal
-      figure is driven by `net_invested_cash`, which only counts
-      investment events typed `deposit`/`withdrawal` within the month
-      (`InvestmentCashflowService.calculate_month`,
-      `backend/app/services/investment_cashflow_service.py`). Confirm
-      the Trading 212 importer
-      (`backend/app/importers/trading212.py`, `_get_event_type`) is
-      actually classifying the imported rows as `deposit`, that the
-      event dates fall inside the queried month, and that the
-      Dashboard refetches the summary after a successful import
-      rather than showing a stale cached value.
-
 - [ ] Bitcoin holdings have no working manual-entry path. Trading 212
       does not provide a statement/CSV for Bitcoin, so this position
       needs to be entered and updated by hand, but the edit control
