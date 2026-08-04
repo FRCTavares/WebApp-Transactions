@@ -24,28 +24,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 2. Outstanding verification and product decisions
 
-- [ ] Audit investment holdings and valuations end-to-end. Francisco
-      reports current holdings/quantities and position values on the
-      Investments page do not look correct after the July Trading 212
-      import. Check `_get_holdings_on` and `_get_portfolio_value_on`
-      (`backend/app/services/investment_valuation_service.py`) against
-      the actual imported events for at least one full account, and
-      confirm cost-basis buckets and FX conversion are applied
-      per-holding rather than aggregated incorrectly.
-
-- [ ] Investigate why the Dashboard's "Investment performance" figure
-      looks wrong (e.g. -€47.67 shown with no investments made that
-      month). Note: the requested methodology - portfolio value on
-      the 1st of the month vs. value on the last day of the month,
-      minus net cash invested in between - is already what
-      `get_monthly_change`
-      (`backend/app/services/investment_valuation_service.py`)
-      computes, so this is not a missing feature. The likely fault is
-      in the inputs: verify `_get_valuation_price_on` is finding a
-      real historical price for the boundary dates rather than
-      falling back to a stale/estimated price (`is_estimated`), and
-      verify the FX rate used for non-EUR tickers on those two dates.
-
 - [ ] Wealth trend values before December 2024 are wrong. Francisco
       has the correct historical net-worth figures in a personal
       spreadsheet and can supply them. Decide whether to backfill via

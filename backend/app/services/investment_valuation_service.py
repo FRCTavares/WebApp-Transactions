@@ -18,6 +18,14 @@ from app.models.market_price_history import MarketPriceHistory
 from app.services.investment_cost_basis import build_average_cost_positions
 
 
+# A price this many days or fewer before the valuation date is treated as a
+# normal weekend/holiday carry-forward, not an estimate - covers a long
+# bank-holiday weekend (Fri close used for the following Tue) with a little
+# headroom. Anything staler than this suggests the price feed actually
+# missed real trading days, which is worth flagging to the user.
+MAX_CARRY_FORWARD_DAYS = 4
+
+
 class InvestmentValuationMixin:
     def list_positions(
         self,
@@ -379,10 +387,19 @@ class InvestmentValuationMixin:
             )
 
         if historical_price is not None:
+            # A price dated a few days before value_date is normal, not an
+            # estimate - most exchanges don't trade on weekends/holidays, so
+            # carrying forward the last real close for those dates is the
+            # standard convention (the same thing every broker statement
+            # does), not a degraded-confidence fallback. Only flag it as
+            # estimated if the gap is wide enough to suggest the price feed
+            # actually missed real trading days, rather than just a normal
+            # weekend/holiday gap.
+            days_stale = (value_date - historical_price.price_date).days
             return (
                 historical_price.close_price,
                 historical_price.currency,
-                historical_price.price_date < value_date,
+                days_stale > MAX_CARRY_FORWARD_DAYS,
             )
 
         relevant_events = (
@@ -421,9 +438,14 @@ class InvestmentValuationMixin:
         *,
         current_user: CurrentUser,
         events: list[InvestmentEvent] | None = None,
-    ) -> dict[tuple[str, str | None, str | None, str | None], dict[str, object]]:
+    ) -> dict[tuple[str | None, str | None], dict[str, object]]:
+        # Keyed on (ticker, isin) only - not source/account - so a position
+        # held across multiple sources (e.g. an imported broker holding
+        # plus a manually-entered trade of the same instrument) is valued
+        # as a single holding rather than double-counted as two. Matches
+        # the grouping in investment_cost_basis.build_average_cost_positions.
         holdings: dict[
-            tuple[str, str | None, str | None, str | None],
+            tuple[str | None, str | None],
             dict[str, object],
         ] = {}
 
@@ -444,8 +466,6 @@ class InvestmentValuationMixin:
                 continue
 
             key = (
-                event.source,
-                event.account,
                 event.ticker,
                 event.isin,
             )
