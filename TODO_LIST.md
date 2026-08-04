@@ -55,6 +55,20 @@ CI/deployment reliability, accessibility, and UI maintainability.
       Sep 2024-Dec 2024 segment reflects real values instead of
       whatever is there now.
 
+- [ ] Decide the fate of the rest of the Investments page's "main-view
+      cleanup" (Phase 7, PR #113): `.investments-page
+      .investment-breakdown-card, .investment-detailed-positions-card,
+      .investment-tools-grid, .compact-filter-panel,
+      .investment-events-card { display: none; }`
+      (`frontend/src/styles/investments.css`) currently hides Funding
+      split, Manual market price, Detailed positions, Filters, and the
+      Events list entirely - not just visually decluttered, genuinely
+      unreachable. Francisco did not know this section existed until
+      debugging the #128 manual-position form (moved out of
+      `investment-tools-grid` so it isn't swept up in this rule).
+      Confirm whether the rest should stay hidden pending a proper
+      redesign, or be restored/redesigned now.
+
 ## 3. Financial correctness and atomicity
 
 ## 4. Frontend design system
