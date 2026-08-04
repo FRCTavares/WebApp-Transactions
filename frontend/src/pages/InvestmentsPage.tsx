@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CircleCheck, History, RefreshCw } from 'lucide-react'
 import {
+  createInvestmentEvent,
   previewPendingFx,
   resolveManualFunding,
   resolvePendingFx,
@@ -22,6 +23,8 @@ import { InvestmentPortfolioTrendChart } from '../components/investments/Investm
 import { InvestmentPositionsTable } from '../components/investments/InvestmentPositionsTable'
 import { InvestmentSummaryCards } from '../components/investments/InvestmentSummaryCards'
 import { FundingSplitPanel } from '../components/investments/FundingSplitPanel'
+import { ManualInvestmentEventForm } from '../components/investments/ManualInvestmentEventForm'
+import type { ManualInvestmentEventFormState } from '../components/investments/ManualInvestmentEventForm'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
 import type { InvestmentEvent, InvestmentFundingMonth, MarketPrice } from '../types/api'
@@ -66,6 +69,17 @@ export function InvestmentsPage() {
     source: 'manual',
   })
   const [isFetchingMarketData, setIsFetchingMarketData] = useState(false)
+  const [manualEventForm, setManualEventForm] = useState<ManualInvestmentEventFormState>({
+    date: '',
+    eventType: 'market_buy',
+    instrumentName: '',
+    ticker: '',
+    quantity: '',
+    amount: '',
+    currency: 'EUR',
+    account: 'Manual',
+  })
+  const [isSavingManualEvent, setIsSavingManualEvent] = useState(false)
   const [isBackfillingHistory, setIsBackfillingHistory] = useState(false)
   const [isResolvingFx, setIsResolvingFx] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -517,6 +531,84 @@ export function InvestmentsPage() {
     })
   }
 
+  async function submitManualInvestmentEvent() {
+    setError(null)
+    setMessage(null)
+
+    const quantity = Number(manualEventForm.quantity)
+    const amount = Number(manualEventForm.amount)
+
+    if (!manualEventForm.date) {
+      setError('Enter a date.')
+      return
+    }
+
+    if (!manualEventForm.instrumentName.trim() && !manualEventForm.ticker.trim()) {
+      setError('Enter an instrument name or ticker.')
+      return
+    }
+
+    if (!manualEventForm.quantity || !Number.isFinite(quantity) || quantity <= 0) {
+      setError('Enter a positive quantity.')
+      return
+    }
+
+    if (!manualEventForm.amount || !Number.isFinite(amount) || amount <= 0) {
+      setError('Enter a positive amount.')
+      return
+    }
+
+    if (!manualEventForm.currency.trim()) {
+      setError('Enter a currency.')
+      return
+    }
+
+    const label = manualEventForm.instrumentName.trim() || manualEventForm.ticker.trim()
+    const actionLabel = manualEventForm.eventType === 'market_buy' ? 'Manual buy' : 'Manual sell'
+    const description = `${actionLabel}: ${label}`
+    const price = (amount / quantity).toFixed(8)
+
+    setIsSavingManualEvent(true)
+
+    try {
+      await createInvestmentEvent({
+        date: manualEventForm.date,
+        source: 'manual',
+        account: manualEventForm.account.trim() || 'Manual',
+        event_type: manualEventForm.eventType,
+        description,
+        raw_description: description,
+        instrument_name: manualEventForm.instrumentName.trim() || null,
+        ticker: manualEventForm.ticker.trim() || null,
+        quantity: manualEventForm.quantity,
+        price,
+        amount: amount.toFixed(2),
+        currency: manualEventForm.currency.trim().toUpperCase(),
+      })
+
+      setMessage('Manual position saved.')
+      setManualEventForm({
+        date: '',
+        eventType: 'market_buy',
+        instrumentName: '',
+        ticker: '',
+        quantity: '',
+        amount: '',
+        currency: 'EUR',
+        account: 'Manual',
+      })
+      reloadAfterMutation()
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to save manual position',
+      )
+    } finally {
+      setIsSavingManualEvent(false)
+    }
+  }
+
   async function removeMarketPrice(marketPrice: MarketPrice) {
     const label = marketPrice.ticker ?? marketPrice.isin ?? `#${marketPrice.id}`
     const confirmed = window.confirm(`Delete cached market price for ${label}?`)
@@ -687,6 +779,13 @@ export function InvestmentsPage() {
         onCancelManualEdit={cancelMarketPriceEdit}
         onEditManualPrice={startMarketPriceEdit}
         onDeleteManualPrice={removeMarketPrice}
+      />
+
+      <ManualInvestmentEventForm
+        form={manualEventForm}
+        isSubmitting={isSavingManualEvent}
+        onChange={setManualEventForm}
+        onSubmit={() => void submitManualInvestmentEvent()}
       />
       </div>
 

@@ -267,6 +267,22 @@ export type InvestmentEventFilters = {
   offset?: number
 }
 
+export type InvestmentEventCreatePayload = {
+  date: string
+  source: string
+  account?: string | null
+  event_type: string
+  description: string
+  raw_description: string
+  instrument_name?: string | null
+  ticker?: string | null
+  isin?: string | null
+  quantity?: string | null
+  price?: string | null
+  amount: string
+  currency: string
+}
+
 export type MarketPrice = {
   id: number
   ticker: string | null
