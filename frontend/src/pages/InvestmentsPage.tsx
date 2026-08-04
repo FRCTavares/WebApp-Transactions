@@ -743,6 +743,13 @@ export function InvestmentsPage() {
 
       <InvestmentAllocationCharts positions={positions} />
 
+      <ManualInvestmentEventForm
+        form={manualEventForm}
+        isSubmitting={isSavingManualEvent}
+        onChange={setManualEventForm}
+        onSubmit={() => void submitManualInvestmentEvent()}
+      />
+
       <details className="content-card panel-card investment-detailed-positions-card">
         <summary>
           <span>
@@ -779,13 +786,6 @@ export function InvestmentsPage() {
         onCancelManualEdit={cancelMarketPriceEdit}
         onEditManualPrice={startMarketPriceEdit}
         onDeleteManualPrice={removeMarketPrice}
-      />
-
-      <ManualInvestmentEventForm
-        form={manualEventForm}
-        isSubmitting={isSavingManualEvent}
-        onChange={setManualEventForm}
-        onSubmit={() => void submitManualInvestmentEvent()}
       />
       </div>
 
