@@ -1,11 +1,12 @@
-import { TrendingUp } from 'lucide-react'
+import { Plus, TrendingUp } from 'lucide-react'
 import type { InvestmentPosition } from '../../types/api'
 import { formatMoney } from '../../utils/format'
-import { EmptyState } from '../ui'
+import { EmptyState, IconButton } from '../ui'
 import { formatFxSource, getFxSourceHint } from '../../utils/fxSourceLabels'
 
 type InvestmentHoldingsOverviewProps = {
   positions: InvestmentPosition[]
+  onAddTrade: (position: InvestmentPosition) => void
 }
 
 function toNumber(value: string | null | undefined) {
@@ -44,7 +45,7 @@ function getAllocationPercentage(position: InvestmentPosition, totalValue: numbe
   return (toNumber(position.market_value) / totalValue) * 100
 }
 
-export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOverviewProps) {
+export function InvestmentHoldingsOverview({ positions, onAddTrade }: InvestmentHoldingsOverviewProps) {
   const sortedPositions = [...positions].sort((left, right) => {
     return toNumber(right.market_value) - toNumber(left.market_value)
   })
@@ -80,11 +81,19 @@ export function InvestmentHoldingsOverview({ positions }: InvestmentHoldingsOver
                   <h3>{getPositionName(position)}</h3>
                 </div>
 
-                <strong>
-                  {position.market_value && position.market_value_currency
-                    ? formatMoney(position.market_value, position.market_value_currency)
-                    : '-'}
-                </strong>
+                <div className="investment-holding-header-actions">
+                  <strong>
+                    {position.market_value && position.market_value_currency
+                      ? formatMoney(position.market_value, position.market_value_currency)
+                      : '-'}
+                  </strong>
+                  <IconButton
+                    icon={Plus}
+                    label={`Add a buy or sell for ${getPositionLabel(position)}`}
+                    size="sm"
+                    onClick={() => onAddTrade(position)}
+                  />
+                </div>
               </div>
 
               <div className="investment-holding-meta">

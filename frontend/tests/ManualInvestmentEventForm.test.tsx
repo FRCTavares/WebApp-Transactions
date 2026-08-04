@@ -25,12 +25,7 @@ function buildForm(
 describe('ManualInvestmentEventForm', () => {
   it('renders the current form values', () => {
     render(
-      <ManualInvestmentEventForm
-        form={buildForm()}
-        isSubmitting={false}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
+      <ManualInvestmentEventForm form={buildForm()} onChange={vi.fn()} />,
     )
 
     expect(screen.getByDisplayValue('Bitcoin')).toBeInTheDocument()
@@ -46,9 +41,7 @@ describe('ManualInvestmentEventForm', () => {
     render(
       <ManualInvestmentEventForm
         form={buildForm({ ticker: '' })}
-        isSubmitting={false}
         onChange={onChange}
-        onSubmit={vi.fn()}
       />,
     )
 
@@ -59,34 +52,18 @@ describe('ManualInvestmentEventForm', () => {
     )
   })
 
-  it('calls onSubmit when the save button is clicked', async () => {
+  it('lets the person switch between buy and sell', async () => {
     const user = userEvent.setup()
-    const onSubmit = vi.fn()
+    const onChange = vi.fn()
 
     render(
-      <ManualInvestmentEventForm
-        form={buildForm()}
-        isSubmitting={false}
-        onChange={vi.fn()}
-        onSubmit={onSubmit}
-      />,
+      <ManualInvestmentEventForm form={buildForm()} onChange={onChange} />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Save position' }))
+    await user.selectOptions(screen.getByLabelText('Type'), 'market_sell')
 
-    expect(onSubmit).toHaveBeenCalledTimes(1)
-  })
-
-  it('disables the save button while submitting', () => {
-    render(
-      <ManualInvestmentEventForm
-        form={buildForm()}
-        isSubmitting
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-      />,
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'market_sell' }),
     )
-
-    expect(screen.getByRole('button', { name: 'Save position' })).toBeDisabled()
   })
 })
