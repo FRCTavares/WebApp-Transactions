@@ -85,10 +85,16 @@ def read_summary(client) -> dict[str, object]:
     return response.json()
 
 
-def test_linked_deposit_is_counted_once_and_excluded_from_spending(
+def test_linked_deposit_is_excluded_from_spending_but_does_not_define_invested(
     client,
     db_session,
 ):
+    # A broker deposit is still excluded from "personal spending" (it's
+    # savings, not spending) via the deposit/withdrawal-specific exclusion
+    # in summary_repository.py - that part is unrelated to this change and
+    # stays covered here. What changed: the deposit itself no longer counts
+    # toward "invested" - only the market_buy does, even though both happen
+    # to be 100.00 in this scenario.
     add_transaction(
         db_session,
         amount="1000.00",
@@ -137,7 +143,10 @@ def test_linked_deposit_is_counted_once_and_excluded_from_spending(
     assert summary["net_invested_cash"] == "100.00"
     assert summary["available_net"] == "800.00"
     assert summary["investment_cashflow_status"] == "available"
-    assert summary["investment_reconciliation_status"] == "complete"
+    # The market_buy carries no funding_source/transaction link (only the
+    # deposit does), so there is nothing to reconcile against a bank
+    # transaction here.
+    assert summary["investment_reconciliation_status"] == "not_applicable"
     assert summary["investment_goal_eur"] == "100.00"
     assert summary["investment_goal_remaining"] == "0.00"
     assert summary["investment_goal_over"] == "0.00"
@@ -150,16 +159,16 @@ def test_linked_deposit_is_counted_once_and_excluded_from_spending(
     ]
 
 
-def test_deposits_less_withdrawals_define_net_invested_cash(
+def test_market_buys_less_sells_define_net_invested(
     client,
     db_session,
 ):
-    add_event(db_session, event_type="deposit", amount="150.00")
-    add_event(db_session, event_type="withdrawal", amount="40.00")
+    add_event(db_session, event_type="market_buy", amount="150.00")
+    add_event(db_session, event_type="market_sell", amount="40.00")
 
     for event_type in (
-        "market_buy",
-        "market_sell",
+        "deposit",
+        "withdrawal",
         "dividend",
         "interest",
         "fee",
@@ -197,7 +206,7 @@ def test_custom_goal_reports_in_progress_state(client, db_session):
     )
     assert response.status_code == 200
 
-    add_event(db_session, event_type="deposit", amount="100.00")
+    add_event(db_session, event_type="market_buy", amount="100.00")
     db_session.commit()
 
     summary = read_summary(client)
@@ -209,13 +218,13 @@ def test_custom_goal_reports_in_progress_state(client, db_session):
     assert summary["investment_goal_status"] == "in_progress"
 
 
-def test_unresolved_non_eur_cashflow_makes_available_net_unavailable(
+def test_unresolved_non_eur_market_buy_makes_available_net_unavailable(
     client,
     db_session,
 ):
     add_event(
         db_session,
-        event_type="deposit",
+        event_type="market_buy",
         amount="100.00",
         currency="USD",
         funding_source="activobank",
@@ -256,7 +265,7 @@ def test_resolved_fx_is_decimal_and_other_users_are_excluded(
     )
     add_event(
         db_session,
-        event_type="deposit",
+        event_type="market_buy",
         amount="100.00",
         currency="USD",
         funding_source="activobank",
@@ -268,7 +277,7 @@ def test_resolved_fx_is_decimal_and_other_users_are_excluded(
     )
     add_event(
         db_session,
-        event_type="deposit",
+        event_type="market_buy",
         amount="999.00",
         user_id="other-user",
     )
@@ -283,10 +292,14 @@ def test_resolved_fx_is_decimal_and_other_users_are_excluded(
     assert summary["investment_goal_remaining"] == "10.00"
 
 
-def test_linked_withdrawal_income_is_not_counted_twice(
+def test_linked_withdrawal_income_is_excluded_from_money_in_but_does_not_define_invested(
     client,
     db_session,
 ):
+    # The withdrawal-to-bank-transaction exclusion (money coming back from
+    # the broker isn't personal income) is unrelated to this change and
+    # stays covered here. With no market_buy/sell events, "invested" is
+    # correctly 0.00 even though a withdrawal happened this month.
     withdrawal_transaction = add_transaction(
         db_session,
         amount="40.00",
@@ -309,6 +322,6 @@ def test_linked_withdrawal_income_is_not_counted_twice(
     summary = read_summary(client)
 
     assert summary["money_in"] == "0.00"
-    assert summary["net_invested_cash"] == "-40.00"
-    assert summary["available_net"] == "40.00"
-    assert summary["investment_reconciliation_status"] == "complete"
+    assert summary["net_invested_cash"] == "0.00"
+    assert summary["available_net"] == "0.00"
+    assert summary["investment_reconciliation_status"] == "not_applicable"

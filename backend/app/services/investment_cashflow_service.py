@@ -1,13 +1,16 @@
-"""Authoritative monthly investment cash-flow calculation.
+"""Authoritative monthly investment activity calculation.
 
-Only broker deposits and withdrawals move personal cash into or out of the
-investment account. Purchases, sales, dividends, interest, fees, taxes, FX
-conversions, and market-value changes are investment-account activity and do
-not change contributed personal cash.
+Only market buys and sells change how much money is actively invested.
+Broker deposits and withdrawals move personal cash into or out of the
+brokerage but do not, by themselves, put that money into a position - the
+buy does. Dividends, interest, fees, taxes, and FX conversions are
+investment-account activity that also does not represent buying or selling.
 
-When an investment event is linked to a bank transaction, the investment event
-is authoritative. The bank transaction is reconciliation provenance and must
-not be counted as a second economic movement.
+(Deposits/withdrawals are still excluded from "personal spending" totals
+elsewhere - see `_linked_investment_cashflow_exists` in
+`summary_repository.py` and `transaction_repository.py` - so a broker
+transfer is never double-counted as spending. That is a separate concern
+from what counts as "invested" here.)
 """
 
 from dataclasses import dataclass
@@ -23,7 +26,7 @@ from app.repositories.transaction_repository import TransactionRepository
 
 
 MONEY_QUANTUM = Decimal("0.01")
-CASH_EVENT_TYPES = {"deposit", "withdrawal"}
+MARKET_ACTIVITY_EVENT_TYPES = {"market_buy", "market_sell"}
 
 InvestmentCashflowStatus = Literal["available", "unavailable"]
 InvestmentReconciliationStatus = Literal[
@@ -63,7 +66,7 @@ class InvestmentCashflowService:
                 end_date=end_date,
                 user_id=user_id,
             )
-            if event.event_type in CASH_EVENT_TYPES
+            if event.event_type in MARKET_ACTIVITY_EVENT_TYPES
         ]
 
         reconciliation_status = self._get_reconciliation_status(
@@ -82,7 +85,7 @@ class InvestmentCashflowService:
                     reconciliation_status=reconciliation_status,
                 )
 
-            if event.event_type == "deposit":
+            if event.event_type == "market_buy":
                 net_invested_cash += amount_eur
             else:
                 net_invested_cash -= amount_eur
@@ -117,6 +120,10 @@ class InvestmentCashflowService:
         *,
         user_id: str,
     ) -> InvestmentReconciliationStatus:
+        # Market buys/sells are internal to the brokerage and normally carry
+        # no funding_source/transaction link - this will usually report
+        # "not_applicable". It stays generic (rather than hard-coding that)
+        # in case a future importer ever links a buy/sell to a bank record.
         if not events:
             return "not_applicable"
 

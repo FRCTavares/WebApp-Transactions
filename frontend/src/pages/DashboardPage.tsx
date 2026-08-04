@@ -512,7 +512,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 investedAmount === null
                   ? 'unavailable'
                   : formatMoney(investedAmount)
-              }. Net personal cash contributed to investments after withdrawals.`}
+              }. Net amount bought this month, after sells.`}
               className={`dashboard-metric-card dashboard-metric-${getMetricTone(investedAmount)}`}
               role="listitem"
             >
@@ -526,7 +526,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                     ? '-'
                     : formatMoney(investedAmount)}
                 </strong>
-                <small>Deposits minus qualifying withdrawals</small>
+                <small>Market buys minus market sells this month</small>
               </div>
             </Card>
 
