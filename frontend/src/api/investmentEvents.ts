@@ -2,6 +2,7 @@ import { apiGet, apiPostJson, buildQuery } from './client'
 import { invalidateHistoricalData } from '../utils/historicalDataCache'
 import type {
   InvestmentEvent,
+  InvestmentEventCreatePayload,
   InvestmentEventFilters,
   InvestmentMonthlyChange,
   InvestmentMonthlySeriesPoint,
@@ -11,6 +12,16 @@ import type {
   ManualFundingResolutionResponse,
   PendingFxSummary,
 } from '../types/api'
+
+export function createInvestmentEvent(payload: InvestmentEventCreatePayload) {
+  return apiPostJson<InvestmentEvent>(
+    '/api/investment-events',
+    payload,
+  ).then((result) => {
+    invalidateHistoricalData()
+    return result
+  })
+}
 
 export function listInvestmentEvents(filters: InvestmentEventFilters = {}) {
   return apiGet<InvestmentEvent[]>(`/api/investment-events${buildQuery(filters)}`)

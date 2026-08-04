@@ -57,18 +57,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 3. Financial correctness and atomicity
 
-- [ ] Bitcoin holdings have no working manual-entry path. Trading 212
-      does not provide a statement/CSV for Bitcoin, so this position
-      needs to be entered and updated by hand, but the edit control
-      Francisco sees does nothing when clicked. There is currently a
-      manual *price* override (`MarketPricesTable`,
-      `frontend/src/components/investments/MarketPricesTable.tsx`)
-      but no manual *holdings/quantity* entry for a non-imported
-      asset - determine whether the visible button is dead/unwired UI
-      or whether it needs a new backend endpoint plus UI to create
-      and edit a manual investment position (quantity, cost basis,
-      currency) for assets with no importer.
-
 ## 4. Frontend design system
 
 Full audit and target design system:
