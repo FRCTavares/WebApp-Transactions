@@ -820,3 +820,18 @@ export type PendingFxSummary = {
   latest_date: string | null
   resolutions: PendingFxResolution[]
 }
+
+export type AccessStatus = 'allowed' | 'pending' | 'denied'
+
+export type AccessStatusResponse = {
+  status: AccessStatus
+}
+
+export type PendingSignup = {
+  id: number
+  email: string
+  status: 'pending' | 'approved' | 'denied'
+  requested_at: string
+  decided_at: string | null
+  decided_by: string | null
+}

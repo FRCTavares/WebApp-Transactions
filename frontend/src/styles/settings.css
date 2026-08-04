@@ -72,6 +72,12 @@
   padding: 0.92rem 1rem;
 }
 
+.settings-access-request-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-4);
+}
+
 .settings-list-row > span {
   display: grid;
   gap: 0.22rem;

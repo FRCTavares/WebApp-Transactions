@@ -6,6 +6,9 @@ from app.database import is_sqlite_database_url
 from app.database_foreign_key_migrations import (
     run_sqlite_foreign_key_migrations,
 )
+from app.database_pending_signup_migrations import (
+    run_pending_signup_migrations,
+)
 
 
 def run_startup_migrations(engine: Engine) -> None:
@@ -37,6 +40,10 @@ def run_startup_migrations(engine: Engine) -> None:
     _run_wealth_value_source_migrations(engine=engine)
     _run_import_preview_migrations(engine=engine)
     _run_user_preferences_migrations(engine=engine)
+    # Creates the "pending_signups" table; kept in its own module to stay
+    # under this file's line-count limit (see database_pending_signup_
+    # migrations.py).
+    run_pending_signup_migrations(engine=engine)
     _run_user_scoped_dedupe_index_migrations(engine=engine)
     run_sqlite_foreign_key_migrations(engine)
 

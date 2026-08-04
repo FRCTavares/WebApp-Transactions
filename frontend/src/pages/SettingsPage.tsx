@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { PresentationPreferences } from '../utils/format'
 import { translate } from '../i18n/messages'
+import { AccessRequestsPanel } from '../components/AccessRequestsPanel'
 import { Button, Field, PageHeader } from '../components/ui'
 
 const PRIVACY_CONTACT =
@@ -251,6 +252,8 @@ export function SettingsPage({
             </span>
           </div>
         </section>
+
+        {isAuthEnabled && <AccessRequestsPanel />}
 
         <section className="settings-group">
           <header className="settings-group-header">

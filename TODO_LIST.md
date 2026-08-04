@@ -15,19 +15,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 1. Dependency and release risks
 
-- [ ] Replace the manual `ALLOWED_USER_EMAILS` Render env var with a
-      self-serve sign-up flow: anyone with the app link can sign in
-      with Google via Supabase Auth, but new accounts start in a
-      "pending approval" state with no data access until Francisco
-      approves them. `is_allowed_user_email`
-      (`backend/app/auth/current_user.py`) currently treats an empty
-      allow-list as "everyone allowed", so simply removing the env var
-      is not a fix - this needs a real pending-user table, an
-      approval action restricted to the owner, and an email
-      notification to Francisco when someone new signs in for the
-      first time. Decide whether the notification is sent via a
-      third-party mail provider or Supabase's own auth email hooks.
-
 - [ ] Add a first-run onboarding experience for new users: a short
       sequence of cards/steps that walks them through setting up their
       monthly investment goal, default currency, and categories before

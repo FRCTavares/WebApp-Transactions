@@ -7,8 +7,11 @@ import jwt
 from fastapi import Depends, HTTPException, Request, status
 from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError, PyJWKClientError
+from sqlalchemy.orm import Session
 
+from app.database import get_db
 from app.middleware.request_logging import set_request_log_user_id
+from app.repositories.pending_signup_repository import PendingSignupRepository
 
 
 LOCAL_DEFAULT_USER_ID = "local-default-user"
@@ -209,13 +212,41 @@ def get_email_from_supabase_payload(payload: dict[str, Any]) -> str:
     return normalise_user_email(raw_email)
 
 
-def get_supabase_user_from_request(request: Request) -> CurrentUser:
+def is_approved_pending_signup(email: str, *, db: Session) -> bool:
+    pending_signup = PendingSignupRepository(db).get_by_email(email)
+    return pending_signup is not None and pending_signup.status == "approved"
+
+
+def get_authenticated_supabase_user(request: Request) -> CurrentUser:
+    """Validate the bearer JWT only - no allow-list/approval gate.
+
+    Used solely by the access-status endpoint, which must be reachable by
+    any successfully authenticated Supabase user (including someone whose
+    sign-up is still pending approval) so they can be told their status.
+    Every other endpoint must keep using `get_current_user` below.
+    """
+
     token = get_authorization_bearer_token(request)
     payload = decode_supabase_jwt(token)
     subject = get_subject_from_supabase_payload(payload)
     email = get_email_from_supabase_payload(payload)
 
-    if not is_allowed_user_email(email):
+    return CurrentUser(id=subject, email=email)
+
+
+def get_supabase_user_from_request(
+    request: Request,
+    db: Session,
+) -> CurrentUser:
+    token = get_authorization_bearer_token(request)
+    payload = decode_supabase_jwt(token)
+    subject = get_subject_from_supabase_payload(payload)
+    email = get_email_from_supabase_payload(payload)
+
+    if not is_allowed_user_email(email) and not is_approved_pending_signup(
+        email,
+        db=db,
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User email is not allowed",
@@ -225,10 +256,13 @@ def get_supabase_user_from_request(request: Request) -> CurrentUser:
 
 
 
-def get_current_user(request: Request) -> CurrentUser:
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> CurrentUser:
     """Return the authenticated Supabase user."""
 
-    current_user = get_supabase_user_from_request(request)
+    current_user = get_supabase_user_from_request(request, db=db)
     set_request_log_user_id(
         request.scope,
         current_user.id,
