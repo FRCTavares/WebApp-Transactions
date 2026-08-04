@@ -27,7 +27,7 @@ import { ManualInvestmentEventForm } from '../components/investments/ManualInves
 import type { ManualInvestmentEventFormState } from '../components/investments/ManualInvestmentEventForm'
 import { MarketDataPanel } from '../components/investments/MarketDataPanel'
 import type { MarketPriceFormState } from '../components/investments/MarketPriceForm'
-import type { InvestmentEvent, InvestmentFundingMonth, MarketPrice } from '../types/api'
+import type { InvestmentEvent, InvestmentFundingMonth, InvestmentPosition, MarketPrice } from '../types/api'
 import { useInvestmentData } from '../hooks/useInvestmentData'
 import { formatMoney } from '../utils/format'
 import {
@@ -46,7 +46,7 @@ import {
   type ManualFundingFormState,
   type MonthlyFundingFormState,
 } from '../utils/investmentsPageUtils'
-import { Button, PageHeader } from '../components/ui'
+import { Button, Modal, PageHeader } from '../components/ui'
 
 export function InvestmentsPage() {
   const [chartMonths, setChartMonths] = useState(24)
@@ -80,6 +80,7 @@ export function InvestmentsPage() {
     account: 'Manual',
   })
   const [isSavingManualEvent, setIsSavingManualEvent] = useState(false)
+  const [isManualEventModalOpen, setIsManualEventModalOpen] = useState(false)
   const [isBackfillingHistory, setIsBackfillingHistory] = useState(false)
   const [isResolvingFx, setIsResolvingFx] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -531,6 +532,26 @@ export function InvestmentsPage() {
     })
   }
 
+  function openManualEventForm(position?: InvestmentPosition) {
+    setError(null)
+    setMessage(null)
+    setManualEventForm({
+      date: '',
+      eventType: 'market_buy',
+      instrumentName: position?.instrument_name ?? '',
+      ticker: position?.ticker ?? '',
+      quantity: '',
+      amount: '',
+      currency: position?.market_value_currency ?? position?.market_price_currency ?? 'EUR',
+      account: 'Manual',
+    })
+    setIsManualEventModalOpen(true)
+  }
+
+  function closeManualEventModal() {
+    setIsManualEventModalOpen(false)
+  }
+
   async function submitManualInvestmentEvent() {
     setError(null)
     setMessage(null)
@@ -597,6 +618,7 @@ export function InvestmentsPage() {
         currency: 'EUR',
         account: 'Manual',
       })
+      setIsManualEventModalOpen(false)
       reloadAfterMutation()
     } catch (caughtError: unknown) {
       setError(
@@ -739,16 +761,48 @@ export function InvestmentsPage() {
         }))}
       />
 
-      <InvestmentHoldingsOverview positions={positions} />
+      <InvestmentHoldingsOverview positions={positions} onAddTrade={openManualEventForm} />
 
       <InvestmentAllocationCharts positions={positions} />
 
-      <ManualInvestmentEventForm
-        form={manualEventForm}
-        isSubmitting={isSavingManualEvent}
-        onChange={setManualEventForm}
-        onSubmit={() => void submitManualInvestmentEvent()}
-      />
+      {isManualEventModalOpen && (
+        <Modal
+          title={
+            manualEventForm.instrumentName || manualEventForm.ticker
+              ? `Add trade: ${manualEventForm.instrumentName || manualEventForm.ticker}`
+              : 'Add manual position'
+          }
+          onClose={closeManualEventModal}
+          isCloseDisabled={isSavingManualEvent}
+          footer={
+            <>
+              <Button type="button" onClick={closeManualEventModal} disabled={isSavingManualEvent}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                loading={isSavingManualEvent}
+                onClick={() => void submitManualInvestmentEvent()}
+              >
+                Save position
+              </Button>
+            </>
+          }
+        >
+          <p className="muted small">
+            For assets with no importer (e.g. Bitcoin held outside Trading
+            212). Creates a real buy/sell event, so it counts toward
+            holdings, valuation, and the monthly investment goal like any
+            imported trade.
+          </p>
+          {error && <p className="status status-error" role="alert">{error}</p>}
+          <ManualInvestmentEventForm
+            form={manualEventForm}
+            onChange={setManualEventForm}
+          />
+        </Modal>
+      )}
 
       <details className="content-card panel-card investment-detailed-positions-card">
         <summary>

@@ -330,6 +330,13 @@ which is why dark mode
   gap: 0.9rem;
 }
 
+.investment-holding-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex: 0 0 auto;
+}
+
 .investment-holding-header h3 {
   margin: 0.25rem 0 0;
   color: var(--investment-text);
