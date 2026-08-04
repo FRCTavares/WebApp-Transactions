@@ -6,7 +6,7 @@ from app.models.investment_event import InvestmentEvent
 
 ZERO = Decimal("0")
 
-PositionKey = tuple[str, str | None, str | None, str | None]
+PositionKey = tuple[str | None, str | None]
 CostBucket = dict[str, Decimal]
 PositionState = dict[str, object]
 
@@ -18,6 +18,14 @@ def build_average_cost_positions(
 
     Buy fees and taxes increase acquisition cost. Sell fees and taxes reduce
     net proceeds. A sell removes the average acquisition cost of units sold.
+
+    Grouped by (ticker, isin) only - deliberately not source/account, so an
+    imported broker holding and a manually-entered trade of the same
+    instrument merge into a single position rather than showing as two
+    separate cards. `source`/`account` on the resulting position are
+    whichever event for that ticker happened first chronologically; they
+    are informational only (used as a React list key on the frontend, not
+    for correctness) and are not meaningful once a position mixes sources.
     """
 
     positions: dict[PositionKey, PositionState] = {}
@@ -30,8 +38,6 @@ def build_average_cost_positions(
             continue
 
         key = (
-            event.source,
-            event.account,
             event.ticker,
             event.isin,
         )

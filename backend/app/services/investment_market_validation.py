@@ -122,7 +122,7 @@ def validate_market_sell_timeline(
         )
     )
 
-    holdings: dict[tuple[str, str, str, str, str], Decimal] = {}
+    holdings: dict[tuple[str, str, str], Decimal] = {}
 
     for entry in entries:
         if entry["event_type"] not in {"market_buy", "market_sell"}:
@@ -154,8 +154,8 @@ def validate_market_sell_timeline(
 def get_affected_market_identity_keys(
     candidate: MarketEventCandidate,
     existing_event: InvestmentEvent | None,
-) -> set[tuple[str, str, str, str, str]]:
-    keys: set[tuple[str, str, str, str, str]] = set()
+) -> set[tuple[str, str, str]]:
+    keys: set[tuple[str, str, str]] = set()
 
     if existing_event is not None and existing_event.event_type in {
         "market_buy",
@@ -171,10 +171,8 @@ def get_affected_market_identity_keys(
 
 def get_market_identity_key(
     candidate: MarketEventCandidate,
-) -> tuple[str, str, str, str, str]:
+) -> tuple[str, str, str]:
     return (
-        str(candidate["source"] or ""),
-        str(candidate["account"] or ""),
         str(candidate["ticker"] or ""),
         str(candidate["isin"] or ""),
         str(candidate["currency"] or "").upper(),
