@@ -144,17 +144,28 @@ jobs:
         run: npm run build
 
   e2e-tests:
-    name: Frontend e2e
+    name: Frontend e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     # Promoted to a required check 2026-07-20 after proving stable across
     # every CI run since it was introduced (#32). See TODO_LIST.md.
     #
-    # Raised from 15 to 30 minutes on 2026-08-02: the Phase 7 visual-audit
-    # suite (theme-page-coverage.spec.ts + interactive-state-coverage.spec.ts,
-    # 100 tests each run across all 5 browser projects) pushed the full run to
-    # 546 tests on a 2-worker runner. A run observed at 73% complete after
-    # 13.5 minutes projected to ~19 minutes total; 30 minutes leaves headroom.
+    # Sharded 4-way on 2026-08-04: the Phase 7 visual-audit suite
+    # (theme-page-coverage.spec.ts + interactive-state-coverage.spec.ts, 100
+    # tests each run across all 5 browser projects) pushed the full run to
+    # 546 tests, which on a single 2-worker runner took 16-18 minutes -
+    # meaning every PR paid that cost regardless of whether it could affect
+    # the frontend at all. Splitting into 4 shards via Playwright's
+    # `--shard` flag runs the suite across 4 parallel runners instead of one
+    # sequential job. The `seed` project (a dependency of every browser
+    # project) reruns once per shard against that shard's own isolated
+    # backend/database, so shards stay fully independent. `Required checks`
+    # needs no change: a `needs:` reference to a matrix job already resolves
+    # to "failure" if any shard fails.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Check out repository
@@ -181,7 +192,7 @@ jobs:
           ALLOWED_USER_EMAILS: ${{ secrets.E2E_TEST_EMAIL }}
           CORS_ORIGINS: http://127.0.0.1:4173
           APP_ENV: e2e
-          DATABASE_URL: sqlite:///${{ runner.temp }}/e2e-tests.db
+          DATABASE_URL: sqlite:///${{ runner.temp }}/e2e-tests-${{ matrix.shard }}.db
         run: |
           set -euo pipefail
           PYTHONPATH=. nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 \
@@ -216,13 +227,13 @@ jobs:
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           VITE_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: frontend/playwright-report/
           retention-days: 7
 
