@@ -19,6 +19,7 @@ EXPORT_FORMAT_VERSION = 4
 
 NON_RECOVERABLE_USER_TABLE_NAMES = (
     "import_previews",
+    "pending_signups",
 )
 
 
@@ -79,4 +80,5 @@ MIGRATION_TABLE_ORDER = (
     'cashflow_rules',
     'description_rules',
     'user_preferences',
+    'pending_signups',
 )

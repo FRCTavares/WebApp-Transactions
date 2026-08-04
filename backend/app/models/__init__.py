@@ -9,6 +9,7 @@ from app.models.market_price_history import MarketPriceHistory
 from app.models.owed_item import OwedItem
 from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
+from app.models.pending_signup import PendingSignup
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
 from app.models.wealth_account import WealthAccount
@@ -28,6 +29,7 @@ __all__ = [
     "OwedItemEvent",
     "OwedPayment",
     "OwedPaymentAllocation",
+    "PendingSignup",
     "Transaction",
     "TransactionCategory",
     "WealthAccount",

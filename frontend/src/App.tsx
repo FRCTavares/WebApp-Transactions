@@ -15,6 +15,7 @@ import { AppSidebar } from './components/AppSidebar'
 import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
 import { PeriodProvider } from './context/PeriodContext'
+import { useAccessStatus } from './hooks/useAccessStatus'
 import { useAuth } from './hooks/useAuth'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { usePresentationPreferences } from './hooks/usePresentationPreferences'
@@ -100,6 +101,7 @@ function App() {
     user,
   } = useAuth()
   const presentation = usePresentationPreferences(!isAuthEnabled || Boolean(session))
+  const accessStatus = useAccessStatus(isAuthEnabled && Boolean(session))
   const isOnline = useOnlineStatus()
   const shouldShowGlobalPeriodSelector =
     page !== null
@@ -207,6 +209,47 @@ function App() {
 
           <button type="button" onClick={handleLogin}>
             Sign in with Google
+          </button>
+        </section>
+      </div>
+    )
+  }
+
+  // A confirmed "pending"/"denied" status blocks the app. Anything else
+  // (loading, a failed status check, e.g. offline) falls through and lets
+  // the normal per-endpoint 403 enforcement handle access instead, so an
+  // already-approved user isn't locked out by a network hiccup.
+  if (accessStatus.status === 'pending') {
+    return (
+      <div className="unlock-page">
+        <section className="unlock-card">
+          <p className="eyebrow">Almost there</p>
+          <h1>Waiting for approval</h1>
+          <p>
+            {user?.email ?? 'Your account'} has signed in, but someone with
+            access to this tracker still needs to approve it before you can
+            use it. Check back soon.
+          </p>
+          <button type="button" onClick={handleLogout}>
+            Sign out
+          </button>
+        </section>
+      </div>
+    )
+  }
+
+  if (accessStatus.status === 'denied') {
+    return (
+      <div className="unlock-page">
+        <section className="unlock-card">
+          <p className="eyebrow">Access denied</p>
+          <h1>This account can't use the tracker</h1>
+          <p>
+            {user?.email ?? 'This account'} was not approved for access.
+            Contact the owner of this tracker if you think that's wrong.
+          </p>
+          <button type="button" onClick={handleLogout}>
+            Sign out
           </button>
         </section>
       </div>
