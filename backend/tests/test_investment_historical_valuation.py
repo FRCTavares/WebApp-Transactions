@@ -462,3 +462,182 @@ def test_historical_valuation_returns_null_when_fx_is_missing(
     assert may_point["market_value_eur"] is None
     assert may_point["gain_eur"] is None
     assert may_point["is_estimated"] is False
+
+
+def test_monthly_change_nets_a_sell_recorded_under_a_different_source(
+    client,
+    db_session,
+):
+    """Regression test: point-in-time valuation used to key holdings by
+    (source, account, ticker, isin). A buy from one source and a sell of
+    the same instrument from a different source (e.g. an imported
+    Trading212 buy plus a manually-entered sell) were treated as two
+    separate holdings - the sell's negative quantity was then filtered
+    out entirely (quantity <= 0 is skipped), so the sell never reduced
+    the valued total. Holdings now key on (ticker, isin) only, so the
+    sell correctly nets against the buy regardless of source.
+    """
+    from app.models.market_price_history import MarketPriceHistory
+
+    buy = InvestmentEvent(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 5),
+        source="trading212",
+        account="Trading 212",
+        event_type="market_buy",
+        description="Market buy VWCE",
+        raw_description="Market buy VWCE",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        quantity=Decimal("2.00"),
+        amount=Decimal("200.00"),
+        currency="EUR",
+        original_amount=Decimal("200.00"),
+        original_currency="EUR",
+        fx_rate_to_eur=Decimal("1"),
+    )
+    sell = InvestmentEvent(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        date=date(2026, 5, 20),
+        source="manual",
+        account="Manual",
+        event_type="market_sell",
+        description="Manual sell VWCE",
+        raw_description="Manual sell VWCE",
+        instrument_name="Vanguard FTSE All-World UCITS ETF",
+        ticker="VWCE",
+        isin="IE00BK5BQT80",
+        quantity=Decimal("1.00"),
+        amount=Decimal("105.00"),
+        currency="EUR",
+        original_amount=Decimal("105.00"),
+        original_currency="EUR",
+        fx_rate_to_eur=Decimal("1"),
+    )
+    db_session.add(buy)
+    db_session.add(sell)
+    db_session.add(
+        MarketPriceHistory(
+            ticker="VWCE",
+            isin="IE00BK5BQT80",
+            price_date=date(2026, 5, 31),
+            close_price=Decimal("110.00"),
+            currency="EUR",
+            source="manual",
+        )
+    )
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # 1 remaining unit (2 bought - 1 sold) at the €110.00 close price.
+    assert data["end_value"] == "110.00"
+
+
+def _add_holding(db_session, *, ticker: str, isin: str) -> None:
+    db_session.add(
+        InvestmentEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            date=date(2026, 5, 1),
+            source="trading212",
+            account="Trading 212",
+            event_type="market_buy",
+            description=f"Market buy {ticker}",
+            raw_description=f"Market buy {ticker}",
+            instrument_name=ticker,
+            ticker=ticker,
+            isin=isin,
+            quantity=Decimal("1.00"),
+            amount=Decimal("100.00"),
+            currency="EUR",
+            original_amount=Decimal("100.00"),
+            original_currency="EUR",
+            fx_rate_to_eur=Decimal("1"),
+        )
+    )
+
+
+def test_weekend_price_carry_forward_is_not_flagged_as_estimated(client, db_session):
+    """A month-end that falls on a non-trading day (weekend/holiday) has no
+    price of its own - carrying forward the last real close (here, 2 days
+    earlier) is the standard valuation convention, not a degraded-confidence
+    estimate, and should not be reported as one.
+    """
+    from app.models.market_price_history import MarketPriceHistory
+
+    _add_holding(db_session, ticker="CSPX", isin="IE00B5BMR087")
+    db_session.add(
+        MarketPriceHistory(
+            ticker="CSPX",
+            isin="IE00B5BMR087",
+            price_date=date(2026, 5, 1),
+            close_price=Decimal("100.00"),
+            currency="EUR",
+            source="yfinance",
+        )
+    )
+    db_session.add(
+        MarketPriceHistory(
+            ticker="CSPX",
+            isin="IE00B5BMR087",
+            price_date=date(2026, 5, 29),
+            close_price=Decimal("120.00"),
+            currency="EUR",
+            source="yfinance",
+        )
+    )
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["start_value"] == "100.00"
+    assert data["end_value"] == "120.00"
+    assert data["is_estimated"] is False
+
+
+def test_genuinely_stale_price_is_still_flagged_as_estimated(client, db_session):
+    """A price gap wider than a normal weekend/holiday (here, 10 days) means
+    the price feed likely missed real trading days, not just a non-trading
+    date - this should still be flagged as estimated.
+    """
+    from app.models.market_price_history import MarketPriceHistory
+
+    _add_holding(db_session, ticker="CSPX", isin="IE00B5BMR087")
+    db_session.add(
+        MarketPriceHistory(
+            ticker="CSPX",
+            isin="IE00B5BMR087",
+            price_date=date(2026, 5, 1),
+            close_price=Decimal("100.00"),
+            currency="EUR",
+            source="yfinance",
+        )
+    )
+    db_session.add(
+        MarketPriceHistory(
+            ticker="CSPX",
+            isin="IE00B5BMR087",
+            price_date=date(2026, 5, 20),
+            close_price=Decimal("120.00"),
+            currency="EUR",
+            source="yfinance",
+        )
+    )
+    db_session.commit()
+
+    response = client.get("/api/investment-events/monthly-change?year=2026&month=5")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["start_value"] == "100.00"
+    assert data["end_value"] == "120.00"
+    assert data["is_estimated"] is True
