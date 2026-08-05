@@ -304,10 +304,24 @@ class WealthService:
             for snapshot in snapshots_by_month[month]:
                 latest_by_account[snapshot.account_id] = snapshot
 
+            # Same reasoning as the money_owed_to_me override below: for
+            # "now" specifically, use the true latest snapshot per account
+            # across all history (what get_summary() uses), not just the
+            # snapshots dated on-or-before today's iteration through the
+            # month loop. In practice these agree once every month has been
+            # walked, but computing it directly removes any dependency on
+            # that loop invariant holding.
+            if valuation_date == date.today():
+                latest_by_account_for_total = self._get_latest_snapshot_by_account(
+                    snapshots
+                )
+            else:
+                latest_by_account_for_total = latest_by_account
+
             total = sum(
                 (
                     snapshot.balance_eur
-                    for snapshot in latest_by_account.values()
+                    for snapshot in latest_by_account_for_total.values()
                     if snapshot.account_id not in derived_account_ids
                 ),
                 Decimal("0"),
@@ -317,17 +331,29 @@ class WealthService:
                 month,
                 Decimal("0"),
             )
-            money_owed_to_me = sum(
-                (
-                    event.amount_remaining
-                    for event in latest_owed_event_by_item.values()
-                    if (
-                        event.event_type != "deleted"
-                        and event.status in ("open", "partially_paid")
-                    )
-                ),
-                Decimal("0"),
-            )
+
+            # For the current/latest point specifically, use the same
+            # authoritative OwedItem query get_summary() uses, rather than
+            # the event-replay reconstruction below. Replaying history is
+            # the right tool for a genuinely past month, but for "now" it
+            # is a needless indirection that can drift from the real
+            # current state if any OwedItem's event history is incomplete
+            # (e.g. from a legacy import) - and get_active_remaining_total
+            # is unambiguously correct for "right now" by definition.
+            if valuation_date == date.today():
+                money_owed_to_me = self._get_money_owed_to_me(user_id)
+            else:
+                money_owed_to_me = sum(
+                    (
+                        event.amount_remaining
+                        for event in latest_owed_event_by_item.values()
+                        if (
+                            event.event_type != "deleted"
+                            and event.status in ("open", "partially_paid")
+                        )
+                    ),
+                    Decimal("0"),
+                )
 
             rows.append(
                 WealthMonthlyRead(

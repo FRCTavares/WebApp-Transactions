@@ -227,6 +227,64 @@ def test_wealth_latest_month_matches_summary_current_total(client, db_session):
     assert latest_row["investment_value_eur"] == "240.00"
     assert latest_row["total_wealth_eur"] == summary["current_total_wealth_eur"]
 
+
+def test_wealth_latest_month_uses_authoritative_owed_state_not_stale_event(
+    client,
+    db_session,
+):
+    """Regression test for a real discrepancy: a legacy-imported OwedItem
+    whose event history was left stale (event still says fully open) after
+    the item itself was paid off/edited through a path that didn't append
+    a matching event. get_summary() correctly reads OwedItem.amount_remaining
+    directly; the monthly-totals endpoint used to replay only the (stale)
+    event log for every month including the current one, so the "current"
+    point on the Wealth trend chart disagreed with the summary card above
+    it. The current-month point must match the authoritative source.
+    """
+    today = date.today()
+
+    owed_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Legacy Import",
+        amount_total=Decimal("500.00"),
+        amount_paid=Decimal("500.00"),
+        amount_remaining=Decimal("0.00"),
+        reason="Paid off outside the normal update flow",
+        status="paid",
+    )
+    db_session.add(owed_item)
+    db_session.flush()
+
+    # The only event on record still claims the item is fully open - this
+    # is the drift a legacy import or manual DB edit can leave behind.
+    db_session.add(
+        OwedItemEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            owed_item_id=owed_item.id,
+            event_type="created",
+            effective_date=date(2026, 1, 10),
+            amount_total=Decimal("500.00"),
+            amount_paid=Decimal("0.00"),
+            amount_remaining=Decimal("500.00"),
+            status="open",
+            notes="Stale - item was paid off without a matching event.",
+        )
+    )
+    db_session.commit()
+
+    summary_response = client.get("/api/wealth/summary")
+    monthly_response = client.get("/api/wealth/monthly")
+
+    assert summary_response.status_code == 200
+    assert monthly_response.status_code == 200
+
+    summary = summary_response.json()
+    latest_row = monthly_response.json()[-1]
+
+    assert latest_row["month"] == today.strftime("%Y-%m")
+    assert summary["money_owed_to_me_eur"] == "0.00"
+    assert latest_row["total_wealth_eur"] == summary["current_total_wealth_eur"]
+
 def test_wealth_current_month_does_not_use_future_dated_investment_data(
     client,
     db_session,
