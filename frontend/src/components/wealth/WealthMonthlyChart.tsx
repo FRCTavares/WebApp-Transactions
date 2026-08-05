@@ -5,6 +5,7 @@ import {
   ChartGrid,
   ChartLegend,
   ChartTooltip,
+  getNiceTicks,
   useChartScale,
 } from '../charts'
 import { EmptyState, Skeleton } from '../ui'
@@ -154,11 +155,7 @@ export function WealthMonthlyChart({
     minValue,
     maxValue,
   })
-  const gridValues = [
-    maxValue - (maxValue - minValue) * 0.25,
-    maxValue - (maxValue - minValue) * 0.5,
-    maxValue - (maxValue - minValue) * 0.75,
-  ]
+  const gridValues = getNiceTicks(minValue, maxValue, 3)
 
   if (monthlyTotals.length === 0) {
     if (isLoading) {
