@@ -18,6 +18,7 @@ class UserPreferencesUpdate(BaseModel):
         default=None,
         gt=0,
     )
+    has_completed_onboarding: bool | None = None
 
     @field_validator("locale")
     @classmethod
@@ -64,3 +65,4 @@ class UserPreferencesRead(UserPreferencesUpdate):
     model_config = ConfigDict(from_attributes=True)
 
     monthly_investment_goal_eur: Decimal = Field(gt=0)
+    has_completed_onboarding: bool = False
