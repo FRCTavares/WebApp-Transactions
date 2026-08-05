@@ -239,6 +239,26 @@ export function SettingsPage({
 
         <section className="settings-group">
           <header className="settings-group-header">
+            <h2>{t('data')}</h2>
+          </header>
+
+          <SettingsAction
+            title={t('import')}
+            description={t('importDescription')}
+            actionLabel={t('open')}
+            onClick={onOpenImport}
+          />
+
+          <SettingsAction
+            title={t('exportBackup')}
+            description={t('exportDescription')}
+            actionLabel={t('open')}
+            onClick={onOpenExport}
+          />
+        </section>
+
+        <section className="settings-group">
+          <header className="settings-group-header">
             <h2>Privacy</h2>
           </header>
           <div className="settings-list-row settings-privacy-summary">
@@ -268,25 +288,6 @@ export function SettingsPage({
           />
         </section>
 
-        <section className="settings-group">
-          <header className="settings-group-header">
-            <h2>{t('data')}</h2>
-          </header>
-
-          <SettingsAction
-            title={t('import')}
-            description={t('importDescription')}
-            actionLabel={t('open')}
-            onClick={onOpenImport}
-          />
-
-          <SettingsAction
-            title={t('exportBackup')}
-            description={t('exportDescription')}
-            actionLabel={t('open')}
-            onClick={onOpenExport}
-          />
-        </section>
         <section className="settings-group">
           <header className="settings-group-header">
             <h2>Build</h2>

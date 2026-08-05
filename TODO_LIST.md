@@ -76,10 +76,3 @@ Each implementation must finish with:
 ### Phase 6 — Charts and icons
 
 ### Phase 7 — Consistency sweep and guardrails
-
-- [ ] Settings page layout is visually unbalanced - large empty
-      right-hand column under "Organisation", inconsistent card
-      widths/heights across the "Access", "Privacy", "Organisation",
-      and "Data" panels. Needs a proper grid pass so panels read as a
-      coherent settings page rather than mismatched blocks
-      (`frontend/src/pages/SettingsPage.tsx`).
