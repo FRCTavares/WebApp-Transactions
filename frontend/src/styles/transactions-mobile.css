@@ -130,6 +130,7 @@
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   background: var(--color-surface-sunken);
+  margin-bottom: var(--space-6);
 }
 
 .transaction-create-owed-toggle {
