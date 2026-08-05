@@ -86,11 +86,6 @@ Each implementation must finish with:
 
 ### Phase 7 — Consistency sweep and guardrails
 
-- [ ] "Save Money In"/"Save Money Out" button sits too close to
-      (visually overlaps) the "Someone owes me for this" checkbox row
-      on the Add Money In/Out form (Transactions page). Add spacing
-      between the checkbox row and the action buttons.
-
 - [ ] Settings page layout is visually unbalanced - large empty
       right-hand column under "Organisation", inconsistent card
       widths/heights across the "Access", "Privacy", "Organisation",

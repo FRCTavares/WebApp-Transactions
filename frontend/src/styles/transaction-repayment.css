@@ -127,6 +127,7 @@
   border: 1px solid var(--color-border);
   border-radius: 1.25rem;
   background: var(--color-surface);
+  margin-bottom: var(--space-6);
 }
 
 .transaction-repayment-toggle {
