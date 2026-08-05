@@ -8,6 +8,7 @@ def test_preferences_have_defaults_and_are_persisted(client):
         "date_format": "medium",
         "language": "en",
         "monthly_investment_goal_eur": "100.00",
+        "has_completed_onboarding": False,
     }
 
     updated = client.put(
@@ -85,3 +86,24 @@ def test_preferences_update_preserves_goal_when_omitted(client):
         second_update.json()["monthly_investment_goal_eur"]
         == "275.00"
     )
+
+
+def test_preferences_onboarding_flag_can_be_set_and_persists(client):
+    assert client.get("/api/preferences").json()["has_completed_onboarding"] is False
+
+    updated = client.put(
+        "/api/preferences",
+        json={
+            "locale": "en-GB",
+            "currency": "EUR",
+            "time_zone": "Europe/Lisbon",
+            "date_format": "medium",
+            "language": "en",
+            "monthly_investment_goal_eur": "150.00",
+            "has_completed_onboarding": True,
+        },
+    )
+
+    assert updated.status_code == 200
+    assert updated.json()["has_completed_onboarding"] is True
+    assert client.get("/api/preferences").json()["has_completed_onboarding"] is True

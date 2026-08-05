@@ -5,6 +5,7 @@ export type PresentationPreferences = {
   date_format: 'short' | 'medium' | 'long'
   language: 'en' | 'pt'
   monthly_investment_goal_eur: string
+  has_completed_onboarding: boolean
 }
 
 export const DEFAULT_PRESENTATION_PREFERENCES: PresentationPreferences = {
@@ -14,6 +15,7 @@ export const DEFAULT_PRESENTATION_PREFERENCES: PresentationPreferences = {
   date_format: 'medium',
   language: 'en',
   monthly_investment_goal_eur: '100.00',
+  has_completed_onboarding: false,
 }
 
 let preferences = DEFAULT_PRESENTATION_PREFERENCES
