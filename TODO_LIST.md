@@ -24,15 +24,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 2. Outstanding verification and product decisions
 
-- [ ] Wealth trend values before December 2024 are wrong. Francisco
-      has the correct historical net-worth figures in a personal
-      spreadsheet and can supply them. Decide whether to backfill via
-      manual wealth snapshots (the `Account`/`Snapshot` flow already
-      used on the Wealth page) or a one-off data migration, then
-      correct the stored snapshot rows so the "Wealth trend" chart's
-      Sep 2024-Dec 2024 segment reflects real values instead of
-      whatever is there now.
-
 - [ ] Decide the fate of the rest of the Investments page's "main-view
       cleanup" (Phase 7, PR #113): `.investments-page
       .investment-breakdown-card, .investment-detailed-positions-card,
