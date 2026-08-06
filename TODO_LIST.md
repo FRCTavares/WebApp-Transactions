@@ -15,13 +15,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 1. Dependency and release risks
 
-- [ ] Add a first-run onboarding experience for new users: a short
-      sequence of cards/steps that walks them through setting up their
-      monthly investment goal, default currency, and categories before
-      they land on an empty Dashboard. Needed before inviting outside
-      users, since a new account currently has no orientation into the
-      app.
-
 ## 2. Outstanding verification and product decisions
 
 - [ ] Decide the fate of the rest of the Investments page's "main-view
