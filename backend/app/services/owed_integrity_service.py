@@ -170,12 +170,24 @@ class OwedIntegrityMixin:
                     self._build_event(
                         owed_item=item,
                         event_type="payment",
-                        effective_date=item.updated_at.date(),
+                        # max(...) guarantees this event sorts after the
+                        # stale one regardless of what item.updated_at
+                        # actually is - list_all_events_ascending() orders
+                        # by (effective_date, id), so a backfilled event
+                        # dated *before* the stale event it's meant to
+                        # replace would never become "latest" and the
+                        # drift would look fixed here but persist on the
+                        # next check.
+                        effective_date=max(
+                            item.updated_at.date(),
+                            latest_event.effective_date,
+                        ),
                         notes=(
                             "Backfilled: the item was already paid/edited "
                             "but no matching event existed on record "
                             "(found via the integrity check). Dated to "
-                            "the item's last-updated timestamp, per "
+                            "the item's last-updated timestamp (or the "
+                            "prior event's date if later), per "
                             "Francisco's confirmation."
                         ),
                     )

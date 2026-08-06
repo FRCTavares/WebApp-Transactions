@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID, get_privileged_user
@@ -277,5 +277,60 @@ def test_repair_is_idempotent(client, db_session):
 
     assert first_pass.status_code == 200
     assert len(first_pass.json()) == 1
+    assert second_pass.status_code == 200
+    assert second_pass.json() == []
+
+
+def test_repair_still_works_when_the_stale_event_is_dated_after_updated_at(
+    client,
+    db_session,
+):
+    """Regression test for a real production bug: item.updated_at can be
+    earlier than the stale 'created' event's effective_date (e.g. the
+    event was backdated to when the debt actually occurred, well before
+    the item row was last touched). The first fix used
+    item.updated_at.date() directly, so the backfilled event sorted
+    *before* the stale one and never became "latest" - the repair
+    reported success but the drift was still there on the next check.
+    """
+    today = date.today()
+    future_event_date = today + timedelta(days=5)
+
+    item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Martinha",
+        amount_total=Decimal("7.33"),
+        amount_paid=Decimal("7.33"),
+        amount_remaining=Decimal("0.00"),
+        reason="Paid off outside the normal update flow",
+        status="paid",
+    )
+    db_session.add(item)
+    db_session.flush()
+    db_session.add(
+        OwedItemEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            owed_item_id=item.id,
+            event_type="created",
+            effective_date=future_event_date,
+            amount_total=Decimal("7.33"),
+            amount_paid=Decimal("0.00"),
+            amount_remaining=Decimal("7.33"),
+            status="open",
+            notes="Stale, dated after item.updated_at.",
+        )
+    )
+    db_session.commit()
+
+    use_privileged_user(client)
+
+    first_pass = client.post("/api/owed/integrity-check/repair")
+    second_pass = client.post("/api/owed/integrity-check/repair")
+
+    assert first_pass.status_code == 200
+    assert len(first_pass.json()) == 1
+    assert first_pass.json()[0]["owed_item_id"] == item.id
+
+    # The bug: this used to report the same item as still needing repair.
     assert second_pass.status_code == 200
     assert second_pass.json() == []
