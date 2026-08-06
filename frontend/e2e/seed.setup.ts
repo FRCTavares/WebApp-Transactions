@@ -23,6 +23,11 @@ const wealthAccountName = `E2E Seed Account ${runId}`
 test('seeds representative categories, transactions, owed, and wealth data', async ({ page }) => {
   await page.goto('/categories')
 
+  // A brand-new e2e test user has never completed onboarding, so the
+  // first-run modal covers the page - dismiss it like a real user would
+  // before continuing with the rest of the seed.
+  await page.getByRole('button', { name: 'Skip for now' }).click()
+
   await page.getByLabel('Name').fill(groceriesCategory)
   await page.getByRole('button', { name: 'Add category' }).click()
   await expect(page.getByText(groceriesCategory)).toBeVisible()

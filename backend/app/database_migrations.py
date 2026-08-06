@@ -770,6 +770,17 @@ def _run_user_preferences_migrations(engine: Engine) -> None:
         ),
     )
 
+    _add_column_if_missing(
+        engine=engine,
+        table_name="user_preferences",
+        column_name="has_completed_onboarding",
+        sql=(
+            "ALTER TABLE user_preferences "
+            "ADD COLUMN has_completed_onboarding "
+            "BOOLEAN NOT NULL DEFAULT 0"
+        ),
+    )
+
 
 def _run_wealth_user_migrations(engine: Engine) -> None:
     wealth_tables = [
