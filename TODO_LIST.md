@@ -17,19 +17,19 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 2. Outstanding verification and product decisions
 
-- [ ] Decide the fate of the rest of the Investments page's "main-view
-      cleanup" (Phase 7, PR #113): `.investments-page
-      .investment-breakdown-card, .investment-detailed-positions-card,
-      .investment-tools-grid, .compact-filter-panel,
-      .investment-events-card { display: none; }`
-      (`frontend/src/styles/investments.css`) currently hides Funding
-      split, Manual market price, Detailed positions, Filters, and the
-      Events list entirely - not just visually decluttered, genuinely
-      unreachable. Francisco did not know this section existed until
-      debugging the #128 manual-position form (moved out of
-      `investment-tools-grid` so it isn't swept up in this rule).
-      Confirm whether the rest should stay hidden pending a proper
-      redesign, or be restored/redesigned now.
+- [ ] Add Playwright interactive-state coverage for the Investments page's
+      "Add trade"/"Add manual position" modal (see the comment above the
+      Categories block in `frontend/e2e/interactive-state-coverage.spec.ts`).
+      It has unit coverage (`ManualInvestmentEventForm.test.tsx`) but no
+      e2e coverage of the modal open/close/submit flow.
+- [ ] Decide whether to delete the now-frontend-unreachable backend
+      surface left over from the Investments page cleanup: the
+      `investment-funding-months` routes/service/repository, the manual
+      market-price CRUD endpoints (`POST`/`PATCH`/`DELETE
+      /api/market-prices`), and `resolve-manual-funding`. Nothing in the
+      frontend calls these anymore, but removing backend routes/services/
+      migrations is a separate, larger change from the frontend cleanup and
+      wasn't done here.
 
 ## 3. Financial correctness and atomicity
 

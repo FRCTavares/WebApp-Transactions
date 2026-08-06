@@ -175,18 +175,13 @@ for (const combo of FULL_MATRIX) {
 }
 
 /**
- * Investments: no coverage. The page's only disclosure
- * (`details.investment-detailed-positions-card`, InvestmentsPage.tsx:654-663)
- * is permanently `display: none` by design - see the "Investments main-view
- * cleanup" rule at frontend/src/styles/investments.css:617-626, which hides
- * it along with `.investment-breakdown-card`/`-details` and
- * `.investment-tools-grid` as deliberate dead UI ("Advanced/import/debug
- * sections can be redesigned later instead of shown as clutter"). Confirmed
- * live: attempting to click its summary times out with "element is not
- * visible". There is currently no reachable dialog/menu/disclosure/inline-form
- * on this page to cover - its action buttons (Resolve FX, Backfill, Refresh
- * prices) trigger async requests, not an openable state. Revisit if that CSS
- * rule is ever lifted.
+ * Investments: no coverage in this file. The page previously carried
+ * several disclosures (funding split, manual market price entry, detailed
+ * positions, filters, events list) that were permanently hidden via CSS as
+ * dead UI ("Investments main-view cleanup" in the old investments.css); that
+ * dead code was removed outright rather than kept hidden. The page's
+ * remaining openable state is the "Add trade"/"Add manual position" modal,
+ * which is not yet covered here - see TODO_LIST.md.
  */
 
 /**

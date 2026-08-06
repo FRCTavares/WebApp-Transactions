@@ -295,24 +295,6 @@ export type MarketPrice = {
   updated_at: string
 }
 
-export type MarketPriceCreatePayload = {
-  ticker?: string | null
-  isin?: string | null
-  price: string
-  currency: string
-  source: string
-  fetched_at?: string | null
-}
-
-export type MarketPriceUpdatePayload = {
-  ticker?: string | null
-  isin?: string | null
-  price?: string
-  currency?: string
-  source?: string
-  fetched_at?: string | null
-}
-
 export type MarketPriceHistory = {
   id: number
   ticker: string | null
@@ -349,46 +331,6 @@ export type MarketPriceHistoryFilters = {
   date_to?: string
   limit?: number
 }
-
-export type ManualFundingResolutionPayload = {
-  eur_amount: string
-  date: string
-  description: string
-  notes?: string | null
-}
-
-export type ManualFundingResolutionResponse = {
-  investment_event: InvestmentEvent
-  transaction_id: number
-}
-
-export type InvestmentFundingMonth = {
-  id: number
-  month: string
-  source: string
-  manual_amount: string
-  cashback_rounding_amount: string
-  currency: string
-  notes: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type InvestmentFundingMonthPayload = {
-  month: string
-  source: string
-  manual_amount: string
-  cashback_rounding_amount: string
-  currency: string
-  notes?: string | null
-}
-
-export type InvestmentFundingMonthFilters = {
-  month?: string
-  source?: string
-}
-
-
 
 export type OwedStatus = 'open' | 'partially_paid' | 'paid' | 'cancelled'
 export type OwedStatusFilter = 'active' | OwedStatus

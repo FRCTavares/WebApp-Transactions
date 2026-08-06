@@ -8,8 +8,6 @@ import type {
   InvestmentMonthlySeriesPoint,
   InvestmentPosition,
   InvestmentRealisedGain,
-  ManualFundingResolutionPayload,
-  ManualFundingResolutionResponse,
   PendingFxSummary,
 } from '../types/api'
 
@@ -53,19 +51,6 @@ export function listInvestmentMonthlySeries(months = 24) {
   return apiGet<InvestmentMonthlySeriesPoint[]>(
     `/api/investment-events/monthly-series${buildQuery({ months })}`,
   )
-}
-
-export function resolveManualFunding(
-  eventId: number,
-  payload: ManualFundingResolutionPayload,
-) {
-  return apiPostJson<ManualFundingResolutionResponse>(
-    `/api/investment-events/${eventId}/resolve-manual-funding`,
-    payload,
-  ).then((result) => {
-    invalidateHistoricalData()
-    return result
-  })
 }
 
 export function previewPendingFx() {
