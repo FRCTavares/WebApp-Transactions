@@ -6,8 +6,6 @@ import {
   listInvestmentPositions,
   listInvestmentRealisedGains,
 } from '../api/investmentEvents'
-import { listInvestmentFundingMonths } from '../api/investmentFundingMonths'
-import { listMarketPrices } from '../api/marketPrices'
 import {
   buildHistoricalCacheKey,
   invalidateHistoricalData,
@@ -16,42 +14,19 @@ import {
 } from '../utils/historicalDataCache'
 import type {
   InvestmentEvent,
-  InvestmentFundingMonth,
   InvestmentMonthlySeriesPoint,
   InvestmentPosition,
   InvestmentRealisedGain,
-  MarketPrice,
 } from '../types/api'
 
 const INVESTMENT_EVENTS_FETCH_LIMIT = 500
 
-function getMonthDateRange(month: string) {
-  if (!month) {
-    return {
-      dateFrom: '',
-      dateTo: '',
-    }
-  }
-
-  const [year, monthNumber] = month.split('-').map(Number)
-  const monthText = String(monthNumber).padStart(2, '0')
-  const lastDay = new Date(year, monthNumber, 0).getDate()
-
-  return {
-    dateFrom: `${year}-${monthText}-01`,
-    dateTo: `${year}-${monthText}-${String(lastDay).padStart(2, '0')}`,
-  }
-}
-
-async function listAllInvestmentEvents(
-  filters: Parameters<typeof listInvestmentEvents>[0] = {},
-) {
+async function listAllInvestmentEvents() {
   const allEvents: InvestmentEvent[] = []
   let offset = 0
 
   while (true) {
     const batch = await listInvestmentEvents({
-      ...filters,
       limit: INVESTMENT_EVENTS_FETCH_LIMIT,
       offset,
     })
@@ -70,8 +45,6 @@ async function listAllInvestmentEvents(
 
 type UseInvestmentDataOptions = {
   chartMonths: number
-  onFundingMonthsLoaded: (fundingMonths: InvestmentFundingMonth[]) => void
-  onEventsReloaded: () => void
   onError: (message: string) => void
   onWarning: (message: string | null) => void
   onBeforeLoad: () => void
@@ -82,8 +55,6 @@ export function useInvestmentData({
   onBeforeLoad,
   onError,
   onWarning,
-  onEventsReloaded,
-  onFundingMonthsLoaded,
 }: UseInvestmentDataOptions) {
   const { user } = useAuth()
   const cacheUserId = user?.id ?? 'local-default-user'
@@ -110,15 +81,8 @@ export function useInvestmentData({
       ) === undefined
     ),
   )
-  const [marketPrices, setMarketPrices] = useState<MarketPrice[]>([])
-  const [fundingMonths, setFundingMonths] = useState<InvestmentFundingMonth[]>([])
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [monthlySeriesError, setMonthlySeriesError] = useState<string | null>(null)
-  const [eventType, setEventType] = useState('')
-  const [source, setSource] = useState('')
-  const [month, setMonth] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
 
   const loadMonthlySeries = useCallback((force = false) => {
     const cachedSeries = readHistoricalData<InvestmentMonthlySeriesPoint[]>(
@@ -164,31 +128,18 @@ export function useInvestmentData({
     monthlySeriesCacheKey,
   ])
 
-  async function loadEvents() {
+  async function loadInvestmentData() {
     onBeforeLoad()
     onWarning(null)
 
-    const monthDateRange = getMonthDateRange(month)
     const [
       eventsResult,
       positionsResult,
       realisedGainsResult,
-      marketPricesResult,
-      fundingMonthsResult,
     ] = await Promise.allSettled([
-      listAllInvestmentEvents({
-        source: source || undefined,
-        event_type: eventType || undefined,
-        date_from: dateFrom || monthDateRange.dateFrom || undefined,
-        date_to: dateTo || monthDateRange.dateTo || undefined,
-      }),
-      listInvestmentPositions(source || undefined),
-      listInvestmentRealisedGains(source || undefined),
-      listMarketPrices(),
-      listInvestmentFundingMonths({
-        month: month || undefined,
-        source: source || undefined,
-      }),
+      listAllInvestmentEvents(),
+      listInvestmentPositions(),
+      listInvestmentRealisedGains(),
     ])
 
     const requiredErrors: string[] = []
@@ -196,7 +147,6 @@ export function useInvestmentData({
 
     if (eventsResult.status === 'fulfilled') {
       setEvents(eventsResult.value)
-      onEventsReloaded()
     } else {
       requiredErrors.push(
         eventsResult.reason instanceof Error
@@ -221,19 +171,6 @@ export function useInvestmentData({
       optionalErrors.push('Realised gains could not be refreshed.')
     }
 
-    if (marketPricesResult.status === 'fulfilled') {
-      setMarketPrices(marketPricesResult.value)
-    } else {
-      optionalErrors.push('Market prices could not be refreshed.')
-    }
-
-    if (fundingMonthsResult.status === 'fulfilled') {
-      setFundingMonths(fundingMonthsResult.value)
-      onFundingMonthsLoaded(fundingMonthsResult.value)
-    } else {
-      optionalErrors.push('Funding breakdown could not be refreshed.')
-    }
-
     if (requiredErrors.length > 0) {
       onError(requiredErrors.join(' '))
     }
@@ -247,7 +184,7 @@ export function useInvestmentData({
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      loadEvents()
+      loadInvestmentData()
     }, 0)
 
     return () => window.clearTimeout(timeoutId)
@@ -263,112 +200,20 @@ export function useInvestmentData({
     return () => window.clearTimeout(timeoutId)
   }, [loadMonthlySeries])
 
-  function clearFilters() {
-    setEventType('')
-    setSource('')
-    setMonth('')
-    setDateFrom('')
-    setDateTo('')
-
-    onBeforeLoad()
-    onWarning(null)
-
-    void Promise.allSettled([
-      listAllInvestmentEvents(),
-      listInvestmentPositions(),
-      listInvestmentRealisedGains(),
-      listMarketPrices(),
-      listInvestmentFundingMonths(),
-    ]).then(([
-      eventsResult,
-      positionsResult,
-      realisedGainsResult,
-      marketPricesResult,
-      fundingMonthsResult,
-    ]) => {
-      const requiredErrors: string[] = []
-      const optionalErrors: string[] = []
-
-      if (eventsResult.status === 'fulfilled') {
-        setEvents(eventsResult.value)
-        onEventsReloaded()
-      } else {
-        requiredErrors.push(
-          eventsResult.reason instanceof Error
-            ? eventsResult.reason.message
-            : 'Failed to load investment events',
-        )
-      }
-
-      if (positionsResult.status === 'fulfilled') {
-        setPositions(positionsResult.value)
-      } else {
-        requiredErrors.push(
-          positionsResult.reason instanceof Error
-            ? positionsResult.reason.message
-            : 'Failed to load investment positions',
-        )
-      }
-
-      if (realisedGainsResult.status === 'fulfilled') {
-        setRealisedGains(realisedGainsResult.value)
-      } else {
-        optionalErrors.push('Realised gains could not be refreshed.')
-      }
-
-      if (marketPricesResult.status === 'fulfilled') {
-        setMarketPrices(marketPricesResult.value)
-      } else {
-        optionalErrors.push('Market prices could not be refreshed.')
-      }
-
-      if (fundingMonthsResult.status === 'fulfilled') {
-        setFundingMonths(fundingMonthsResult.value)
-        onFundingMonthsLoaded(fundingMonthsResult.value)
-      } else {
-        optionalErrors.push('Funding breakdown could not be refreshed.')
-      }
-
-      if (requiredErrors.length > 0) {
-        onError(requiredErrors.join(' '))
-      }
-
-      if (optionalErrors.length > 0) {
-        onWarning(optionalErrors.join(' '))
-      }
-    })
-
-  }
-
   function reloadAfterMutation() {
     invalidateHistoricalData()
-    loadEvents()
+    loadInvestmentData()
     void loadMonthlySeries(true)
   }
 
   return {
-    clearFilters,
-    dateFrom,
-    dateTo,
-    eventType,
     events,
-    fundingMonths,
     isInitialDataLoading,
     isMonthlySeriesLoading,
-    loadEvents,
-    marketPrices,
-    month,
     monthlySeries,
     monthlySeriesError,
     positions,
     realisedGains,
     reloadAfterMutation,
-    setDateFrom,
-    setDateTo,
-    setEventType,
-    setFundingMonths,
-    setMonth,
-    setSource,
-    source,
   }
 }

@@ -1,24 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { InvestmentFiltersPanel } from '../src/components/investments/InvestmentFiltersPanel'
+import { describe, expect, it } from 'vitest'
 import { WealthMobileAccounts } from '../src/components/wealth/WealthMobileAccounts'
-
-const FILTER_PROPS = {
-  activeFilterCount: 2,
-  eventType: '',
-  source: '',
-  month: '',
-  dateFrom: '',
-  dateTo: '',
-  onEventTypeChange: vi.fn(),
-  onSourceChange: vi.fn(),
-  onMonthChange: vi.fn(),
-  onDateFromChange: vi.fn(),
-  onDateToChange: vi.fn(),
-  onApplyFilters: vi.fn(),
-  onClearFilters: vi.fn(),
-}
 
 const SAVINGS_ACCOUNT = {
   id: 1,
@@ -35,32 +18,6 @@ const SAVINGS_ACCOUNT = {
 }
 
 describe('disclosure chevrons', () => {
-  it('toggles the compact investment filter with a decorative chevron', async () => {
-    const user = userEvent.setup()
-    const { container } = render(
-      <InvestmentFiltersPanel {...FILTER_PROPS} />,
-    )
-
-    const summary = screen.getByText('Filters').closest('summary')
-    const details = summary?.closest('details')
-    const chevron = container.querySelector(
-      '.compact-filter-panel .disclosure-chevron',
-    )
-
-    expect(summary).not.toBeNull()
-    expect(details).not.toBeNull()
-    expect(details).not.toHaveAttribute('open')
-    expect(chevron).toHaveAttribute('aria-hidden', 'true')
-
-    await user.click(summary!)
-
-    expect(details).toHaveAttribute('open')
-
-    await user.click(summary!)
-
-    expect(details).not.toHaveAttribute('open')
-  })
-
   it('toggles a Wealth mobile account group with a decorative chevron', async () => {
     const user = userEvent.setup()
     const { container } = render(

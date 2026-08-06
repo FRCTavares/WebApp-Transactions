@@ -12,7 +12,6 @@
 @import './styles/table-actions.css';
 @import './styles/investments.css';
 @import './styles/investments-mobile.css';
-@import './styles/market-data.css';
 @import './styles/owed.css';
 @import './styles/owed-desktop.css';
 @import './styles/owed-mobile.css';
@@ -32,6 +31,16 @@
 @import './styles/loading-states.css';
 @import './styles/investment-loading-states.css';
 @import './styles/mobile-shell.css';
+
+/* Shared summary-card typography (used by ImportPage and InvestmentSummaryCards). */
+.summary-card strong {
+  overflow-wrap: anywhere;
+}
+
+.summary-card:nth-last-child(-n + 3) strong {
+  font-size: 21px;
+  line-height: 1.2;
+}
 
 .global-topbar {
   position: absolute;
@@ -128,23 +137,6 @@ main {
 
 @media (max-width: 800px) {.investments-page .panel-card > .section-header p {
     display: none;
-  }
-
-.investment-funding-mobile-summary {
-    display: block;
-    margin: 0;
-    color: var(--color-text);
-    font-size: 15px;
-    font-weight: 700;
-  }
-
-.investment-funding-details {
-    margin-top: 12px;
-  }
-
-.market-data-details {
-    display: grid;
-    gap: 12px;
   }
 
 .backend-wake-notice {
@@ -686,8 +678,7 @@ main {
 }
 
 .investments-page .portfolio-snapshot,
-.investments-page .panel-card,
-.investments-page .filter-panel {
+.investments-page .panel-card {
   margin-bottom: 0;
 }
 
@@ -706,96 +697,4 @@ main {
 
 .investments-page .section-header h2 {
   margin-top: 0;
-}
-
-.investments-page .investment-funding-card,
-.investments-page .market-data-panel {
-  padding: 1rem;
-}
-
-.investments-page .investment-events-card {
-  padding: 1rem;
-}
-
-.investments-page .investment-events-card > p {
-  margin-bottom: 0;
-}
-
-.investments-page .investment-position-table-wrap,
-.investments-page .investments-table-wrap {
-  margin-bottom: 0;
-}
-
-@media (min-width: 900px) {.investments-page .investment-funding-card,
-.investments-page .market-data-panel,
-.investments-page .filter-panel,
-.investments-page .investment-events-card {
-    border-radius: 0.95rem;
-  }
-
-.investments-page .investment-funding-details,
-.investments-page .market-data-details {
-    margin-top: 0.4rem;
-  }
-}
-
-@media (max-width: 800px) {.investments-page {
-    gap: 0.85rem;
-  }
-
-.investments-page .investment-funding-card,
-.investments-page .market-data-panel,
-.investments-page .investment-events-card {
-    padding: 14px;
-  }
-}
-
-/* Investments second pass: compact utility sections. */
-.investment-tools-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1.35rem;
-}
-
-.investments-page .investment-tools-grid .panel-card {
-  min-height: 0;
-}
-
-.investments-page .investment-funding-card,
-.investments-page .market-data-panel {
-  align-content: start;
-}
-
-.investments-page .investment-events-card {
-  padding: 0.95rem 1rem;
-}
-
-.investments-page .investment-events-card .section-header {
-  margin-bottom: 0;
-}
-
-.investments-page .investment-events-card .section-header h2 {
-  margin-bottom: 0.25rem;
-}
-
-.investments-page .investment-events-card .action-group {
-  align-items: center;
-}
-
-.investments-page .investment-events-card .small-button {
-  min-height: 2.25rem;
-}
-
-.investments-page .investment-events-card:has(.investments-table-wrap) .section-header {
-  margin-bottom: 0.9rem;
-}
-
-@media (max-width: 1100px) {.investment-tools-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 800px) {.investment-tools-grid {
-    gap: 0.85rem;
-  }
 }

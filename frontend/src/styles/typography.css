@@ -33,19 +33,15 @@
 .section-header h2,
 .panel-card > .section-header h2,
 .wealth-mobile-accounts h2,
-.expense-chart-list h3,
-.market-data-mobile-simple h2 {
+.expense-chart-list h3 {
   font-size: var(--font-section-title);
   font-weight: var(--weight-title);
   letter-spacing: var(--tracking-tight);
 }
 
 .muted.small,
-.table-subtext,
 .wealth-mobile-account-group-header span,
 .wealth-mobile-account-item span,
-.investment-position-mobile-header p,
-.investment-position-mobile-details dt,
 .expense-chart-legend-row small,
 .dashboard-mobile-category-card span,
 .dashboard-mobile-category-transaction-main p {
@@ -73,8 +69,7 @@
   .investments-page .panel-card > .section-header h2,
   .investment-summary-card .section-header h2,
   .dashboard-section-header h2,
-  .wealth-mobile-accounts h2,
-  .market-data-mobile-simple h2 {
+  .wealth-mobile-accounts h2 {
     font-size: var(--font-section-title);
     line-height: 1.15;
     letter-spacing: var(--tracking-tight);
@@ -97,19 +92,15 @@
   }
 
   .dashboard-metric-card strong,
-  .investment-funding-mobile-summary,
   .wealth-mobile-account-group-header > strong,
-  .wealth-mobile-account-item strong,
-  .investment-position-mobile-header strong {
+  .wealth-mobile-account-item strong {
     font-size: var(--font-card-title);
   }
 
   .dashboard-mobile-category-card strong,
   .dashboard-mobile-category-transaction-main strong,
   .expense-chart-legend-row strong,
-  .investment-position-mobile-details dd,
-  .investments-page label,
-  .small-button {
+  .investments-page label {
     font-size: var(--font-body);
   }
 
@@ -117,8 +108,6 @@
   .investments-page .muted.small,
   .wealth-mobile-account-group-header span,
   .wealth-mobile-account-item span,
-  .investment-position-mobile-header p,
-  .investment-position-mobile-details dt,
   .expense-chart-legend-row small,
   .dashboard-mobile-category-card span,
   .dashboard-mobile-category-transaction-main p {
