@@ -81,6 +81,17 @@ def check_owed_item_integrity(
 
 
 @router.post(
+    "/integrity-check/repair",
+    response_model=list[OwedItemIntegrityIssue],
+)
+def repair_owed_item_integrity(
+    service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
+):
+    return service.backfill_stale_owed_events(current_user=current_user)
+
+
+@router.post(
     "",
     response_model=OwedItemRead,
     status_code=status.HTTP_201_CREATED,

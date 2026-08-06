@@ -158,3 +158,124 @@ def test_integrity_check_flags_active_item_whose_latest_event_is_deleted(
     assert len(issues) == 1
     assert issues[0]["owed_item_id"] == item.id
     assert issues[0]["latest_event_type"] == "deleted"
+
+
+def test_repair_requires_privileged_access(client):
+    response = client.post("/api/owed/integrity-check/repair")
+
+    assert response.status_code == 403
+
+
+def test_repair_backfills_only_the_mismatched_case(client, db_session):
+    use_privileged_user(client)
+
+    stale_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Legacy Import",
+        amount_total=Decimal("500.00"),
+        amount_paid=Decimal("500.00"),
+        amount_remaining=Decimal("0.00"),
+        reason="Paid off outside the normal update flow",
+        status="paid",
+    )
+    no_event_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Legacy Import",
+        amount_total=Decimal("50.00"),
+        amount_paid=Decimal("0.00"),
+        amount_remaining=Decimal("50.00"),
+        reason="Imported with no event",
+        status="open",
+    )
+    reinstated_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Legacy Import",
+        amount_total=Decimal("30.00"),
+        amount_paid=Decimal("0.00"),
+        amount_remaining=Decimal("30.00"),
+        reason="Reinstated after being deleted",
+        status="open",
+    )
+    db_session.add_all([stale_item, no_event_item, reinstated_item])
+    db_session.flush()
+    db_session.add_all(
+        [
+            OwedItemEvent(
+                user_id=LOCAL_DEFAULT_USER_ID,
+                owed_item_id=stale_item.id,
+                event_type="created",
+                effective_date=date(2026, 1, 10),
+                amount_total=Decimal("500.00"),
+                amount_paid=Decimal("0.00"),
+                amount_remaining=Decimal("500.00"),
+                status="open",
+                notes="Stale.",
+            ),
+            OwedItemEvent(
+                user_id=LOCAL_DEFAULT_USER_ID,
+                owed_item_id=reinstated_item.id,
+                event_type="deleted",
+                effective_date=date(2026, 1, 10),
+                amount_total=Decimal("30.00"),
+                amount_paid=Decimal("0.00"),
+                amount_remaining=Decimal("30.00"),
+                status="open",
+                notes="Deleted, then reinstated directly.",
+            ),
+        ]
+    )
+    db_session.commit()
+
+    response = client.post("/api/owed/integrity-check/repair")
+
+    assert response.status_code == 200
+    repaired = response.json()
+    assert len(repaired) == 1
+    assert repaired[0]["owed_item_id"] == stale_item.id
+
+    # The mismatch is now gone...
+    follow_up = client.get("/api/owed/integrity-check")
+    remaining_issue_ids = {issue["owed_item_id"] for issue in follow_up.json()}
+    assert stale_item.id not in remaining_issue_ids
+
+    # ...but the two cases that need a human judgment call are untouched.
+    assert no_event_item.id in remaining_issue_ids
+    assert reinstated_item.id in remaining_issue_ids
+
+
+def test_repair_is_idempotent(client, db_session):
+    use_privileged_user(client)
+
+    item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person="Legacy Import",
+        amount_total=Decimal("500.00"),
+        amount_paid=Decimal("500.00"),
+        amount_remaining=Decimal("0.00"),
+        reason="Paid off outside the normal update flow",
+        status="paid",
+    )
+    db_session.add(item)
+    db_session.flush()
+    db_session.add(
+        OwedItemEvent(
+            user_id=LOCAL_DEFAULT_USER_ID,
+            owed_item_id=item.id,
+            event_type="created",
+            effective_date=date(2026, 1, 10),
+            amount_total=Decimal("500.00"),
+            amount_paid=Decimal("0.00"),
+            amount_remaining=Decimal("500.00"),
+            status="open",
+            notes="Stale.",
+        )
+    )
+    db_session.commit()
+
+    first_pass = client.post("/api/owed/integrity-check/repair")
+    second_pass = client.post("/api/owed/integrity-check/repair")
+
+    assert first_pass.status_code == 200
+    assert len(first_pass.json()) == 1
+    assert second_pass.status_code == 200
+    assert second_pass.json() == []
