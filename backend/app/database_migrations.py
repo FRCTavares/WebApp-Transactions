@@ -23,7 +23,7 @@ def run_startup_migrations(engine: Engine) -> None:
     if not is_sqlite_database_url(str(engine.url)):
         return
 
-    _run_investment_funding_month_migrations(engine=engine)
+    _drop_removed_investment_funding_months_table(engine=engine)
     _run_transaction_category_migrations(engine=engine)
     _drop_removed_category_rules_table(engine=engine)
     _run_transaction_migrations(engine=engine)
@@ -511,65 +511,12 @@ def _run_transaction_migrations(engine: Engine) -> None:
 
 
 
-def _run_investment_funding_month_migrations(engine: Engine) -> None:
-    if _table_exists(engine=engine, table_name="investment_funding_months"):
+def _drop_removed_investment_funding_months_table(engine: Engine) -> None:
+    if not _table_exists(engine=engine, table_name="investment_funding_months"):
         return
 
-    if engine.dialect.name == "postgresql":
-        create_table_sql = """
-            CREATE TABLE investment_funding_months (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user',
-                month VARCHAR(7) NOT NULL,
-                source VARCHAR(50) NOT NULL,
-                manual_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                cashback_rounding_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
-                notes TEXT,
-                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT ck_investment_funding_months_month_length CHECK (length(month) = 7),
-                CONSTRAINT ck_investment_funding_months_manual_non_negative CHECK (manual_amount >= 0),
-                CONSTRAINT ck_investment_funding_months_cashback_rounding_non_negative CHECK (cashback_rounding_amount >= 0),
-                CONSTRAINT ck_investment_funding_months_currency_length CHECK (length(currency) = 3),
-                CONSTRAINT uq_investment_funding_months_user_month_source UNIQUE (user_id, month, source)
-            )
-        """
-    else:
-        create_table_sql = """
-            CREATE TABLE investment_funding_months (
-                id INTEGER PRIMARY KEY,
-                user_id VARCHAR(100) NOT NULL DEFAULT 'local-default-user',
-                month VARCHAR(7) NOT NULL,
-                source VARCHAR(50) NOT NULL,
-                manual_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                cashback_rounding_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                currency VARCHAR(3) NOT NULL DEFAULT 'EUR',
-                notes TEXT,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT ck_investment_funding_months_month_length CHECK (length(month) = 7),
-                CONSTRAINT ck_investment_funding_months_manual_non_negative CHECK (manual_amount >= 0),
-                CONSTRAINT ck_investment_funding_months_cashback_rounding_non_negative CHECK (cashback_rounding_amount >= 0),
-                CONSTRAINT ck_investment_funding_months_currency_length CHECK (length(currency) = 3),
-                CONSTRAINT uq_investment_funding_months_user_month_source UNIQUE (user_id, month, source)
-            )
-        """
-
     with engine.begin() as connection:
-        connection.execute(text(create_table_sql))
-        connection.execute(
-            text(
-                "CREATE INDEX ix_investment_funding_months_user_month "
-                "ON investment_funding_months (user_id, month)"
-            )
-        )
-        connection.execute(
-            text(
-                "CREATE INDEX ix_investment_funding_months_user_source "
-                "ON investment_funding_months (user_id, source)"
-            )
-        )
+        connection.execute(text("DROP TABLE investment_funding_months"))
 
 def _run_investment_event_migrations(engine: Engine) -> None:
     if not _table_exists(engine=engine, table_name="investment_events"):

@@ -4,7 +4,6 @@ from app.models.cashflow_rule import CashflowRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
-from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
 from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
@@ -15,7 +14,7 @@ from app.models.wealth_snapshot import WealthSnapshot
 from app.models.user_preferences import UserPreferences
 
 
-EXPORT_FORMAT_VERSION = 4
+EXPORT_FORMAT_VERSION = 5
 
 NON_RECOVERABLE_USER_TABLE_NAMES = (
     "import_previews",
@@ -42,10 +41,6 @@ USER_RECOVERY_TABLES = (
         OwedPaymentAllocation,
     ),
     UserRecoveryTable('investment_events', InvestmentEvent),
-    UserRecoveryTable(
-        'investment_funding_months',
-        InvestmentFundingMonth,
-    ),
     UserRecoveryTable('wealth_snapshots', WealthSnapshot),
     UserRecoveryTable('cashflow_rules', CashflowRule),
     UserRecoveryTable('description_rules', DescriptionRule),
@@ -73,7 +68,6 @@ MIGRATION_TABLE_ORDER = (
     'owed_item_events',
     'owed_payment_allocations',
     'investment_events',
-    'investment_funding_months',
     'market_prices',
     'market_price_history',
     'wealth_snapshots',

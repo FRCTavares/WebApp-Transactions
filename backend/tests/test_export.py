@@ -12,7 +12,6 @@ from app.models.cashflow_rule import CashflowRule
 from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.investment_event import InvestmentEvent
-from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
 from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
@@ -167,17 +166,6 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
     )
 
     db_session.add(
-        InvestmentFundingMonth(
-            user_id=user_id,
-            month="2026-06",
-            source="trading212",
-            manual_amount=Decimal("100.00"),
-            cashback_rounding_amount=Decimal("1.00"),
-            currency="EUR",
-        )
-    )
-
-    db_session.add(
         CashflowRule(
             user_id=user_id,
             name=f"{user_id} cashflow rule",
@@ -216,7 +204,7 @@ def test_export_json_returns_current_user_data_only(db_session):
     body = response.json()
     tables = body["tables"]
 
-    assert body["format_version"] == 4
+    assert body["format_version"] == 5
     assert body["user_id"] == current_user.id
     assert body["email"] is None
 
@@ -230,7 +218,6 @@ def test_export_json_returns_current_user_data_only(db_session):
         "owed_item_events",
         "owed_payment_allocations",
         "investment_events",
-        "investment_funding_months",
         "wealth_snapshots",
         "cashflow_rules",
         "description_rules",

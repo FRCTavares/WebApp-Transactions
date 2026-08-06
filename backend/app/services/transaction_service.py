@@ -7,13 +7,23 @@ from app.auth.current_user import CurrentUser
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment
 from app.models.transaction import Transaction
+from app.repositories.transaction_category_repository import (
+    TransactionCategoryRepository,
+)
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import TransactionCreate, TransactionRead, TransactionUpdate
 
 
 class TransactionService:
-    def __init__(self, repository: TransactionRepository) -> None:
+    def __init__(
+        self,
+        repository: TransactionRepository,
+        category_repository: TransactionCategoryRepository | None = None,
+    ) -> None:
         self.repository = repository
+        self.category_repository = category_repository or TransactionCategoryRepository(
+            repository.db
+        )
 
     def create_transaction(
         self,
@@ -21,6 +31,12 @@ class TransactionService:
         *,
         current_user: CurrentUser,
     ) -> TransactionRead:
+        self.validate_category(
+            transaction_data.category,
+            direction=transaction_data.direction,
+            cashflow_type=transaction_data.cashflow_type,
+            current_user=current_user,
+        )
         transaction = self.repository.create(
             transaction_data,
             user_id=current_user.id,
@@ -144,6 +160,19 @@ class TransactionService:
     ) -> TransactionRead:
         user_id = current_user.id
         transaction = self._get_transaction_model(transaction_id, user_id)
+        update_fields = transaction_data.model_dump(exclude_unset=True)
+
+        if "category" in update_fields:
+            self.validate_category(
+                update_fields["category"],
+                direction=update_fields.get("direction", transaction.direction),
+                cashflow_type=update_fields.get(
+                    "cashflow_type", transaction.cashflow_type
+                ),
+                current_user=current_user,
+                current_value=transaction.category,
+            )
+
         updated_transaction = self.repository.update(transaction, transaction_data)
         owed_items_by_transaction_id = self.repository.list_owed_items_by_transaction_ids(
             [updated_transaction.id],
@@ -192,6 +221,55 @@ class TransactionService:
             )
 
         self.repository.delete(transaction)
+
+    def validate_category(
+        self,
+        category: str | None,
+        *,
+        direction: str,
+        cashflow_type: str | None,
+        current_user: CurrentUser,
+        current_value: str | None = None,
+    ) -> None:
+        """Rejects a category that isn't one of the user's configured
+        categories for this direction/cashflow type.
+
+        Keeping the transaction's own existing value unchanged is always
+        allowed, even if that value no longer matches an active category -
+        legacy or imported category text should be surfaced for correction
+        elsewhere, not silently blocked from being kept when editing an
+        unrelated field on the same transaction.
+        """
+        if category is None or category.strip() == "":
+            return
+
+        normalised_category = category.strip()
+
+        if (
+            current_value is not None
+            and current_value.strip().casefold() == normalised_category.casefold()
+        ):
+            return
+
+        if cashflow_type is None:
+            return
+
+        match = self.category_repository.find_active_by_name(
+            normalised_category,
+            user_id=current_user.id,
+            direction=direction,
+            cashflow_type=cashflow_type,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f'Category "{normalised_category}" does not exist for '
+                    f"this direction/cashflow type. Create it in Settings "
+                    f"before assigning it to a transaction."
+                ),
+            )
 
     def _get_transaction_model(
         self,

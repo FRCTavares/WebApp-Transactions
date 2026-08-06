@@ -52,6 +52,12 @@ class FinancialCommandService:
         current_user: CurrentUser,
     ) -> TransactionRead:
         self._validate_owed_total(command)
+        self.transaction_service.validate_category(
+            command.transaction.category,
+            direction=command.transaction.direction,
+            cashflow_type=command.transaction.cashflow_type,
+            current_user=current_user,
+        )
 
         try:
             transaction = self.transaction_repository.create(

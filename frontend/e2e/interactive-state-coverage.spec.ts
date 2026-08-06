@@ -175,14 +175,94 @@ for (const combo of FULL_MATRIX) {
 }
 
 /**
- * Investments: no coverage in this file. The page previously carried
- * several disclosures (funding split, manual market price entry, detailed
- * positions, filters, events list) that were permanently hidden via CSS as
- * dead UI ("Investments main-view cleanup" in the old investments.css); that
- * dead code was removed outright rather than kept hidden. The page's
- * remaining openable state is the "Add trade"/"Add manual position" modal,
- * which is not yet covered here - see TODO_LIST.md.
+ * Investments: a position's icon button opens the "Add trade" modal.
+ * Positions have no page-level "add" trigger of their own (see
+ * e2e/seed.setup.ts's note that holdings/positions are derived from
+ * transactions and import events, not created directly), and the modal's
+ * own "Add manual position" mode is only reachable once a position already
+ * exists - so this test seeds one position directly via
+ * POST /api/investment-events (the same request
+ * frontend/src/pages/InvestmentsPage.tsx's submitManualInvestmentEvent
+ * sends) before driving the actual open/close flow through the UI.
+ * Verified against frontend/src/pages/InvestmentsPage.tsx:283-297
+ * (`openManualEventForm` prefills the form from the clicked position) and
+ * frontend/src/components/investments/InvestmentHoldingsOverview.tsx:88-95
+ * (`Add a buy or sell for ${label}` icon button label, where label is the
+ * position's ticker).
  */
+for (const combo of REDUCED_MATRIX) {
+  test(
+    `investments: a position's icon button opens the add-trade modal in ${combo.theme} theme at ${combo.viewport.width}px`,
+    async ({ page }, testInfo) => {
+      await setUpPage(page, combo)
+
+      const uniqueSuffix = `${testInfo.project.name}-${combo.theme}-${combo.viewport.name}-${Date.now()}`
+      const ticker = `E2E ${uniqueSuffix}`
+      const instrumentName = `E2E Interactive Trade ${uniqueSuffix}`
+
+      const authState = await page.context().storageState()
+      const authOrigin = authState.origins.find(
+        (origin) => origin.origin === 'http://127.0.0.1:4173',
+      )
+      const authEntry = authOrigin?.localStorage.find(
+        (item) => item.name.startsWith('sb-') && item.name.endsWith('-auth-token'),
+      )
+
+      if (!authEntry) {
+        throw new Error('e2e auth session not found in storage state')
+      }
+
+      const accessToken = (JSON.parse(authEntry.value) as { access_token: string }).access_token
+
+      const seedResponse = await page.request.post(
+        'http://127.0.0.1:8000/api/investment-events',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          data: {
+            date: '2026-05-04',
+            source: 'manual',
+            account: 'Manual',
+            event_type: 'market_buy',
+            description: `E2E interactive trade seed ${uniqueSuffix}`,
+            raw_description: `E2E interactive trade seed ${uniqueSuffix}`,
+            instrument_name: instrumentName,
+            ticker,
+            quantity: '1',
+            price: '100.00',
+            amount: '100.00',
+            currency: 'EUR',
+          },
+        },
+      )
+
+      expect(seedResponse.ok(), 'seeding an investment event').toBeTruthy()
+
+      await page.goto('/investments')
+
+      await page.getByRole('button', { name: `Add a buy or sell for ${ticker}` }).click()
+
+      await expect(
+        page.getByRole('heading', { level: 2, name: `Add trade: ${instrumentName}` }),
+      ).toBeVisible()
+      await expect(page.getByLabel('Instrument name')).toBeVisible()
+      await expect(page.getByLabel('Ticker')).toBeVisible()
+      await expect(page.getByLabel('Quantity')).toBeVisible()
+
+      await assertNoHorizontalOverflow(page, 'on /investments with the add-trade modal open')
+
+      await page.screenshot({
+        path: testInfo.outputPath(screenshotName('investments', combo, 'add-trade-open')),
+        fullPage: true,
+      })
+
+      await page.getByRole('button', { name: 'Cancel' }).click()
+
+      await expect(
+        page.getByRole('heading', { level: 2, name: `Add trade: ${instrumentName}` }),
+      ).not.toBeVisible()
+    },
+  )
+}
 
 /**
  * Categories: deleting a category with linked transactions opens the

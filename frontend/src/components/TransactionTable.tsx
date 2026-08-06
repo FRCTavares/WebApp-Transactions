@@ -8,7 +8,7 @@ import {
   Receipt,
   Trash2,
 } from 'lucide-react'
-import type { Transaction } from '../types/api'
+import type { Transaction, TransactionCategory } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
 import { Badge, Button, EmptyState, Icon } from './ui'
 import type { BadgeTone } from './ui'
@@ -30,6 +30,26 @@ type TransactionTableProps = {
   onEdit?: (transaction: TransactionTableRow) => void
   onDelete?: (transaction: TransactionTableRow) => void
   onMarkOwed?: (transaction: TransactionTableRow) => void
+  categoryOptions?: TransactionCategory[]
+}
+
+function isKnownCategory(
+  transaction: TransactionTableRow,
+  categoryOptions?: TransactionCategory[],
+) {
+  if (!transaction.category || !categoryOptions) {
+    return true
+  }
+
+  const normalisedCategory = transaction.category.trim().toLowerCase()
+
+  return categoryOptions.some(
+    (category) =>
+      category.is_active &&
+      category.direction === transaction.direction &&
+      category.cashflow_type === transaction.cashflow_type &&
+      category.name.trim().toLowerCase() === normalisedCategory,
+  )
 }
 
 type SortField = 'date' | 'amount'
@@ -164,6 +184,7 @@ export function TransactionTable({
   onEdit,
   onDelete,
   onMarkOwed,
+  categoryOptions,
 }: TransactionTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -245,7 +266,27 @@ export function TransactionTable({
                     <strong>{transaction.description}</strong>
                     <p>
                       {formatDate(transaction.date)}
-                      {transaction.category ? ` · ${transaction.category}` : ''}
+                      {transaction.category ? (
+                        <>
+                          {' · '}
+                          <span
+                            className={
+                              isKnownCategory(transaction, categoryOptions)
+                                ? undefined
+                                : 'transaction-category-unknown'
+                            }
+                            title={
+                              isKnownCategory(transaction, categoryOptions)
+                                ? undefined
+                                : 'Not in your current categories — edit to fix'
+                            }
+                          >
+                            {transaction.category}
+                          </span>
+                        </>
+                      ) : (
+                        ''
+                      )}
                     </p>
                   </div>
                   <div className="transaction-mobile-amount">
@@ -431,7 +472,17 @@ export function TransactionTable({
                 </td>
                 <td>
                   {transaction.category ? (
-                    <Badge tone="neutral" size="sm">{transaction.category}</Badge>
+                    <Badge
+                      tone={isKnownCategory(transaction, categoryOptions) ? 'neutral' : 'warning'}
+                      size="sm"
+                      title={
+                        isKnownCategory(transaction, categoryOptions)
+                          ? undefined
+                          : 'Not in your current categories — edit to fix'
+                      }
+                    >
+                      {transaction.category}
+                    </Badge>
                   ) : (
                     <span className="muted">-</span>
                   )}

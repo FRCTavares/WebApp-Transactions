@@ -95,6 +95,7 @@ export function TransactionForm({
               : categoryOptions?.map((category) => category.name)
           }
           placeholder="Category"
+          allowCreate={false}
         />
       </div>
 

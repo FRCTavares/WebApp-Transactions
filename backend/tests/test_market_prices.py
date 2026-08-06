@@ -12,6 +12,7 @@ from app.auth.current_user import (
     get_privileged_user,
 )
 from app.models.investment_event import InvestmentEvent
+from app.models.market_price import MarketPrice
 
 
 def make_market_price_token(
@@ -77,27 +78,32 @@ def create_market_buy(db_session, *, ticker="VWCE", isin="IE00BK5BQT80"):
     return event
 
 
-def test_create_and_get_latest_market_price(client):
-    response = client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
+def create_market_price(
+    db_session,
+    *,
+    ticker="VWCE",
+    isin="IE00BK5BQT80",
+    price="150.00",
+    currency="EUR",
+    source="manual",
+):
+    market_price = MarketPrice(
+        ticker=ticker,
+        isin=isin,
+        price=Decimal(price),
+        currency=currency,
+        source=source,
     )
 
-    assert response.status_code == 201
+    db_session.add(market_price)
+    db_session.commit()
+    db_session.refresh(market_price)
 
-    created = response.json()
+    return market_price
 
-    assert created["ticker"] == "VWCE"
-    assert created["isin"] == "IE00BK5BQT80"
-    assert created["price"] == "150.00000000"
-    assert created["currency"] == "EUR"
-    assert created["source"] == "manual"
+
+def test_get_latest_market_price(client, db_session):
+    create_market_price(db_session)
 
     latest_response = client.get("/api/market-prices/latest?ticker=VWCE")
 
@@ -105,51 +111,9 @@ def test_create_and_get_latest_market_price(client):
     assert latest_response.json()["price"] == "150.00000000"
 
 
-def test_market_price_updates_existing_latest_price(client):
-    client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    response = client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "151.25",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    assert response.status_code == 201
-
-    list_response = client.get("/api/market-prices")
-
-    assert list_response.status_code == 200
-    assert len(list_response.json()) == 1
-    assert list_response.json()[0]["price"] == "151.25000000"
-
-
 def test_positions_include_matching_market_price_and_gain(client, db_session):
     create_market_buy(db_session)
-
-    client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
+    create_market_price(db_session)
 
     response = client.get("/api/investment-events/positions")
 
@@ -167,17 +131,7 @@ def test_positions_include_matching_market_price_and_gain(client, db_session):
 
 def test_positions_do_not_fake_gain_when_cost_currency_does_not_match_price_currency(client, db_session):
     create_market_buy(db_session)
-
-    client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "USD",
-            "source": "manual",
-        },
-    )
+    create_market_price(db_session, currency="USD")
 
     response = client.get("/api/investment-events/positions")
 
@@ -193,85 +147,6 @@ def test_positions_do_not_fake_gain_when_cost_currency_does_not_match_price_curr
     assert position["unrealised_gain"] is None
     assert position["unrealised_gain_percent"] is None
 
-
-def test_update_market_price_by_id(client):
-    create_response = client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    assert create_response.status_code == 201
-
-    price_id = create_response.json()["id"]
-
-    update_response = client.patch(
-        f"/api/market-prices/{price_id}",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "152.50",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    assert update_response.status_code == 200
-    assert update_response.json()["price"] == "152.50000000"
-
-    list_response = client.get("/api/market-prices")
-
-    assert list_response.status_code == 200
-    assert len(list_response.json()) == 1
-    assert list_response.json()[0]["price"] == "152.50000000"
-
-
-def test_delete_market_price_by_id(client):
-    create_response = client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    assert create_response.status_code == 201
-
-    price_id = create_response.json()["id"]
-
-    delete_response = client.delete(f"/api/market-prices/{price_id}")
-
-    assert delete_response.status_code == 204
-
-    list_response = client.get("/api/market-prices")
-
-    assert list_response.status_code == 200
-    assert list_response.json() == []
-
-
-def test_update_missing_market_price_returns_404(client):
-    response = client.patch(
-        "/api/market-prices/999999",
-        json={
-            "price": "152.50",
-        },
-    )
-
-    assert response.status_code == 404
-
-
-def test_delete_missing_market_price_returns_404(client):
-    response = client.delete("/api/market-prices/999999")
-
-    assert response.status_code == 404
 
 from datetime import UTC, datetime
 
@@ -333,6 +208,30 @@ def test_fetch_latest_market_price_from_provider(client):
         client.app.dependency_overrides.clear()
 
 
+def test_fetch_latest_market_price_updates_existing_row_in_place(client):
+    client.app.dependency_overrides[get_market_data_provider] = lambda: FakeMarketDataProvider()
+
+    try:
+        for _ in range(2):
+            response = client.post(
+                "/api/market-prices/fetch/latest",
+                json={
+                    "symbol": "VWCE.DE",
+                    "ticker": "VWCE",
+                    "isin": "IE00BK5BQT80",
+                },
+            )
+
+            assert response.status_code == 200
+
+        list_response = client.get("/api/market-prices")
+
+        assert list_response.status_code == 200
+        assert len(list_response.json()) == 1
+    finally:
+        client.app.dependency_overrides.clear()
+
+
 def test_fetch_and_list_market_price_history_from_provider(client):
     client.app.dependency_overrides[get_market_data_provider] = lambda: FakeMarketDataProvider()
 
@@ -378,15 +277,12 @@ def test_positions_convert_usd_market_value_to_eur_using_imported_fx_rate(client
     db_session.add(event)
     db_session.commit()
 
-    client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "CSPX",
-            "isin": "IE00B5BMR087",
-            "price": "800.54",
-            "currency": "USD",
-            "source": "manual",
-        },
+    create_market_price(
+        db_session,
+        ticker="CSPX",
+        isin="IE00B5BMR087",
+        price="800.54",
+        currency="USD",
     )
 
     response = client.get("/api/investment-events/positions")
@@ -416,15 +312,12 @@ def test_positions_derive_market_fx_rate_from_eur_market_buy(client, db_session)
     db_session.add(event)
     db_session.commit()
 
-    client.post(
-        "/api/market-prices",
-        json={
-            "ticker": "CSPX",
-            "isin": "IE00B5BMR087",
-            "price": "800.53997803",
-            "currency": "USD",
-            "source": "manual",
-        },
+    create_market_price(
+        db_session,
+        ticker="CSPX",
+        isin="IE00B5BMR087",
+        price="800.53997803",
+        currency="USD",
     )
 
     response = client.get("/api/investment-events/positions")
@@ -448,9 +341,6 @@ def test_positions_derive_market_fx_rate_from_eur_market_buy(client, db_session)
         ("GET", "/api/market-prices/history?ticker=VWCE", None),
         ("POST", "/api/market-prices/fetch/latest", {}),
         ("POST", "/api/market-prices/fetch/history", {}),
-        ("POST", "/api/market-prices", {}),
-        ("PATCH", "/api/market-prices/999999", {}),
-        ("DELETE", "/api/market-prices/999999", None),
     ],
 )
 def test_market_price_routes_require_authentication_when_supabase_is_enabled(
@@ -480,9 +370,6 @@ def test_market_price_routes_require_authentication_when_supabase_is_enabled(
     [
         ("POST", "/api/market-prices/fetch/latest", {}),
         ("POST", "/api/market-prices/fetch/history", {}),
-        ("POST", "/api/market-prices", {}),
-        ("PATCH", "/api/market-prices/999999", {}),
-        ("DELETE", "/api/market-prices/999999", None),
     ],
 )
 def test_market_price_mutations_reject_authenticated_non_admin(
@@ -512,7 +399,7 @@ def test_market_price_mutations_reject_authenticated_non_admin(
     assert response.json() == {"detail": "Privileged access is required"}
 
 
-def test_market_price_create_accepts_configured_admin(
+def test_market_price_fetch_latest_accepts_configured_admin(
     client,
     monkeypatch,
 ):
@@ -523,25 +410,28 @@ def test_market_price_create_accepts_configured_admin(
     use_real_market_price_auth(client)
 
     token = make_market_price_token("admin@example.com", secret)
+    client.app.dependency_overrides[get_market_data_provider] = lambda: FakeMarketDataProvider()
 
-    response = client.post(
-        "/api/market-prices",
-        headers={"Authorization": f"Bearer {token}"},
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
+    try:
+        response = client.post(
+            "/api/market-prices/fetch/latest",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "symbol": "VWCE.DE",
+                "ticker": "VWCE",
+                "isin": "IE00BK5BQT80",
+            },
+        )
 
-    assert response.status_code == 201
-    assert response.json()["ticker"] == "VWCE"
+        assert response.status_code == 200
+        assert response.json()["ticker"] == "VWCE"
+    finally:
+        client.app.dependency_overrides.pop(get_market_data_provider, None)
 
 
 def test_market_price_reads_accept_authenticated_non_admin(
     client,
+    db_session,
     monkeypatch,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
@@ -553,22 +443,9 @@ def test_market_price_reads_accept_authenticated_non_admin(
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_market_price_auth(client)
 
-    admin_token = make_market_price_token("admin@example.com", secret)
+    create_market_price(db_session)
+
     user_token = make_market_price_token("me@example.com", secret)
-
-    create_response = client.post(
-        "/api/market-prices",
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json={
-            "ticker": "VWCE",
-            "isin": "IE00BK5BQT80",
-            "price": "150.00",
-            "currency": "EUR",
-            "source": "manual",
-        },
-    )
-
-    assert create_response.status_code == 201
 
     response = client.get(
         "/api/market-prices",

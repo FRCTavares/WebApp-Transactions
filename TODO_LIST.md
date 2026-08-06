@@ -17,20 +17,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 2. Outstanding verification and product decisions
 
-- [ ] Add Playwright interactive-state coverage for the Investments page's
-      "Add trade"/"Add manual position" modal (see the comment above the
-      Categories block in `frontend/e2e/interactive-state-coverage.spec.ts`).
-      It has unit coverage (`ManualInvestmentEventForm.test.tsx`) but no
-      e2e coverage of the modal open/close/submit flow.
-- [ ] Decide whether to delete the now-frontend-unreachable backend
-      surface left over from the Investments page cleanup: the
-      `investment-funding-months` routes/service/repository, the manual
-      market-price CRUD endpoints (`POST`/`PATCH`/`DELETE
-      /api/market-prices`), and `resolve-manual-funding`. Nothing in the
-      frontend calls these anymore, but removing backend routes/services/
-      migrations is a separate, larger change from the frontend cleanup and
-      wasn't done here.
-
 ## 3. Financial correctness and atomicity
 
 ## 4. Frontend design system

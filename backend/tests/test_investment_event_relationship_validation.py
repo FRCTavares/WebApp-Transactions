@@ -3,7 +3,6 @@ from decimal import Decimal
 
 import pytest
 from fastapi import HTTPException
-from sqlalchemy import select
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 from app.models.investment_event import InvestmentEvent
@@ -15,7 +14,6 @@ from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.investment_event import (
     InvestmentEventCreate,
     InvestmentEventUpdate,
-    ManualFundingResolutionCreate,
 )
 from app.services.investment_event_service import InvestmentEventService
 
@@ -507,62 +505,3 @@ def test_update_event_allows_current_transaction_links(db_session):
 
     assert updated.transaction_id == transaction.id
     assert updated.matched_transaction_id == transaction.id
-
-
-def test_manual_funding_resolution_rolls_back_on_update_failure(
-    db_session,
-    monkeypatch,
-):
-    event = InvestmentEvent(
-        user_id=LOCAL_DEFAULT_USER_ID,
-        date=date(2026, 7, 14),
-        source="trading212",
-        event_type="deposit",
-        description="Investment deposit",
-        raw_description="Investment deposit",
-        amount=Decimal("100.00"),
-        currency="USD",
-        funding_source="activobank",
-        funding_match_status="unmatched",
-    )
-    db_session.add(event)
-    db_session.commit()
-
-    service = build_service(db_session)
-
-    def fail_update(*args, **kwargs):
-        raise RuntimeError("forced event update failure")
-
-    monkeypatch.setattr(
-        service.repository,
-        "update",
-        fail_update,
-    )
-
-    with pytest.raises(
-        RuntimeError,
-        match="forced event update failure",
-    ):
-        service.resolve_manual_funding(
-            event.id,
-            ManualFundingResolutionCreate(
-                eur_amount=Decimal("90.00"),
-                date=date(2026, 7, 14),
-                description="Manual funding",
-            ),
-            current_user=LOCAL_CURRENT_USER,
-        )
-
-    stored_transactions = list(
-        db_session.scalars(
-            select(Transaction).where(
-                Transaction.user_id == LOCAL_DEFAULT_USER_ID
-            )
-        ).all()
-    )
-    assert stored_transactions == []
-
-    db_session.refresh(event)
-    assert event.funding_match_status == "unmatched"
-    assert event.transaction_id is None
-    assert event.matched_transaction_id is None
