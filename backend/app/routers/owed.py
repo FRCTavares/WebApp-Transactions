@@ -4,13 +4,14 @@ from io import StringIO
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.auth.current_user import CurrentUser, get_current_user
+from app.auth.current_user import CurrentUser, get_current_user, get_privileged_user
 from app.database import get_db
 from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.security.rate_limit import enforce_export_rate_limit
 from app.schemas.owed_item import (
     OwedItemCreate,
+    OwedItemIntegrityIssue,
     OwedItemRead,
     OwedItemUpdate,
     OwedPaymentCreate,
@@ -66,6 +67,28 @@ def get_owed_service(db: Session = Depends(get_db)) -> OwedService:
     owed_repository = OwedRepository(db)
     transaction_repository = TransactionRepository(db)
     return OwedService(owed_repository, transaction_repository)
+
+
+@router.get(
+    "/integrity-check",
+    response_model=list[OwedItemIntegrityIssue],
+)
+def check_owed_item_integrity(
+    service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
+):
+    return service.find_integrity_issues(current_user=current_user)
+
+
+@router.post(
+    "/integrity-check/repair",
+    response_model=list[OwedItemIntegrityIssue],
+)
+def repair_owed_item_integrity(
+    service: OwedService = Depends(get_owed_service),
+    current_user: CurrentUser = Depends(get_privileged_user),
+):
+    return service.backfill_stale_owed_events(current_user=current_user)
 
 
 @router.post(
