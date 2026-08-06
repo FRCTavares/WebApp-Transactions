@@ -18,13 +18,14 @@ from app.schemas.owed_item import (
     OwedPersonRename,
     OwedPersonRenameRead,
 )
+from app.services.owed_integrity_service import OwedIntegrityMixin
 
 
 def utc_today() -> date:
     return datetime.now(UTC).date()
 
 
-class OwedService:
+class OwedService(OwedIntegrityMixin):
     def __init__(
         self,
         repository: OwedRepository,
