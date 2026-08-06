@@ -12,6 +12,7 @@ from app.repositories.owed_repository import OwedRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.owed_item import (
     OwedItemCreate,
+    OwedItemIntegrityIssue,
     OwedItemUpdate,
     OwedPaymentCreate,
     OwedPaymentRead,
@@ -761,3 +762,92 @@ class OwedService:
         dedupe_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
         return owed_data.model_copy(update={"dedupe_hash": dedupe_hash})
+
+    def find_integrity_issues(
+        self,
+        *,
+        current_user: CurrentUser,
+    ) -> list[OwedItemIntegrityIssue]:
+        """Compare every non-deleted OwedItem against its own latest event.
+
+        Diagnostic for the drift found while fixing the Wealth trend chart
+        (see WealthService.get_monthly_totals): a legacy import or a manual
+        edit can leave an item's event log out of sync with the item
+        itself. Read-only - does not correct anything, so it is safe to
+        call repeatedly while the actual bad row(s) are tracked down.
+        """
+        user_id = current_user.id
+        items = self.repository.list(
+            user_id=user_id,
+            limit=10000,
+            offset=0,
+        )
+        events = self.repository.list_all_events_ascending(user_id)
+
+        latest_event_by_item: dict[int, OwedItemEvent] = {}
+        for event in events:
+            latest_event_by_item[event.owed_item_id] = event
+
+        issues: list[OwedItemIntegrityIssue] = []
+
+        for item in items:
+            latest_event = latest_event_by_item.get(item.id)
+
+            if latest_event is None:
+                issues.append(
+                    OwedItemIntegrityIssue(
+                        owed_item_id=item.id,
+                        person=item.person,
+                        reason="No event on record for this item at all.",
+                        item_amount_remaining=item.amount_remaining,
+                        item_status=item.status,
+                        latest_event_amount_remaining=None,
+                        latest_event_status=None,
+                        latest_event_type=None,
+                    )
+                )
+                continue
+
+            if latest_event.event_type == "deleted":
+                issues.append(
+                    OwedItemIntegrityIssue(
+                        owed_item_id=item.id,
+                        person=item.person,
+                        reason=(
+                            "Item exists and is not deleted, but its "
+                            "latest event is a delete event."
+                        ),
+                        item_amount_remaining=item.amount_remaining,
+                        item_status=item.status,
+                        latest_event_amount_remaining=(
+                            latest_event.amount_remaining
+                        ),
+                        latest_event_status=latest_event.status,
+                        latest_event_type=latest_event.event_type,
+                    )
+                )
+                continue
+
+            if (
+                latest_event.amount_remaining != item.amount_remaining
+                or latest_event.status != item.status
+            ):
+                issues.append(
+                    OwedItemIntegrityIssue(
+                        owed_item_id=item.id,
+                        person=item.person,
+                        reason=(
+                            "Latest event does not match the item's "
+                            "current amount_remaining/status."
+                        ),
+                        item_amount_remaining=item.amount_remaining,
+                        item_status=item.status,
+                        latest_event_amount_remaining=(
+                            latest_event.amount_remaining
+                        ),
+                        latest_event_status=latest_event.status,
+                        latest_event_type=latest_event.event_type,
+                    )
+                )
+
+        return issues
