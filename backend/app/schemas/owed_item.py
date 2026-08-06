@@ -111,3 +111,20 @@ class OwedPaymentRead(BaseModel):
     allocations: list[OwedPaymentAllocationRead]
     created_at: DateTimeType
     updated_at: DateTimeType
+
+
+class OwedItemIntegrityIssue(BaseModel):
+    """One OwedItem whose current authoritative state (amount_remaining,
+    status) disagrees with its own latest OwedItemEvent - or that has no
+    event at all. Surfaces the data drift that motivated using OwedItem
+    directly (not event replay) for "now" in WealthService.get_monthly_totals.
+    """
+
+    owed_item_id: int
+    person: str
+    reason: str
+    item_amount_remaining: Decimal
+    item_status: str
+    latest_event_amount_remaining: Decimal | None
+    latest_event_status: str | None
+    latest_event_type: str | None

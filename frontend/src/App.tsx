@@ -14,6 +14,7 @@ import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { AppSidebar } from './components/AppSidebar'
 import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
+import { OnboardingModal } from './components/OnboardingModal'
 import { PeriodProvider } from './context/PeriodContext'
 import { useAccessStatus } from './hooks/useAccessStatus'
 import { useAuth } from './hooks/useAuth'
@@ -259,6 +260,10 @@ function App() {
   return (
     <PeriodProvider>
       <div className="app-shell">
+        {!presentation.isLoading && !presentation.preferences.has_completed_onboarding && (
+          <OnboardingModal preferences={presentation.preferences} onSave={presentation.save} />
+        )}
+
         <AppSidebar
           authError={authError}
           currentPage={page}

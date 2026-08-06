@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Numeric, String
+from sqlalchemy import Boolean, DateTime, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -24,6 +24,11 @@ class UserPreferences(Base):
         Numeric(12, 2),
         default=Decimal("100.00"),
         server_default="100.00",
+    )
+    has_completed_onboarding: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default="false",
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
