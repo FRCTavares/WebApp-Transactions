@@ -33,24 +33,6 @@ CI/deployment reliability, accessibility, and UI maintainability.
 
 ## 3. Financial correctness and atomicity
 
-- [ ] Audit `owed_item_events` for legacy/stale entries that disagree
-      with their `OwedItem`'s current `amount_remaining`/`status`.
-      The Wealth trend chart's current-month point didn't match the
-      Wealth summary card (a real gap, not rounding) because
-      `get_monthly_totals` reconstructed "now" by replaying the event
-      log instead of reading the authoritative `OwedItem` row, and at
-      least one item's event history had drifted from its real state
-      - most likely from the original legacy Excel import, which may
-      not have created a matching event for every historical
-      payment/edit. Fixed the symptom (the current-month point now
-      reads the authoritative source directly, same as the summary
-      card - see `WealthService.get_monthly_totals`), but the
-      specific stale row(s) causing the drift haven't been identified
-      or corrected, and historical (non-current) months still rely on
-      event replay, so past chart points could carry the same drift.
-      Needs direct production DB access to compare every OwedItem
-      against its latest event and fix the actual bad row(s).
-
 ## 4. Frontend design system
 
 Full audit and target design system:
