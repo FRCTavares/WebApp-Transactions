@@ -6,6 +6,7 @@ from app.models.transaction import Transaction
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.cashflow_rule import CashflowRuleCreate, CashflowRuleUpdate
+from app.services.transaction_service import TransactionService
 
 
 class CashflowRuleService:
@@ -94,6 +95,10 @@ class CashflowRuleService:
                 detail="Transaction repository is required to apply cashflow rules",
             )
 
+        transaction_service = TransactionService(
+            self.transaction_repository
+        )
+
         try:
             transactions = (
                 self.transaction_repository.list_for_description_rule_application(
@@ -116,6 +121,13 @@ class CashflowRuleService:
 
                 if transaction.cashflow_type == cashflow_type:
                     continue
+
+                transaction_service.validate_category(
+                    transaction.category,
+                    direction=transaction.direction,
+                    cashflow_type=cashflow_type,
+                    current_user=current_user,
+                )
 
                 self.transaction_repository.update_cashflow_type(
                     transaction=transaction,

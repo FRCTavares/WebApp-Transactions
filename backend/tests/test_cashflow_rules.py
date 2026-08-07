@@ -6,13 +6,35 @@ import pytest
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
 
 from app.repositories.cashflow_rule_repository import CashflowRuleRepository
+from app.repositories.transaction_category_repository import (
+    TransactionCategoryRepository,
+)
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.cashflow_rule import CashflowRuleCreate, CashflowRuleUpdate
 from app.schemas.transaction import TransactionCreate
+from app.schemas.transaction_category import TransactionCategoryCreate
 from app.services.cashflow_rule_service import CashflowRuleService
 
 
 LOCAL_CURRENT_USER = CurrentUser(id=LOCAL_DEFAULT_USER_ID)
+
+
+def create_transaction_category(
+    db_session,
+    name: str,
+    cashflow_type: str,
+    *,
+    user_id: str = LOCAL_DEFAULT_USER_ID,
+):
+    repository = TransactionCategoryRepository(db_session)
+    return repository.create(
+        TransactionCategoryCreate(
+            name=name,
+            direction="out",
+            cashflow_type=cashflow_type,
+        ),
+        user_id=user_id,
+    )
 
 
 def test_cashflow_rule_crud(db_session):
@@ -129,6 +151,197 @@ def test_apply_cashflow_rule_updates_matching_transactions(db_session):
     assert result["updated"] == 1
     assert matching_transaction.cashflow_type == "transfer"
     assert non_matching_transaction.cashflow_type == "expense"
+
+
+def test_cashflow_rule_rejects_incompatible_existing_category_and_rolls_back(
+    db_session,
+):
+    transaction_repository = TransactionRepository(db_session)
+    rule_repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(
+        cashflow_rule_repository=rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    create_transaction_category(
+        db_session,
+        "Groceries",
+        "expense",
+    )
+
+    first_transaction = transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 2),
+            description="Trading 212 uncategorised",
+            raw_description="Trading 212 uncategorised",
+            amount=Decimal("100.00"),
+            direction="out",
+            source="activobank",
+            currency="EUR",
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    incompatible_transaction = transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 1),
+            description="Trading 212 groceries",
+            raw_description="Trading 212 groceries",
+            amount=Decimal("25.00"),
+            direction="out",
+            source="activobank",
+            category="Groceries",
+            currency="EUR",
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    service.create_rule(
+        CashflowRuleCreate(
+            name="Trading 212 investment",
+            cashflow_type="transfer",
+            match_text="Trading 212",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        ),
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    with pytest.raises(Exception) as caught_error:
+        service.apply_rules_to_existing_transactions(
+            current_user=LOCAL_CURRENT_USER
+        )
+
+    assert getattr(caught_error.value, "status_code", None) == 400
+
+    db_session.expire_all()
+    db_session.refresh(first_transaction)
+    db_session.refresh(incompatible_transaction)
+
+    assert first_transaction.cashflow_type == "expense"
+    assert incompatible_transaction.cashflow_type == "expense"
+    assert incompatible_transaction.category == "Groceries"
+
+
+def test_cashflow_rule_accepts_category_that_exists_in_target_group(
+    db_session,
+):
+    transaction_repository = TransactionRepository(db_session)
+    rule_repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(
+        cashflow_rule_repository=rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    create_transaction_category(
+        db_session,
+        "Flexible",
+        "expense",
+    )
+    create_transaction_category(
+        db_session,
+        "Flexible",
+        "transfer",
+    )
+
+    transaction = transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 1),
+            description="Trading 212 flexible",
+            raw_description="Trading 212 flexible",
+            amount=Decimal("100.00"),
+            direction="out",
+            source="activobank",
+            category="Flexible",
+            currency="EUR",
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    service.create_rule(
+        CashflowRuleCreate(
+            name="Trading 212 investment",
+            cashflow_type="transfer",
+            match_text="Trading 212",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        ),
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    result = service.apply_rules_to_existing_transactions(
+        current_user=LOCAL_CURRENT_USER
+    )
+
+    db_session.refresh(transaction)
+
+    assert result == {"checked": 1, "updated": 1}
+    assert transaction.cashflow_type == "transfer"
+    assert transaction.category == "Flexible"
+
+
+def test_cashflow_rule_rejects_target_category_owned_by_another_user(
+    db_session,
+):
+    transaction_repository = TransactionRepository(db_session)
+    rule_repository = CashflowRuleRepository(db_session)
+    service = CashflowRuleService(
+        cashflow_rule_repository=rule_repository,
+        transaction_repository=transaction_repository,
+    )
+
+    create_transaction_category(
+        db_session,
+        "Flexible",
+        "expense",
+    )
+    create_transaction_category(
+        db_session,
+        "Flexible",
+        "transfer",
+        user_id="other-user",
+    )
+
+    transaction = transaction_repository.create(
+        TransactionCreate(
+            date=date(2026, 5, 1),
+            description="Trading 212 flexible",
+            raw_description="Trading 212 flexible",
+            amount=Decimal("100.00"),
+            direction="out",
+            source="activobank",
+            category="Flexible",
+            currency="EUR",
+        ),
+        user_id=LOCAL_DEFAULT_USER_ID,
+    )
+
+    service.create_rule(
+        CashflowRuleCreate(
+            name="Trading 212 investment",
+            cashflow_type="transfer",
+            match_text="Trading 212",
+            match_field="raw_description",
+            direction="out",
+            source="activobank",
+        ),
+        current_user=LOCAL_CURRENT_USER,
+    )
+
+    with pytest.raises(Exception) as caught_error:
+        service.apply_rules_to_existing_transactions(
+            current_user=LOCAL_CURRENT_USER
+        )
+
+    assert getattr(caught_error.value, "status_code", None) == 400
+
+    db_session.expire_all()
+    db_session.refresh(transaction)
+
+    assert transaction.cashflow_type == "expense"
+    assert transaction.category == "Flexible"
 
 
 def test_cashflow_rule_application_commits_once(db_session, monkeypatch):
