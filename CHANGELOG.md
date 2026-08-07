@@ -72,8 +72,8 @@ that's generated. The current running build's commit is shown in
   `ImportPage.tsx`, `WealthPage.tsx`, `OwedPage.tsx`, `InvestmentsPage.tsx`,
   `TransactionsPage.tsx`, and `TransactionCategoriesPanel.tsx`. Also added
   the missing `aria-label` to the mobile (and desktop) "Owed" row action in
-  `TransactionTable.tsx`. See `TODO_LIST.md` section 10 for the full
-  breakdown.
+  `TransactionTable.tsx`. The associated pull-request history retains
+  the full split breakdown.
 
 ### Fixed
 

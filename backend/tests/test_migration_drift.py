@@ -2,8 +2,8 @@
 
 See `scripts/check_migration_drift.py` for the full rationale. This test
 just wires that static check into the normal backend test run so it
-actually blocks CI (`python -m pytest -q` in .github/workflows/ci.yml),
-matching TODO_LIST.md section 7.
+actually blocks CI (`python -m pytest -q` in `.github/workflows/ci.yml`),
+where it contributes to the required backend test gate.
 """
 
 from scripts.check_migration_drift import find_migration_drift

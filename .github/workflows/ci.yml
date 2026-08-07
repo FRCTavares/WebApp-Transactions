@@ -148,7 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Promoted to a required check 2026-07-20 after proving stable across
-    # every CI run since it was introduced (#32). See TODO_LIST.md.
+    # every CI run since it was introduced (#32). See docs/browser-support.md.
     #
     # Sharded 4-way on 2026-08-04: the Phase 7 visual-audit suite
     # (theme-page-coverage.spec.ts + interactive-state-coverage.spec.ts, 100
