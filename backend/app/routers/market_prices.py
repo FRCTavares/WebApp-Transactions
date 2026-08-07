@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.auth.current_user import (
@@ -11,7 +11,7 @@ from app.auth.current_user import (
 from app.database import get_db
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
-from app.schemas.market_price import MarketPriceCreate, MarketPriceRead, MarketPriceUpdate
+from app.schemas.market_price import MarketPriceRead
 from app.security.rate_limit import enforce_market_fetch_rate_limit
 from app.schemas.market_price_history import (
     MarketPriceFetchHistoryRequest,
@@ -106,35 +106,3 @@ def fetch_market_price_history(
     current_user: CurrentUser = Depends(get_privileged_user),
 ):
     return service.fetch_history(request)
-
-
-@router.post(
-    "",
-    response_model=MarketPriceRead,
-    status_code=status.HTTP_201_CREATED,
-)
-def create_or_update_market_price(
-    price_data: MarketPriceCreate,
-    service: MarketPriceService = Depends(get_market_price_service),
-    current_user: CurrentUser = Depends(get_privileged_user),
-):
-    return service.create_or_update_latest(price_data)
-
-
-@router.patch("/{price_id}", response_model=MarketPriceRead)
-def update_market_price(
-    price_id: int,
-    price_data: MarketPriceUpdate,
-    service: MarketPriceService = Depends(get_market_price_service),
-    current_user: CurrentUser = Depends(get_privileged_user),
-):
-    return service.update(price_id, price_data)
-
-
-@router.delete("/{price_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_market_price(
-    price_id: int,
-    service: MarketPriceService = Depends(get_market_price_service),
-    current_user: CurrentUser = Depends(get_privileged_user),
-):
-    service.delete(price_id)

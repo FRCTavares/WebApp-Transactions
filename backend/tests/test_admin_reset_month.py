@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from app.auth.current_user import CurrentUser
 from app.models.investment_event import InvestmentEvent
-from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
@@ -69,15 +68,7 @@ def test_reset_month_dry_run_counts_without_deleting(db_session):
         amount=Decimal("50.00"),
         currency="EUR",
     )
-    funding_month = InvestmentFundingMonth(
-        user_id=user.id,
-        month="2026-06",
-        source="trading212",
-        manual_amount=Decimal("50.00"),
-        cashback_rounding_amount=Decimal("0.00"),
-        currency="EUR",
-    )
-    db_session.add_all([allocation, investment_event, funding_month])
+    db_session.add_all([allocation, investment_event])
     db_session.commit()
 
     response = service.reset_month(
@@ -97,7 +88,6 @@ def test_reset_month_dry_run_counts_without_deleting(db_session):
         "owed_payments": 1,
         "owed_payment_allocations": 1,
         "investment_events": 1,
-        "investment_funding_months": 1,
     }
     assert response.deleted == {
         "transactions": 0,
@@ -105,7 +95,6 @@ def test_reset_month_dry_run_counts_without_deleting(db_session):
         "owed_payments": 0,
         "owed_payment_allocations": 0,
         "investment_events": 0,
-        "investment_funding_months": 0,
     }
     assert response.after == response.before
 

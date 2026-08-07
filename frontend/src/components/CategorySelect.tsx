@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { CATEGORY_OPTIONS } from '../constants/categories'
 
 type CategorySelectProps = {
@@ -63,6 +63,14 @@ export function CategorySelect({
     (option) => normaliseOption(option) === searchValue,
   )
 
+  const lastValidValueRef = useRef(value)
+
+  useEffect(() => {
+    if (hasExactMatch || value.trim() === '') {
+      lastValidValueRef.current = value
+    }
+  }, [value, hasExactMatch])
+
   const shouldShowCreateOption =
     allowCreate && value.trim() !== '' && !hasExactMatch
   const optionCount = filteredOptions.length + (shouldShowCreateOption ? 1 : 0)
@@ -113,7 +121,13 @@ export function CategorySelect({
           }
         }}
         onBlur={() => {
-          window.setTimeout(() => setIsOpen(false), 120)
+          window.setTimeout(() => {
+            setIsOpen(false)
+
+            if (!allowCreate && value.trim() !== '' && !hasExactMatch) {
+              onChange(lastValidValueRef.current)
+            }
+          }, 120)
         }}
         placeholder={placeholder}
         role="combobox"

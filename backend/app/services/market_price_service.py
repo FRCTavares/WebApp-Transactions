@@ -6,7 +6,7 @@ from app.models.market_price import MarketPrice
 from app.models.market_price_history import MarketPriceHistory
 from app.repositories.market_price_history_repository import MarketPriceHistoryRepository
 from app.repositories.market_price_repository import MarketPriceRepository
-from app.schemas.market_price import MarketPriceCreate, MarketPriceUpdate
+from app.schemas.market_price import MarketPriceCreate
 from app.schemas.market_price_history import (
     MarketPriceFetchHistoryRequest,
     MarketPriceFetchLatestRequest,
@@ -150,30 +150,3 @@ class MarketPriceService:
             date_to=date_to,
             limit=limit,
         )
-
-    def update(self, price_id: int, price_data: MarketPriceUpdate) -> MarketPrice:
-        market_price = self.repository.get_by_id(price_id)
-
-        if market_price is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Market price not found",
-            )
-
-        if price_data.fetched_at is None:
-            price_data = price_data.model_copy(
-                update={"fetched_at": datetime.now(UTC)}
-            )
-
-        return self.repository.update(market_price, price_data)
-
-    def delete(self, price_id: int) -> None:
-        market_price = self.repository.get_by_id(price_id)
-
-        if market_price is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Market price not found",
-            )
-
-        self.repository.delete(market_price)

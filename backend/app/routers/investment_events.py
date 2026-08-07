@@ -18,8 +18,6 @@ from app.schemas.investment_event import (
     InvestmentMonthlySeriesPointRead,
     InvestmentPositionRead,
     InvestmentRealisedGainRead,
-    ManualFundingResolutionCreate,
-    ManualFundingResolutionRead,
 )
 from app.schemas.pending_fx import PendingFxSummaryRead
 from app.security.rate_limit import enforce_market_fetch_rate_limit
@@ -174,25 +172,3 @@ def get_investment_event(
     current_user: CurrentUser = Depends(get_current_user),
 ):
     return service.get_event(event_id, current_user=current_user)
-
-
-@router.post(
-    "/{event_id}/resolve-manual-funding",
-    response_model=ManualFundingResolutionRead,
-)
-def resolve_manual_funding(
-    event_id: int,
-    resolution_data: ManualFundingResolutionCreate,
-    service: InvestmentEventService = Depends(get_investment_event_service),
-    current_user: CurrentUser = Depends(get_current_user),
-):
-    investment_event, transaction_id = service.resolve_manual_funding(
-        event_id=event_id,
-        resolution_data=resolution_data,
-        current_user=current_user,
-    )
-
-    return {
-        "investment_event": investment_event,
-        "transaction_id": transaction_id,
-    }

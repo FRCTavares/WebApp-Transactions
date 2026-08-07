@@ -3,7 +3,6 @@ from app.models.description_rule import DescriptionRule
 from app.models.import_batch import ImportBatch
 from app.models.import_preview import ImportPreview
 from app.models.investment_event import InvestmentEvent
-from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.market_price import MarketPrice
 from app.models.market_price_history import MarketPriceHistory
 from app.models.owed_item import OwedItem
@@ -22,7 +21,6 @@ __all__ = [
     "ImportBatch",
     "ImportPreview",
     "InvestmentEvent",
-    "InvestmentFundingMonth",
     "MarketPrice",
     "MarketPriceHistory",
     "OwedItem",

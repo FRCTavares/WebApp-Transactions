@@ -446,6 +446,10 @@
   background: var(--color-warning-subtle);
 }
 
+.transaction-category-unknown {
+  color: var(--color-warning-text);
+}
+
 /* Transaction delete dialog. */
 .transaction-delete-dialog-backdrop {
   position: fixed;

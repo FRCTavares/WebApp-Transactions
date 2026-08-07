@@ -23,9 +23,7 @@ from app.services.investment_valuation_service import InvestmentValuationMixin
 from app.schemas.investment_event import (
     InvestmentEventCreate,
     InvestmentEventUpdate,
-    ManualFundingResolutionCreate,
 )
-from app.schemas.transaction import TransactionCreate
 
 
 class InvestmentEventService(InvestmentValuationMixin):
@@ -191,87 +189,3 @@ class InvestmentEventService(InvestmentValuationMixin):
         event.matched_transaction = matched_transaction
 
         return event
-
-    def resolve_manual_funding(
-        self,
-        event_id: int,
-        resolution_data: ManualFundingResolutionCreate,
-        *,
-        current_user: CurrentUser,
-    ) -> tuple[InvestmentEvent, int]:
-        if self.transaction_repository is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Transaction repository is required",
-            )
-
-        event = self.get_event(event_id, current_user=current_user)
-
-        if event.event_type != "deposit":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only deposit investment events can be manually resolved",
-            )
-
-        if event.funding_match_status != "unmatched":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only unmatched funding events can be manually resolved",
-            )
-
-        db = self.repository.db
-
-        if self.transaction_repository.db is not db:
-            raise RuntimeError(
-                "Investment and transaction repositories must share a session"
-            )
-
-        try:
-            transaction = self.transaction_repository.create(
-                TransactionCreate(
-                    date=resolution_data.date,
-                    description=resolution_data.description,
-                    raw_description=(
-                        "Manual funding resolution for investment "
-                        f"event {event.id}: {event.raw_description}"
-                    ),
-                    amount=resolution_data.eur_amount,
-                    original_amount=event.amount,
-                    original_currency=event.currency,
-                    fx_rate_to_eur=(
-                        resolution_data.eur_amount / event.amount
-                    ),
-                    fx_rate_source="manual",
-                    direction="out",
-                    cashflow_type="transfer",
-                    source="manual",
-                    account="ActivoBank",
-                    currency="EUR",
-                    notes=resolution_data.notes,
-                ),
-                user_id=current_user.id,
-                commit=False,
-            )
-
-            updated_event = self.repository.update(
-                event,
-                InvestmentEventUpdate(
-                    transaction_id=transaction.id,
-                    matched_transaction_id=transaction.id,
-                    funding_match_status="manual",
-                    fx_rate_to_eur=(
-                        resolution_data.eur_amount / event.amount
-                    ),
-                    fx_rate_source="manual",
-                ),
-                commit=False,
-            )
-
-            db.commit()
-            db.refresh(transaction)
-            db.refresh(updated_event)
-        except Exception:
-            db.rollback()
-            raise
-
-        return updated_event, transaction.id

@@ -247,6 +247,7 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
           onEdit={props.onStartEdit}
           onDelete={props.onDelete}
           onMarkOwed={props.direction === 'out' ? props.onMarkOwed : undefined}
+          categoryOptions={props.categoryOptions}
         />
       )}
       {props.editingTransaction && (

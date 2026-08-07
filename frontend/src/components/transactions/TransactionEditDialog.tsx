@@ -126,6 +126,7 @@ export function TransactionEditDialog({
               form.category,
             )}
             placeholder="Category"
+            allowCreate={false}
           />
         </div>
 

@@ -5,7 +5,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models.investment_event import InvestmentEvent
-from app.models.investment_funding_month import InvestmentFundingMonth
 from app.models.owed_item import OwedItem
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
@@ -17,7 +16,6 @@ RESET_COUNT_KEYS = [
     "owed_payments",
     "owed_payment_allocations",
     "investment_events",
-    "investment_funding_months",
 ]
 
 
@@ -82,19 +80,12 @@ class MonthResetRepository:
             .where(InvestmentEvent.date < end_date)
         )
 
-        investment_funding_month_ids = self._list_ids(
-            select(InvestmentFundingMonth.id)
-            .where(InvestmentFundingMonth.user_id == user_id)
-            .where(InvestmentFundingMonth.month == month_label)
-        )
-
         return {
             "transactions": transaction_ids,
             "owed_items": owed_item_ids,
             "owed_payments": owed_payment_ids,
             "owed_payment_allocations": owed_payment_allocation_ids,
             "investment_events": investment_event_ids,
-            "investment_funding_months": investment_funding_month_ids,
         }
 
     def count_reset_rows(
@@ -146,10 +137,6 @@ class MonthResetRepository:
         deleted["investment_events"] = self._delete_by_ids(
             InvestmentEvent,
             reset_ids["investment_events"],
-        )
-        deleted["investment_funding_months"] = self._delete_by_ids(
-            InvestmentFundingMonth,
-            reset_ids["investment_funding_months"],
         )
         deleted["transactions"] = self._delete_by_ids(
             Transaction,

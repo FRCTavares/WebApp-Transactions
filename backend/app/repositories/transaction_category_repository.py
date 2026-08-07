@@ -90,6 +90,24 @@ class TransactionCategoryRepository:
         )
         return self.db.scalar(statement)
 
+    def find_active_by_name(
+        self,
+        name: str,
+        user_id: str,
+        direction: str,
+        cashflow_type: str,
+    ) -> TransactionCategory | None:
+        statement = (
+            select(TransactionCategory)
+            .where(TransactionCategory.user_id == user_id)
+            .where(TransactionCategory.is_active.is_(True))
+            .where(TransactionCategory.direction == direction)
+            .where(TransactionCategory.cashflow_type == cashflow_type)
+            .where(func.lower(TransactionCategory.name) == name.strip().lower())
+            .limit(1)
+        )
+        return self.db.scalar(statement)
+
     def update(
         self,
         category: TransactionCategory,
