@@ -162,15 +162,32 @@ class TransactionService:
         transaction = self._get_transaction_model(transaction_id, user_id)
         update_fields = transaction_data.model_dump(exclude_unset=True)
 
-        if "category" in update_fields:
+        category_fields = {"category", "direction", "cashflow_type"}
+
+        if category_fields.intersection(update_fields):
+            effective_direction = update_fields.get(
+                "direction",
+                transaction.direction,
+            )
+            effective_cashflow_type = update_fields.get(
+                "cashflow_type",
+                transaction.cashflow_type,
+            )
+            category_group_changed = (
+                effective_direction != transaction.direction
+                or effective_cashflow_type != transaction.cashflow_type
+            )
+
             self.validate_category(
-                update_fields["category"],
-                direction=update_fields.get("direction", transaction.direction),
-                cashflow_type=update_fields.get(
-                    "cashflow_type", transaction.cashflow_type
-                ),
+                update_fields.get("category", transaction.category),
+                direction=effective_direction,
+                cashflow_type=effective_cashflow_type,
                 current_user=current_user,
-                current_value=transaction.category,
+                current_value=(
+                    None
+                    if category_group_changed
+                    else transaction.category
+                ),
             )
 
         updated_transaction = self.repository.update(transaction, transaction_data)

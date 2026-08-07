@@ -142,6 +142,72 @@ def test_update_transaction_to_known_category_succeeds(client):
     assert update_response.json()["category"] == "Restaurants"
 
 
+def test_update_cashflow_type_revalidates_existing_category(client):
+    create_category(client, "Groceries")
+    create_response = client.post(
+        "/api/transactions",
+        json=base_transaction_payload(category="Groceries"),
+    )
+    transaction_id = create_response.json()["id"]
+
+    update_response = client.patch(
+        f"/api/transactions/{transaction_id}",
+        json={"cashflow_type": "transfer"},
+    )
+
+    assert update_response.status_code == 400
+
+    unchanged = client.get(f"/api/transactions/{transaction_id}").json()
+    assert unchanged["cashflow_type"] == "expense"
+    assert unchanged["category"] == "Groceries"
+
+
+def test_update_direction_and_cashflow_type_revalidate_existing_category(
+    client,
+):
+    create_category(client, "Groceries")
+    create_response = client.post(
+        "/api/transactions",
+        json=base_transaction_payload(category="Groceries"),
+    )
+    transaction_id = create_response.json()["id"]
+
+    update_response = client.patch(
+        f"/api/transactions/{transaction_id}",
+        json={
+            "direction": "in",
+            "cashflow_type": "income",
+        },
+    )
+
+    assert update_response.status_code == 400
+
+    unchanged = client.get(f"/api/transactions/{transaction_id}").json()
+    assert unchanged["direction"] == "out"
+    assert unchanged["cashflow_type"] == "expense"
+    assert unchanged["category"] == "Groceries"
+
+
+def test_update_cashflow_type_accepts_category_in_target_group(client):
+    create_category(client, "Flexible", cashflow_type="expense")
+    create_category(client, "Flexible", cashflow_type="transfer")
+
+    create_response = client.post(
+        "/api/transactions",
+        json=base_transaction_payload(category="Flexible"),
+    )
+    transaction_id = create_response.json()["id"]
+
+    update_response = client.patch(
+        f"/api/transactions/{transaction_id}",
+        json={"cashflow_type": "transfer"},
+    )
+
+    assert update_response.status_code == 200
+    assert update_response.json()["cashflow_type"] == "transfer"
+    assert update_response.json()["category"] == "Flexible"
+
+
 def test_update_transaction_unrelated_field_keeps_legacy_category(client, db_session):
     """A transaction imported with legacy free-text category data (no
     matching TransactionCategory row) must remain editable for unrelated
