@@ -1,9 +1,16 @@
 # Frontend Design System — Audit and Implementation Plan
 
-Status: **open work**. Tracked in [`TODO_LIST.md`](../TODO_LIST.md) section 12.
+Status: **completed implementation plan / historical audit**.
 
-Audited 2026-07-20 against `frontend/src` at that date. This document is the
-specification; `TODO_LIST.md` holds the ordered, checkable tasks.
+Originally audited 2026-07-20 against `frontend/src` at that date. The design
+system was subsequently implemented and the root TODO no longer tracks these
+phases. Final completion evidence includes Phase 5 (`e40f916`), the Phase 6
+chart and icon work (`ac0fab0`, `b17c475`), and Phase 7 guardrails
+(`ad61f5d`), with later cleanup continuing on top of that baseline.
+
+The detailed measurements, defects, and imperative wording below are retained
+as historical design rationale. Statements describing the "current" codebase
+refer to the 2026-07-20 audit baseline, not the present repository state.
 
 ## 0. Decisions taken before this plan was written
 

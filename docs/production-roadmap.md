@@ -1,6 +1,7 @@
 # Production Roadmap and Release Readiness
 
-Last audited: 2026-07-19
+Last audited: 2026-08-07
+Current audit baseline: commit `8066189`
 Original audit baseline: commit `96c3f0c`
 
 This document tracks project status, evidence, and standing decisions.
@@ -22,24 +23,29 @@ Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 | UI/UX | 4/5 | Screen-level workflow clarity, loading/error states, and personal-default removal are implemented |
 | Accessibility | 4/5 | Dialog focus management, keyboard support, live regions, reduced motion, and browser zoom are implemented |
 | Internationalization | 4/5 | Locale, currency, date/time-zone preferences, and an English/Portuguese translation layer are implemented |
-| Testing | 4/5 | 470 backend tests, 11 frontend unit test files (31 tests), and a Playwright e2e suite (Chromium/Firefox/WebKit, desktop+mobile) all pass; lint, build, and migrations pass (#32, #24 merged) |
-| CI/CD | 4/5 | Required CI checks cover backend, recovery, frontend, dependencies, and repository hygiene; a non-required e2e job runs the full browser matrix |
-| Observability | 4/5 | Structured logging, readiness checks, a monitoring ping covering liveness/readiness/frontend, and a documented incident runbook exist (#33). Dashboard-side alert configuration (Render/Vercel/GitHub notification settings) still needs manual confirmation — see `docs/oauth-and-hosting-checklist.md`. |
+| Testing | 4/5 | 553 backend tests pass; frontend lint, unit tests, production build, and the sharded Playwright Chromium/Firefox/WebKit desktop+mobile suite are CI-gated and passing |
+| CI/CD | 4/5 | The required CI aggregate gates backend, recovery, frontend lint/unit/build, all four Playwright e2e shards, dependency audit, and repository hygiene |
+| Observability | 4/5 | Structured logging, readiness checks, monitoring, and the incident runbook exist; the dashboard-side GitHub, Supabase, Render, Vercel, and OAuth checks from #33 were completed 2026-07-20 and are documented in `docs/oauth-and-hosting-checklist.md` |
 | Performance | 3/5 | Free-host cold starts remain (accepted, see Upgrade Triggers); request/database timeouts are enforced |
-| Documentation | 4/5 | Privacy, i18n, security/timeouts, deployment, browser-support, offline, incident-response, and release/rollback docs exist; a broader accuracy refresh is still open (#34) |
-| Global release readiness | 3/5 | Suitable for controlled use; OAuth/Supabase/Render dashboard verification (checklist ready) and #34's documentation refresh still block public launch |
+| Documentation | 4/5 | Privacy, i18n, security/timeouts, deployment, browser-support, offline, incident-response, release/rollback, ownership, and recovery documentation exists; #34's broader documentation refresh is completed, with ongoing accuracy maintained as the code evolves |
+| Global release readiness | 3/5 | Suitable for controlled personal/invited use; wider public or commercial release remains blocked by the unresolved Yahoo/yfinance market-data licensing risk in decision #13 |
 
 ## 2. Verification Evidence
 
-Current repository evidence on 2026-07-19 (`main`, commit `5c3c18f` and later):
+Current repository evidence on 2026-08-07 (`main`, commit `8066189`):
 
-- Full backend suite: 470 tests passed (6 short test-key warnings, pre-existing and non-blocking).
-- Frontend lint and production build passed.
-- Alembic has a single head: `913e77ab658e` (merges `1a3d5e7f9b20` and `2b4d6f8a0c31`).
-- Required GitHub Actions CI checks passed on `main` after each merge below.
-- Backend dependencies are exactly pinned.
-- No production source file exceeds 1,000 lines (see Known Risks for files close to the limit).
-- No open `CRIT`, `HIGH`, or `MED` items remain in the task list.
+- Full backend suite: 553 tests passed (6 short test-key warnings, pre-existing and non-blocking).
+- Frontend lint, CSS guardrails, unit tests, production build, and the complete
+  Playwright browser matrix pass in required CI.
+- Playwright runs as four independent shards across Chromium, Firefox, and
+  WebKit desktop/mobile projects; the `Required checks` job fails if any shard
+  fails.
+- Alembic has a single head: `5e9a2c7f1b40`.
+- The Alembic/legacy-SQLite migration-drift gate passes.
+- Backend dependencies remain pinned and dependency auditing is CI-gated.
+- No production source file exceeds the project's 1,000-line hard limit.
+- GitHub reports no open issues and no open pull requests.
+- `TODO_LIST.md` contains no active implementation tasks.
 
 ### 2026-07-19 merge session
 
@@ -59,8 +65,9 @@ in open, unmerged PRs (#36–#40). This was reconciled today:
 - Full backend suite (465 tests), frontend lint, and frontend build were run
   after each merge; CI was confirmed green on `main` before proceeding to the
   next PR.
-- Dependabot PR #3 (`pydantic-core` 2.46.4 → 2.47.0) remains open and was not
-  merged in this session — tracked in `TODO_LIST.md`.
+- At the end of that historical merge session, Dependabot PR #3 was still
+  open. That is no longer current state; the 2026-08-07 audit reports no open
+  pull requests.
 
 ## 3. Definition of Global Release Ready
 
@@ -84,9 +91,9 @@ in open, unmerged PRs (#36–#40). This was reconciled today:
 ## 4. Known Risks
 
 **Resolved 2026-07-20**: the seven files previously approaching the
-project's 1,000-line hard limit / 900-line soft limit were all split
-(see `TODO_LIST.md` section 10 for the breakdown). No production source
-file exceeds 700 lines as of this pass.
+project's 1,000-line hard limit / 900-line soft limit were split into focused
+modules. The associated pull-request and commit history retains the detailed
+breakdown. No production source file exceeds the 1,000-line hard limit.
 
 ## 5. Upgrade Triggers
 
@@ -135,9 +142,12 @@ consequential implementation work tracked as its own task.
 10. Is offline use real or only installability? **Real offline use is required, not just installability** — not expected to be exercised often, but must work when it is. **Implemented**: see `docs/pwa-offline.md`.
 11. When does availability justify paid Render? **Never, by owner preference** (confirmed 2026-07-20) — the owner does not want to pay for hosting regardless of cold-start/availability tradeoffs. The Upgrade Triggers above remain documented for reference but are not something the owner intends to act on.
 12. Are users outside Portugal targeted immediately? **No.**
-13. Are market-data terms compatible with public release? **No — real, unresolved legal risk if released beyond personal/small-invited-group use.** Researched 2026-07-20: Yahoo's Terms of Service explicitly prohibit automated access/scraping without express written permission, and separately prohibit commercial use of Yahoo API data without permission. `yfinance` (used here) wraps Yahoo's unofficial endpoints — acceptable risk for personal/small-scale use like this project's current "controlled personal and invited-user deployment" (`docs/privacy.md`), but this must be resolved (switch to a licensed market-data provider) before any wider or genuinely public release. Do not treat "Global release readiness" below as met until this is addressed.
+13. Are market-data terms compatible with public release? **No — real, unresolved legal risk if released beyond personal/small-invited-group use.** Researched 2026-07-20: Yahoo's Terms of Service explicitly prohibit automated access/scraping without express written permission, and separately prohibit commercial use of Yahoo API data without permission. `yfinance` (used here) wraps Yahoo's unofficial endpoints — acceptable risk for personal/small-scale use like this project's current "controlled personal and invited-user deployment" (`docs/privacy.md`), but this must be resolved (switch to a licensed market-data provider) before any wider or genuinely public release. Do not treat the Global release readiness scorecard as met until this is addressed.
 
-## 7. Deferred (do not prioritize before open work above)
+## 7. Deferred product ideas
+
+These are not current TODO items. Reassess them only when product needs justify
+the added complexity.
 
 Complex charts, budget prediction, expanded investment analytics, automatic
 bank synchronization, Open Banking, OCR, PDF imports, advanced animations,

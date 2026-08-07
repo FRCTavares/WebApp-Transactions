@@ -5,9 +5,9 @@ that predate the current Alembic history (see its module docstring). It is
 hand-written and does not run Alembic. Twice already, an Alembic migration
 added a column that `database_migrations.py` never learned about, so a local
 SQLite database created before that migration existed 500'd on the first
-request that touched the new column (see TODO_LIST.md section 9 and
-`backend/tests/test_migration_failure_blocks_deploy.py` for the incident
-this is meant to prevent).
+request that touched the new column (see
+`tests/test_migration_failure_blocks_deploy.py` for the incident this is
+meant to prevent).
 
 This script statically scans every migration under `migrations/versions/`
 for `add_column`, `create_table`, and rename operations, and checks that the

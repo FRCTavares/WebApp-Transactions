@@ -52,6 +52,7 @@ for anything relying on iOS Safari's PWA install behavior or Safari's
 Intelligent Tracking Prevention, which Playwright's WebKit build does not
 fully replicate.
 
-See `TODO_LIST.md` for the current CI status of this suite (frontend unit
-tests are a required check; the e2e job runs on every push but is not yet
-required — see the note there before treating an e2e failure as blocking).
+The Playwright matrix is a required CI gate. `.github/workflows/ci.yml`
+runs it as four shards and includes the matrix job in the `Required checks`
+aggregate, so a failure in any shard blocks required CI. Frontend unit tests
+are also required through the `Frontend lint and build` job.

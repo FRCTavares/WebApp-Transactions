@@ -12,9 +12,9 @@ User-owned tables (each has a `user_id` column, enforced at the
 application/service layer — see "No database-level RLS" below):
 
 `transactions`, `owed_items`, `owed_item_events`, `owed_payments`,
-`import_batches`, `import_previews`, `investment_events`,
-`investment_funding_months`, `wealth_accounts`, `wealth_snapshots`,
-`transaction_categories` (`transaction_category.py`), `cashflow_rules`,
+`import_batches`, `import_previews`, `investment_events`, `wealth_accounts`,
+`wealth_snapshots`, `transaction_categories` (`transaction_category.py`),
+`cashflow_rules`,
 `description_rules`, `user_preferences`.
 
 Every repository method that reads or writes one of these tables takes the
@@ -53,11 +53,11 @@ that's the intended model going forward.
 
 ## Per-user investment tracking, built on shared prices
 
-Per-user investment data (`investment_events`, `investment_funding_months`)
-references shared ticker/ISIN identifiers from `market_prices` without
-duplicating price data per user. Each user's holdings, cost basis, and
-funding history are their own rows; the price used to value them is looked
-up from the shared table by ticker/ISIN, not owned by anyone.
+Per-user investment data (`investment_events`) references shared
+ticker/ISIN identifiers from `market_prices` without duplicating price data
+per user. Each user's holdings, cost basis, and investment activity derive
+from their own rows; the price used to value them is looked up from the
+shared table by ticker/ISIN, not owned by anyone.
 
 ## Admin vs. regular users
 
