@@ -77,6 +77,11 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Transaction edits now revalidate the existing category when the
+  transaction direction or cashflow type changes, preventing a partial
+  update from leaving a category attached to an incompatible transaction
+  group. (#99)
+
 - Trading 212 current-history imports now accept ISO-8601 timestamps with
   explicit timezone offsets, including the broker's `+00:00` UTC format and
   trailing `Z`, instead of classifying every affected row as invalid.
