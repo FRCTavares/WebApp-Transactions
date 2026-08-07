@@ -77,6 +77,11 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Cashflow-rule application now validates an existing transaction category
+  against the rule's target cashflow type before updating it. Incompatible
+  or cross-user category assignments reject the batch and preserve all
+  original transaction values through the existing rollback.
+
 - Transaction edits now revalidate the existing category when the
   transaction direction or cashflow type changes, preventing a partial
   update from leaving a category attached to an incompatible transaction
