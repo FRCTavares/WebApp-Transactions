@@ -1,20 +1,21 @@
 name: Keep backend warm and monitor availability
 
-# This workflow's actual job, as of 2026-07-20, is monitoring/alerting: a
-# failed scheduled run triggers GitHub's default email notification to repo
-# watchers. See docs/incident-response.md and
-# docs/oauth-and-hosting-checklist.md for the reasoning.
+# This workflow's actual job is monitoring/alerting: a failed scheduled run
+# triggers GitHub's default email notification to repo watchers. See
+# docs/incident-response.md and docs/oauth-and-hosting-checklist.md for the
+# reasoning.
 #
-# It does NOT reliably reduce Render cold starts by itself -- GitHub Actions
-# silently throttles frequent cron schedules like the one below to roughly
-# hourly under normal load, regardless of what's written here. That's a
-# GitHub-side limitation, not a bug in this file. The actual 10-minute
-# keep-warm pinging is handled externally by a free cron-job.org job hitting
-# GET /api/health, which isn't subject to this throttling.
+# As of the Render -> Cloud Run migration, this backend uses
+# --min-instances=0 (scale-to-zero). The cron below intentionally runs
+# hourly rather than every 10 minutes, so this workflow does not itself keep
+# an instance continuously warm and inflate Cloud Run usage -- it exists to
+# catch outages within about an hour, not to defeat scale-to-zero. If an
+# external cron-job.org ping against the old Render URL is still configured,
+# it should be updated to the new Cloud Run URL or disabled.
 
 on:
   schedule:
-    - cron: "7/10 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          BACKEND_URL="https://f-transactions-api.onrender.com"
+          BACKEND_URL="https://webapp-transactions-backend-1025162530033.europe-west1.run.app"
 
           echo "Pinging backend liveness endpoint..."
           curl --fail --silent --show-error --location --max-time 120 \
@@ -41,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          BACKEND_URL="https://f-transactions-api.onrender.com"
+          BACKEND_URL="https://webapp-transactions-backend-1025162530033.europe-west1.run.app"
 
           echo "Checking backend readiness endpoint..."
           curl --fail --silent --show-error --location --max-time 30 \
