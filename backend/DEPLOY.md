@@ -94,9 +94,16 @@ Rejected alternatives:
 
 **This choice needs your explicit confirmation before anything runs against
 the production database schema.** The commands below are written for
-Option (b); nothing in this PR executes them.
+Option (b); nothing in this repository executes them - they are for you to
+run manually, in order, once you've signed off.
 
-One-time setup (after you confirm the approach):
+### a) Create the Cloud Run Job (one-time setup, and again after any change
+to `backend/Dockerfile`, `requirements.txt`, or `migrations/`)
+
+Same source tree and `Dockerfile` as the service in §3 - only the container
+`command`/`args` are overridden to run Alembic instead of Uvicorn, so this
+job always reflects exactly the migrations that ship with the image you're
+about to deploy.
 
 ```bash
 gcloud run jobs deploy f-transactions-migrate \
@@ -109,14 +116,52 @@ gcloud run jobs deploy f-transactions-migrate \
   --max-retries=0
 ```
 
-Before every deploy that includes a schema change (see checklist below):
+`--max-retries=0` is deliberate: an `alembic upgrade head` failure should
+stop the rollout and get investigated, not silently retry against a
+partially-migrated schema.
+
+### b) Execute the job before every deploy that includes a schema change
 
 ```bash
 gcloud run jobs execute f-transactions-migrate --region REGION --wait
 ```
 
-Only proceed to deploy the service (§3) once this command exits
-successfully.
+`--wait` blocks until the execution finishes and makes `gcloud` exit
+non-zero if it failed - check `$?` after this command:
+
+```bash
+echo "exit code: $?"
+```
+
+Only proceed to deploy the service (§3) once this exits `0`.
+
+### c) Confirm success before moving on
+
+Don't rely on the exit code alone - confirm both the structured execution
+status and the actual Alembic output before deploying the service revision:
+
+```bash
+# Structured status of the most recent execution (look for
+# "Succeeded" / completionTime, not just that it finished)
+gcloud run jobs executions list \
+  --job f-transactions-migrate \
+  --region REGION \
+  --limit=1
+
+# Full logs for that execution - the actual `alembic upgrade head` output,
+# or the traceback if it failed. Cloud Run Jobs logs land in Cloud Logging
+# under resource.type="cloud_run_job".
+gcloud logging read \
+  'resource.type="cloud_run_job" AND resource.labels.job_name="f-transactions-migrate"' \
+  --project PROJECT_ID \
+  --order asc \
+  --freshness=1h \
+  --limit=200
+```
+
+If the execution failed, do **not** proceed to §3 - the service would
+deploy against a schema that doesn't match its models. Fix the migration
+issue, then re-run (b).
 
 ## 3. Deploy command
 
