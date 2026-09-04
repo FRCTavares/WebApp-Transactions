@@ -127,7 +127,7 @@ td[colspan] {
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);
   border-radius: 0.75rem;
-  box-shadow: var(--shadow-lg, 0 20px 40px var(--shadow-color-deep));
+  box-shadow: var(--elevation-lg);
   padding: 1rem;
   color: var(--color-text);
 }
@@ -487,4 +487,3 @@ td[colspan] {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-
