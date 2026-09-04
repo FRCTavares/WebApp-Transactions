@@ -583,6 +583,43 @@ def test_record_payment_auto_allocates_oldest_first(client):
     assert second_owed["status"] == "partially_paid"
 
 
+def test_record_payment_can_stop_auto_allocation_before_later_item(client):
+    first_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="20.00",
+    )
+    second_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Japan Flights",
+        amount_total="748.21",
+    )
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "700.00",
+            "method": "cash",
+            "allocation_stop_before_id": second_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["allocated_amount"] == "20.00"
+    assert response.json()["unallocated_amount"] == "680.00"
+
+    first_owed = client.get(f"/api/owed/{first_response.json()['id']}").json()
+    second_owed = client.get(f"/api/owed/{second_response.json()['id']}").json()
+
+    assert first_owed["status"] == "paid"
+    assert second_owed["amount_paid"] == "0.00"
+    assert second_owed["status"] == "open"
+
+
 def test_record_payment_merges_case_and_whitespace_person_variants(client, db_session):
     first_response = create_owed_item(
         client,

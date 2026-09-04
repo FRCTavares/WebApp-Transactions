@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Button } from '../ui'
-import type { Transaction } from '../../types/api'
 
 /** Owned here rather than by the table, so the form has no cycle back to it. */
 export type OwedFormState = {
@@ -17,10 +16,6 @@ export type OwedInlineFormProps = {
   form: OwedFormState
   people: string[]
   onChange: (field: keyof OwedFormState, value: string) => void
-  onLinkedTransactionChange: (value: string) => void
-  linkedTransactions: Transaction[]
-  /** Injected, matching how the table already receives it. */
-  formatLinkedTransactionOption: (transaction: Transaction) => string
   onSave: () => void
   onCancel: () => void
   /** Prefixes every accessible name so the create and edit forms stay distinct. */
@@ -31,23 +26,14 @@ export type OwedInlineFormProps = {
 }
 
 /**
- * The create and edit forms used to be inline `<tr>`s spread across the table's
- * nine columns. That made the row ~1650px wide inside a ~1010px container, so
- * the amount and linked-transaction fields sat underneath the sticky actions
- * column where they could be neither seen nor clicked, and Save sat off-screen.
- *
- * Rendering the form in a single full-width cell instead lets it use a grid
- * that fits the container at any width, so every field and both buttons are
- * always reachable. The two forms are identical apart from labels and the
- * status cell, so they share one component.
+ * The form renders in a page-level editor panel rather than a table row or
+ * secondary dialog. A responsive grid keeps every field and both actions
+ * reachable while the owed-item list remains visible and scrollable.
  */
 export function OwedInlineForm({
   form,
   people,
   onChange,
-  onLinkedTransactionChange,
-  linkedTransactions,
-  formatLinkedTransactionOption,
   onSave,
   onCancel,
   labelPrefix = '',
@@ -141,24 +127,7 @@ export function OwedInlineForm({
         </label>
 
         <label className="owed-inline-field">
-          <span>Linked transaction</span>
-          <select
-            className="table-input"
-            value={form.linkedTransactionId}
-            onChange={(event) => onLinkedTransactionChange(event.target.value)}
-            aria-label={label('Linked transaction')}
-          >
-            <option value="">Choose transaction</option>
-            {linkedTransactions.map((transaction) => (
-              <option key={transaction.id} value={transaction.id}>
-                {formatLinkedTransactionOption(transaction)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="owed-inline-field">
-          <span>Or transaction ID</span>
+          <span>Money Out transaction ID (optional)</span>
           <input
             className="table-input"
             type="number"

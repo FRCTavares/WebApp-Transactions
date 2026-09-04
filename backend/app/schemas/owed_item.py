@@ -80,6 +80,7 @@ class OwedPaymentCreate(BaseModel):
     linked_transaction_id: int | None = None
     unallocated_category: str | None = Field(default=None, max_length=100)
     unallocated_notes: str | None = None
+    allocation_stop_before_id: int | None = Field(default=None, gt=0)
     allocations: list[OwedPaymentAllocationCreate] = Field(default_factory=list)
 
 

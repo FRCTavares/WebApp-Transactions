@@ -423,6 +423,7 @@ export type OwedPaymentCreatePayload = {
   linked_transaction_id?: number | null
   unallocated_category?: string | null
   unallocated_notes?: string | null
+  allocation_stop_before_id?: number | null
   allocations?: OwedPaymentAllocationCreatePayload[]
 }
 

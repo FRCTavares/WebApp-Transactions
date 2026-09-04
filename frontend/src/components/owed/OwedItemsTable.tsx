@@ -5,7 +5,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
-import type { OwedItem, Transaction } from '../../types/api'
+import type { OwedItem } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import {
   comparePersonLabels,
@@ -101,7 +101,6 @@ function getStatusLabel(item: OwedItem) {
 type OwedItemsTableProps = {
   items: OwedItem[]
   people: string[]
-  linkedTransactions: Transaction[]
   isCreateRowOpen: boolean
   form: OwedFormState
   editForm: OwedFormState
@@ -113,17 +112,13 @@ type OwedItemsTableProps = {
   onDelete: (item: OwedItem) => void
   onFormChange: (field: keyof OwedFormState, value: string) => void
   onEditFormChange: (field: keyof OwedFormState, value: string) => void
-  onLinkedTransactionChange: (transactionId: string) => void
-  onEditLinkedTransactionChange: (transactionId: string) => void
   onCancelCreate: () => void
   onCancelEdit: () => void
-  formatLinkedTransactionOption: (transaction: Transaction) => string
 }
 
 export function OwedItemsTable({
   items,
   people,
-  linkedTransactions,
   isCreateRowOpen,
   form,
   editForm,
@@ -135,19 +130,52 @@ export function OwedItemsTable({
   onDelete,
   onFormChange,
   onEditFormChange,
-  onLinkedTransactionChange,
-  onEditLinkedTransactionChange,
   onCancelCreate,
   onCancelEdit,
-  formatLinkedTransactionOption,
 }: OwedItemsTableProps) {
-  const shouldShowFlatTable = isCreateRowOpen || Boolean(editingItem)
   const personGroups = getPersonGroups(items)
 
   return (
     <>
-      {!shouldShowFlatTable && (
-        <div className="owed-person-groups owed-mobile-groups">
+      {(isCreateRowOpen || editingItem) && (
+        <section className="owed-editor-panel" aria-label={isCreateRowOpen ? 'Add owed item' : 'Edit owed item'}>
+          <div className="owed-editor-panel-header">
+            <div>
+              <p className="owed-editor-eyebrow">{isCreateRowOpen ? 'New item' : 'Update item'}</p>
+              <h2>{isCreateRowOpen ? 'Add owed item' : `Edit ${editingItem?.reason ?? 'owed item'}`}</h2>
+            </div>
+            <span className="muted small">All fields stay on this page</span>
+          </div>
+          {isCreateRowOpen ? (
+            <OwedInlineForm
+              form={form}
+              people={people}
+              onChange={onFormChange}
+              onSave={onCreateItem}
+              onCancel={onCancelCreate}
+              status={<Badge tone="warning" size="sm">open</Badge>}
+              saveLabel="Save"
+            />
+          ) : editingItem ? (
+            <OwedInlineForm
+              form={editForm}
+              people={people}
+              onChange={onEditFormChange}
+              onSave={onSaveEdit}
+              onCancel={onCancelEdit}
+              labelPrefix="Edit"
+              status={(
+                <Badge tone={getStatusTone(editingItem)} size="sm">
+                  {getStatusLabel(editingItem)}
+                </Badge>
+              )}
+              saveLabel="Save"
+            />
+          ) : null}
+        </section>
+      )}
+
+      <div className="owed-person-groups owed-mobile-groups">
           {personGroups.length === 0 ? (
             <EmptyState
               icon={HandCoins}
@@ -271,9 +299,7 @@ export function OwedItemsTable({
             ))
           )}
         </div>
-      )}
-
-      <div className={`content-card table-wrap owed-table-wrap owed-desktop-table-wrap ${shouldShowFlatTable ? 'owed-table-has-inline-form' : 'owed-flat-table-hidden'}`}>
+      <div className="content-card table-wrap owed-table-wrap owed-desktop-table-wrap">
         <table className="owed-table">
         <thead>
           <tr>
@@ -289,26 +315,7 @@ export function OwedItemsTable({
           </tr>
         </thead>
         <tbody>
-          {isCreateRowOpen && (
-            <tr className="inline-create-row">
-              <td colSpan={9}>
-                    <OwedInlineForm
-                      form={form}
-                      people={people}
-                  onChange={onFormChange}
-                  onLinkedTransactionChange={onLinkedTransactionChange}
-                  linkedTransactions={linkedTransactions}
-                  formatLinkedTransactionOption={formatLinkedTransactionOption}
-                  onSave={onCreateItem}
-                  onCancel={onCancelCreate}
-                  status={<Badge tone="warning" size="sm">open</Badge>}
-                  saveLabel="Save"
-                />
-              </td>
-            </tr>
-          )}
-
-          {items.length === 0 && !isCreateRowOpen ? (
+          {items.length === 0 ? (
             <tr>
               <td colSpan={9}>
                 <EmptyState
@@ -320,29 +327,6 @@ export function OwedItemsTable({
             </tr>
           ) : (
             items.map((item) => (
-              editingItem?.id === item.id ? (
-                <tr key={item.id} className="inline-edit-row">
-                  <td colSpan={9}>
-                    <OwedInlineForm
-                      form={editForm}
-                      people={people}
-                      onChange={onEditFormChange}
-                      onLinkedTransactionChange={onEditLinkedTransactionChange}
-                      linkedTransactions={linkedTransactions}
-                      formatLinkedTransactionOption={formatLinkedTransactionOption}
-                      onSave={onSaveEdit}
-                      onCancel={onCancelEdit}
-                      labelPrefix="Edit"
-                      status={(
-                        <Badge tone={getStatusTone(item)} size="sm">
-                          {getStatusLabel(item)}
-                        </Badge>
-                      )}
-                      saveLabel="Save"
-                    />
-                  </td>
-                </tr>
-              ) : (
                 <tr key={item.id}>
                   <td>{item.person}</td>
                   <td>
@@ -394,7 +378,6 @@ export function OwedItemsTable({
                     </div>
                   </td>
                 </tr>
-              )
             ))
           )}
         </tbody>

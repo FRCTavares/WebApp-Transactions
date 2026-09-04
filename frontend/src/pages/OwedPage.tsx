@@ -18,7 +18,6 @@ import { useDialogAccessibility } from '../hooks/useDialogAccessibility'
 import type { OwedItem, OwedStatusFilter, Transaction } from '../types/api'
 import { formatMoney, formatMonthLabel } from '../utils/format'
 import {
-  formatLinkedTransactionOption,
   getInitialPaymentFormState,
   getManualAllocationTotal,
   getManualPaymentAllocations,
@@ -90,7 +89,6 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export function OwedPage() {
   const [items, setItems] = useState<OwedItem[]>([])
-  const [linkedTransactions, setLinkedTransactions] = useState<Transaction[]>([])
   const [paymentLinkedTransactions, setPaymentLinkedTransactions] = useState<Transaction[]>([])
   const [statusFilter, setStatusFilter] = useState<'' | OwedStatusFilter>('active')
   const [tableMonthFilter, setTableMonthFilter] = useState<'current' | 'all'>('all')
@@ -127,21 +125,6 @@ export function OwedPage() {
       })
   }, [statusFilter])
 
-  function loadLinkedTransactions() {
-    listTransactions({
-      direction: 'out',
-      cashflow_type: 'expense',
-      limit: 100,
-    })
-      .then(setLinkedTransactions)
-      .catch(() => {
-        setDataWarning((currentWarning) => {
-          const warning = 'Linked money-out options could not be refreshed.'
-          return currentWarning ? `${currentWarning} ${warning}` : warning
-        })
-      })
-  }
-
   function loadPaymentLinkedTransactions() {
     listTransactions({
       direction: 'in',
@@ -167,7 +150,6 @@ export function OwedPage() {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setDataWarning(null)
-      loadLinkedTransactions()
       loadPaymentLinkedTransactions()
     }, 0)
 
@@ -187,15 +169,6 @@ export function OwedPage() {
       [field]: value,
     }))
   }
-
-  function updateFormLinkedTransactionId(transactionId: string) {
-    updateForm('linkedTransactionId', transactionId)
-  }
-
-  function updateEditFormLinkedTransactionId(transactionId: string) {
-    updateEditForm('linkedTransactionId', transactionId)
-  }
-
 
   function updatePaymentForm<K extends keyof PaymentFormState>(
     field: K,
@@ -277,6 +250,9 @@ export function OwedPage() {
         linked_transaction_id: linkedTransactionId,
         unallocated_category: paymentForm.unallocatedCategory || null,
         unallocated_notes: paymentForm.unallocatedNotes || null,
+        allocation_stop_before_id: paymentForm.allocationStopBeforeId
+          ? Number(paymentForm.allocationStopBeforeId)
+          : null,
         allocations: manualAllocations.length > 0 ? manualAllocations : undefined,
       })
 
@@ -515,7 +491,6 @@ export function OwedPage() {
         onRefresh={() => {
           setDataWarning(null)
           loadItems()
-          loadLinkedTransactions()
           loadPaymentLinkedTransactions()
         }}
       />
@@ -562,7 +537,6 @@ export function OwedPage() {
         <OwedItemsTable
           items={visibleItems}
           people={getPaymentPeople(items)}
-          linkedTransactions={linkedTransactions}
           isCreateRowOpen={isCreateRowOpen}
           form={form}
           editForm={editForm}
@@ -574,8 +548,6 @@ export function OwedPage() {
           onDelete={handleDelete}
           onFormChange={updateForm}
           onEditFormChange={updateEditForm}
-          onLinkedTransactionChange={updateFormLinkedTransactionId}
-          onEditLinkedTransactionChange={updateEditFormLinkedTransactionId}
           onCancelCreate={() => {
             setForm(getInitialFormState())
             setIsCreateRowOpen(false)
@@ -584,7 +556,6 @@ export function OwedPage() {
             setEditingItem(null)
             setEditForm(getInitialFormState())
           }}
-          formatLinkedTransactionOption={formatLinkedTransactionOption}
         />
       )}
     </section>
