@@ -45,20 +45,49 @@ export function getInitialPaymentFormState(): PaymentFormState {
   }
 }
 
+export function normalizePersonName(person: string) {
+  return person.trim().replace(/\s+/g, ' ')
+}
+
+export function getPersonKey(person: string) {
+  return normalizePersonName(person).toLocaleLowerCase()
+}
+
+export function comparePersonLabels(first: string, second: string) {
+  const startsWithCapital = (name: string) => {
+    const firstCharacter = name.charAt(0)
+    return firstCharacter !== firstCharacter.toLocaleLowerCase()
+  }
+  const rankDifference = Number(!startsWithCapital(first)) - Number(!startsWithCapital(second))
+
+  return rankDifference || first.localeCompare(second)
+}
+
 export function getPaymentPeople(items: OwedItem[]) {
-  return Array.from(new Set(
-    items
-      .filter((item) => item.status === 'open' || item.status === 'partially_paid')
-      .map((item) => item.person),
-  )).sort((first, second) => first.localeCompare(second))
+  const peopleByKey = new Map<string, string>()
+
+  for (const item of items) {
+    if (item.status !== 'open' && item.status !== 'partially_paid') {
+      continue
+    }
+
+    const name = normalizePersonName(item.person)
+    const key = getPersonKey(name)
+    const currentName = peopleByKey.get(key)
+
+    // Prefer a tidily capitalized label when legacy values only vary by case.
+    if (!currentName || comparePersonLabels(name, currentName) < 0) {
+      peopleByKey.set(key, name)
+    }
+  }
+
+  return Array.from(peopleByKey.values()).sort((first, second) => first.localeCompare(second))
 }
 
 export function getAutoAllocationPreview(items: OwedItem[], person: string, amount: number) {
   let remaining = amount
 
-  return items
-    .filter((item) => item.person === person)
-    .filter((item) => item.status === 'open' || item.status === 'partially_paid')
+  return getPaymentAllocationItems(items, person)
     .map((item) => {
       const allocationAmount = Math.min(remaining, Number(item.amount_remaining))
       remaining -= allocationAmount
@@ -73,8 +102,11 @@ export function getAutoAllocationPreview(items: OwedItem[], person: string, amou
 
 export function getPaymentAllocationItems(items: OwedItem[], person: string) {
   return items
-    .filter((item) => item.person === person)
+    .filter((item) => getPersonKey(item.person) === getPersonKey(person))
     .filter((item) => item.status === 'open' || item.status === 'partially_paid')
+    .toSorted((first, second) => (
+      first.created_at.localeCompare(second.created_at) || first.id - second.id
+    ))
 }
 
 export function getManualPaymentAllocations(paymentForm: PaymentFormState) {

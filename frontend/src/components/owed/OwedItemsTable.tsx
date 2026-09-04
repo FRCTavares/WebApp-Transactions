@@ -7,6 +7,11 @@ import {
 } from 'lucide-react'
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
+import {
+  comparePersonLabels,
+  getPersonKey,
+  normalizePersonName,
+} from '../../utils/owedPaymentUtils'
 import { Badge, Button, EmptyState, Icon } from '../ui'
 import type { BadgeTone } from '../ui'
 
@@ -16,16 +21,25 @@ import type { OwedFormState } from './OwedInlineForm'
 export type { OwedFormState } from './OwedInlineForm'
 
 function getPersonGroups(items: OwedItem[]) {
-  const groups = new Map<string, OwedItem[]>()
+  const groups = new Map<string, { person: string; items: OwedItem[] }>()
 
   for (const item of items) {
-    const currentItems = groups.get(item.person) ?? []
-    currentItems.push(item)
-    groups.set(item.person, currentItems)
+    const person = normalizePersonName(item.person)
+    const key = getPersonKey(person)
+    const currentGroup = groups.get(key)
+
+    if (currentGroup) {
+      currentGroup.items.push(item)
+      if (comparePersonLabels(person, currentGroup.person) < 0) {
+        currentGroup.person = person
+      }
+    } else {
+      groups.set(key, { person, items: [item] })
+    }
   }
 
-  return [...groups.entries()]
-    .map(([person, personItems]) => ({
+  return [...groups.values()]
+    .map(({ person, items: personItems }) => ({
       person,
       items: personItems,
       totalRemaining: personItems.reduce(
@@ -86,6 +100,7 @@ function getStatusLabel(item: OwedItem) {
 
 type OwedItemsTableProps = {
   items: OwedItem[]
+  people: string[]
   linkedTransactions: Transaction[]
   isCreateRowOpen: boolean
   form: OwedFormState
@@ -107,6 +122,7 @@ type OwedItemsTableProps = {
 
 export function OwedItemsTable({
   items,
+  people,
   linkedTransactions,
   isCreateRowOpen,
   form,
@@ -276,8 +292,9 @@ export function OwedItemsTable({
           {isCreateRowOpen && (
             <tr className="inline-create-row">
               <td colSpan={9}>
-                <OwedInlineForm
-                  form={form}
+                    <OwedInlineForm
+                      form={form}
+                      people={people}
                   onChange={onFormChange}
                   onLinkedTransactionChange={onLinkedTransactionChange}
                   linkedTransactions={linkedTransactions}
@@ -308,6 +325,7 @@ export function OwedItemsTable({
                   <td colSpan={9}>
                     <OwedInlineForm
                       form={editForm}
+                      people={people}
                       onChange={onEditFormChange}
                       onLinkedTransactionChange={onEditLinkedTransactionChange}
                       linkedTransactions={linkedTransactions}

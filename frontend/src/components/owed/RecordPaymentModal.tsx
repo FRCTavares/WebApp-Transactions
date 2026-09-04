@@ -14,6 +14,10 @@ import {
 } from '../../utils/owedPaymentUtils'
 import { Button } from '../ui'
 
+function getPaymentAmount(value: string) {
+  return Math.abs(Number(value.replace(',', '.')))
+}
+
 /**
  * The "Record payment" modal on `OwedPage`. Split out (along with its
  * pure helpers, see `utils/owedPaymentUtils.ts`) to keep `OwedPage.tsx`
@@ -40,11 +44,27 @@ export function RecordPaymentModal({
   onUpdateAllocation: (owedItemId: number, amount: string) => void
   onSubmit: () => void
 }) {
+  const amount = getPaymentAmount(paymentForm.amount)
+  const automaticAllocations = getAutoAllocationPreview(
+    items,
+    paymentForm.person,
+    amount,
+  )
+  const manualAllocationTotal = getManualAllocationTotal(paymentForm)
+  const hasManualAllocations = getManualPaymentAllocations(paymentForm).length > 0
+  const allocatedAmount = hasManualAllocations
+    ? manualAllocationTotal
+    : getAllocationTotal(automaticAllocations)
+  const leftoverAmount = Math.max(amount - allocatedAmount, 0)
+  const fullyPaidCount = automaticAllocations.filter(
+    ({ item, amount: allocationAmount }) => allocationAmount >= Number(item.amount_remaining),
+  ).length
+
   return (
     <div className="modal-backdrop" role="presentation">
       <div
         ref={dialogRef}
-        className="modal-card"
+        className="modal-card record-payment-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="record-payment-title"
@@ -52,9 +72,10 @@ export function RecordPaymentModal({
       >
         <div className="modal-header">
           <div>
+            <p className="record-payment-eyebrow">Repayment received</p>
             <h2 id="record-payment-title">Record payment</h2>
             <p className="muted small">
-              Record cash, bank transfer, MB WAY, or other repayments.
+              Enter the cash received and we’ll settle the oldest open items automatically.
             </p>
           </div>
           <Button type="button" size="sm" onClick={onClose}>
@@ -64,7 +85,7 @@ export function RecordPaymentModal({
 
         <div className="form-row">
           <label>
-            Person
+            Who paid you?
             <select
               value={paymentForm.person}
               onChange={(event) => onUpdatePerson(event.target.value)}
@@ -84,6 +105,7 @@ export function RecordPaymentModal({
               type="number"
               min="0"
               step="0.01"
+              inputMode="decimal"
               value={paymentForm.amount}
               onChange={(event) => onUpdateField('amount', event.target.value)}
               placeholder="0.00"
@@ -117,14 +139,109 @@ export function RecordPaymentModal({
           </label>
         </div>
 
-        <div className="form-row">
+        {paymentForm.person && amount > 0 && (
+          <section className="modal-transaction-summary record-payment-plan" aria-live="polite">
+            <div>
+              <strong>{hasManualAllocations ? 'Custom payment plan' : 'Automatic payment plan'}</strong>
+              <p className="muted small">
+                {hasManualAllocations
+                  ? 'Only the amounts entered below will be applied.'
+                  : 'Oldest open items are paid first.'}
+              </p>
+              {automaticAllocations.length === 0 ? (
+                <p className="muted small">No open owed items for this person.</p>
+              ) : !hasManualAllocations && (
+                <ul className="record-payment-plan-items">
+                  {automaticAllocations.map(({ item, amount: allocationAmount }) => (
+                    <li key={item.id}>
+                      <span>{item.reason}</span>
+                      <strong>{formatMoney(allocationAmount.toFixed(2))}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!hasManualAllocations && fullyPaidCount > 0 && (
+                <p className="muted small">
+                  {fullyPaidCount} item{fullyPaidCount === 1 ? '' : 's'} will be fully paid.
+                </p>
+              )}
+            </div>
+            <strong>{formatMoney(allocatedAmount.toFixed(2))}</strong>
+            {leftoverAmount > 0 && (
+              <p className="record-payment-leftover">
+                {formatMoney(leftoverAmount.toFixed(2))} left unallocated
+              </p>
+            )}
+          </section>
+        )}
+
+        {paymentForm.person && amount > 0 && getPaymentAllocationItems(items, paymentForm.person).length > 0 && (
+          <details className="record-payment-details">
+            <summary>Adjust which items are paid</summary>
+            <p className="muted small">
+              Optional. Entering any amount replaces the automatic plan with your custom plan.
+            </p>
+            <div className="record-payment-allocation-list">
+              {getPaymentAllocationItems(items, paymentForm.person).map((item) => (
+                <label key={item.id}>
+                  <span>
+                    {item.reason}
+                    <small>Remaining {formatMoney(item.amount_remaining)}</small>
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    max={item.amount_remaining}
+                    value={paymentForm.allocationAmounts[item.id] ?? ''}
+                    onChange={(event) => onUpdateAllocation(item.id, event.target.value)}
+                    placeholder="0.00"
+                    aria-label={`Amount to apply to ${item.reason}`}
+                  />
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
+
+        {paymentForm.person && amount > 0 && leftoverAmount > 0 && (
+          <details className="record-payment-details">
+            <summary>Classify the leftover (optional)</summary>
+            <div className="form-row">
+              <label>
+                Category
+                <select
+                  value={paymentForm.unallocatedCategory}
+                  onChange={(event) => onUpdateField('unallocatedCategory', event.target.value)}
+                >
+                  {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value || 'empty'} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Note
+                <input
+                  value={paymentForm.unallocatedNotes}
+                  onChange={(event) => onUpdateField('unallocatedNotes', event.target.value)}
+                  placeholder="Extra cash"
+                />
+              </label>
+            </div>
+          </details>
+        )}
+
+        <details className="record-payment-details">
+          <summary>Add a note or link a Money In transaction</summary>
           <label>
             Linked Money In
             <select
               value={paymentForm.linkedTransactionId}
               onChange={(event) => onUpdateField('linkedTransactionId', event.target.value)}
             >
-              <option value="">No linked money in transaction</option>
+              <option value="">No linked Money In transaction</option>
               {paymentLinkedTransactions.map((transaction) => (
                 <option key={transaction.id} value={transaction.id}>
                   {formatLinkedTransactionOption(transaction)}
@@ -132,108 +249,16 @@ export function RecordPaymentModal({
               ))}
             </select>
           </label>
-
           <label>
-            Manual Money In Tx ID
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={paymentForm.linkedTransactionId}
-              onChange={(event) => onUpdateField('linkedTransactionId', event.target.value)}
+            Payment note
+            <textarea
+              value={paymentForm.notes}
+              onChange={(event) => onUpdateField('notes', event.target.value)}
+              rows={2}
               placeholder="Optional"
             />
           </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Unallocated category
-            <select
-              value={paymentForm.unallocatedCategory}
-              onChange={(event) => onUpdateField('unallocatedCategory', event.target.value)}
-            >
-              {UNALLOCATED_CATEGORY_OPTIONS.map((option) => (
-                <option key={option.value || 'empty'} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <span className="muted small">
-              Use Allowance, Gift, or Income when leftover money should count as money in.
-            </span>
-          </label>
-
-          <label>
-            Unallocated notes
-            <input
-              value={paymentForm.unallocatedNotes}
-              onChange={(event) => onUpdateField('unallocatedNotes', event.target.value)}
-              placeholder="Grandma gave extra"
-            />
-          </label>
-        </div>
-
-        <label>
-          Payment notes
-          <textarea
-            value={paymentForm.notes}
-            onChange={(event) => onUpdateField('notes', event.target.value)}
-            rows={3}
-          />
-        </label>
-
-        {paymentForm.person && Number(paymentForm.amount) > 0 && (
-          <div className="modal-transaction-summary">
-            <div>
-              <strong>Choose owed items to pay</strong>
-              <p className="muted small">
-                Leave all amounts blank to auto-allocate oldest first.
-              </p>
-
-              {getPaymentAllocationItems(items, paymentForm.person).length === 0 ? (
-                <p className="muted small">No open owed items for this person.</p>
-              ) : (
-                getPaymentAllocationItems(items, paymentForm.person).map((item) => (
-                  <label key={item.id}>
-                    {item.reason} · remaining {formatMoney(item.amount_remaining)}
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      max={item.amount_remaining}
-                      value={paymentForm.allocationAmounts[item.id] ?? ''}
-                      onChange={(event) => onUpdateAllocation(item.id, event.target.value)}
-                      placeholder="0.00"
-                    />
-                  </label>
-                ))
-              )}
-            </div>
-
-            {getManualPaymentAllocations(paymentForm).length > 0 ? (
-              <span>
-                Leftover: {formatMoney((
-                  Math.abs(Number(paymentForm.amount)) -
-                  getManualAllocationTotal(paymentForm)
-                ).toFixed(2))}
-              </span>
-            ) : (
-              <span>
-                Auto leftover: {formatMoney((
-                  Math.abs(Number(paymentForm.amount)) -
-                  getAllocationTotal(
-                    getAutoAllocationPreview(
-                      items,
-                      paymentForm.person,
-                      Math.abs(Number(paymentForm.amount)),
-                    ),
-                  )
-                ).toFixed(2))}
-              </span>
-            )}
-          </div>
-        )}
+        </details>
 
         <div className="modal-actions">
           <Button type="button" onClick={onClose}>

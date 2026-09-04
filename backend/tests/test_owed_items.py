@@ -1,6 +1,7 @@
 from datetime import date
 
 from app.auth.current_user import CurrentUser, LOCAL_DEFAULT_USER_ID
+from app.models.owed_item import OwedItem
 from app.models.transaction import Transaction
 from app.repositories.owed_repository import OwedRepository
 from app.schemas.owed_item import OwedItemCreate, OwedPaymentCreate
@@ -580,6 +581,70 @@ def test_record_payment_auto_allocates_oldest_first(client):
     assert second_owed["amount_paid"] == "25.00"
     assert second_owed["amount_remaining"] == "5.00"
     assert second_owed["status"] == "partially_paid"
+
+
+def test_record_payment_merges_case_and_whitespace_person_variants(client, db_session):
+    first_response = create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="20.00",
+    )
+    first_id = first_response.json()["id"]
+
+    # This mirrors data created before person labels were canonicalized.
+    duplicate_item = OwedItem(
+        user_id=LOCAL_DEFAULT_USER_ID,
+        person=" mother ",
+        amount_total=Decimal("30.00"),
+        amount_paid=Decimal("0.00"),
+        amount_remaining=Decimal("30.00"),
+        reason="Pharmacy",
+        status="open",
+        source="manual",
+    )
+    db_session.add(duplicate_item)
+    db_session.commit()
+
+    response = client.post(
+        "/api/owed/payments",
+        json={
+            "person": "Mother",
+            "payment_date": "2026-06-14",
+            "amount": "45.00",
+            "method": "cash",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["allocated_amount"] == "45.00"
+    assert len(response.json()["allocations"]) == 2
+
+    first_owed = client.get(f"/api/owed/{first_id}").json()
+    second_owed = client.get(f"/api/owed/{duplicate_item.id}").json()
+
+    assert first_owed["person"] == "Mother"
+    assert second_owed["person"] == "Mother"
+    assert second_owed["amount_remaining"] == "5.00"
+
+
+def test_create_owed_item_reuses_existing_person_label_ignoring_case_and_space(client):
+    create_owed_item(
+        client,
+        person="Mother",
+        reason="Groceries",
+        amount_total="20.00",
+    )
+
+    response = create_owed_item(
+        client,
+        person=" mother ",
+        reason="Pharmacy",
+        amount_total="30.00",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["person"] == "Mother"
 
 
 def test_record_payment_rejects_allocation_to_other_person(client):

@@ -23,6 +23,7 @@ import {
   getManualAllocationTotal,
   getManualPaymentAllocations,
   getTodayDate,
+  getPaymentPeople,
   type PaymentFormState,
 } from '../utils/owedPaymentUtils'
 
@@ -560,6 +561,7 @@ export function OwedPage() {
       ) : (
         <OwedItemsTable
           items={visibleItems}
+          people={getPaymentPeople(items)}
           linkedTransactions={linkedTransactions}
           isCreateRowOpen={isCreateRowOpen}
           form={form}

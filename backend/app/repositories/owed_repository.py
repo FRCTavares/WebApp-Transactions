@@ -185,6 +185,61 @@ class OwedRepository:
 
         return list(self.db.scalars(statement).all())
 
+    def list_person_name_variants(
+        self,
+        normalized_person: str,
+        user_id: str,
+    ) -> list[str]:
+        """Return stored labels that only differ by case or surrounding space.
+
+        A person is deliberately a label rather than a separate database entity.
+        Keeping this lookup here lets the service consistently reuse an existing
+        label instead of accidentally creating a second card for ``Mother`` vs
+        `` mother ``.
+        """
+        normalized_value = normalized_person.casefold()
+        item_statement = (
+            select(OwedItem.person)
+            .where(OwedItem.user_id == user_id)
+            .where(func.lower(func.trim(OwedItem.person)) == normalized_value)
+        )
+        payment_statement = (
+            select(OwedPayment.person)
+            .where(OwedPayment.user_id == user_id)
+            .where(func.lower(func.trim(OwedPayment.person)) == normalized_value)
+        )
+
+        names = set(self.db.scalars(item_statement).all())
+        names.update(self.db.scalars(payment_statement).all())
+        return sorted(names, key=lambda name: (name.casefold(), name))
+
+    def normalize_person_name_variants(
+        self,
+        normalized_person: str,
+        user_id: str,
+    ) -> None:
+        """Merge case/whitespace variants into one stored label for a payment."""
+        normalized_value = normalized_person.casefold()
+        item_condition = (
+            (OwedItem.user_id == user_id)
+            & (func.lower(func.trim(OwedItem.person)) == normalized_value)
+        )
+        payment_condition = (
+            (OwedPayment.user_id == user_id)
+            & (func.lower(func.trim(OwedPayment.person)) == normalized_value)
+        )
+
+        self.db.execute(
+            update(OwedItem)
+            .where(item_condition)
+            .values(person=normalized_person)
+        )
+        self.db.execute(
+            update(OwedPayment)
+            .where(payment_condition)
+            .values(person=normalized_person)
+        )
+
     def create_event(
         self,
         event: OwedItemEvent,
