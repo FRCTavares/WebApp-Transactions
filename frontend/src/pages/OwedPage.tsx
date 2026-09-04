@@ -102,6 +102,9 @@ export function OwedPage() {
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
   const [isItemsLoading, setIsItemsLoading] = useState(true)
+  const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false)
+  const [lastPaymentFingerprint, setLastPaymentFingerprint] = useState<string | null>(null)
+  const [lastPaymentRecordedAt, setLastPaymentRecordedAt] = useState<number | null>(null)
   const closePaymentModal = useCallback(() => setIsPaymentModalOpen(false), [])
   const paymentDialogRef = useDialogAccessibility<HTMLDivElement>({
     onClose: closePaymentModal,
@@ -199,6 +202,10 @@ export function OwedPage() {
   }
 
   async function recordPaymentFromForm() {
+    if (isPaymentSubmitting) {
+      return
+    }
+
     setError(null)
     setMessage(null)
 
@@ -216,6 +223,26 @@ export function OwedPage() {
 
     if (!paymentForm.paymentDate) {
       setError('Payment date is required.')
+      return
+    }
+
+    const paymentFingerprint = [
+      paymentForm.person.trim().toLowerCase(),
+      amount.toFixed(2),
+      paymentForm.paymentDate,
+      paymentForm.method,
+    ].join('|')
+    const isRecentDuplicate = lastPaymentFingerprint === paymentFingerprint
+      && lastPaymentRecordedAt !== null
+      && Date.now() - lastPaymentRecordedAt < 120_000
+
+    if (
+      isRecentDuplicate
+      && !window.confirm(
+        'A payment with the same person, amount, date, and method was just recorded. '
+        + 'Record another one anyway?',
+      )
+    ) {
       return
     }
 
@@ -239,6 +266,8 @@ export function OwedPage() {
       return
     }
 
+    setIsPaymentSubmitting(true)
+
     try {
       const payment = await createOwedPayment({
         person: paymentForm.person.trim(),
@@ -261,11 +290,15 @@ export function OwedPage() {
           ? `Payment recorded. ${formatMoney(payment.unallocated_amount)} left unallocated.`
           : 'Payment recorded.',
       )
+      setLastPaymentFingerprint(paymentFingerprint)
+      setLastPaymentRecordedAt(Date.now())
       setPaymentForm(getInitialPaymentFormState())
       setIsPaymentModalOpen(false)
       loadItems()
     } catch (caughtError: unknown) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to record payment')
+    } finally {
+      setIsPaymentSubmitting(false)
     }
   }
 
@@ -526,6 +559,7 @@ export function OwedPage() {
           onUpdatePerson={updatePaymentPerson}
           onUpdateAllocation={updatePaymentAllocation}
           onSubmit={recordPaymentFromForm}
+          isSubmitting={isPaymentSubmitting}
         />
       )}
 

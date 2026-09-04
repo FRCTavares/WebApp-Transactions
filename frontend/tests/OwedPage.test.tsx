@@ -158,6 +158,31 @@ describe('owed page payment workflow', () => {
     })
   })
 
+  it('blocks a double click while the payment is being recorded', async () => {
+    let resolvePayment: ((value: { unallocated_amount: string }) => void) | undefined
+    mocks.createOwedPayment.mockImplementation(
+      () => new Promise((resolve) => { resolvePayment = resolve }),
+    )
+    const user = userEvent.setup()
+    render(<OwedPage />)
+
+    await user.click(await screen.findByRole('button', { name: 'Record Payment' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Record payment' })
+    await user.selectOptions(within(dialog).getByLabelText('Who paid you?'), 'Maria')
+    await user.type(within(dialog).getByLabelText('Amount received'), '40')
+
+    const submitButton = within(dialog).getByRole('button', { name: 'Record payment' })
+    await user.dblClick(submitButton)
+
+    expect(mocks.createOwedPayment).toHaveBeenCalledTimes(1)
+    expect(within(dialog).getByRole('button', { name: 'Recording payment' })).toBeDisabled()
+
+    resolvePayment?.({ unallocated_amount: '0.00' })
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Record payment' })).not.toBeInTheDocument()
+    })
+  })
+
   it('closes the payment dialog on Escape without recording anything', async () => {
     const user = userEvent.setup()
     render(<OwedPage />)

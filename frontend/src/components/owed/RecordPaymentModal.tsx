@@ -33,6 +33,7 @@ export function RecordPaymentModal({
   onUpdatePerson,
   onUpdateAllocation,
   onSubmit,
+  isSubmitting,
 }: {
   dialogRef: RefObject<HTMLDivElement | null>
   items: OwedItem[]
@@ -43,6 +44,7 @@ export function RecordPaymentModal({
   onUpdatePerson: (person: string) => void
   onUpdateAllocation: (owedItemId: number, amount: string) => void
   onSubmit: () => void
+  isSubmitting?: boolean
 }) {
   const amount = getPaymentAmount(paymentForm.amount)
   const automaticAllocations = getAutoAllocationPreview(
@@ -293,8 +295,9 @@ export function RecordPaymentModal({
             type="button"
             variant="primary"
             onClick={onSubmit}
+            loading={isSubmitting}
           >
-            Record payment
+            {isSubmitting ? 'Recording payment' : 'Record payment'}
           </Button>
         </div>
       </div>
