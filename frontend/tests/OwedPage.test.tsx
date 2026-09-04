@@ -91,8 +91,10 @@ describe('owed page payment workflow', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Record payment' })
 
-    await user.selectOptions(within(dialog).getByLabelText('Person'), 'Maria')
+    await user.selectOptions(within(dialog).getByLabelText('Who paid you?'), 'Maria')
     await user.type(within(dialog).getByLabelText('Amount received'), '40')
+
+    await user.click(within(dialog).getByText('Adjust which items are paid'))
 
     const allocationInput = await within(dialog).findByLabelText(
       /Dinner split/,

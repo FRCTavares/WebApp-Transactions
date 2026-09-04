@@ -15,6 +15,7 @@ export type OwedFormState = {
 
 export type OwedInlineFormProps = {
   form: OwedFormState
+  people: string[]
   onChange: (field: keyof OwedFormState, value: string) => void
   onLinkedTransactionChange: (value: string) => void
   linkedTransactions: Transaction[]
@@ -42,6 +43,7 @@ export type OwedInlineFormProps = {
  */
 export function OwedInlineForm({
   form,
+  people,
   onChange,
   onLinkedTransactionChange,
   linkedTransactions,
@@ -65,7 +67,11 @@ export function OwedInlineForm({
             onChange={(event) => onChange('person', event.target.value)}
             placeholder="Person"
             aria-label={label('Person owing')}
+            list="owed-person-suggestions"
           />
+          <datalist id="owed-person-suggestions">
+            {people.map((person) => <option key={person} value={person} />)}
+          </datalist>
         </label>
 
         <label className="owed-inline-field">

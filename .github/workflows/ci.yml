@@ -274,7 +274,18 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
-          npm audit --audit-level=high
+          for attempt in 1 2 3; do
+            if npm audit --audit-level=high; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+
+            echo "npm audit failed; retrying in 20 seconds (attempt $attempt of 3)"
+            sleep 20
+          done
 
   repository-hygiene:
     name: Repository hygiene

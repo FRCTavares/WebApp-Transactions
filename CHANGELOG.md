@@ -77,6 +77,11 @@ that's generated. The current running build's commit is shown in
 
 ### Fixed
 
+- Recording an owed repayment now shows the automatic oldest-first settlement
+  plan instead of requiring item-by-item selection. Case and whitespace
+  variants of the same person's name are consolidated during repayment, and
+  future owed entries reuse the existing label.
+
 - Cashflow-rule application now validates an existing transaction category
   against the rule's target cashflow type before updating it. Incompatible
   or cross-user category assignments reject the batch and preserve all

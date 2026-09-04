@@ -8,6 +8,113 @@
   margin-bottom: 0;
 }
 
+/* Record-payment modal: the usual repayment path is deliberately compact.
+   Individual allocation inputs are available only after expanding the detail. */
+.record-payment-modal {
+  width: min(600px, 100%);
+}
+
+.record-payment-eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.record-payment-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-5) var(--space-6);
+}
+
+.record-payment-plan > div > p,
+.record-payment-plan > p {
+  margin: var(--space-3) 0 0;
+}
+
+.record-payment-plan-items {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0;
+  margin: var(--space-5) 0 0;
+  list-style: none;
+}
+
+.record-payment-plan-items li,
+.record-payment-allocation-list label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.record-payment-plan-items li {
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.record-payment-leftover {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.record-payment-details {
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.record-payment-details summary {
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.record-payment-details > p {
+  margin: var(--space-3) 0;
+}
+
+.record-payment-details > label {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.record-payment-allocation-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.record-payment-allocation-list label {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.record-payment-allocation-list label:last-child {
+  border-bottom: 0;
+}
+
+.record-payment-allocation-list span,
+.record-payment-allocation-list small {
+  display: block;
+}
+
+.record-payment-allocation-list small {
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.record-payment-allocation-list input {
+  width: 8rem;
+}
+
 .owed-toolbar {
   display: flex;
   align-items: flex-end;

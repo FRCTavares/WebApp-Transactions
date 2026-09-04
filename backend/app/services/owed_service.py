@@ -42,6 +42,9 @@ class OwedService(OwedIntegrityMixin):
         commit: bool = True,
     ) -> OwedItem:
         user_id = current_user.id
+        owed_data = owed_data.model_copy(
+            update={"person": self._resolve_person_name(owed_data.person, user_id)}
+        )
         owed_data = self._with_dedupe_hash(owed_data, user_id)
 
         if owed_data.dedupe_hash and self.repository.exists_by_dedupe_hash(
@@ -143,6 +146,15 @@ class OwedService(OwedIntegrityMixin):
         current_user: CurrentUser,
     ) -> OwedItem:
         owed_item = self.get_owed_item(owed_item_id, current_user=current_user)
+        if owed_data.person is not None:
+            owed_data = owed_data.model_copy(
+                update={
+                    "person": self._resolve_person_name(
+                        owed_data.person,
+                        owed_item.user_id,
+                    )
+                }
+            )
         previous_status = owed_item.status
         previous_amount_total = owed_item.amount_total
         previous_amount_paid = owed_item.amount_paid
@@ -247,31 +259,45 @@ class OwedService(OwedIntegrityMixin):
         commit: bool = True,
     ) -> OwedPaymentRead:
         user_id = current_user.id
-        payment = OwedPayment(
-            user_id=user_id,
-            person=payment_data.person,
-            payment_date=payment_data.payment_date,
-            amount=payment_data.amount,
-            currency=payment_data.currency,
-            method=payment_data.method,
-            notes=payment_data.notes,
-            linked_transaction_id=payment_data.linked_transaction_id,
-            unallocated_category=payment_data.unallocated_category,
-            unallocated_notes=payment_data.unallocated_notes,
-        )
-
-        self._validate_linked_payment_transaction(
-            linked_transaction_id=payment_data.linked_transaction_id,
-            amount=payment_data.amount,
-            user_id=user_id,
-        )
-
-        requested_allocations = self._validate_requested_allocations(
-            payment_data=payment_data,
-            current_user=current_user,
-        )
-
         try:
+            canonical_person = self._resolve_person_name(
+                payment_data.person,
+                user_id,
+            )
+            # A repayment is the natural time to repair labels such as
+            # "Mother", "mother", and " Mother ". They represent the same
+            # person but previously formed separate cards and could not be
+            # paid in one automatic allocation.
+            self.repository.normalize_person_name_variants(
+                canonical_person,
+                user_id,
+            )
+            payment_data = payment_data.model_copy(
+                update={"person": canonical_person}
+            )
+            payment = OwedPayment(
+                user_id=user_id,
+                person=payment_data.person,
+                payment_date=payment_data.payment_date,
+                amount=payment_data.amount,
+                currency=payment_data.currency,
+                method=payment_data.method,
+                notes=payment_data.notes,
+                linked_transaction_id=payment_data.linked_transaction_id,
+                unallocated_category=payment_data.unallocated_category,
+                unallocated_notes=payment_data.unallocated_notes,
+            )
+
+            self._validate_linked_payment_transaction(
+                linked_transaction_id=payment_data.linked_transaction_id,
+                amount=payment_data.amount,
+                user_id=user_id,
+            )
+
+            requested_allocations = self._validate_requested_allocations(
+                payment_data=payment_data,
+                current_user=current_user,
+            )
             payment = self.repository.create_payment(payment, user_id)
             remaining_to_allocate = payment_data.amount
 
@@ -311,6 +337,23 @@ class OwedService(OwedIntegrityMixin):
             if commit:
                 self.repository.rollback()
             raise
+
+    def _resolve_person_name(self, person: str, user_id: str) -> str:
+        normalized_person = " ".join(person.split())
+        if not normalized_person:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Person is required",
+            )
+
+        existing_names = self.repository.list_person_name_variants(
+            normalized_person,
+            user_id,
+        )
+        if normalized_person in existing_names:
+            return normalized_person
+
+        return existing_names[0] if existing_names else normalized_person
 
     def list_payments(
         self,
