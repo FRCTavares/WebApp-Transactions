@@ -4,6 +4,36 @@
   gap: 16px;
 }
 
+.owed-editor-panel {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--elevation-xs);
+}
+
+.owed-editor-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.owed-editor-panel-header h2,
+.owed-editor-eyebrow {
+  margin: 0;
+}
+
+.owed-editor-eyebrow {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
 .owed-page .page-header {
   margin-bottom: 0;
 }
@@ -12,6 +42,18 @@
    Individual allocation inputs are available only after expanding the detail. */
 .record-payment-modal {
   width: min(600px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.record-payment-boundary {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.record-payment-boundary select {
+  width: 100%;
 }
 
 .record-payment-eyebrow {

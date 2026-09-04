@@ -12,6 +12,7 @@ export type PaymentFormState = {
   amount: string
   paymentDate: string
   method: OwedPaymentMethod
+  allocationStopBeforeId: string
   linkedTransactionId: string
   unallocatedCategory: string
   unallocatedNotes: string
@@ -37,6 +38,7 @@ export function getInitialPaymentFormState(): PaymentFormState {
     amount: '',
     paymentDate: getTodayDate(),
     method: 'cash',
+    allocationStopBeforeId: '',
     linkedTransactionId: '',
     unallocatedCategory: '',
     unallocatedNotes: '',
@@ -84,10 +86,22 @@ export function getPaymentPeople(items: OwedItem[]) {
   return Array.from(peopleByKey.values()).sort((first, second) => first.localeCompare(second))
 }
 
-export function getAutoAllocationPreview(items: OwedItem[], person: string, amount: number) {
+export function getAutoAllocationPreview(
+  items: OwedItem[],
+  person: string,
+  amount: number,
+  stopBeforeId = '',
+) {
   let remaining = amount
+  const allocationItems = getPaymentAllocationItems(items, person)
+  const stopIndex = stopBeforeId
+    ? allocationItems.findIndex((item) => item.id === Number(stopBeforeId))
+    : -1
+  const eligibleItems = stopIndex >= 0
+    ? allocationItems.slice(0, stopIndex)
+    : allocationItems
 
-  return getPaymentAllocationItems(items, person)
+  return eligibleItems
     .map((item) => {
       const allocationAmount = Math.min(remaining, Number(item.amount_remaining))
       remaining -= allocationAmount

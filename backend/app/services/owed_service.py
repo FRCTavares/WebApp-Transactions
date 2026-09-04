@@ -314,6 +314,12 @@ class OwedService(OwedIntegrityMixin):
                     payment_data.person,
                     user_id,
                 ):
+                    if (
+                        payment_data.allocation_stop_before_id is not None
+                        and owed_item.id == payment_data.allocation_stop_before_id
+                    ):
+                        break
+
                     if remaining_to_allocate <= 0:
                         break
 

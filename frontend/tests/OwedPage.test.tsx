@@ -116,6 +116,48 @@ describe('owed page payment workflow', () => {
     expect(screen.queryByRole('dialog', { name: 'Record payment' })).not.toBeInTheDocument()
   })
 
+  it('can stop automatic allocation before a later item', async () => {
+    mocks.createOwedPayment.mockResolvedValue({ unallocated_amount: '0.00' })
+    mocks.listOwedItems.mockResolvedValue([
+      OPEN_OWED_ITEM,
+      {
+        ...OPEN_OWED_ITEM,
+        id: 8,
+        reason: 'Japan Flights',
+        amount_total: '748.21',
+        amount_remaining: '748.21',
+        created_at: '2026-08-01T00:00:00Z',
+      },
+    ])
+    const user = userEvent.setup()
+    render(<OwedPage />)
+
+    await user.click(await screen.findByRole('button', { name: 'Record Payment' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Record payment' })
+
+    await user.selectOptions(within(dialog).getByLabelText('Who paid you?'), 'Maria')
+    await user.type(within(dialog).getByLabelText('Amount received'), '700')
+    await user.selectOptions(
+      within(dialog).getByRole('combobox', { name: 'Automatic payment ends before' }),
+      '8',
+    )
+
+    expect(
+      within(dialog).getByRole('combobox', { name: 'Automatic payment ends before' }),
+    ).toHaveValue('8')
+    await user.click(within(dialog).getByRole('button', { name: 'Record payment' }))
+
+    await waitFor(() => {
+      expect(mocks.createOwedPayment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          person: 'Maria',
+          amount: '700.00',
+          allocation_stop_before_id: 8,
+        }),
+      )
+    })
+  })
+
   it('closes the payment dialog on Escape without recording anything', async () => {
     const user = userEvent.setup()
     render(<OwedPage />)

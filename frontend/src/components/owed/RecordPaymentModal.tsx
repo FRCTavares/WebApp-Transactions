@@ -49,7 +49,9 @@ export function RecordPaymentModal({
     items,
     paymentForm.person,
     amount,
+    paymentForm.allocationStopBeforeId,
   )
+  const paymentAllocationItems = getPaymentAllocationItems(items, paymentForm.person)
   const manualAllocationTotal = getManualAllocationTotal(paymentForm)
   const hasManualAllocations = getManualPaymentAllocations(paymentForm).length > 0
   const allocatedAmount = hasManualAllocations
@@ -139,6 +141,29 @@ export function RecordPaymentModal({
           </label>
         </div>
 
+        {paymentForm.person && paymentAllocationItems.length > 0 && (
+          <label className="record-payment-boundary" htmlFor="allocation-stop-before">
+            Automatic payment ends before
+            <select
+              id="allocation-stop-before"
+              aria-label="Automatic payment ends before"
+              value={paymentForm.allocationStopBeforeId}
+              onChange={(event) => onUpdateField('allocationStopBeforeId', event.target.value)}
+            >
+              <option value="">No limit — use oldest items first</option>
+              {paymentAllocationItems.map((item, index) => (
+                <option key={item.id} value={item.id}>
+                  {index + 1}. Before {item.reason} ({formatMoney(item.amount_remaining)})
+                </option>
+              ))}
+            </select>
+            <span className="muted small">
+              Choose an item to keep it and everything after it separate. For example, choose
+              “Before Japan Flights” to pay the earlier items only.
+            </span>
+          </label>
+        )}
+
         {paymentForm.person && amount > 0 && (
           <section className="modal-transaction-summary record-payment-plan" aria-live="polite">
             <div>
@@ -175,14 +200,14 @@ export function RecordPaymentModal({
           </section>
         )}
 
-        {paymentForm.person && amount > 0 && getPaymentAllocationItems(items, paymentForm.person).length > 0 && (
+        {paymentForm.person && amount > 0 && paymentAllocationItems.length > 0 && (
           <details className="record-payment-details">
             <summary>Adjust which items are paid</summary>
             <p className="muted small">
               Optional. Entering any amount replaces the automatic plan with your custom plan.
             </p>
             <div className="record-payment-allocation-list">
-              {getPaymentAllocationItems(items, paymentForm.person).map((item) => (
+              {paymentAllocationItems.map((item) => (
                 <label key={item.id}>
                   <span>
                     {item.reason}
