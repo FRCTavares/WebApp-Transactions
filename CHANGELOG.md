@@ -66,6 +66,17 @@ that's generated. The current running build's commit is shown in
 
 ### Changed
 
+- Reworked the dashboard to cut duplication and tighten the layout. The
+  five metric cards and the "Monthly summary" bar list showed the same four
+  figures twice; both are replaced by one **Cash flow** panel whose stacked
+  bar shows how the month's income split into spending, investing and what
+  was left, with the monthly investment goal and (separately labelled)
+  unrealised investment performance folded in. Recent transactions moves up
+  beside the spending breakdown as a compact list instead of a sparse
+  full-width table. `DashboardPage.tsx` drops from 885 to ~350 lines, split
+  into `MonthlyCashflowPanel`, `RecentTransactionsList` and
+  `CategoryDetailPanel`.
+
 - Reworked the Wealth and Investments trend charts onto one shared
   `TrendChart` component. It measures its own container and draws at that
   exact pixel width instead of a fixed 900-wide canvas the browser then

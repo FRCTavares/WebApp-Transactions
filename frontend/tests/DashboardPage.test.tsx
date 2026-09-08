@@ -55,6 +55,22 @@ const MONTHLY_SUMMARY = {
   top_expense_categories: [],
 }
 
+function makeExpense(id: number, description: string, overrides = {}) {
+  return {
+    id,
+    date: `2026-07-${String(30 - id).padStart(2, '0')}`,
+    description,
+    raw_description: description,
+    amount: '20.00',
+    direction: 'out',
+    category: 'Other',
+    notes: null,
+    is_owed: false,
+    owed_amount_total: null,
+    ...overrides,
+  }
+}
+
 describe('dashboard page loading, empty, error, and partial-data states', () => {
   beforeEach(() => {
     mocks.getInvestmentMonthlyChange.mockReset()
@@ -96,7 +112,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
     ).toBeInTheDocument()
   })
 
-  it('excludes fully owed expenses and fills the five recent slots', async () => {
+  it('excludes fully owed expenses and caps the recent list at six', async () => {
     mocks.getMonthlySummary.mockResolvedValue(MONTHLY_SUMMARY)
     mocks.getInvestmentMonthlyChange.mockResolvedValue({
       unrealised_monthly_change: '10.00',
@@ -104,99 +120,28 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
     })
     mocks.getCategorySummary.mockResolvedValue({ items: [] })
     mocks.listTransactions.mockResolvedValue([
-      {
-        id: 1,
-        date: '2026-07-20',
-        description: 'Fully owed expense',
-        raw_description: 'Fully owed expense',
-        amount: '40.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
+      makeExpense(1, 'Fully owed expense', {
         is_owed: true,
-        owed_amount_total: '40.00',
-      },
-      {
-        id: 2,
-        date: '2026-07-19',
-        description: 'Personal expense one',
-        raw_description: 'Personal expense one',
-        amount: '20.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
-        is_owed: false,
-        owed_amount_total: null,
-      },
-      {
-        id: 3,
-        date: '2026-07-18',
-        description: 'Partially owed expense',
-        raw_description: 'Partially owed expense',
-        amount: '30.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
+        owed_amount_total: '20.00',
+      }),
+      makeExpense(2, 'Partially owed expense', {
         is_owed: true,
-        owed_amount_total: '10.00',
-      },
-      {
-        id: 4,
-        date: '2026-07-17',
-        description: 'Personal expense two',
-        raw_description: 'Personal expense two',
-        amount: '12.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
-        is_owed: false,
-        owed_amount_total: null,
-      },
-      {
-        id: 5,
-        date: '2026-07-16',
-        description: 'Personal expense three',
-        raw_description: 'Personal expense three',
-        amount: '13.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
-        is_owed: false,
-        owed_amount_total: null,
-      },
-      {
-        id: 6,
-        date: '2026-07-15',
-        description: 'Personal expense four',
-        raw_description: 'Personal expense four',
-        amount: '14.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
-        is_owed: false,
-        owed_amount_total: null,
-      },
-      {
-        id: 7,
-        date: '2026-07-14',
-        description: 'Sixth eligible expense',
-        raw_description: 'Sixth eligible expense',
-        amount: '15.00',
-        direction: 'out',
-        category: 'Other',
-        notes: null,
-        is_owed: false,
-        owed_amount_total: null,
-      },
+        owed_amount_total: '5.00',
+      }),
+      makeExpense(3, 'Personal expense one'),
+      makeExpense(4, 'Personal expense two'),
+      makeExpense(5, 'Personal expense three'),
+      makeExpense(6, 'Personal expense four'),
+      makeExpense(7, 'Personal expense five'),
+      makeExpense(8, 'Seventh eligible expense'),
     ])
 
     render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
 
-    expect(await screen.findByText('Personal expense one')).toBeInTheDocument()
-    expect(screen.getByText('Partially owed expense')).toBeInTheDocument()
-    expect(screen.getByText('Personal expense four')).toBeInTheDocument()
+    expect(await screen.findByText('Partially owed expense')).toBeInTheDocument()
+    expect(screen.getByText('Personal expense five')).toBeInTheDocument()
     expect(screen.queryByText('Fully owed expense')).not.toBeInTheDocument()
-    expect(screen.queryByText('Sixth eligible expense')).not.toBeInTheDocument()
+    expect(screen.queryByText('Seventh eligible expense')).not.toBeInTheDocument()
 
     expect(mocks.listTransactions).toHaveBeenCalledWith({
       direction: 'out',
@@ -206,7 +151,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
     })
   })
 
-  it('uses authoritative Available Net and excludes unrealised performance', async () => {
+  it('leads with authoritative Available Net and keeps unrealised performance separate', async () => {
     mocks.getMonthlySummary.mockResolvedValue({
       ...MONTHLY_SUMMARY,
       available_net: '500.00',
@@ -220,16 +165,12 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
 
     render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
 
-    expect(
-      (await screen.findAllByText('Available Net')).length,
-    ).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Available net')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('€500.00').length).toBeGreaterThan(0)
     expect(screen.getByText('Investment performance')).toBeInTheDocument()
-    expect(screen.getByText('€999.00')).toBeInTheDocument()
+    expect(screen.getByText('+€999.00')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'Unrealised market/FX gain or loss; excluded from Available Net',
-      ),
+      screen.getByText('unrealised market/FX — not part of cash flow'),
     ).toBeInTheDocument()
   })
 
@@ -239,7 +180,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
       invested: '60.00',
       remaining: '40.00',
       over: '0.00',
-      expected: '€40.00 remaining',
+      expected: '€40.00 to go',
     },
     {
       status: 'reached',
@@ -253,41 +194,33 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
       invested: '130.00',
       remaining: '0.00',
       over: '30.00',
-      expected: 'Goal exceeded by €30.00',
+      expected: 'Over by €30.00',
     },
-  ])(
-    'shows the $status monthly investment goal state',
-    async ({
-      status,
-      invested,
-      remaining,
-      over,
-      expected,
-    }) => {
-      mocks.getMonthlySummary.mockResolvedValue({
-        ...MONTHLY_SUMMARY,
-        net_invested_cash: invested,
-        investment_goal_remaining: remaining,
-        investment_goal_over: over,
-        investment_goal_status: status,
-      })
-      mocks.getInvestmentMonthlyChange.mockResolvedValue({
-        unrealised_monthly_change: '10.00',
-        is_estimated: false,
-      })
-      mocks.getCategorySummary.mockResolvedValue({ items: [] })
-      mocks.listTransactions.mockResolvedValue([])
+  ])('shows the $status monthly investment goal state', async ({
+    status,
+    invested,
+    remaining,
+    over,
+    expected,
+  }) => {
+    mocks.getMonthlySummary.mockResolvedValue({
+      ...MONTHLY_SUMMARY,
+      net_invested_cash: invested,
+      investment_goal_remaining: remaining,
+      investment_goal_over: over,
+      investment_goal_status: status,
+    })
+    mocks.getInvestmentMonthlyChange.mockResolvedValue({
+      unrealised_monthly_change: '10.00',
+      is_estimated: false,
+    })
+    mocks.getCategorySummary.mockResolvedValue({ items: [] })
+    mocks.listTransactions.mockResolvedValue([])
 
-      render(
-        <DashboardPage
-          greeting="Good morning"
-          displayName="Francisco"
-        />,
-      )
+    render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
 
-      expect(await screen.findByText(expected)).toBeInTheDocument()
-    },
-  )
+    expect(await screen.findByText(expected)).toBeInTheDocument()
+  })
 
   it('shows unavailable investment cash flow without inventing Available Net', async () => {
     mocks.getMonthlySummary.mockResolvedValue({
@@ -309,17 +242,11 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
 
     render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
 
+    expect(await screen.findByText('Cash flow unavailable')).toBeInTheDocument()
     expect(
-      await screen.findByText('Investment cash flow unavailable'),
+      screen.getByText('Some investment funding is not fully reconciled.'),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Some investment funding is not fully reconciled.',
-      ),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByLabelText(/Available net: unavailable/i),
-    ).toBeInTheDocument()
+    expect(screen.getByText('—')).toBeInTheDocument()
   })
 
   it('shows a full error when required data fails to load', async () => {
@@ -350,7 +277,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
       ),
     ).toBeInTheDocument()
 
-    expect(await screen.findByText('Money In')).toBeInTheDocument()
+    expect(await screen.findByText('Money in')).toBeInTheDocument()
     expect(screen.getAllByText('€1,000.00').length).toBeGreaterThan(0)
   })
 })

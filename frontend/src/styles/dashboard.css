@@ -42,105 +42,11 @@
   letter-spacing: -0.055em;
 }
 
-.dashboard-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.dashboard-metric-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.9rem;
-  min-height: 6.5rem;
-  box-shadow: var(--elevation-sm);
-}
-
-.dashboard-metric-icon {
-  display: grid;
-  width: 2.1rem;
-  height: 2.1rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  box-shadow: inset 0 1px 0 var(--color-border-glass);
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.dashboard-metric-card div {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.dashboard-metric-card p,
-.dashboard-metric-card small {
-  margin: 0;
-  color: var(--dashboard-muted);
-}
-
-.dashboard-metric-card p {
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.dashboard-metric-card strong {
-  color: var(--dashboard-text);
-  font-size: clamp(1.4rem, 1.7vw, 1.7rem);
-  line-height: 1.05;
-  letter-spacing: -0.05em;
-}
-
-.dashboard-metric-card small {
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-.dashboard-metric-income .dashboard-metric-icon {
-  background: var(--dashboard-green-soft);
-  color: var(--dashboard-green);
-}
-
-.dashboard-metric-positive .dashboard-metric-icon {
-  background: var(--dashboard-blue-soft);
-  color: var(--dashboard-blue);
-}
-
-.dashboard-metric-spent .dashboard-metric-icon {
-  background: var(--dashboard-orange-soft);
-  color: var(--dashboard-orange);
-}
-
-.dashboard-metric-neutral .dashboard-metric-icon {
-  background: var(--color-surface-sunken);
-  color: var(--color-text-muted);
-}
-
-.dashboard-metric-negative .dashboard-metric-icon {
-  background: var(--dashboard-red-soft);
-  color: var(--dashboard-red);
-}
-
-.dashboard-metric-income strong,
-.dashboard-metric-positive strong {
-  color: var(--color-positive-text);
-}
-
-.dashboard-metric-spent strong {
-  color: var(--color-negative-text);
-}
-
-.dashboard-metric-negative strong {
-  color: var(--color-negative-text);
-}
-
 .dashboard-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 0.9rem;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
+  gap: var(--space-5);
+  align-items: start;
 }
 
 .dashboard-panel-header {
@@ -164,138 +70,21 @@
   font-size: 0.88rem;
 }
 
-.dashboard-summary-bars {
-  display: grid;
-  gap: 1rem;
-  padding: 1.15rem;
-}
-
-.dashboard-summary-bar-row {
-  display: grid;
-  grid-template-columns: minmax(6rem, 1fr) auto;
-  gap: 0.55rem 1rem;
-  align-items: center;
-}
-
-.dashboard-summary-bar-row > div:first-child {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--dashboard-muted);
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.dashboard-summary-bar-row strong {
-  color: var(--dashboard-text);
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-}
-
-.dashboard-dot {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 999px;
-}
-
-.dashboard-dot-income,
-.dashboard-summary-bar-income {
-  background: var(--dashboard-green);
-}
-
-.dashboard-dot-spent,
-.dashboard-summary-bar-spent {
-  background: var(--dashboard-orange);
-}
-
-.dashboard-dot-net,
-.dashboard-summary-bar-net {
-  background: var(--dashboard-blue);
-}
-
-.dashboard-dot-invested,
-.dashboard-summary-bar-invested {
-  background: var(--dashboard-blue);
-}
-
-.dashboard-investment-goal {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.dashboard-investment-goal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.dashboard-investment-goal-header h2,
-.dashboard-investment-goal-header p,
-.dashboard-investment-goal > p {
-  margin: 0;
-}
-
-.dashboard-investment-goal-header h2 {
-  color: var(--dashboard-text);
-  font-size: 1.05rem;
-}
-
-.dashboard-investment-goal-header p {
-  margin-top: var(--space-1);
-  color: var(--dashboard-muted);
-  font-size: 0.88rem;
-}
-
-.dashboard-investment-goal-header > strong {
-  color: var(--dashboard-text);
-  text-align: right;
-}
-
-.dashboard-investment-goal-track {
-  height: 0.75rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--chart-track);
-}
-
-.dashboard-investment-goal-track > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--dashboard-green);
-}
-
-.dashboard-summary-bar-track {
-  grid-column: 1 / -1;
-  height: 0.7rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--chart-track);
-}
-
-.dashboard-summary-bar {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-}
-
 /* The donut's own root. Its only call site is inside the `Card` above, so the
-   card owns the surface, border and radius and this is a layout body.
-   `.dashboard-spending-panel` used to carry `padding: 0` so the inner element
-   could pad instead; `.ui-card-pad-md` outranks it, so that never applied.
-
-   The padding here is deliberate and is *not* redundant with the card's. It
-   sits on top of it, and the total is what lines this panel's heading up with
-   Monthly summary's beside it - that heading carries its own ~19px offset, so
-   removing this drops the donut's heading 18.4px higher than its neighbour at
-   1440. Measured, not assumed. */
+   card owns the surface, border and radius and this is a layout body. The
+   inner padding sits on top of the card's and lines the panel heading up with
+   Recent transactions' heading beside it. */
 .dashboard-spending-panel .expense-chart-body {
   display: grid;
-  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
-  gap: 1.25rem;
-  height: 100%;
-  padding: 1.15rem;
+  grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+  gap: var(--space-7);
+  align-items: start;
+  padding: var(--space-6);
+}
+
+.dashboard-spending-panel .expense-chart-visual {
+  min-height: 0;
+  align-self: center;
 }
 
 .dashboard-spending-panel .expense-chart-list-header {
@@ -332,20 +121,20 @@
 }
 
 .dashboard-recent-panel {
-  padding-bottom: 0.4rem;
+  padding-bottom: var(--space-2);
 }
 
 .dashboard-recent-list {
   display: grid;
-  padding: 0.7rem 1.15rem 1.15rem;
+  padding: var(--space-4) var(--space-6) var(--space-6);
 }
 
 .dashboard-recent-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 9rem 7.5rem 7rem;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5);
   align-items: center;
-  padding: 0.85rem 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -355,11 +144,11 @@
 
 .dashboard-recent-main {
   display: grid;
-  gap: 0.2rem;
+  gap: var(--space-2);
   min-width: 0;
 }
 
-.dashboard-recent-main strong {
+.dashboard-recent-main > strong {
   overflow: hidden;
   color: var(--dashboard-text);
   font-size: 0.95rem;
@@ -367,30 +156,36 @@
   white-space: nowrap;
 }
 
-.dashboard-recent-main span,
-.dashboard-recent-date {
-  overflow: hidden;
+.dashboard-recent-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
   color: var(--dashboard-muted);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-recent-meta > span {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.dashboard-recent-reason {
+  flex: 1 1 auto;
+}
+
 .dashboard-recent-category {
-  justify-self: start;
-  padding: 0.22rem 0.55rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface-sunken);
-  color: var(--color-text-muted);
-  font-size: 0.78rem;
+  flex: 0 0 auto;
+  color: var(--dashboard-text);
   font-weight: 800;
 }
 
 .dashboard-recent-amount {
   justify-self: end;
   color: var(--dashboard-text);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-page .category-detail-panel {
@@ -398,9 +193,6 @@
 }
 
 @media (max-width: 1180px) {
-  .dashboard-summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 
   .dashboard-main-grid {
     grid-template-columns: 1fr;
@@ -410,34 +202,6 @@
 @media (max-width: 800px) {
   .dashboard-page {
     gap: 0.9rem;
-  }
-
-  .dashboard-summary-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .dashboard-metric-card {
-    min-height: auto;
-    padding: 1rem;
-    border-radius: 1rem;
-  }
-
-  .dashboard-metric-icon {
-    width: 2.1rem;
-    height: 2.1rem;
-  }
-
-  .dashboard-metric-card small {
-    display: none;
-  }
-
-  .dashboard-investment-goal-header {
-    display: grid;
-  }
-
-  .dashboard-investment-goal-header > strong {
-    text-align: left;
   }
 
   .dashboard-panel {
@@ -450,71 +214,9 @@
     padding: 1rem;
   }
 
-  .dashboard-recent-row {
-    grid-template-columns: 1fr auto;
-    gap: 0.35rem 0.8rem;
-  }
-
-  .dashboard-recent-category,
-  .dashboard-recent-date {
+  .dashboard-recent-reason {
     display: none;
   }
-}
-
-/* Zero-centred net summary bar. */
-.dashboard-summary-bar-track-net {
-  position: relative;
-}
-
-.dashboard-summary-bar-track-net::before {
-  content: "";
-  position: absolute;
-  top: 0.12rem;
-  bottom: 0.12rem;
-  left: 50%;
-  width: 1px;
-  background: var(--chart-axis);
-}
-
-.dashboard-summary-bar-track-net .dashboard-summary-bar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  height: 100%;
-}
-
-.dashboard-summary-bar-net-negative {
-  background: var(--dashboard-red);
-}
-
-/* Stronger zero marker for net summary bar. */
-.dashboard-summary-bar-track-net {
-  overflow: visible;
-  background:
-    linear-gradient(
-      90deg,
-      var(--chart-track) 0%,
-      var(--chart-track) calc(50% - 1.5px),
-      var(--chart-axis) calc(50% - 1.5px),
-      var(--chart-axis) calc(50% + 1.5px),
-      var(--chart-track) calc(50% + 1.5px),
-      var(--chart-track) 100%
-    );
-}
-
-.dashboard-summary-bar-track-net::before {
-  top: -0.3rem;
-  bottom: -0.3rem;
-  width: 3px;
-  border-radius: 999px;
-  background: var(--chart-axis);
-  box-shadow: 0 0 0 3px var(--color-surface);
-  transform: translateX(-1.5px);
-  z-index: 1;
-}
-
-.dashboard-summary-bar-track-net .dashboard-summary-bar {
-  z-index: 2;
 }
 
 /* Extracted from index.css: dashboard-specific styles. */
@@ -874,5 +576,289 @@
 
   .dashboard-chart-toggle button {
     min-height: 34px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Cash flow panel — replaces the five metric cards and the "Monthly summary"
+   bar list, which showed the same four figures twice. One stacked bar shows
+   how the month's income divided into spending, investing and what was left.
+   --------------------------------------------------------------------------- */
+.cashflow-panel {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.cashflow-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.cashflow-head h2 {
+  margin: 0;
+  color: var(--dashboard-text);
+  font-size: 1.15rem;
+  letter-spacing: -0.035em;
+}
+
+.cashflow-head > div:first-child p {
+  margin: var(--space-1) 0 0;
+}
+
+.cashflow-headline {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+  text-align: right;
+}
+
+.cashflow-headline span {
+  color: var(--dashboard-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cashflow-headline strong {
+  color: var(--dashboard-text);
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-headline.is-positive strong {
+  color: var(--color-positive-text);
+}
+
+.cashflow-headline.is-negative strong {
+  color: var(--color-negative-text);
+}
+
+.cashflow-headline small {
+  color: var(--dashboard-muted);
+  font-size: 0.8rem;
+}
+
+.cashflow-inflow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.cashflow-inflow span {
+  color: var(--dashboard-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cashflow-inflow strong {
+  color: var(--dashboard-text);
+  font-size: 1.1rem;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-bar {
+  display: flex;
+  gap: var(--space-1);
+  height: 0.9rem;
+  margin-top: calc(-1 * var(--space-3));
+  border-radius: var(--radius-full);
+  background: var(--chart-track);
+  overflow: hidden;
+}
+
+.cashflow-bar > span {
+  display: block;
+  width: var(--seg);
+  min-width: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.cashflow-seg-spent {
+  background: var(--dashboard-orange);
+}
+
+.cashflow-seg-invested {
+  background: var(--dashboard-blue);
+}
+
+.cashflow-seg-leftover {
+  background: var(--dashboard-green);
+}
+
+.cashflow-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-5) var(--space-8);
+}
+
+.cashflow-stat {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.cashflow-stat > span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--dashboard-muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.cashflow-stat > span i {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.cashflow-stat strong {
+  color: var(--dashboard-text);
+  font-size: 1.28rem;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-stat strong.is-positive {
+  color: var(--color-positive-text);
+}
+
+.cashflow-stat strong.is-negative {
+  color: var(--color-negative-text);
+}
+
+.cashflow-stat small {
+  color: var(--dashboard-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.cashflow-goal {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.cashflow-goal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cashflow-goal-head span {
+  color: var(--dashboard-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cashflow-goal-head strong {
+  color: var(--dashboard-text);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-goal-track {
+  height: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--chart-track);
+  overflow: hidden;
+}
+
+.cashflow-goal-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dashboard-green);
+}
+
+.cashflow-warn {
+  color: var(--color-negative-text);
+  font-weight: 700;
+}
+
+.cashflow-perf {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-border);
+}
+
+.cashflow-perf span {
+  color: var(--dashboard-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cashflow-perf strong {
+  color: var(--dashboard-text);
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cashflow-perf.is-positive strong {
+  color: var(--color-positive-text);
+}
+
+.cashflow-perf.is-negative strong {
+  color: var(--color-negative-text);
+}
+
+.cashflow-perf small {
+  color: var(--dashboard-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.dashboard-recent-amount.is-negative {
+  color: var(--color-negative-text);
+}
+
+.dashboard-recent-amount.is-positive {
+  color: var(--color-positive-text);
+}
+
+@media (max-width: 800px) {
+  .cashflow-head {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .cashflow-headline {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .cashflow-foot {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .cashflow-perf {
+    padding-left: 0;
+    padding-top: var(--space-5);
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
   }
 }

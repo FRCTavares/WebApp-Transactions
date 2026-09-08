@@ -1,99 +1,29 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { listTransactions } from '../api/transactions'
 import { getCategorySummary, getMonthlySummary } from '../api/summary'
-import type { CategorySummaryItem, CategorySummaryResponse, InvestmentMonthlyChange, MonthlySummary, Transaction } from '../types/api'
-import { formatMoney, formatMonthLabel } from '../utils/format'
-import { ArrowDownLeft, ArrowUpRight, Equal, Receipt, TrendingUp } from 'lucide-react'
+import type {
+  CategorySummaryItem,
+  CategorySummaryResponse,
+  InvestmentMonthlyChange,
+  MonthlySummary,
+  Transaction,
+} from '../types/api'
+import { formatMonthLabel } from '../utils/format'
+import { isFullyOwedTransaction } from '../utils/dashboardTransactions'
 import { StatusMessage } from '../components/StatusMessage'
 import { ExpenseCategoryDonutChart } from '../components/dashboard/ExpenseCategoryDonutChart'
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  Icon,
-  PageHeader,
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableMessageRow,
-  TableRow,
-} from '../components/ui'
+import { MonthlyCashflowPanel } from '../components/dashboard/MonthlyCashflowPanel'
+import { RecentTransactionsList } from '../components/dashboard/RecentTransactionsList'
+import { CategoryDetailPanel } from '../components/dashboard/CategoryDetailPanel'
+import { Card, PageHeader, Skeleton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
 import { usePeriod } from '../hooks/usePeriod'
 
 type CategoryRollup = {
   category: string
   count: number
-  grossTotal: number
-  owedTotal: number
   personalTotal: number
-}
-
-function getInvestmentGoalMessage(summary: MonthlySummary) {
-  if (summary.investment_goal_status === 'unavailable') {
-    return 'Investment cash flow unavailable'
-  }
-
-  if (summary.investment_goal_status === 'exceeded') {
-    return `Goal exceeded by ${formatMoney(summary.investment_goal_over ?? '0.00')}`
-  }
-
-  if (summary.investment_goal_status === 'reached') {
-    return 'Goal reached'
-  }
-
-  return `${formatMoney(summary.investment_goal_remaining ?? '0.00')} remaining`
-}
-
-function getInvestmentGoalProgress(summary: MonthlySummary) {
-  if (
-    summary.net_invested_cash === null
-    || Number(summary.investment_goal_eur) <= 0
-  ) {
-    return 0
-  }
-
-  return Math.max(
-    0,
-    Math.min(
-      100,
-      (
-        Number(summary.net_invested_cash)
-        / Number(summary.investment_goal_eur)
-      ) * 100,
-    ),
-  )
-}
-
-function getReconciliationMessage(summary: MonthlySummary) {
-  if (summary.investment_reconciliation_status === 'partial') {
-    return 'Some investment funding is not fully reconciled.'
-  }
-
-  if (summary.investment_reconciliation_status === 'complete') {
-    return 'Linked bank and broker records are counted once.'
-  }
-
-  return 'No linked bank reconciliation was required this month.'
-}
-
-function getMetricTone(value: string | number | null | undefined) {
-  const amount = Number(value ?? 0)
-
-  if (amount > 0) {
-    return 'positive'
-  }
-
-  if (amount < 0) {
-    return 'negative'
-  }
-
-  return 'neutral'
 }
 
 function toNumber(value: string) {
@@ -111,132 +41,29 @@ function getDateRange(year: number, month: number) {
   }
 }
 
-function getMonthLabel(year: number, month: number) {
-  return formatMonthLabel(`${year}-${String(month).padStart(2, '0')}`, 'long')
-}
-
-function getTransactionOwedAmount(transaction: Transaction) {
-  return Number(transaction.owed_amount_total ?? 0)
-}
-
-function getTransactionPersonalAmount(transaction: Transaction) {
-  return Number(transaction.amount) - getTransactionOwedAmount(transaction)
-}
-
-function isFullyOwedTransaction(transaction: Transaction) {
-  const transactionAmount = Number(transaction.amount)
-  const owedAmount = getTransactionOwedAmount(transaction)
-
-  return (
-    transaction.direction === 'out'
-    && transaction.is_owed
-    && transactionAmount > 0
-    && owedAmount >= transactionAmount - 0.0001
-  )
-}
-
-function getRecentTransactionAmount(transaction: Transaction) {
-  if (transaction.direction === 'out') {
-    return -getTransactionPersonalAmount(transaction)
-  }
-
-  return getTransactionPersonalAmount(transaction)
-}
-
-function getReasonText(transaction: Transaction) {
-  if (transaction.notes) {
-    return transaction.notes
-  }
-
-  if (transaction.raw_description && transaction.raw_description !== transaction.description) {
-    return transaction.raw_description
-  }
-
-  return transaction.description
-}
-
-/**
- * The reason line only earns its space when it says something the description
- * does not. With no notes and a raw_description equal to the description, the
- * fallback above returns the description itself, which rendered every recent
- * transaction twice ("Prenda de Anos Ze / Prenda de Anos Ze").
- */
-function getSecondaryReasonText(transaction: Transaction) {
-  const reason = getReasonText(transaction)
-
-  return reason === transaction.description ? null : reason
-}
-
-function buildCategoryRollups(items: CategorySummaryItem[]) {
+function buildCategoryRollups(items: CategorySummaryItem[]): CategoryRollup[] {
   const rollups = new Map<string, CategoryRollup>()
 
   for (const item of items) {
     const current = rollups.get(item.category) ?? {
       category: item.category,
       count: 0,
-      grossTotal: 0,
-      owedTotal: 0,
       personalTotal: 0,
     }
 
     current.count += item.count
-    current.grossTotal += toNumber(item.gross_total)
-    current.owedTotal += toNumber(item.owed_total)
     current.personalTotal += toNumber(item.personal_total)
 
     rollups.set(item.category, current)
   }
 
-  return Array.from(rollups.values())
-}
+  return Array.from(rollups.values()).sort((first, second) => {
+    const difference = second.personalTotal - first.personalTotal
 
-function sortCategoryRollups(items: CategoryRollup[]) {
-  return [...items].sort((firstItem, secondItem) => {
-    const personalDifference = secondItem.personalTotal - firstItem.personalTotal
-
-    if (personalDifference !== 0) {
-      return personalDifference
-    }
-
-    return firstItem.category.localeCompare(secondItem.category)
+    return difference !== 0
+      ? difference
+      : first.category.localeCompare(second.category)
   })
-}
-
-function getSummaryBarWidth(value: string | number, maxValue: number) {
-  if (maxValue <= 0) {
-    return '0%'
-  }
-
-  return `${Math.max(4, Math.min(100, (Number(value) / maxValue) * 100))}%`
-}
-
-function getNetSummaryBarStyle(value: string | number, maxValue: number): CSSProperties {
-  const amount = Number(value)
-
-  if (maxValue <= 0 || amount === 0) {
-    return {
-      left: '50%',
-      width: '0%',
-    }
-  }
-
-  const width = Math.max(4, Math.min(50, (Math.abs(amount) / maxValue) * 50))
-
-  if (amount < 0) {
-    return {
-      right: '50%',
-      width: `${width}%`,
-    }
-  }
-
-  return {
-    left: '50%',
-    width: `${width}%`,
-  }
-}
-
-function getCategoryLabel(transaction: Transaction) {
-  return transaction.category || 'Uncategorised'
 }
 
 type DashboardPageProps = {
@@ -246,11 +73,7 @@ type DashboardPageProps = {
 
 export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const { year, month } = usePeriod()
-  const {
-    accessToken,
-    isAuthEnabled,
-    isLoading: isAuthLoading,
-  } = useAuth()
+  const { accessToken, isAuthEnabled, isLoading: isAuthLoading } = useAuth()
   const [summary, setSummary] = useState<MonthlySummary | null>(null)
   const [investmentMonthlyChange, setInvestmentMonthlyChange] =
     useState<InvestmentMonthlyChange | null>(null)
@@ -263,10 +86,9 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
   const [isDashboardLoading, setIsDashboardLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dataWarning, setDataWarning] = useState<string | null>(null)
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
 
   const sortedCategoryRollups = useMemo(
-    () => sortCategoryRollups(buildCategoryRollups(categories?.items ?? [])),
+    () => buildCategoryRollups(categories?.items ?? []),
     [categories],
   )
 
@@ -342,7 +164,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
           setRecentTransactions(
             recentTransactionsResult.value
               .filter((transaction) => !isFullyOwedTransaction(transaction))
-              .slice(0, 5),
+              .slice(0, 6),
           )
         } else {
           requiredErrors.push(
@@ -357,7 +179,6 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         }
 
         setIsDashboardLoading(false)
-        setLastUpdatedAt(new Date())
       })
     }, 0)
 
@@ -389,25 +210,21 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         setCategoryTransactions(transactions)
       })
       .catch((caughtError: unknown) => {
-        setError(caughtError instanceof Error ? caughtError.message : 'Failed to load category details')
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Failed to load category details',
+        )
       })
       .finally(() => {
         setCategoryDetailsLoading(false)
       })
   }
 
-  const monthLabel = getMonthLabel(year, month)
-  const availableNet = summary?.available_net ?? null
-  const investedAmount = summary?.net_invested_cash ?? null
-  const investmentChange = investmentMonthlyChange?.unrealised_monthly_change ?? null
-  const summaryMaxValue = summary
-    ? Math.max(
-        Number(summary.money_in),
-        Number(summary.personal_money_out),
-        Math.abs(Number(investedAmount ?? 0)),
-        Math.abs(Number(availableNet ?? 0)),
-      )
-    : 0
+  const monthLabel = formatMonthLabel(
+    `${year}-${String(month).padStart(2, '0')}`,
+    'long',
+  )
 
   return (
     <section className="app-page dashboard-page">
@@ -415,16 +232,9 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
         eyebrow={`${greeting}, ${displayName}`}
         title="Dashboard"
         meta={
-          lastUpdatedAt && (
-            <p className="muted small" role="status">
-              Data refreshed at{' '}
-              {lastUpdatedAt.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-              .
-            </p>
-          )
+          <p className="muted small" role="status">
+            {monthLabel}
+          </p>
         }
       />
 
@@ -445,24 +255,19 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
           {/* Skeletons stand at the real height of what replaces them, so
               nothing reflows when the data lands. */}
-          <div className="dashboard-summary-grid" aria-hidden="true">
-            {Array.from({ length: 5 }, (_, index) => (
-              <Card key={index} padding="md" className="dashboard-metric-card">
-                <Skeleton variant="text" width="45%" />
-                <Skeleton variant="text" width="70%" height="1.5rem" />
-                <Skeleton variant="text" width="85%" />
-              </Card>
-            ))}
-          </div>
+          <Card padding="md" aria-hidden="true">
+            <Skeleton variant="text" width="30%" />
+            <Skeleton variant="block" height="8rem" />
+          </Card>
 
           <div className="dashboard-main-grid" aria-hidden="true">
             <Card padding="md">
               <Skeleton variant="text" width="40%" height="1.25rem" />
-              <Skeleton variant="block" height="9rem" />
+              <Skeleton variant="block" height="12rem" />
             </Card>
             <Card padding="md">
               <Skeleton variant="text" width="40%" height="1.25rem" />
-              <Skeleton variant="block" height="9rem" />
+              <Skeleton variant="block" height="12rem" />
             </Card>
           </div>
         </>
@@ -470,253 +275,13 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
 
       {summary && (
         <>
-          <div className="dashboard-summary-grid" role="list" aria-label="Monthly key metrics">
-            <Card
-              as="article"
-              padding="md"
-              className="dashboard-metric-card dashboard-metric-income"
-              role="listitem"
-              aria-label={`Money in: ${formatMoney(summary.money_in)}. Income received.`}
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Icon icon={ArrowDownLeft} size={16} />
-              </span>
-              <div>
-                <p>Money In</p>
-                <strong>{formatMoney(summary.money_in)}</strong>
-                <small>Income received</small>
-              </div>
-            </Card>
-
-            <Card
-              as="article"
-              padding="md"
-              className="dashboard-metric-card dashboard-metric-spent"
-              role="listitem"
-              aria-label={`Money out: ${formatMoney(summary.personal_money_out)}. Excludes owed or reimbursable spending.`}
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Icon icon={ArrowUpRight} size={16} />
-              </span>
-              <div>
-                <p>Money Out</p>
-                <strong>{formatMoney(summary.personal_money_out)}</strong>
-                <small>Excludes owed/reimbursable spending</small>
-              </div>
-            </Card>
-
-            <Card
-              as="article"
-              padding="md"
-              aria-label={`Invested: ${
-                investedAmount === null
-                  ? 'unavailable'
-                  : formatMoney(investedAmount)
-              }. Net amount bought this month, after sells.`}
-              className={`dashboard-metric-card dashboard-metric-${getMetricTone(investedAmount)}`}
-              role="listitem"
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Icon icon={TrendingUp} size={16} />
-              </span>
-              <div>
-                <p>Invested</p>
-                <strong>
-                  {investedAmount === null
-                    ? '-'
-                    : formatMoney(investedAmount)}
-                </strong>
-                <small>Market buys minus market sells this month</small>
-              </div>
-            </Card>
-
-            <Card
-              as="article"
-              padding="md"
-              aria-label={`Available net: ${
-                availableNet === null
-                  ? 'unavailable'
-                  : formatMoney(availableNet)
-              }. Money in minus personal spending and invested cash.`}
-              className={`dashboard-metric-card dashboard-metric-${getMetricTone(availableNet)}`}
-              role="listitem"
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Icon icon={Equal} size={16} />
-              </span>
-              <div>
-                <p>Available Net</p>
-                <strong>
-                  {availableNet === null
-                    ? '-'
-                    : formatMoney(availableNet)}
-                </strong>
-                <small>Money In - Money Out - Invested</small>
-              </div>
-            </Card>
-
-            <Card
-              as="article"
-              padding="md"
-              aria-label={`Investment performance: ${
-                investmentChange === null
-                  ? 'unavailable'
-                  : formatMoney(investmentChange)
-              }. Unrealised market and foreign exchange gain or loss. Does not affect Available Net.`}
-              className={`dashboard-metric-card dashboard-metric-${getMetricTone(investmentChange)}`}
-              role="listitem"
-            >
-              <span className="dashboard-metric-icon" aria-hidden="true">
-                <Icon icon={TrendingUp} size={16} />
-              </span>
-              <div>
-                <p>Investment performance</p>
-                <strong>
-                  {investmentChange === null
-                    ? '-'
-                    : formatMoney(investmentChange)}
-                </strong>
-                <small>
-                  {investmentMonthlyChange?.is_estimated
-                    ? 'Estimated unrealised market/FX gain or loss; excluded from Available Net'
-                    : 'Unrealised market/FX gain or loss; excluded from Available Net'}
-                </small>
-              </div>
-            </Card>
-          </div>
-
-          <Card
-            as="section"
-            padding="md"
-            className="dashboard-investment-goal"
-            aria-label={`Monthly investment goal: ${getInvestmentGoalMessage(summary)}.`}
-          >
-            <div className="dashboard-investment-goal-header">
-              <div>
-                <h2>Monthly investment goal</h2>
-                <p>
-                  {investedAmount === null
-                    ? 'Invested amount is temporarily unavailable.'
-                    : `${formatMoney(investedAmount)} of ${formatMoney(summary.investment_goal_eur)}`}
-                </p>
-              </div>
-              <strong>{getInvestmentGoalMessage(summary)}</strong>
-            </div>
-
-            <div
-              className="dashboard-investment-goal-track"
-              role="progressbar"
-              aria-label="Monthly investment goal progress"
-              aria-valuemin={0}
-              aria-valuemax={Number(summary.investment_goal_eur)}
-              aria-valuenow={
-                investedAmount === null
-                  ? undefined
-                  : Math.max(0, Number(investedAmount))
-              }
-            >
-              <span
-                style={{
-                  width: `${getInvestmentGoalProgress(summary)}%`,
-                }}
-              />
-            </div>
-
-            <p className="muted small">
-              {getReconciliationMessage(summary)}
-            </p>
-          </Card>
+          <MonthlyCashflowPanel
+            summary={summary}
+            monthLabel={monthLabel}
+            investmentChange={investmentMonthlyChange}
+          />
 
           <div className="dashboard-main-grid">
-            <Card as="section" padding="md" className="dashboard-monthly-summary">
-              <div className="dashboard-panel-header">
-                <div>
-                  <h2>Monthly summary</h2>
-                  <p>Personal cash flow over {monthLabel}</p>
-                </div>
-              </div>
-
-              <div className="dashboard-summary-bars">
-                <div className="dashboard-summary-bar-row">
-                  <div>
-                    <span className="dashboard-dot dashboard-dot-income" />
-                    <span>Income</span>
-                  </div>
-                  <strong>{formatMoney(summary.money_in)}</strong>
-                  <div className="dashboard-summary-bar-track">
-                    <span
-                      className="dashboard-summary-bar dashboard-summary-bar-income"
-                      style={{ width: getSummaryBarWidth(summary.money_in, summaryMaxValue) }}
-                    />
-                  </div>
-                </div>
-
-                <div className="dashboard-summary-bar-row">
-                  <div>
-                    <span className="dashboard-dot dashboard-dot-spent" />
-                    <span>Spent</span>
-                  </div>
-                  <strong>{formatMoney(summary.personal_money_out)}</strong>
-                  <div className="dashboard-summary-bar-track">
-                    <span
-                      className="dashboard-summary-bar dashboard-summary-bar-spent"
-                      style={{
-                        width: getSummaryBarWidth(summary.personal_money_out, summaryMaxValue),
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="dashboard-summary-bar-row">
-                  <div>
-                    <span className="dashboard-dot dashboard-dot-invested" />
-                    <span>Invested</span>
-                  </div>
-                  <strong>
-                    {investedAmount === null
-                      ? '-'
-                      : formatMoney(investedAmount)}
-                  </strong>
-                  <div className="dashboard-summary-bar-track">
-                    <span
-                      className="dashboard-summary-bar dashboard-summary-bar-invested"
-                      style={{
-                        width: getSummaryBarWidth(
-                          investedAmount ?? 0,
-                          summaryMaxValue,
-                        ),
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="dashboard-summary-bar-row">
-                  <div>
-                    <span className="dashboard-dot dashboard-dot-net" />
-                    <span>Available Net</span>
-                  </div>
-                  <strong>
-                    {availableNet === null
-                      ? '-'
-                      : formatMoney(availableNet)}
-                  </strong>
-                  <div className="dashboard-summary-bar-track dashboard-summary-bar-track-net">
-                    <span
-                      className={`dashboard-summary-bar dashboard-summary-bar-net ${
-                        Number(availableNet ?? 0) < 0
-                          ? 'dashboard-summary-bar-net-negative'
-                          : ''
-                      }`}
-                      style={getNetSummaryBarStyle(
-                        availableNet ?? 0,
-                        summaryMaxValue,
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
             <Card as="section" padding="md" className="dashboard-spending-panel">
               <ExpenseCategoryDonutChart
                 items={sortedCategoryRollups}
@@ -728,156 +293,21 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
                 onSelectCategory={handleCategoryClick}
               />
             </Card>
+
+            <RecentTransactionsList
+              transactions={recentTransactions}
+              monthLabel={monthLabel}
+            />
           </div>
 
           {selectedCategory && (
-            <Card as="section" padding="md" className="category-detail-panel">
-              <div className="category-detail-header">
-                <div>
-                  <h3>{selectedCategory} details</h3>
-                  <p className="muted small">Transactions behind the selected category.</p>
-                </div>
-                <Button size="sm" onClick={() => handleCategoryClick(selectedCategory)}>
-                  Close
-                </Button>
-              </div>
-
-              {categoryDetailsLoading ? (
-                <Skeleton variant="text" lines={4} />
-              ) : (
-                <>
-                  <div className="dashboard-mobile-category-transactions">
-                    {categoryTransactions.map((transaction) => (
-                      <article
-                        key={transaction.id}
-                        className="dashboard-mobile-category-transaction"
-                      >
-                        <div className="dashboard-mobile-category-transaction-main">
-                          <div>
-                            <strong>{transaction.description}</strong>
-                            <p>{transaction.date}</p>
-                          </div>
-                          <strong>
-                            {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
-                          </strong>
-                        </div>
-
-                        <div className="dashboard-mobile-category-transaction-meta">
-                          {getTransactionOwedAmount(transaction) > 0 && (
-                            <Badge tone="neutral" size="sm">
-                              Owed{' '}
-                              {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
-                            </Badge>
-                          )}
-                          <span className="muted small">
-                            Gross {formatMoney(transaction.amount)}
-                          </span>
-                        </div>
-
-                        <p className="muted small">{getReasonText(transaction)}</p>
-                      </article>
-                    ))}
-
-                    {categoryTransactions.length === 0 && (
-                      <EmptyState
-                        size="sm"
-                        icon={Receipt}
-                        title="No transactions found for this category."
-                      />
-                    )}
-                  </div>
-
-                  <div className="dashboard-category-detail-table-wrap">
-                    <Table label={`${selectedCategory} transactions`} minWidth="52rem">
-                      <TableHead>
-                        <TableRow>
-                          <TableHeaderCell>Date</TableHeaderCell>
-                          <TableHeaderCell>Description</TableHeaderCell>
-                          <TableHeaderCell align="right">Personal</TableHeaderCell>
-                          <TableHeaderCell align="right">Owed</TableHeaderCell>
-                          <TableHeaderCell align="right">Gross</TableHeaderCell>
-                          <TableHeaderCell>Reason</TableHeaderCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {categoryTransactions.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{transaction.date}</TableCell>
-                            <TableCell>{transaction.description}</TableCell>
-                            <TableCell align="right" numeric>
-                              {formatMoney(getTransactionPersonalAmount(transaction).toFixed(2))}
-                            </TableCell>
-                            <TableCell align="right" numeric>
-                              <span className="amount-muted">
-                                {formatMoney(getTransactionOwedAmount(transaction).toFixed(2))}
-                              </span>
-                            </TableCell>
-                            <TableCell align="right" numeric>
-                              <span className="amount-muted">
-                                {formatMoney(transaction.amount)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="muted small">{getReasonText(transaction)}</span>
-                              {transaction.owed_person && (
-                                <Badge tone="neutral" size="sm">
-                                  owed by {transaction.owed_person}
-                                </Badge>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-
-                        {categoryTransactions.length === 0 && (
-                          <TableMessageRow colSpan={6}>
-                            No transactions found for this category.
-                          </TableMessageRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </>
-              )}
-            </Card>
+            <CategoryDetailPanel
+              category={selectedCategory}
+              transactions={categoryTransactions}
+              isLoading={categoryDetailsLoading}
+              onClose={() => handleCategoryClick(selectedCategory)}
+            />
           )}
-
-          <Card as="section" padding="md" className="dashboard-recent-panel">
-            <div className="dashboard-panel-header">
-              <div>
-                <h2>Recent transactions</h2>
-                <p>Latest spending in {monthLabel}</p>
-              </div>
-            </div>
-
-            <div className="dashboard-recent-list">
-              {recentTransactions.map((transaction) => (
-                <article key={transaction.id} className="dashboard-recent-row">
-                  <div className="dashboard-recent-main">
-                    <strong>{transaction.description}</strong>
-                    {getSecondaryReasonText(transaction) && (
-                      <span>{getSecondaryReasonText(transaction)}</span>
-                    )}
-                  </div>
-                  <span className="dashboard-recent-category">
-                    {getCategoryLabel(transaction)}
-                  </span>
-                  <span className="dashboard-recent-date">{transaction.date}</span>
-                  <strong className="dashboard-recent-amount">
-                    {formatMoney(getRecentTransactionAmount(transaction).toFixed(2))}
-                  </strong>
-                </article>
-              ))}
-
-              {recentTransactions.length === 0 && (
-                <EmptyState
-                  size="sm"
-                  icon={Receipt}
-                  title="No recent spending found for this month."
-                  description="Spending you record this month will appear here."
-                />
-              )}
-            </div>
-          </Card>
         </>
       )}
     </section>
