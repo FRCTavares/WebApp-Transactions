@@ -46,7 +46,24 @@
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
   gap: var(--space-5);
-  align-items: start;
+  align-items: stretch;
+}
+
+/* Both panels track the taller one's height, and their bodies grow to fill
+   it so neither card ends in dead space. */
+.dashboard-main-grid > .dashboard-spending-panel,
+.dashboard-main-grid > .dashboard-recent-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-spending-panel .expense-chart-body {
+  flex: 1 1 auto;
+}
+
+.dashboard-recent-panel .dashboard-recent-list {
+  flex: 1 1 auto;
+  align-content: space-evenly;
 }
 
 .dashboard-panel-header {
