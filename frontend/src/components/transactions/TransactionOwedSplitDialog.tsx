@@ -1,7 +1,8 @@
 import type { OwedItem, Transaction } from '../../types/api'
 import { formatMoney } from '../../utils/format'
 import type { TransactionTableRow } from '../TransactionTable'
-import { Button } from '../ui'
+import { X } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
 
 export type OwedSplitRowState = {
@@ -98,9 +99,13 @@ export function TransactionOwedSplitDialog({
               Add who owes part of this expense. Optionally link matching Money In repayments now.
             </p>
           </div>
-          <Button type="button" onClick={onClose}>
-            Close
-          </Button>
+          <IconButton
+            icon={X}
+            label="Close dialog"
+            size="sm"
+            onClick={onClose}
+            disabled={isCreating}
+          />
         </div>
 
         <div className="modal-transaction-summary">

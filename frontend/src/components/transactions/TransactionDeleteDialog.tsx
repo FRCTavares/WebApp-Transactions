@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button } from '../ui'
+import { X } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 import type {
   Transaction,
   TransactionDeletionPreview,
@@ -122,6 +123,13 @@ export function TransactionDeleteDialog({
               Review linked owed records before continuing.
             </p>
           </div>
+          <IconButton
+            icon={X}
+            label="Close dialog"
+            size="sm"
+            onClick={onCancel}
+            disabled={isDeleting}
+          />
         </div>
 
         <div className="transaction-delete-dialog-summary">

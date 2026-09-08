@@ -304,7 +304,7 @@
 
 .category-replacement-backdrop {
   position: fixed;
-  z-index: 1200;
+  z-index: var(--z-modal);
   inset: 0;
   display: grid;
   place-items: center;
@@ -318,10 +318,10 @@
   gap: 1rem;
   width: min(100%, 31rem);
   padding: 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 1.15rem;
-  background: var(--color-surface);
-  box-shadow: 0 24px 70px var(--shadow-color-deeper);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  box-shadow: var(--elevation-lg);
 }
 
 .category-replacement-header {
@@ -395,7 +395,7 @@
 
 .category-migration-backdrop {
   position: fixed;
-  z-index: 1250;
+  z-index: var(--z-modal);
   inset: 0;
   display: grid;
   place-items: center;
@@ -410,10 +410,10 @@
   width: min(100%, 70rem);
   max-height: min(90vh, 58rem);
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: 1.2rem;
-  background: var(--color-surface);
-  box-shadow: 0 28px 80px var(--shadow-color-deepest);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  box-shadow: var(--elevation-lg);
 }
 
 .category-migration-header,

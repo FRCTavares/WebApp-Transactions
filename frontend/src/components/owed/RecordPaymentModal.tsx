@@ -12,7 +12,8 @@ import {
   getPaymentPeople,
   type PaymentFormState,
 } from '../../utils/owedPaymentUtils'
-import { Button } from '../ui'
+import { X } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 
 function getPaymentAmount(value: string) {
   return Math.abs(Number(value.replace(',', '.')))
@@ -82,9 +83,12 @@ export function RecordPaymentModal({
               Enter the cash received and we’ll settle the oldest open items automatically.
             </p>
           </div>
-          <Button type="button" size="sm" onClick={onClose}>
-            Close
-          </Button>
+          <IconButton
+            icon={X}
+            label="Close dialog"
+            size="sm"
+            onClick={onClose}
+          />
         </div>
 
         <div className="form-row">

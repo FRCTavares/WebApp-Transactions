@@ -65,7 +65,7 @@ describe('WealthAccountDetailsModal keyboard behavior', () => {
     await user.click(screen.getByRole('button', { name: /Savings.*Show details/s }))
     const dialog = await screen.findByRole('dialog', { name: 'Savings' })
 
-    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await user.click(screen.getByRole('button', { name: 'Close dialog' }))
 
     expect(dialog).not.toBeInTheDocument()
   })

@@ -114,7 +114,7 @@ td[colspan] {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,9 +124,9 @@ td[colspan] {
 
 .modal-card {
   width: min(560px, 100%);
-  background: var(--color-surface);
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border-strong);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-xl);
   box-shadow: var(--elevation-lg);
   padding: 1rem;
   color: var(--color-text);
@@ -142,6 +142,7 @@ td[colspan] {
 }
 
 .modal-header {
+  align-items: flex-start;
   margin-bottom: 1rem;
 }
 
@@ -203,11 +204,14 @@ td[colspan] {
     overflow-y: auto;
   }
 
-  .modal-header,
   .modal-actions,
   .modal-transaction-summary {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .modal-header {
+    align-items: flex-start;
   }
 
   .modal-actions {
@@ -356,7 +360,7 @@ td[colspan] {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
-    border-radius: 1.15rem;
+    border-radius: var(--radius-xl);
     -webkit-overflow-scrolling: touch;
   }
 

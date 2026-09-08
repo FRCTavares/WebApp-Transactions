@@ -3,7 +3,7 @@
 .wealth-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: var(--z-modal);
   display: grid;
   place-items: center;
   padding: 2rem;
@@ -14,25 +14,29 @@
 .wealth-modal-card {
   display: grid;
   gap: 1rem;
-  width: min(72rem, 100%);
+  width: min(48rem, 100%);
   max-height: min(82vh, 52rem);
   overflow: auto;
   padding: 1rem;
-  border: 1px solid var(--color-border-glass);
-  border-radius: 1.35rem;
-  background: var(--color-surface-glass);
-  box-shadow:
-    var(--elevation-lg),
-    inset 0 0 0 1px var(--color-border-glass);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-raised);
+  box-shadow: var(--elevation-lg);
 }
 
 .wealth-modal-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 1rem;
-  align-items: start;
   padding: 0.35rem 0.35rem 0.85rem;
   border-bottom: 1px solid var(--color-border);
+}
+
+.wealth-modal-header-aside {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .wealth-modal-header h2 {
@@ -71,13 +75,6 @@
   white-space: nowrap;
 }
 
-.wealth-modal-close {
-  min-height: 2.35rem;
-  border-radius: 0.85rem;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-weight: 800;
-}
 
 .wealth-modal-subaccount-list {
   display: grid;
@@ -143,11 +140,16 @@
 
   .wealth-modal-card {
     max-height: 88vh;
-    border-radius: 1.15rem;
+    border-radius: var(--radius-xl);
   }
 
   .wealth-modal-header {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .wealth-modal-header-aside {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .wealth-modal-total {
