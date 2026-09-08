@@ -91,7 +91,6 @@
     letter-spacing: var(--tracking-tight);
   }
 
-  .dashboard-metric-card strong,
   .wealth-mobile-account-group-header > strong,
   .wealth-mobile-account-item strong {
     font-size: var(--font-card-title);
