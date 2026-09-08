@@ -1,15 +1,8 @@
-import { useState, type MouseEvent } from 'react'
 import { CircleAlert, TrendingUp } from 'lucide-react'
-import {
-  ChartAxis,
-  ChartGrid,
-  ChartLegend,
-  ChartTooltip,
-  useChartScale,
-} from '../charts'
+import { ChartLegend, TrendChart } from '../charts'
 import { EmptyState, Skeleton } from '../ui'
 import type { InvestmentMonthlySeriesPoint } from '../../types/api'
-import { formatMoney, formatMonthLabel } from '../../utils/format'
+import { formatMoney, formatMoneyCompact, formatMonthLabel } from '../../utils/format'
 
 type InvestmentPortfolioTrendChartProps = {
   months: number
@@ -26,7 +19,7 @@ const chartWindowOptions = [
   { label: '5Y', value: 60 },
 ]
 
-type ChartPoint = {
+type SeriesPoint = {
   month: string
   allocated: number | null
   marketValue: number | null
@@ -34,43 +27,16 @@ type ChartPoint = {
   isEstimated: boolean
 }
 
-type TrendCoordinate = {
-  month: string
-  value: number
-  x: number
-  y: number
-}
-
-const chartWidth = 900
-const chartHeight = 190
-const paddingTop = 22
-const paddingRight = 28
-const paddingBottom = 34
-const paddingLeft = 28
-
-const tooltipWidth = 190
-const tooltipHeight = 72
-const tooltipOffset = 12
-
-function toNumber(value: string | null | undefined) {
-  const number = Number(value ?? 0)
-
-  return Number.isNaN(number) ? 0 : number
-}
-
 function toNullableNumber(value: string | null) {
   if (value === null) {
     return null
   }
 
-  return toNumber(value)
+  const number = Number(value)
+  return Number.isNaN(number) ? null : number
 }
 
-function formatMonth(month: string) {
-  return formatMonthLabel(month)
-}
-
-function buildPoints(series: InvestmentMonthlySeriesPoint[]): ChartPoint[] {
+function buildPoints(series: InvestmentMonthlySeriesPoint[]): SeriesPoint[] {
   return series
     .map((point) => ({
       month: point.month,
@@ -84,70 +50,6 @@ function buildPoints(series: InvestmentMonthlySeriesPoint[]): ChartPoint[] {
         (point.allocated !== null && point.allocated > 0)
         || point.marketValue !== null,
     )
-}
-
-function getCoordinates(
-  points: ChartPoint[],
-  getValue: (point: ChartPoint) => number | null,
-  getX: (index: number) => number,
-  getY: (value: number) => number,
-): TrendCoordinate[] {
-  return points
-    .map((point, index) => {
-      const value = getValue(point)
-
-      if (value === null) {
-        return null
-      }
-
-      return {
-        month: point.month,
-        value,
-        x: getX(index),
-        y: getY(value),
-      }
-    })
-    .filter((point) => point !== null)
-}
-
-function buildPath(coordinates: TrendCoordinate[]) {
-  return coordinates
-    .map((point, index) => {
-      return `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
-    })
-    .join(' ')
-}
-
-function getNearestPointFromMouse(
-  event: MouseEvent<SVGSVGElement>,
-  points: ChartPoint[],
-  getX: (index: number) => number,
-) {
-  const svgBounds = event.currentTarget.getBoundingClientRect()
-  const mouseX = ((event.clientX - svgBounds.left) / svgBounds.width) * chartWidth
-
-  return points.reduce((nearestPoint, point, index) => {
-    const nearestIndex = points.indexOf(nearestPoint)
-    const nearestDistance = Math.abs(getX(nearestIndex) - mouseX)
-    const pointDistance = Math.abs(getX(index) - mouseX)
-
-    return pointDistance < nearestDistance ? point : nearestPoint
-  }, points[0])
-}
-
-function getTooltipX(x: number) {
-  if (x + tooltipWidth + tooltipOffset > chartWidth) {
-    return x - tooltipWidth - tooltipOffset
-  }
-
-  return x + tooltipOffset
-}
-
-function getTooltipY(y: number) {
-  const preferredY = y - tooltipHeight - tooltipOffset
-  const maxY = chartHeight - paddingBottom - tooltipHeight - 8
-
-  return Math.max(8, Math.min(preferredY, maxY))
 }
 
 function ChartWindowSelector({
@@ -233,33 +135,7 @@ export function InvestmentPortfolioTrendChart({
   isLoading = false,
   onMonthsChange,
 }: InvestmentPortfolioTrendChartProps) {
-  const [hoveredPoint, setHoveredPoint] = useState<ChartPoint | null>(null)
   const points = buildPoints(series)
-  const allValues = points.flatMap((point) =>
-    [point.allocated, point.marketValue].filter(
-      (value): value is number => value !== null,
-    ),
-  )
-  const minValue = allValues.length > 0 ? Math.min(...allValues) * 0.96 : 0
-  const maxValue = allValues.length > 0 ? Math.max(...allValues) * 1.04 : 1
-  const chartScale = useChartScale({
-    width: chartWidth,
-    height: chartHeight,
-    padding: {
-      top: paddingTop,
-      right: paddingRight,
-      bottom: paddingBottom,
-      left: paddingLeft,
-    },
-    pointCount: points.length,
-    minValue,
-    maxValue,
-  })
-  const gridValues = [
-    maxValue - (maxValue - minValue) * 0.25,
-    maxValue - (maxValue - minValue) * 0.5,
-    maxValue - (maxValue - minValue) * 0.75,
-  ]
 
   if (points.length === 0) {
     return (
@@ -272,36 +148,15 @@ export function InvestmentPortfolioTrendChart({
     )
   }
 
-  const allocatedCoordinates = getCoordinates(
-    points,
-    (point) => point.allocated,
-    chartScale.getX,
-    chartScale.getY,
-  )
-  const marketValueCoordinates = getCoordinates(
-    points,
-    (point) => point.marketValue,
-    chartScale.getX,
-    chartScale.getY,
-  )
-  const allocatedPath = buildPath(allocatedCoordinates)
-  const marketValuePath = buildPath(marketValueCoordinates)
-  const latestPoint = [...points].reverse().find((point) => point.marketValue !== null) ?? points[points.length - 1]
+  const latestPoint =
+    [...points].reverse().find((point) => point.marketValue !== null)
+    ?? points[points.length - 1]
   const latestMarketValue = latestPoint.marketValue
   const latestGain = latestPoint.gain
-  const activePoint = hoveredPoint ?? latestPoint
-  const activeIndex = points.findIndex((point) => point.month === activePoint.month)
-  const activeX = chartScale.getX(activeIndex)
-  const activeAllocatedCoordinate = allocatedCoordinates.find((coordinate) => coordinate.month === activePoint.month)
-  const activeMarketValueCoordinate = marketValueCoordinates.find((coordinate) => coordinate.month === activePoint.month)
-  const activeY = activeMarketValueCoordinate?.y ?? activeAllocatedCoordinate?.y ?? paddingTop
-  const labelPoints = [
-    points[0],
-    points[Math.floor(points.length / 2)],
-    points[points.length - 1],
-  ].filter((point, index, array) => {
-    return array.findIndex((item) => item.month === point.month) === index
-  })
+  const estimatedByMonth = new Map(
+    points.map((point) => [point.month, point.isEstimated]),
+  )
+
   return (
     <section className="content-card panel-card investment-trend-card">
       <div className="investment-trend-header">
@@ -325,152 +180,33 @@ export function InvestmentPortfolioTrendChart({
         </div>
       </div>
 
-      <div className="investment-trend-visual">
-        <svg
-          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-          role="img"
-          aria-label={`Investment portfolio trend. ${formatMonth(activePoint.month)}: portfolio ${
-            activePoint.marketValue === null
-              ? 'unavailable'
-              : formatMoney(activePoint.marketValue.toFixed(2))
-          }, allocated ${
-            activePoint.allocated === null
-              ? 'unavailable'
-              : formatMoney(activePoint.allocated.toFixed(2))
-          }${activePoint.isEstimated ? ', estimated' : ''}. Use Left and Right arrows to explore.`}
-          tabIndex={0}
-          onFocus={() => setHoveredPoint(latestPoint)}
-          onBlur={() => setHoveredPoint(null)}
-          onKeyDown={(event) => {
-            let nextIndex: number
-
-            if (event.key === 'ArrowLeft') {
-              nextIndex = Math.max(activeIndex - 1, 0)
-            } else if (event.key === 'ArrowRight') {
-              nextIndex = Math.min(activeIndex + 1, points.length - 1)
-            } else if (event.key === 'Home') {
-              nextIndex = 0
-            } else if (event.key === 'End') {
-              nextIndex = points.length - 1
-            } else {
-              return
-            }
-
-            event.preventDefault()
-            setHoveredPoint(points[nextIndex])
-          }}
-          onMouseMove={(event) =>
-            setHoveredPoint(getNearestPointFromMouse(event, points, chartScale.getX))
-          }
-          onMouseLeave={() => setHoveredPoint(null)}
-        >
-          <ChartGrid
-            x1={paddingLeft}
-            x2={chartWidth - paddingRight}
-            labelX={paddingLeft - 8}
-            rows={gridValues.map((value) => ({
-              label: formatMoney(value.toFixed(0)),
-              y: chartScale.getY(value),
-            }))}
-          />
-
-          <ChartAxis
-            className="investment-trend-baseline"
-            x1={paddingLeft}
-            x2={chartWidth - paddingRight}
-            y={chartScale.baselineY}
-          />
-
-          <path d={allocatedPath} className="investment-trend-allocated-line" />
-          <path d={marketValuePath} className="investment-trend-value-line" />
-
-          {marketValueCoordinates.length > 0 && (
-            <circle
-              cx={marketValueCoordinates[marketValueCoordinates.length - 1].x}
-              cy={marketValueCoordinates[marketValueCoordinates.length - 1].y}
-              r="4.5"
-              className="investment-trend-current-point"
-            />
-          )}
-
-          {hoveredPoint && (
-            <>
-              <line
-                className="trend-chart-crosshair"
-                x1={activeX}
-                y1={paddingTop}
-                x2={activeX}
-                y2={chartHeight - paddingBottom}
-              />
-              {activeAllocatedCoordinate && (
-                <circle
-                  className="trend-chart-active-point trend-chart-active-point-secondary"
-                  cx={activeAllocatedCoordinate.x}
-                  cy={activeAllocatedCoordinate.y}
-                  r="4"
-                />
-              )}
-              {activeMarketValueCoordinate && (
-                <circle
-                  className="trend-chart-active-point trend-chart-active-point-primary"
-                  cx={activeMarketValueCoordinate.x}
-                  cy={activeMarketValueCoordinate.y}
-                  r="4.8"
-                />
-              )}
-              <ChartTooltip
-                x={getTooltipX(activeX)}
-                y={getTooltipY(activeY)}
-                width={tooltipWidth}
-                height={tooltipHeight}
-              >
-                <text
-                  className="chart-tooltip-label"
-                  x="12"
-                  y="20"
-                  fontSize="11"
-                  fontWeight="800"
-                >
-                  {formatMonth(activePoint.month)}
-                  {activePoint.isEstimated ? ' · estimated' : ''}
-                </text>
-                <text
-                  className="chart-tooltip-value"
-                  x="12"
-                  y="41"
-                  fontSize="13"
-                  fontWeight="850"
-                >
-                  Portfolio: {activePoint.marketValue === null ? '-' : formatMoney(activePoint.marketValue.toFixed(2))}
-                </text>
-                <text
-                  className="chart-tooltip-label"
-                  x="12"
-                  y="59"
-                  fontSize="12"
-                  fontWeight="750"
-                >
-                  Allocated: {activePoint.allocated === null
-                    ? '-'
-                    : formatMoney(activePoint.allocated.toFixed(2))}
-                </text>
-              </ChartTooltip>
-            </>
-          )}
-
-          {labelPoints.map((point) => (
-            <text
-              key={point.month}
-              x={chartScale.getX(points.indexOf(point))}
-              y={chartHeight - 8}
-              textAnchor={point.month === points[0].month ? 'start' : point.month === points[points.length - 1].month ? 'end' : 'middle'}
-              className="investment-trend-label"
-            >
-              {formatMonth(point.month)}
-            </text>
-          ))}
-        </svg>
-      </div>
+      <TrendChart
+        points={points.map((point) => point.month)}
+        series={[
+          {
+            key: 'market-value',
+            label: 'Portfolio',
+            values: points.map((point) => point.marketValue),
+            lineClassName: 'investment-trend-value-line',
+            endPointClassName: 'investment-trend-current-point',
+          },
+          {
+            key: 'allocated',
+            label: 'Allocated',
+            values: points.map((point) => point.allocated),
+            lineClassName: 'investment-trend-allocated-line',
+          },
+        ]}
+        formatValue={(value) => formatMoney(value.toFixed(2))}
+        formatAxisValue={(value) => formatMoneyCompact(value)}
+        formatPointLabel={(pointKey) => formatMonthLabel(pointKey)}
+        pointNote={(pointKey) =>
+          estimatedByMonth.get(pointKey) ? 'estimated' : null
+        }
+        ariaLabelPrefix="Investment portfolio trend."
+        xLabelClassName="investment-trend-label"
+        baselineClassName="investment-trend-baseline"
+      />
 
       <div className="investment-trend-footer">
         <ChartLegend

@@ -40,6 +40,33 @@ export function formatMoney(value: string | number, currency?: string) {
   }).format(numberValue)
 }
 
+/**
+ * Currency, abbreviated to one significant fractional digit (e.g. "€48K",
+ * "€1.2M"). For chart axes and other tight labels where the full grouped
+ * number would overflow its container - the exact value still shows in the
+ * tooltip. Values below 1,000 render in full.
+ */
+export function formatMoneyCompact(value: string | number, currency?: string) {
+  const numberValue = typeof value === 'string' ? Number(value) : value
+
+  if (Number.isNaN(numberValue)) {
+    return String(value)
+  }
+
+  const formatted = new Intl.NumberFormat(preferences.locale, {
+    style: 'currency',
+    currency: currency ?? preferences.currency,
+    notation: 'compact',
+    maximumFractionDigits: Math.abs(numberValue) >= 1000 ? 1 : 0,
+  }).format(numberValue)
+
+  // Some ICU builds render the compact suffix lower-case (e.g. "€1.3m");
+  // upper-case a single-letter magnitude so axis labels read consistently.
+  return formatted.replace(/(\d\s?)([kmbt])\b/gi, (_, digits, suffix) =>
+    `${digits}${suffix.toUpperCase()}`,
+  )
+}
+
 export function formatDate(value: string | null) {
   if (!value) {
     return '-'

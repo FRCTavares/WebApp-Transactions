@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getNiceTicks } from '../src/components/charts'
+import { getNiceScale, getNiceTicks } from '../src/components/charts'
 
 describe('getNiceTicks', () => {
   it('produces round numbers instead of arbitrary quarter-splits', () => {
@@ -49,5 +49,32 @@ describe('getNiceTicks', () => {
   it('returns an empty array for non-finite input', () => {
     expect(getNiceTicks(Number.NaN, 100, 3)).toEqual([])
     expect(getNiceTicks(0, Number.POSITIVE_INFINITY, 3)).toEqual([])
+  })
+})
+
+describe('getNiceScale', () => {
+  it('rounds the domain outward so the line never touches an edge', () => {
+    const scale = getNiceScale(4213, 5487, 4)
+
+    expect(scale.min).toBeLessThanOrEqual(4213)
+    expect(scale.max).toBeGreaterThanOrEqual(5487)
+    expect(scale.ticks[0]).toBe(scale.min)
+    expect(scale.ticks[scale.ticks.length - 1]).toBe(scale.max)
+
+    for (const tick of scale.ticks) {
+      expect(tick % 500).toBe(0)
+    }
+  })
+
+  it('opens a band around a flat series instead of pinning it to an edge', () => {
+    const scale = getNiceScale(1000, 1000, 4)
+
+    expect(scale.min).toBeLessThan(1000)
+    expect(scale.max).toBeGreaterThan(1000)
+    expect(scale.ticks).toEqual([1000])
+  })
+
+  it('falls back to a unit domain for non-finite input', () => {
+    expect(getNiceScale(Number.NaN, 10)).toEqual({ min: 0, max: 1, ticks: [] })
   })
 })
