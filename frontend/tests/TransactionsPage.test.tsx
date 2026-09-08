@@ -205,13 +205,20 @@ describe('transactions page workflows', () => {
     expect(dateHeader).toHaveAttribute('aria-sort', 'descending')
   })
 
+  it('labels the create toggle "Add" with a single plus (the icon), not "+ Add"', async () => {
+    renderPage()
+
+    const addButton = await screen.findByRole('button', { name: 'Add' })
+    expect(addButton).toHaveTextContent(/^Add$/)
+  })
+
   it('creates a new transaction from the add form', async () => {
     mocks.createTransactionWithOwed.mockResolvedValue({})
     const user = userEvent.setup()
     renderPage()
 
     await user.click(
-      await screen.findByRole('button', { name: '+ Add' }),
+      await screen.findByRole('button', { name: 'Add' }),
     )
     await user.type(
       screen.getByLabelText('Amount'),

@@ -172,7 +172,7 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
                 props.onSetCreateFormOpen(true)
               }}
             >
-              {props.isCreateFormOpen ? 'Close' : '+ Add'}
+              {props.isCreateFormOpen ? 'Close' : 'Add'}
             </Button>
           </>
         }
