@@ -30,16 +30,16 @@
     "src/styles/shell.css": 63,
     "src/styles/sidebar-desktop.css": 23,
     "src/styles/table-actions.css": 1,
-    "src/styles/tables.css": 54,
-    "src/styles/transaction-categories.css": 50,
-    "src/styles/transaction-edit-dialog.css": 18,
+    "src/styles/tables.css": 52,
+    "src/styles/transaction-categories.css": 48,
+    "src/styles/transaction-edit-dialog.css": 16,
     "src/styles/transaction-repayment.css": 51,
     "src/styles/transactions-mobile.css": 64,
-    "src/styles/transactions.css": 53,
+    "src/styles/transactions.css": 52,
     "src/styles/wealth-chart.css": 13,
     "src/styles/wealth-mobile-spacing.css": 5,
     "src/styles/wealth-mobile.css": 29,
-    "src/styles/wealth-modal.css": 19,
+    "src/styles/wealth-modal.css": 17,
     "src/styles/wealth.css": 74
   }
 }

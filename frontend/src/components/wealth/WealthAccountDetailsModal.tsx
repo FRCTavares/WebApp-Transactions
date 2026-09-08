@@ -7,7 +7,8 @@ import {
   type WealthAccountGroup,
 } from '../../utils/wealthPageUtils'
 import { useDialogAccessibility } from '../../hooks/useDialogAccessibility'
-import { Badge, Button } from '../ui'
+import { X } from 'lucide-react'
+import { Badge, Button, IconButton } from '../ui'
 
 type WealthAccountDetailsModalProps = {
   group: WealthAccountGroup
@@ -139,14 +140,19 @@ export function WealthAccountDetailsModal({
             </p>
           </div>
 
-          <div className="wealth-modal-total">
-            <span>Total</span>
-            <strong>{formatMoney(getGroupTotal(group, latestByAccount, investmentPositions))}</strong>
-          </div>
+          <div className="wealth-modal-header-aside">
+            <div className="wealth-modal-total">
+              <span>Total</span>
+              <strong>{formatMoney(getGroupTotal(group, latestByAccount, investmentPositions))}</strong>
+            </div>
 
-          <Button type="button" size="sm" className="wealth-modal-close" onClick={onClose}>
-            Close
-          </Button>
+            <IconButton
+              icon={X}
+              label="Close dialog"
+              size="sm"
+              onClick={onClose}
+            />
+          </div>
         </header>
 
         <div className="wealth-modal-subaccount-list">

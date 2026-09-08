@@ -94,6 +94,10 @@
   --shadow-color-strong: rgb(0 0 0 / 0.55);
 
   --color-scrim: rgb(0 0 0 / 0.62);
+  /* Heavier scrim variants (category replace/migrate dialogs). Without these
+     they fell back to the light-theme slate values over a near-black page. */
+  --color-scrim-strong: rgb(0 0 0 / 0.7);
+  --color-scrim-heavy: rgb(0 0 0 / 0.76);
 
   /* -- Charts ---------------------------------------------------------------
      Series colours shift one step lighter so they hold up against the dark
