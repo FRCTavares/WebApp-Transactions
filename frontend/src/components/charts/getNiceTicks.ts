@@ -36,6 +36,51 @@ export function getNiceTicks(
   return ticks
 }
 
+export type NiceScale = {
+  min: number
+  max: number
+  ticks: number[]
+}
+
+/**
+ * Like {@link getNiceTicks}, but also rounds the domain itself outward to the
+ * nearest step so the plotted line never touches the top or bottom edge and a
+ * near-flat series is not amplified into dramatic swings. Returns the padded
+ * `[min, max]` plus the ticks that fall on it.
+ */
+export function getNiceScale(
+  minValue: number,
+  maxValue: number,
+  tickCount = 3,
+): NiceScale {
+  if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
+    return { min: 0, max: 1, ticks: [] }
+  }
+
+  if (minValue === maxValue) {
+    // A flat series: open a symmetric band around the single value so it
+    // sits mid-plot rather than pinned to an edge.
+    const padding = Math.abs(minValue) > 0 ? Math.abs(minValue) * 0.1 : 1
+    return {
+      min: minValue - padding,
+      max: maxValue + padding,
+      ticks: [minValue],
+    }
+  }
+
+  const step = getNiceStep(maxValue - minValue, tickCount)
+  const niceMin = Math.floor(minValue / step) * step
+  const niceMax = Math.ceil(maxValue / step) * step
+  const ticks: number[] = []
+  const epsilon = step * 1e-9
+
+  for (let tick = niceMin; tick <= niceMax + epsilon; tick += step) {
+    ticks.push(Math.round(tick / step) * step)
+  }
+
+  return { min: niceMin, max: niceMax, ticks }
+}
+
 function getNiceStep(range: number, tickCount: number): number {
   if (range <= 0 || tickCount <= 0) {
     return 1

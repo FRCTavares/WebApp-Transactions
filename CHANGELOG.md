@@ -66,6 +66,15 @@ that's generated. The current running build's commit is shown in
 
 ### Changed
 
+- Reworked the Wealth and Investments trend charts onto one shared
+  `TrendChart` component. It measures its own container and draws at that
+  exact pixel width instead of a fixed 900-wide canvas the browser then
+  squished, rounds the value axis to "nice" round numbers with headroom so
+  the line never touches an edge, and both charts now use the same
+  nice-tick scale (the portfolio chart previously labelled arbitrary
+  quarter-splits of the range). The two ~300-line near-duplicate chart
+  components are gone.
+
 - Split the seven largest source files (all approaching the 900/1,000-line
   soft/hard limits) into focused components, hooks, and pure-helper utils
   modules, with no behavior change: `investment_event_service.py`,
@@ -76,6 +85,11 @@ that's generated. The current running build's commit is shown in
   the full split breakdown.
 
 ### Fixed
+
+- The trend-chart y-axis numbers no longer overflow the plot area: axis
+  labels are abbreviated (e.g. `€48K`, `€1.2M`), sit in a dedicated left
+  gutter, and the chart clips its own overflow. The exact value still shows
+  in the tooltip and the header figure.
 
 - Recording an owed repayment now shows the automatic oldest-first settlement
   plan instead of requiring item-by-item selection. Case and whitespace

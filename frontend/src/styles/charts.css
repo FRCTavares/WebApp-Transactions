@@ -71,19 +71,19 @@
   font-weight: 850;
 }
 
-/* No inner plot box. The SVG sits directly in the root chart card. */
-.investment-trend-visual,
-.wealth-chart-wrap {
-  overflow: visible;
+/* The trend chart measures its own container (see useElementWidth) and draws
+   in that exact pixel space, so the SVG must fill the width and never be
+   forced to a min-width or scrolled. It clips its own overflow: axis labels
+   sit in a fixed left gutter and can no longer spill past the plot. */
+.trend-chart-surface {
+  width: 100%;
 }
 
-.investment-trend-visual svg,
-.wealth-chart-wrap svg {
+.trend-chart-svg {
   display: block;
   width: 100%;
   height: auto;
-  min-height: 0;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .trend-chart-grid-line {
@@ -247,7 +247,7 @@
 
 .trend-chart-axis-label {
   fill: var(--chart-axis-text);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
