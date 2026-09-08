@@ -19,7 +19,7 @@ test('replaces a category with linked transactions and deletes it', async ({ pag
   await expect(page.getByText(categoryName)).toBeVisible()
 
   await page.goto('/transactions')
-  await page.getByRole('button', { name: '+ Add' }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await page.getByLabel('Amount').fill('9.99')
   await page.getByLabel('Description').fill(`E2E linked transaction ${Date.now()}`)
 

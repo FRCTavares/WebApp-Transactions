@@ -43,7 +43,7 @@ test('seeds representative categories, transactions, owed, and wealth data', asy
 
   await page.goto('/transactions')
 
-  await page.getByRole('button', { name: '+ Add' }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await page.getByLabel('Amount').fill('45.00')
   await page.getByLabel('Description').fill(`E2E seed groceries ${runId}`)
   await page.getByPlaceholder('Category').fill(groceriesCategory)
@@ -51,7 +51,7 @@ test('seeds representative categories, transactions, owed, and wealth data', asy
   await page.getByRole('button', { name: /^Save Money Out$/ }).click()
   await expect(page.getByText('Transaction created.')).toBeVisible()
 
-  await page.getByRole('button', { name: '+ Add' }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await page.getByLabel('Amount').fill('65.00')
   await page.getByLabel('Description').fill(`E2E seed utilities ${runId}`)
   await page.getByPlaceholder('Category').fill(utilitiesCategory)
@@ -60,7 +60,7 @@ test('seeds representative categories, transactions, owed, and wealth data', asy
   await expect(page.getByText('Transaction created.')).toBeVisible()
 
   await page.getByRole('radio', { name: 'Money In', exact: true }).click()
-  await page.getByRole('button', { name: '+ Add' }).click()
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
   await page.getByLabel('Amount').fill('1200.00')
   await page.getByLabel('Description').fill(`E2E seed salary ${runId}`)
   await page.getByPlaceholder('Category').fill(salaryCategory)

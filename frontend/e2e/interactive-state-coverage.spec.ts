@@ -83,21 +83,21 @@ function screenshotName(page: string, combo: Combo, state: string) {
 }
 
 /**
- * Transactions: the "+ Add" button opens the inline create form.
+ * Transactions: the "Add" button opens the inline create form.
  * Verified against frontend/src/components/transactions/TransactionsPageView.tsx:162-176
- * (button toggles between "+ Add" and "Close") and
+ * (button toggles between "Add" and "Close") and
  * frontend/src/components/TransactionForm.tsx:53 (`<h2>{title}</h2>`, title
  * is "Add Money Out" for the default "out" direction, set in
  * TransactionsPageView.tsx:198).
  */
 for (const combo of FULL_MATRIX) {
   test(
-    `transactions: "+ Add" opens the create form in ${combo.theme} theme at ${combo.viewport.width}px`,
+    `transactions: "Add" opens the create form in ${combo.theme} theme at ${combo.viewport.width}px`,
     async ({ page }, testInfo) => {
       await setUpPage(page, combo)
       await page.goto('/transactions')
 
-      await page.getByRole('button', { name: '+ Add' }).click()
+      await page.getByRole('button', { name: 'Add', exact: true }).click()
 
       await expect(
         page.getByRole('heading', { level: 2, name: 'Add Money Out' }),
@@ -293,7 +293,7 @@ for (const combo of REDUCED_MATRIX) {
       await expect(page.getByText(categoryName)).toBeVisible()
 
       await page.goto('/transactions')
-      await page.getByRole('button', { name: '+ Add' }).click()
+      await page.getByRole('button', { name: 'Add', exact: true }).click()
       await page.getByLabel('Amount').fill('9.99')
       await page.getByLabel('Description').fill(`E2E interactive linked transaction ${Date.now()}`)
       await page.getByPlaceholder('Category').fill(categoryName)
