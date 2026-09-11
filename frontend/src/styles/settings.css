@@ -1,198 +1,300 @@
-/* Settings page. Balanced grouped-list layout, separate from dashboard cards. */
+/* Settings page. Preferences dominates; Account/Data/Administration/Danger
+   zone are quieter secondary cards built on the shared `Card` primitive. */
 
 .settings-page-redesigned {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--space-8);
   width: 100%;
   max-width: 88rem;
 }
 
-.settings-hero {
-  display: grid;
-  gap: 0.25rem;
-  padding-top: 0.25rem;
+.settings-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  margin-bottom: var(--space-7);
 }
 
-.settings-hero h1 {
+.settings-card-heading h2 {
   margin: 0;
   color: var(--color-text);
-  font-size: clamp(2rem, 3vw, 2.55rem);
-  line-height: 1.02;
-  letter-spacing: -0.055em;
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
 }
 
-.settings-hero .page-subtitle {
-  margin: 0;
-  max-width: 42rem;
+.settings-card-heading p {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 
-.settings-balanced-grid {
+.settings-icon-badge {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(24rem, 0.92fr);
-  gap: 1rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-text);
+}
+
+.settings-icon-badge-danger {
+  background: var(--color-negative-subtle);
+  color: var(--color-negative-text);
+}
+
+/* -- Preferences ------------------------------------------------------- */
+
+.settings-preferences-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-7) var(--space-8);
+}
+
+.settings-preferences-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+}
+
+.settings-preferences-actions p {
+  margin: 0;
+}
+
+.settings-input-suffix {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.settings-input-suffix input {
+  width: 100%;
+  padding-right: var(--space-11);
+}
+
+.settings-input-suffix-label {
+  position: absolute;
+  top: 50%;
+  right: var(--space-5);
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  pointer-events: none;
+}
+
+/* -- Secondary two-up: Account / Data & organisation -------------------- */
+
+.settings-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
   align-items: start;
 }
 
-.settings-group-presentation { grid-column: 1 / -1; }
-.settings-preferences-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; padding: 1rem; }
-.settings-preferences-form label { display: grid; gap: .4rem; font-size: .82rem; font-weight: 700; }
-.settings-preferences-form button, .settings-preferences-form p { align-self: end; margin: 0; }
-
-.settings-group {
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: 1.15rem;
-  background: var(--color-surface);
-  box-shadow: var(--elevation-sm);
-}
-
-.settings-group-access {
-  min-height: 0;
-}
-
-.settings-group-header {
-  padding: 0.85rem 1rem 0.45rem;
-}
-
-.settings-group-header h2 {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.78rem;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
+/* -- Shared list-row idiom: account row, nav rows, delete trigger ------- */
 
 .settings-list-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-6);
   min-width: 0;
-  padding: 0.92rem 1rem;
+  width: 100%;
+  padding: var(--space-6) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
 }
 
-.settings-access-request-actions {
-  display: flex;
-  flex: 0 0 auto;
-  gap: var(--space-4);
+.settings-card-heading + .settings-list-row,
+.settings-card-heading + .settings-list-row.settings-list-button {
+  border-top: 0;
+  padding-top: 0;
 }
 
-.settings-list-row > span {
+.settings-row-avatar {
   display: grid;
-  gap: 0.22rem;
+  width: 2.05rem;
+  height: 2.05rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}
+
+.settings-list-row > span:not(.settings-row-avatar) {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-2);
   min-width: 0;
 }
 
 .settings-list-row strong {
   color: var(--color-text);
-  font-size: 0.98rem;
-  letter-spacing: -0.015em;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
 }
 
 .settings-list-row small {
   color: var(--color-text-muted);
-  font-size: 0.86rem;
-  line-height: 1.35;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 
+.settings-list-row > em {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: var(--weight-semibold);
+}
+
+.settings-row-chevron {
+  flex: 0 0 auto;
+  color: var(--color-text-subtle);
+}
+
+.settings-list-link,
 .settings-list-button {
-  width: 100%;
-  border: 0;
-  border-top: 1px solid var(--color-border);
-  border-radius: 0;
-  text-align: left;
-  box-shadow: none;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
 }
 
+.settings-list-link:hover,
 .settings-list-button:hover {
   background: var(--color-surface-hover);
 }
 
-.settings-list-button em,
-.settings-account-row > em {
+.settings-list-link:focus-visible,
+.settings-list-button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+  border-radius: var(--radius-sm);
+}
+
+/* -- Danger zone --------------------------------------------------------- */
+
+.settings-delete-trigger-badge {
   flex: 0 0 auto;
-  color: var(--color-accent-text);
-  font-size: 0.8rem;
-  font-style: normal;
-  font-weight: 850;
-}
-
-.settings-account-row {
-  display: grid;
-  align-items: start;
-  justify-content: stretch;
-  gap: 0.28rem;
-}
-
-.settings-account-row > em {
-  justify-self: start;
-}
-
-/* `flex` did nothing here - the row is a grid, so the button stretched across
-   the column. `justify-self` is the grid equivalent, matching the `<em>`
-   sibling that renders in its place when auth is disabled. */
-.settings-account-row .ui-button {
-  justify-self: start;
-}
-
-.settings-delete-trigger strong,
-.settings-delete-trigger em {
+  padding: var(--space-3) var(--space-6);
+  border: 1px solid var(--color-negative-border);
+  border-radius: var(--radius-md);
+  background: var(--color-negative-subtle);
   color: var(--color-negative-text);
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: var(--weight-semibold);
 }
 
 .settings-delete-panel {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: var(--space-6);
+  padding: var(--space-7) 0 0;
   border-top: 1px solid var(--color-negative-border);
-  background: var(--color-negative-subtle);
+  margin-top: var(--space-2);
 }
 
 .settings-delete-panel p {
   margin: 0;
   color: var(--color-text-muted);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .settings-delete-panel label {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--space-3);
   max-width: 32rem;
-  font-weight: 700;
+  font-weight: var(--weight-semibold);
 }
 
-.settings-delete-panel .danger-button {
+.settings-delete-panel .ui-button {
   justify-self: start;
 }
 
-.settings-privacy-summary {
-  border-top: 1px solid var(--color-border);
+/* -- Administration ------------------------------------------------------ */
+
+.settings-card-admin .settings-card-heading-inline {
+  align-items: center;
+  margin-bottom: 0;
 }
 
+.settings-card-admin:not(.settings-card-admin-compact) .settings-card-heading-inline {
+  margin-bottom: var(--space-7);
+}
+
+.settings-card-heading-inline > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings-admin-empty {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+/* -- Build footer ---------------------------------------------------------- */
+
+.settings-build-footer {
+  margin: 0;
+  padding: 0 var(--space-2);
+  color: var(--color-text-subtle);
+  font-size: var(--text-xs);
+}
+
+.settings-build-footer a {
+  color: var(--color-text-muted);
+}
+
+/* -- Responsive ------------------------------------------------------------ */
+
 @media (max-width: 1100px) {
-  .settings-balanced-grid {
+  .settings-secondary-grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .settings-group-access {
-    min-height: 0;
+@media (max-width: 700px) {
+  .settings-preferences-form {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 800px) {
   .settings-page-redesigned {
-    gap: 1rem;
+    gap: var(--space-7);
   }
 
-  .settings-list-row {
-    align-items: stretch;
+  .settings-preferences-actions {
     flex-direction: column;
-    min-height: 0;
+    align-items: stretch;
   }
 
-  .settings-segmented-control {
+  .settings-preferences-actions .ui-button {
     width: 100%;
-    flex-basis: auto;
+  }
+
+  .settings-card-heading-inline {
+    flex-wrap: wrap;
+  }
+
+  .settings-admin-empty {
+    white-space: normal;
   }
 }
