@@ -1,11 +1,19 @@
 import { useState, type FormEvent } from 'react'
+import {
+  AlertTriangle,
+  ChevronRight,
+  Download,
+  FolderCog,
+  Layers,
+  ShieldCheck,
+  SlidersHorizontal,
+  Upload,
+  UserRound,
+} from 'lucide-react'
 import type { PresentationPreferences } from '../utils/format'
 import { translate } from '../i18n/messages'
 import { AccessRequestsPanel } from '../components/AccessRequestsPanel'
-import { Button, Field, PageHeader } from '../components/ui'
-
-const PRIVACY_CONTACT =
-  import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
+import { Button, Card, Field, Icon, PageHeader, type IconComponent } from '../components/ui'
 
 type SettingsPageProps = {
   isAuthEnabled: boolean
@@ -23,26 +31,51 @@ type SettingsPageProps = {
 }
 
 type SettingsActionProps = {
+  icon: IconComponent
   title: string
   description: string
-  actionLabel: string
   onClick: () => void
 }
 
-function SettingsAction({
-  title,
-  description,
-  actionLabel,
-  onClick,
-}: SettingsActionProps) {
+function SettingsAction({ icon, title, description, onClick }: SettingsActionProps) {
   return (
     <button type="button" className="settings-list-row settings-list-button" onClick={onClick}>
+      <span className="settings-row-avatar" aria-hidden="true">
+        <Icon icon={icon} size={16} />
+      </span>
       <span>
         <strong>{title}</strong>
         <small>{description}</small>
       </span>
-      <em>{actionLabel}</em>
+      <Icon icon={ChevronRight} size={16} className="settings-row-chevron" aria-hidden="true" />
     </button>
+  )
+}
+
+function SettingsCardHeading({
+  icon,
+  tone = 'default',
+  title,
+  description,
+}: {
+  icon: IconComponent
+  tone?: 'default' | 'danger'
+  title: string
+  description: string
+}) {
+  return (
+    <header className="settings-card-heading">
+      <span
+        className={`settings-icon-badge${tone === 'danger' ? ' settings-icon-badge-danger' : ''}`}
+        aria-hidden="true"
+      >
+        <Icon icon={icon} size={20} />
+      </span>
+      <div>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+    </header>
   )
 }
 
@@ -105,29 +138,105 @@ export function SettingsPage({
   }
 
   return (
-    <section className="settings-page settings-page-redesigned">
+    <section className="settings-page-redesigned">
       <PageHeader
         eyebrow={t('settings')}
         title={t('settings')}
         description={t('settingsSubtitle')}
       />
 
-      <div className="settings-balanced-grid">
-        <section className="settings-group settings-group-presentation">
-          <header className="settings-group-header"><h2>{t('languageRegion')}</h2></header>
-          <form className="settings-preferences-form" onSubmit={handleSavePreferences}>
-            <label>{t('language')}<select value={draft.language} onChange={(event) => setDraft({ ...draft, language: event.target.value as 'en' | 'pt' })}><option value="en">English</option><option value="pt">Português</option></select></label>
-            <label>{t('locale')}<select value={draft.locale} onChange={(event) => setDraft({ ...draft, locale: event.target.value as 'en-GB' | 'pt-PT' })}><option value="en-GB">English (United Kingdom)</option><option value="pt-PT">Português (Portugal)</option></select></label>
-            <label>{t('defaultCurrency')}<input value={draft.currency} maxLength={3} onChange={(event) => setDraft({ ...draft, currency: event.target.value.toUpperCase() })} /></label>
-            <label>{t('timeZone')}<select value={draft.time_zone} onChange={(event) => setDraft({ ...draft, time_zone: event.target.value })}><option value="Europe/Lisbon">Europe/Lisbon</option><option value="Atlantic/Azores">Atlantic/Azores</option><option value="UTC">UTC</option></select></label>
-            <label>{t('dateFormat')}<select value={draft.date_format} onChange={(event) => setDraft({ ...draft, date_format: event.target.value as PresentationPreferences['date_format'] })}><option value="short">{t('short')}</option><option value="medium">{t('medium')}</option><option value="long">{t('long')}</option></select></label>
-            <Field
-              label={t('monthlyInvestmentGoal')}
-              hint={t('monthlyInvestmentGoalHint')}
-              error={investmentGoalError}
-              required
-            >
-              {(controlProps) => (
+      <Card as="section" padding="lg" className="settings-card settings-card-preferences">
+        <SettingsCardHeading
+          icon={SlidersHorizontal}
+          title={t('preferences')}
+          description={t('preferencesDescription')}
+        />
+
+        <form className="settings-preferences-form" onSubmit={handleSavePreferences}>
+          <Field label={t('language')}>
+            {(controlProps) => (
+              <select
+                {...controlProps}
+                value={draft.language}
+                onChange={(event) =>
+                  setDraft({ ...draft, language: event.target.value as 'en' | 'pt' })
+                }
+              >
+                <option value="en">English</option>
+                <option value="pt">Português</option>
+              </select>
+            )}
+          </Field>
+
+          <Field label={t('locale')}>
+            {(controlProps) => (
+              <select
+                {...controlProps}
+                value={draft.locale}
+                onChange={(event) =>
+                  setDraft({ ...draft, locale: event.target.value as 'en-GB' | 'pt-PT' })
+                }
+              >
+                <option value="en-GB">English (United Kingdom)</option>
+                <option value="pt-PT">Português (Portugal)</option>
+              </select>
+            )}
+          </Field>
+
+          <Field label={t('defaultCurrency')}>
+            {(controlProps) => (
+              <input
+                {...controlProps}
+                value={draft.currency}
+                maxLength={3}
+                onChange={(event) =>
+                  setDraft({ ...draft, currency: event.target.value.toUpperCase() })
+                }
+              />
+            )}
+          </Field>
+
+          <Field label={t('timeZone')}>
+            {(controlProps) => (
+              <select
+                {...controlProps}
+                value={draft.time_zone}
+                onChange={(event) => setDraft({ ...draft, time_zone: event.target.value })}
+              >
+                <option value="Europe/Lisbon">Europe/Lisbon</option>
+                <option value="Atlantic/Azores">Atlantic/Azores</option>
+                <option value="UTC">UTC</option>
+              </select>
+            )}
+          </Field>
+
+          <Field label={t('dateFormat')}>
+            {(controlProps) => (
+              <select
+                {...controlProps}
+                value={draft.date_format}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    date_format: event.target.value as PresentationPreferences['date_format'],
+                  })
+                }
+              >
+                <option value="short">{t('short')}</option>
+                <option value="medium">{t('medium')}</option>
+                <option value="long">{t('long')}</option>
+              </select>
+            )}
+          </Field>
+
+          <Field
+            label={t('monthlyInvestmentGoal')}
+            hint={t('monthlyInvestmentGoalHint')}
+            error={investmentGoalError}
+            required
+          >
+            {(controlProps) => (
+              <div className="settings-input-suffix">
                 <input
                   {...controlProps}
                   type="number"
@@ -143,9 +252,19 @@ export function SettingsPage({
                     setSaveState(null)
                   }}
                 />
-              )}
-            </Field>
-            {(preferencesError || saveState) && <p className={preferencesError ? 'error-text' : 'muted'} role="status">{preferencesError ?? saveState}</p>}
+                <span className="settings-input-suffix-label" aria-hidden="true">
+                  {draft.currency || 'EUR'}
+                </span>
+              </div>
+            )}
+          </Field>
+
+          <div className="settings-preferences-actions">
+            {(preferencesError || saveState) && (
+              <p className={preferencesError ? 'error-text' : 'muted'} role="status">
+                {preferencesError ?? saveState}
+              </p>
+            )}
             <Button
               type="submit"
               variant="primary"
@@ -158,22 +277,25 @@ export function SettingsPage({
             >
               {t('savePreferences')}
             </Button>
-          </form>
-        </section>
+          </div>
+        </form>
+      </Card>
 
-        <section className="settings-group settings-group-access">
-          <header className="settings-group-header">
-            <h2>{t('access')}</h2>
-          </header>
+      <div className="settings-secondary-grid">
+        <Card as="section" padding="lg" className="settings-card settings-card-account">
+          <SettingsCardHeading
+            icon={UserRound}
+            title={t('account')}
+            description={t('accountDescription')}
+          />
 
           <div className="settings-list-row settings-account-row">
+            <span className="settings-row-avatar" aria-hidden="true">
+              <Icon icon={UserRound} size={16} />
+            </span>
             <span>
               <strong>{isAuthEnabled ? displayName : t('localMode')}</strong>
-              <small>
-                {isAuthEnabled
-                  ? t('signedIn')
-                  : t('localDescription')}
-              </small>
+              <small>{isAuthEnabled ? t('signedIn') : t('localDescription')}</small>
             </span>
 
             {isAuthEnabled ? (
@@ -185,131 +307,120 @@ export function SettingsPage({
             )}
           </div>
 
-          {isAuthEnabled && (
-            <>
-              <button
-                type="button"
-                className="settings-list-row settings-list-button settings-delete-trigger"
-                onClick={() => setIsDeletePanelOpen((isOpen) => !isOpen)}
-                aria-expanded={isDeletePanelOpen}
-                aria-controls="account-deletion-panel"
-              >
-                <span>
-                  <strong>Delete account</strong>
-                  <small>Permanently remove your financial data and sign-in identity.</small>
-                </span>
-                <em>{isDeletePanelOpen ? 'Cancel' : 'Delete'}</em>
-              </button>
+          <a className="settings-list-row settings-list-link" href="/privacy">
+            <span className="settings-row-avatar" aria-hidden="true">
+              <Icon icon={ShieldCheck} size={16} />
+            </span>
+            <span>
+              <strong>Privacy</strong>
+              <small>Control how your data is used and request a copy or deletion.</small>
+            </span>
+            <Icon icon={ChevronRight} size={16} className="settings-row-chevron" aria-hidden="true" />
+          </a>
+        </Card>
 
-              {isDeletePanelOpen && (
-                <div id="account-deletion-panel" className="settings-delete-panel">
-                  <strong>This cannot be undone.</strong>
-                  <p>
-                    Download an export first if you need a copy. Type your signed-in email,
-                    <b> {accountEmail}</b>, to confirm permanent deletion.
-                  </p>
-                  <label>
-                    Confirmation email
-                    <input
-                      type="email"
-                      autoComplete="off"
-                      value={deleteConfirmation}
-                      onChange={(event) => setDeleteConfirmation(event.target.value)}
-                      disabled={isDeleting}
-                    />
-                  </label>
-                  {deleteError && <p className="status status-error" role="alert">{deleteError}</p>}
-                  <Button
-                    type="button"
-                    variant="danger"
-                    loading={isDeleting}
-                    disabled={
-                      isDeleting ||
-                      deleteConfirmation.trim().toLowerCase() !== accountEmail.toLowerCase()
-                    }
-                    onClick={() => void handleDeleteAccount()}
-                  >
-                    {isDeleting ? 'Deleting account…' : 'Permanently delete account'}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </section>
-
-        <section className="settings-group">
-          <header className="settings-group-header">
-            <h2>{t('data')}</h2>
-          </header>
+        <Card as="section" padding="lg" className="settings-card settings-card-data">
+          <SettingsCardHeading
+            icon={Layers}
+            title={t('dataOrganisation')}
+            description={t('dataOrganisationDescription')}
+          />
 
           <SettingsAction
+            icon={Upload}
             title={t('import')}
             description={t('importDescription')}
-            actionLabel={t('open')}
             onClick={onOpenImport}
           />
 
           <SettingsAction
+            icon={Download}
             title={t('exportBackup')}
             description={t('exportDescription')}
-            actionLabel={t('open')}
             onClick={onOpenExport}
           />
-        </section>
-
-        <section className="settings-group">
-          <header className="settings-group-header">
-            <h2>Privacy</h2>
-          </header>
-          <div className="settings-list-row settings-privacy-summary">
-            <span>
-              <strong>Your financial data</strong>
-              <small>
-                Used only to provide the finance tracker. No advertising or analytics telemetry
-                is enabled. Exports and account deletion are available from Settings. Contact{' '}
-                {PRIVACY_CONTACT} for privacy requests.
-              </small>
-            </span>
-          </div>
-        </section>
-
-        {isAuthEnabled && <AccessRequestsPanel />}
-
-        <section className="settings-group">
-          <header className="settings-group-header">
-            <h2>{t('organisation')}</h2>
-          </header>
 
           <SettingsAction
+            icon={FolderCog}
             title={t('categories')}
             description={t('categoriesDescription')}
-            actionLabel={t('open')}
             onClick={onOpenCategories}
           />
-        </section>
-
-        <section className="settings-group">
-          <header className="settings-group-header">
-            <h2>Build</h2>
-          </header>
-          <div className="settings-list-row settings-build-summary">
-            <span>
-              <strong>Version {__APP_BUILD_COMMIT__}</strong>
-              <small>
-                Built {new Date(__APP_BUILD_TIME__).toLocaleString()}. See{' '}
-                <a
-                  href="https://github.com/FRCTavares/WebApp-Transactions/blob/main/CHANGELOG.md"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  CHANGELOG.md
-                </a>{' '}
-                for release notes.
-              </small>
-            </span>
-          </div>
-        </section>
+        </Card>
       </div>
+
+      {isAuthEnabled && <AccessRequestsPanel />}
+
+      {isAuthEnabled && (
+        <Card as="section" padding="lg" className="settings-card settings-card-danger">
+          <SettingsCardHeading
+            icon={AlertTriangle}
+            tone="danger"
+            title="Danger zone"
+            description="These actions are irreversible."
+          />
+
+          <button
+            type="button"
+            className="settings-list-row settings-list-button settings-delete-trigger"
+            onClick={() => setIsDeletePanelOpen((isOpen) => !isOpen)}
+            aria-expanded={isDeletePanelOpen}
+            aria-controls="account-deletion-panel"
+          >
+            <span>
+              <strong>Delete account</strong>
+              <small>Permanently remove your financial data and sign-in identity.</small>
+            </span>
+            <em className="settings-delete-trigger-badge">
+              {isDeletePanelOpen ? 'Cancel' : 'Delete'}
+            </em>
+          </button>
+
+          {isDeletePanelOpen && (
+            <div id="account-deletion-panel" className="settings-delete-panel">
+              <strong>This cannot be undone.</strong>
+              <p>
+                Download an export first if you need a copy. Type your signed-in email,
+                <b> {accountEmail}</b>, to confirm permanent deletion.
+              </p>
+              <label>
+                Confirmation email
+                <input
+                  type="email"
+                  autoComplete="off"
+                  value={deleteConfirmation}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  disabled={isDeleting}
+                />
+              </label>
+              {deleteError && <p className="status status-error" role="alert">{deleteError}</p>}
+              <Button
+                type="button"
+                variant="danger"
+                loading={isDeleting}
+                disabled={
+                  isDeleting ||
+                  deleteConfirmation.trim().toLowerCase() !== accountEmail.toLowerCase()
+                }
+                onClick={() => void handleDeleteAccount()}
+              >
+                {isDeleting ? 'Deleting account…' : 'Permanently delete account'}
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
+      <p className="settings-build-footer">
+        Version {__APP_BUILD_COMMIT__} • Built {new Date(__APP_BUILD_TIME__).toLocaleString()} •{' '}
+        <a
+          href="https://github.com/FRCTavares/WebApp-Transactions/blob/main/CHANGELOG.md"
+          target="_blank"
+          rel="noreferrer"
+        >
+          CHANGELOG.md
+        </a>
+      </p>
     </section>
   )
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Users } from 'lucide-react'
 import {
   approvePendingSignup,
   denyPendingSignup,
@@ -6,7 +7,7 @@ import {
 } from '../api/accessRequests'
 import { ApiError } from '../api/client'
 import type { PendingSignup } from '../types/api'
-import { Button } from './ui'
+import { Button, Card, Icon } from './ui'
 
 export function AccessRequestsPanel() {
   const [pendingSignups, setPendingSignups] = useState<PendingSignup[]>([])
@@ -68,17 +69,32 @@ export function AccessRequestsPanel() {
     return null
   }
 
+  const isEmpty = !isLoading && pendingSignups.length === 0 && !error
+
   return (
-    <section className="settings-group settings-group-access-requests">
-      <header className="settings-group-header">
-        <h2>Access requests</h2>
+    <Card
+      as="section"
+      padding="lg"
+      className={`settings-card settings-card-admin${isEmpty ? ' settings-card-admin-compact' : ''}`}
+    >
+      <header className="settings-card-heading settings-card-heading-inline">
+        <span className="settings-icon-badge" aria-hidden="true">
+          <Icon icon={Users} size={20} />
+        </span>
+        <div>
+          <h2>Administration</h2>
+          <p>Access requests from other users.</p>
+        </div>
+
+        {isEmpty && (
+          <span className="settings-admin-empty">
+            <Icon icon={Users} size={16} aria-hidden="true" />
+            No pending access requests.
+          </span>
+        )}
       </header>
 
       {error && <p className="status status-error" role="alert">{error}</p>}
-
-      {!isLoading && pendingSignups.length === 0 && !error && (
-        <p className="muted">No one is waiting for approval right now.</p>
-      )}
 
       {pendingSignups.map((signup) => (
         <div className="settings-list-row" key={signup.id}>
@@ -110,6 +126,6 @@ export function AccessRequestsPanel() {
           </span>
         </div>
       ))}
-    </section>
+    </Card>
   )
 }
