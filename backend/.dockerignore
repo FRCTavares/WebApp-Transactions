@@ -1,0 +1,26 @@
+# Local data - never bake personal financial data into an image.
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Env files - production config is injected via Cloud Run env vars/secrets,
+# never baked into the image.
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Tests and dev-only tooling - not needed at runtime.
+tests/
+requirements-dev.txt
+
+# VCS / editor
+.git/
+.gitignore
