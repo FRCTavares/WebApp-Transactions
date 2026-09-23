@@ -39,4 +39,17 @@ describe('WealthMonthlyChart states', () => {
       'Monthly wealth totals could not be loaded',
     )
   })
+
+  it('keeps the exact current value in the header and tooltip, without a duplicate plot label', () => {
+    const { container } = render(
+      <WealthMonthlyChart monthlyTotals={[
+        { month: '2026-01', total_wealth_eur: '1000.00', investment_value_eur: '0.00' },
+        { month: '2026-02', total_wealth_eur: '1200.00', investment_value_eur: '0.00' },
+      ]} />,
+    )
+
+    expect(screen.getByText('€1,200.00')).toBeInTheDocument()
+    expect(screen.getByRole('img')).toHaveAccessibleName(/Net worth €1,200.00/)
+    expect(container.querySelector('.wealth-chart-value-label')).not.toBeInTheDocument()
+  })
 })

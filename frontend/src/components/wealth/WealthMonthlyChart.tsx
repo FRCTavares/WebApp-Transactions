@@ -109,8 +109,6 @@ export function WealthMonthlyChart({
         ariaLabelPrefix="Monthly wealth trend."
         xLabelClassName="wealth-chart-label"
         baselineClassName="wealth-chart-baseline"
-        showEdgeValueLabels
-        currentEdgeValueLabelClassName="wealth-chart-value-label wealth-chart-value-label-current"
       />
 
       <div className="investment-trend-footer wealth-chart-footer">

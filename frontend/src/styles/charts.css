@@ -88,7 +88,7 @@
 
 .trend-chart-grid-line {
   stroke: var(--chart-grid);
-  stroke-width: 0.7;
+  stroke-width: 0.8;
   vector-effect: non-scaling-stroke;
 }
 
@@ -117,8 +117,8 @@
 
 .investment-trend-allocated-line {
   stroke: var(--chart-axis);
-  stroke-width: 1.55;
-  stroke-dasharray: 6 8;
+  stroke-width: 1.7;
+  stroke-dasharray: 5 5;
 }
 
 .investment-trend-current-point,
@@ -127,6 +127,25 @@
   stroke: var(--chart-1);
   stroke-width: 1.9;
   filter: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.investment-trend-allocated-point {
+  fill: var(--color-surface);
+  stroke: var(--chart-axis);
+  stroke-width: 1.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.wealth-chart-area {
+  fill: var(--color-accent-subtle);
+  opacity: 0.42;
+}
+
+.wealth-chart-edge-point {
+  fill: var(--color-surface);
+  stroke: var(--chart-1);
+  stroke-width: 1.7;
   vector-effect: non-scaling-stroke;
 }
 
@@ -144,8 +163,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin: -0.15rem 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .investment-trend-legend {
@@ -179,6 +199,7 @@
 
 .investment-trend-legend-allocated {
   background: var(--chart-axis);
+  background: repeating-linear-gradient(90deg, var(--chart-axis) 0 5px, transparent 5px 9px);
 }
 
 .investment-trend-window-selector {

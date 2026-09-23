@@ -107,4 +107,18 @@ describe('TrendChart', () => {
 
     expect(svg).toHaveAccessibleName(/2026-04 · estimated/)
   })
+
+  it('uses distinct focus markers for the primary and secondary series', () => {
+    const { container } = renderChart({
+      series: [
+        { key: 'portfolio', label: 'Portfolio', values: [42_000, 47_500, 45_100, 52_800], lineClassName: 'value-line' },
+        { key: 'allocated', label: 'Allocated', values: [40_000, 43_000, 44_000, 48_000], lineClassName: 'allocated-line' },
+      ],
+    })
+
+    fireEvent.focus(screen.getByRole('img'))
+
+    expect(container.querySelectorAll('.trend-chart-active-point-primary')).toHaveLength(1)
+    expect(container.querySelectorAll('.trend-chart-active-point-secondary')).toHaveLength(1)
+  })
 })
