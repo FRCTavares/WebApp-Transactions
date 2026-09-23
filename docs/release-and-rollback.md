@@ -25,8 +25,11 @@ production safety gate is therefore explicit:
 
 1. If a release changes `backend/migrations/`, rebuild
    `f-transactions-migrate` from that same release's `./backend` source.
-2. Verify the Job still runs `alembic upgrade head`, uses the production
-   `DATABASE_URL` secret reference, and has `maxRetries=0`.
+2. Verify the Job runs `/cnb/lifecycle/launcher -- python -m alembic upgrade
+   head`, uses the production `DATABASE_URL` secret reference, and has
+   `maxRetries=0`. The launcher supplies the buildpack runtime environment;
+   invoking `alembic` or `python` directly failed before application startup
+   during the 2026-09-23 release.
 3. Execute the Job with `--wait`.
 4. Confirm the execution succeeded and production `alembic_version` equals the
    repository Alembic head.
@@ -92,11 +95,12 @@ reverts require the same migration-compatibility review.
 ## What's actually been tested vs. documented only
 
 - **Tested**: a broken Alembic migration exits non-zero; the production
-  migration Job exists with `maxRetries=0`; its latest successful execution
-  completed on 2026-08-25; and on 2026-09-22 production `alembic_version`
-  matched the repository head (`5e9a2c7f1b40`). The live Cloud Run backend
-  also passed the repository production smoke script when pointed at its
-  current URL.
+  migration Job has `maxRetries=0`; execution `f-transactions-migrate-78bp8`
+  succeeded on 2026-09-23, and a read-only `alembic current -v` execution
+  (`f-transactions-migrate-kk2vs`) confirmed production revision
+  `6f2b4c8d1a93`. Backend revision
+  `webapp-transactions-backend-00010-2dl` passed the repository production
+  smoke script and `/api/ready` after deployment.
 - **Documented, not yet deliberately exercised end-to-end**: rolling Cloud Run
   traffic back to an older revision. Because that changes live production,
   exercise it only during a controlled deployment and record the result here.
