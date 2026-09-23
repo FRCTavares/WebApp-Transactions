@@ -185,26 +185,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Start backend
-        working-directory: backend
-        env:
-          SUPABASE_JWT_SECRET: ${{ secrets.E2E_SUPABASE_JWT_SECRET }}
-          ALLOWED_USER_EMAILS: ${{ secrets.E2E_TEST_EMAIL }}
-          CORS_ORIGINS: http://127.0.0.1:4173
-          APP_ENV: e2e
-          DATABASE_URL: sqlite:///${{ runner.temp }}/e2e-tests-${{ matrix.shard }}.db
-        run: |
-          set -euo pipefail
-          PYTHONPATH=. nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 \
-            > "${{ runner.temp }}/e2e-backend.log" 2>&1 &
-          for _ in $(seq 1 30); do
-            curl -sf http://127.0.0.1:8000/api/health && exit 0
-            sleep 1
-          done
-          echo "Backend did not become healthy in time" >&2
-          cat "${{ runner.temp }}/e2e-backend.log" >&2
-          exit 1
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

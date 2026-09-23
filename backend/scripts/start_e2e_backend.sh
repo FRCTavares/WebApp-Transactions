@@ -27,16 +27,19 @@ else
   exit 1
 fi
 
-if [[ ! -f "${env_file}" ]]; then
-  echo "Missing ${env_file}." >&2
-  echo "It must define SUPABASE_JWT_SECRET, E2E_TEST_EMAIL and VITE_SUPABASE_URL." >&2
-  exit 1
+if [[ -f "${env_file}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${env_file}"
+  set +a
 fi
 
-set -a
-# shellcheck disable=SC1090
-source "${env_file}"
-set +a
+for required in SUPABASE_JWT_SECRET E2E_TEST_EMAIL VITE_SUPABASE_URL; do
+  if [[ -z "${!required:-}" ]]; then
+    echo "Missing ${required}; set it in ${env_file} or the environment." >&2
+    exit 1
+  fi
+done
 
 db_path="$(mktemp -t e2e-backend-XXXXXX).db"
 export APP_ENV="e2e"
