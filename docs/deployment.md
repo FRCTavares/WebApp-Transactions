@@ -64,7 +64,8 @@ For a backend release:
 1. Confirm CI is green and the intended release commit is checked out.
 2. If `backend/migrations/` changed, rebuild `f-transactions-migrate` from the
    same release `./backend` source, preserving its `DATABASE_URL` Secret Manager
-   reference, `alembic upgrade head` command, and `maxRetries=0`.
+   reference, `/cnb/lifecycle/launcher -- python -m alembic upgrade head`
+   command, and `maxRetries=0`.
 3. Execute `gcloud run jobs execute f-transactions-migrate
    --region=europe-west1 --wait`. Do not deploy the service unless it succeeds.
 4. Confirm the production `alembic_version` matches the repository Alembic

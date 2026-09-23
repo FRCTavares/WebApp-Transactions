@@ -10,6 +10,8 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+## 2026-09-23 (d75e46f)
+
 ### Added
 
 - Real offline support: a service worker caches the app shell and API GET
