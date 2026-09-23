@@ -5,15 +5,15 @@ import { execSync } from 'node:child_process'
 function getBuildCommit(): string {
   // Prefer the hosting platform's own git info over running git locally,
   // since a production build environment may not have full git history.
+  const explicitSha = process.env.APP_GIT_COMMIT
   const vercelSha = process.env.VERCEL_GIT_COMMIT_SHA
-  const renderSha = process.env.RENDER_GIT_COMMIT
+
+  if (explicitSha) {
+    return explicitSha.slice(0, 7)
+  }
 
   if (vercelSha) {
     return vercelSha.slice(0, 7)
-  }
-
-  if (renderSha) {
-    return renderSha.slice(0, 7)
   }
 
   try {

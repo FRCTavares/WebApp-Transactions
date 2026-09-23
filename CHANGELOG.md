@@ -27,8 +27,9 @@ that's generated. The current running build's commit is shown in
 - Production monitoring, incident response, and release/rollback
   documentation: `keep-backend-warm.yml`'s existing health/readiness/
   frontend checks are now documented as the primary automated monitoring
-  path, a real regression test proves a broken database migration blocks
-  deployment, and `docs/incident-response.md`, `docs/release-and-rollback.md`,
+  path, and a regression test proves a broken Alembic migration exits
+  non-zero so an explicit deployment gate can stop the release.
+  `docs/incident-response.md`, `docs/release-and-rollback.md`,
   and `docs/oauth-and-hosting-checklist.md` cover detection, triage,
   documented rollback procedures, and the dashboard-only items (OAuth,
   Supabase capacity, deploy notifications) that need the owner's own
@@ -52,6 +53,10 @@ that's generated. The current running build's commit is shown in
   closing the exact gap that caused two real local-only 500 errors found
   during #32's e2e work.
 
+- Monthly trip-savings allocation and free-spending tracking on the Dashboard. Users can configure a normal monthly travel reserve (default EUR 50.00), override or explicitly set zero for individual months, and return a month to its normal default. Historical allocations remain stable when the default changes; persisted values use explicit user ownership and Decimal precision, are included in export/recovery, and reduce authoritative Available Net without being treated as spending or investment. (#162)
+
+- Refined the Wealth and Investments trend charts with a shorter shared plot, quieter fill and grid, distinct portfolio and allocated-capital markers, and a unified legend/range footer. Removed the duplicate permanent wealth endpoint value while retaining exact values in the header and keyboard/pointer tooltip. (#161)
+
 - Automated production database backups
   (`.github/workflows/backup-database.yml`): daily `pg_dump`, `pg_restore
   --list` validation, SHA-256 checksum, GPG (AES-256) encryption, uploaded
@@ -65,6 +70,15 @@ that's generated. The current running build's commit is shown in
   it has succeeded on every run since being introduced in #32.
 
 ### Changed
+
+- Reconciled the operational deployment documentation and production smoke
+  tooling with the live Google Cloud Run backend. Schema-changing releases now
+  explicitly require rebuilding and successfully executing the
+  `f-transactions-migrate` Cloud Run Job before deploying the service; obsolete
+  claims that Render still provides an automatic pre-deploy gate were removed
+  from the active release procedure. Backend build provenance now uses the
+  provider-neutral `APP_GIT_COMMIT` release variable, with
+  `RENDER_GIT_COMMIT` retained only as a legacy compatibility fallback.
 
 - Reworked the dashboard to cut duplication and tighten the layout. The
   five metric cards and the "Monthly summary" bar list showed the same four

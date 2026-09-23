@@ -32,6 +32,13 @@ def test_alembic_upgrade_head_builds_fresh_sqlite_schema(tmp_path):
     assert "import_batches" in table_names
     assert "import_previews" in table_names
     assert "investment_events" in table_names
+    assert "trip_savings_allocations" in table_names
+
+    user_preferences_columns = {
+        column["name"]
+        for column in inspector.get_columns("user_preferences")
+    }
+    assert "monthly_trip_savings_goal_eur" in user_preferences_columns
 
     import_preview_columns = {
         column["name"]

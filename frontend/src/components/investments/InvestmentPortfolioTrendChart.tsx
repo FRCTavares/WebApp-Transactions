@@ -195,6 +195,7 @@ export function InvestmentPortfolioTrendChart({
             label: 'Allocated',
             values: points.map((point) => point.allocated),
             lineClassName: 'investment-trend-allocated-line',
+            endPointClassName: 'investment-trend-allocated-point',
           },
         ]}
         formatValue={(value) => formatMoney(value.toFixed(2))}

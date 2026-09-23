@@ -1,10 +1,11 @@
 # OAuth and Hosting Checklist
 
-Part of #33 (closed). These items require access to dashboards this
-assistant doesn't have: Google Cloud Console, Supabase, Render, Vercel, and
-GitHub notification settings. Nothing here can be verified or automated
-from code — it needs the project owner to actually check it. Tick items
-off as you confirm them; this file is meant to be edited in place.
+Part of #33 (closed). Some items require dashboard access outside the
+repository: Google Cloud Console, Supabase, Google Cloud Run, Vercel, and
+GitHub notification settings.
+
+Historical Render checks are retained below as migration evidence. They do
+not describe the current backend host.
 
 ## GitHub Actions notifications
 
@@ -35,7 +36,7 @@ includes that other app's Vercel/Supabase domains alongside this one.
 - [x] **Authorized redirect URIs** includes the exact Supabase Auth
       callback URL for this project. Confirmed 2026-07-20:
       `https://stddbcpdpblqtwcseygg.supabase.co/auth/v1/callback`, which
-      matches the live `SUPABASE_URL` on Render.
+      matched the production `SUPABASE_URL` at the time of verification.
 - [x] OAuth scopes requested are minimal — this app only needs `openid`,
       `email`, and `profile`. Confirmed 2026-07-20: zero scopes configured
       under non-sensitive/sensitive/restricted in Data access — nothing
@@ -100,7 +101,7 @@ includes that other app's Vercel/Supabase domains alongside this one.
 
 Suggest checking this section monthly, or whenever usage noticeably changes.
 
-## Render (dashboard)
+## Historical Render verification (pre-Cloud Run)
 
 - [x] Environment variables match `render.yaml`'s expected keys — nothing
       missing, nothing stale from a previous configuration. Real finding
@@ -130,13 +131,34 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
       deploy gate could route traffic to a new instance that can't reach
       the database. Fixed: changed to `/api/ready` in the dashboard,
       confirmed live.
-- [x] `autoDeployTrigger: off` is intentional (see
-      `docs/release-and-rollback.md`) — confirmed 2026-07-20, still
-      reflects how the owner wants to deploy.
+- [x] `autoDeployTrigger: off` was intentional for the Render deployment
+      and was confirmed 2026-07-20. The current Cloud Run backend also uses
+      an explicit manual release procedure.
 - [x] The free-tier hour budget and cold-start behavior are still
       acceptable — confirmed 2026-07-20: owner does not want to pay for
       hosting; free tier remains the deliberate choice regardless of
       cold-start tradeoffs.
+
+## Google Cloud Run (current backend)
+
+Verified 2026-09-22 with `gcloud`:
+
+- [x] Production service is `webapp-transactions-backend` in `europe-west1`.
+- [x] Source deployment uses Google buildpacks and `backend/Procfile`.
+- [x] Scale-to-zero is enabled and maximum scale is three instances.
+- [x] Production database credentials and authorization lists use Secret
+      Manager references.
+- [x] `f-transactions-migrate` exists as a separate Cloud Run Job, runs
+      `alembic upgrade head`, uses the production database secret, and has
+      `maxRetries=0`.
+- [x] The latest successful migration execution was 2026-08-25.
+- [x] On 2026-09-22, production `alembic_version` matched repository head
+      `5e9a2c7f1b40`, and the backend passed the production smoke script.
+- [ ] After the next backend deployment, confirm `/api/health` reports the
+      release commit through `APP_GIT_COMMIT`.
+
+The release order and migration gate are defined in
+`docs/release-and-rollback.md`.
 
 ## Vercel (dashboard)
 
@@ -154,27 +176,20 @@ Suggest checking this section monthly, or whenever usage noticeably changes.
       scoped: `VITE_API_BASE_URL` is Production-only, the rest are
       Production and Preview.
 
-## Render cold-start / keep-warm policy
+## Historical Render cold-start / keep-warm policy
 
-Resolved decision (`docs/production-roadmap.md`, decision #6): the app must
-work during backend cold starts — cold starts are accepted, not eliminated.
+This section records the pre-Cloud Run hosting behavior.
 
-Real finding 2026-07-20: `.github/workflows/keep-backend-warm.yml` was
-written to run every 10 minutes (`cron: "7/10 * * * *"`), but its actual
-run history showed it firing roughly hourly — every run succeeded, it just
-wasn't running on the schedule it claimed. This is a documented GitHub
-Actions limitation (frequent cron schedules get silently throttled), not a
-bug in the workflow. Since the owner specifically wants real 10-minute
-pinging to counter Render's sleep timer (not just accept hourly), fixed by
-adding **cron-job.org** (free, external, no GitHub throttling) hitting
-`GET /api/health` every 10 minutes as the actual keep-warm mechanism.
-`.github/workflows/keep-backend-warm.yml` stays as-is for what it's
-actually good at — failure-alert monitoring/incident-detection — just
-understood to run at its real, throttled cadence rather than the
-originally-intended one. See `docs/incident-response.md` for the split.
+On 2026-07-20, GitHub Actions did not reliably run at the intended
+10-minute cadence, so cron-job.org was added to counter Render sleep
+behavior.
 
-- [x] Confirmed 2026-07-20 with this corrected understanding — comfortable
-      keeping both mechanisms for what they each actually do.
+After the Cloud Run migration, the backend deliberately scales to zero.
+`.github/workflows/keep-backend-warm.yml` now runs hourly for availability
+monitoring. Any surviving external cron target must point at the Cloud Run
+URL or be disabled.
+
+- [x] Historical Render keep-warm behavior was reviewed on 2026-07-20.
 
 ## Re-verify after any of these change
 

@@ -29,6 +29,10 @@ EXEMPT_TABLES: dict[str, str] = {
         "New table added in c6a8d1e4f920 with no existing rows anywhere; "
         "create_all() creates it for free on any local database."
     ),
+    "trip_savings_allocations": (
+        "New table added for issue #162 with no existing rows to backfill; "
+        "create_all() creates it for existing local SQLite databases."
+    ),
 }
 
 # (table, column) pairs that are safe to leave unmirrored -- e.g. a column

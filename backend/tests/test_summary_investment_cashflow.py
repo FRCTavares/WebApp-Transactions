@@ -141,7 +141,7 @@ def test_linked_deposit_is_excluded_from_spending_but_does_not_define_invested(
     assert summary["money_out"] == "100.00"
     assert summary["personal_money_out"] == "100.00"
     assert summary["net_invested_cash"] == "100.00"
-    assert summary["available_net"] == "800.00"
+    assert summary["available_net"] == "750.00"
     assert summary["investment_cashflow_status"] == "available"
     # The market_buy carries no funding_source/transaction link (only the
     # deposit does), so there is nothing to reconcile against a bank
@@ -185,7 +185,7 @@ def test_market_buys_less_sells_define_net_invested(
     summary = read_summary(client)
 
     assert summary["net_invested_cash"] == "110.00"
-    assert summary["available_net"] == "-110.00"
+    assert summary["available_net"] == "-160.00"
     assert summary["investment_reconciliation_status"] == "not_applicable"
     assert summary["investment_goal_remaining"] == "0.00"
     assert summary["investment_goal_over"] == "10.00"
@@ -287,7 +287,7 @@ def test_resolved_fx_is_decimal_and_other_users_are_excluded(
 
     assert summary["money_in"] == "200.00"
     assert summary["net_invested_cash"] == "90.00"
-    assert summary["available_net"] == "110.00"
+    assert summary["available_net"] == "60.00"
     assert summary["investment_reconciliation_status"] == "partial"
     assert summary["investment_goal_remaining"] == "10.00"
 
@@ -323,5 +323,5 @@ def test_linked_withdrawal_income_is_excluded_from_money_in_but_does_not_define_
 
     assert summary["money_in"] == "0.00"
     assert summary["net_invested_cash"] == "0.00"
-    assert summary["available_net"] == "0.00"
+    assert summary["available_net"] == "-50.00"
     assert summary["investment_reconciliation_status"] == "not_applicable"

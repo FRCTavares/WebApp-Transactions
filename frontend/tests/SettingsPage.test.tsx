@@ -11,6 +11,8 @@ const PREFERENCES: PresentationPreferences = {
   date_format: 'medium',
   language: 'en',
   monthly_investment_goal_eur: '100.00',
+  monthly_trip_savings_goal_eur: '50.00',
+  has_completed_onboarding: false,
 }
 
 function renderSettings(
@@ -60,6 +62,35 @@ describe('SettingsPage monthly investment goal', () => {
     expect(input).toHaveAccessibleDescription(
       'Used to track monthly investment progress on the Dashboard.',
     )
+  })
+
+  it('renders and saves the monthly trip-savings default', async () => {
+    const user = userEvent.setup()
+    const onSavePreferences = vi.fn(
+      async (preferences: PresentationPreferences) => preferences,
+    )
+
+    renderSettings({ onSavePreferences })
+
+    const input = screen.getByRole('spinbutton', {
+      name: /monthly trip-savings default/i,
+    })
+
+    expect(input).toHaveValue(50)
+    expect(input).toHaveAccessibleDescription(
+      'Normal amount reserved for travel each month unless that month has an override.',
+    )
+
+    await user.clear(input)
+    await user.type(input, '75')
+    await user.click(
+      screen.getByRole('button', { name: 'Save preferences' }),
+    )
+
+    expect(onSavePreferences).toHaveBeenCalledWith({
+      ...PREFERENCES,
+      monthly_trip_savings_goal_eur: '75',
+    })
   })
 
   it('saves the complete preference payload with a changed goal', async () => {

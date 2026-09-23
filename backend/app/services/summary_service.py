@@ -4,9 +4,11 @@ from decimal import Decimal
 from app.auth.current_user import CurrentUser
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.trip_savings_repository import TripSavingsRepository
 from app.services.investment_cashflow_service import (
     InvestmentCashflowService,
 )
+from app.services.trip_savings_service import TripSavingsService
 from app.schemas.summary import (
     CategorySummaryItem,
     CategorySummaryResponse,
@@ -21,10 +23,15 @@ class SummaryService:
         repository: SummaryRepository,
         transaction_repository: TransactionRepository | None = None,
         investment_cashflow_service: InvestmentCashflowService | None = None,
+        trip_savings_service: TripSavingsService | None = None,
     ) -> None:
         self.repository = repository
         self.transaction_repository = transaction_repository
         self.investment_cashflow_service = investment_cashflow_service
+        self.trip_savings_service = trip_savings_service or TripSavingsService(
+            repository.db,
+            TripSavingsRepository(repository.db),
+        )
 
     def get_monthly_summary(
         self,
@@ -43,6 +50,7 @@ class SummaryService:
 
         start_date = date(year, month, 1)
         end_date = self._get_next_month_start(year, month)
+        month_key = f"{year:04d}-{month:02d}"
 
         if self.investment_cashflow_service is None:
             raise RuntimeError(
@@ -96,6 +104,17 @@ class SummaryService:
                 user_id=user_id,
             )
         )
+        trip_savings = self.trip_savings_service.resolve_month(
+            user_id=user_id,
+            month=month_key,
+        )
+
+        if trip_savings.amount_eur > trip_savings.goal_eur:
+            trip_savings_goal_status = "exceeded"
+        elif trip_savings.amount_eur == trip_savings.goal_eur:
+            trip_savings_goal_status = "reached"
+        else:
+            trip_savings_goal_status = "in_progress"
 
         if investment_cashflow.net_invested_cash is None:
             net_invested_cash = None
@@ -105,7 +124,11 @@ class SummaryService:
             investment_goal_status = "unavailable"
         else:
             net_invested_cash = investment_cashflow.net_invested_cash
-            available_net = personal_net - net_invested_cash
+            available_net = (
+                personal_net
+                - net_invested_cash
+                - trip_savings.amount_eur
+            )
             investment_goal_remaining = max(
                 investment_goal_eur - net_invested_cash,
                 Decimal("0.00"),
@@ -135,7 +158,7 @@ class SummaryService:
         ]
 
         return MonthlySummary(
-            month=f"{year:04d}-{month:02d}",
+            month=month_key,
             gross_money_in=gross_money_in,
             money_in=money_in,
             money_out=money_out,
@@ -147,6 +170,10 @@ class SummaryService:
             personal_net=personal_net,
             net_invested_cash=net_invested_cash,
             available_net=available_net,
+            trip_savings_goal_eur=trip_savings.goal_eur,
+            trip_savings_allocated_eur=trip_savings.amount_eur,
+            trip_savings_allocation_source=trip_savings.source,
+            trip_savings_goal_status=trip_savings_goal_status,
             investment_cashflow_status=(
                 investment_cashflow.cashflow_status
             ),

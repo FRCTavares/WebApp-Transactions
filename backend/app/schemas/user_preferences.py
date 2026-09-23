@@ -18,6 +18,12 @@ class UserPreferencesUpdate(BaseModel):
         default=None,
         gt=0,
     )
+    monthly_trip_savings_goal_eur: Decimal | None = Field(
+        default=None,
+        gt=0,
+        max_digits=12,
+        decimal_places=2,
+    )
     has_completed_onboarding: bool | None = None
 
     @field_validator("locale")
@@ -65,4 +71,9 @@ class UserPreferencesRead(UserPreferencesUpdate):
     model_config = ConfigDict(from_attributes=True)
 
     monthly_investment_goal_eur: Decimal = Field(gt=0)
+    monthly_trip_savings_goal_eur: Decimal = Field(
+        gt=0,
+        max_digits=12,
+        decimal_places=2,
+    )
     has_completed_onboarding: bool = False

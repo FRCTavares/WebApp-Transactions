@@ -2,7 +2,7 @@
 
 ## Environment variables
 
-### Backend (`backend/.env` locally; Render dashboard in production)
+### Backend (`backend/.env` locally; Google Cloud Run in production)
 
 See `backend/.env.example` for a filled-in template.
 
@@ -22,7 +22,8 @@ See `backend/.env.example` for a filled-in template.
 | `MARKET_DATA_TIMEOUT_SECONDS` | No | `15` | |
 | `DATABASE_CONNECT_TIMEOUT_SECONDS` | No | `10` | |
 | `DATABASE_STATEMENT_TIMEOUT_MS` | No | `30000` | |
-| `RENDER_GIT_COMMIT` | No | — | Set automatically by Render; used for the `version` field of `GET /api/health` |
+| `APP_GIT_COMMIT` | No | — | Release commit supplied explicitly during Cloud Run deployment; exposed as the short `version` in `GET /api/health` |
+| `RENDER_GIT_COMMIT` | No | — | Legacy compatibility fallback only; do not set for new Cloud Run releases |
 
 `validate_production_config()` (`app/config.py`) raises at startup if
 `APP_ENV=production` and any of `DATABASE_URL`, `SUPABASE_URL`,
@@ -50,20 +51,37 @@ See `frontend/.env.example` for a filled-in template.
 
 ## Production setup
 
-Current production topology: Vercel (frontend), Render (backend), Supabase
-(Postgres + Auth) — see the root `README.md`'s Stack section.
+Current production topology: Vercel (frontend), Google Cloud Run (backend),
+and Supabase (Postgres + Auth).
 
-1. Backend environment variables are set in the Render dashboard, matching
-   `render.yaml`'s `envVars` keys (`sync: false` entries need manual values;
-   the rest have `render.yaml` defaults).
-2. Frontend environment variables are set in the Vercel dashboard, per
-   environment (Production/Preview).
-3. Both are covered by `docs/oauth-and-hosting-checklist.md` for the
-   dashboard-only configuration (OAuth redirect URIs, notification
-   settings) that can't be verified from this repository.
-4. Deploys: frontend auto-deploys on push to `main`; backend requires a
-   manual trigger in the Render dashboard (`autoDeployTrigger: off`) — see
-   `docs/release-and-rollback.md` for why and how rollback works.
+The live backend service is `webapp-transactions-backend` in `europe-west1`.
+It is deployed from `./backend` with Google Cloud source deployment/buildpacks;
+`backend/Procfile` defines the Uvicorn web process. The production database
+schema is managed by the separate `f-transactions-migrate` Cloud Run Job.
+
+For a backend release:
+
+1. Confirm CI is green and the intended release commit is checked out.
+2. If `backend/migrations/` changed, rebuild `f-transactions-migrate` from the
+   same release `./backend` source, preserving its `DATABASE_URL` Secret Manager
+   reference, `alembic upgrade head` command, and `maxRetries=0`.
+3. Execute `gcloud run jobs execute f-transactions-migrate
+   --region=europe-west1 --wait`. Do not deploy the service unless it succeeds.
+4. Confirm the production `alembic_version` matches the repository Alembic
+   head.
+5. Capture the release commit and manually deploy
+   `webapp-transactions-backend` from `./backend` to `europe-west1`. Preserve
+   the existing secrets and service configuration while updating the build
+   identifier with `APP_GIT_COMMIT`.
+6. Run `scripts/smoke_production.sh`, confirm `/api/ready`, confirm
+   `/api/health` reports the expected short release commit, and inspect Cloud
+   Run logs.
+7. Frontend environment variables remain managed in Vercel per environment.
+
+Cloud Run has no Render-style automatic `preDeployCommand`; the migration Job
+is therefore an explicit human-controlled release gate, not an implicit
+platform guarantee. See `docs/release-and-rollback.md` for the full order and
+rollback procedure.
 
 ## Production API documentation policy
 
@@ -83,7 +101,7 @@ When documentation is disabled, the following endpoints are not registered:
 - `/redoc`
 - `/openapi.json`
 
-The Render production service sets `API_DOCS_ENABLED=false` explicitly. Public
+The Cloud Run production service sets `API_DOCS_ENABLED=false` explicitly. Public
 production deployments must keep this setting disabled unless API documentation
 exposure has been deliberately reviewed and approved.
 
@@ -99,7 +117,7 @@ Supabase Auth identity after the user's application data has been deleted.
 
 Requirements:
 
-- configure the service-role key only on Render or another trusted backend;
+- configure the service-role key only on Cloud Run or another trusted backend;
 - never expose it through a `VITE_` variable or frontend bundle;
 - never commit it to the repository or include it in logs;
 - rotate it immediately if it is exposed;

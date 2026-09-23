@@ -56,7 +56,19 @@ def test_liveness_remains_independent_of_readiness(monkeypatch):
     assert body["version"]
 
 
-def test_build_commit_prefers_render_git_commit_env_var(monkeypatch):
+def test_build_commit_prefers_app_git_commit_env_var(monkeypatch):
+    monkeypatch.setenv("APP_GIT_COMMIT", "1234567890abcdef")
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "abcdef1234567890")
+    get_build_commit.cache_clear()
+
+    try:
+        assert get_build_commit() == "1234567"
+    finally:
+        get_build_commit.cache_clear()
+
+
+def test_build_commit_supports_legacy_render_git_commit(monkeypatch):
+    monkeypatch.delenv("APP_GIT_COMMIT", raising=False)
     monkeypatch.setenv("RENDER_GIT_COMMIT", "abcdef1234567890")
     get_build_commit.cache_clear()
 
@@ -67,6 +79,7 @@ def test_build_commit_prefers_render_git_commit_env_var(monkeypatch):
 
 
 def test_build_commit_falls_back_to_local_git(monkeypatch):
+    monkeypatch.delenv("APP_GIT_COMMIT", raising=False)
     monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
     get_build_commit.cache_clear()
 
@@ -117,7 +130,7 @@ def test_readiness_returns_controlled_unavailable_response(
     assert response.json() == {"status": "not_ready"}
 
 
-def test_readiness_is_public_and_suitable_for_render(
+def test_readiness_is_public(
     monkeypatch,
 ):
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "true")

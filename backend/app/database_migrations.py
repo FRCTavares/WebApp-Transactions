@@ -720,6 +720,17 @@ def _run_user_preferences_migrations(engine: Engine) -> None:
     _add_column_if_missing(
         engine=engine,
         table_name="user_preferences",
+        column_name="monthly_trip_savings_goal_eur",
+        sql=(
+            "ALTER TABLE user_preferences "
+            "ADD COLUMN monthly_trip_savings_goal_eur "
+            "NUMERIC(12, 2) NOT NULL DEFAULT 50.00"
+        ),
+    )
+
+    _add_column_if_missing(
+        engine=engine,
+        table_name="user_preferences",
         column_name="has_completed_onboarding",
         sql=(
             "ALTER TABLE user_preferences "

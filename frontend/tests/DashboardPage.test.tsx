@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listTransactions: vi.fn(),
   getCategorySummary: vi.fn(),
   getMonthlySummary: vi.fn(),
+  updateTripSavingsAllocation: vi.fn(),
   useAuth: vi.fn(),
   usePeriod: vi.fn(),
 }))
@@ -22,6 +23,7 @@ vi.mock('../src/api/transactions', () => ({
 vi.mock('../src/api/summary', () => ({
   getCategorySummary: mocks.getCategorySummary,
   getMonthlySummary: mocks.getMonthlySummary,
+  updateTripSavingsAllocation: mocks.updateTripSavingsAllocation,
 }))
 
 vi.mock('../src/hooks/useAuth', () => ({
@@ -44,7 +46,11 @@ const MONTHLY_SUMMARY = {
   net: '600.00',
   personal_net: '600.00',
   net_invested_cash: '100.00',
-  available_net: '500.00',
+  available_net: '450.00',
+  trip_savings_goal_eur: '50.00',
+  trip_savings_allocated_eur: '50.00',
+  trip_savings_allocation_source: 'default',
+  trip_savings_goal_status: 'reached',
   investment_cashflow_status: 'available',
   investment_reconciliation_status: 'complete',
   investment_goal_eur: '100.00',
@@ -152,10 +158,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
   })
 
   it('leads with authoritative Available Net and keeps unrealised performance separate', async () => {
-    mocks.getMonthlySummary.mockResolvedValue({
-      ...MONTHLY_SUMMARY,
-      available_net: '500.00',
-    })
+    mocks.getMonthlySummary.mockResolvedValue(MONTHLY_SUMMARY)
     mocks.getInvestmentMonthlyChange.mockResolvedValue({
       unrealised_monthly_change: '999.00',
       is_estimated: false,
@@ -166,7 +169,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
     render(<DashboardPage greeting="Good morning" displayName="Francisco" />)
 
     expect((await screen.findAllByText('Available net')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('€500.00').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('€450.00').length).toBeGreaterThan(0)
     expect(screen.getByText('Investment performance')).toBeInTheDocument()
     expect(screen.getByText('+€999.00')).toBeInTheDocument()
     expect(
@@ -277,7 +280,7 @@ describe('dashboard page loading, empty, error, and partial-data states', () => 
       ),
     ).toBeInTheDocument()
 
-    expect(await screen.findByText('Money in')).toBeInTheDocument()
+    expect(await screen.findByText('Income')).toBeInTheDocument()
     expect(screen.getAllByText('€1,000.00').length).toBeGreaterThan(0)
   })
 })

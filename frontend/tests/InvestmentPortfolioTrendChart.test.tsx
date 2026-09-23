@@ -49,4 +49,21 @@ describe('InvestmentPortfolioTrendChart states', () => {
       'Historical valuation data unavailable',
     )
   })
+
+  it('keeps portfolio and allocated capital visually distinct', () => {
+    const { container } = render(
+      <InvestmentPortfolioTrendChart
+        months={24}
+        series={[{
+          month: '2026-02', allocated_eur: '1000.00', market_value_eur: '1200.00',
+          gain_eur: '200.00', is_estimated: false,
+        }]}
+        onMonthsChange={vi.fn()}
+      />,
+    )
+
+    expect(container.querySelector('.investment-trend-value-line')).toBeInTheDocument()
+    expect(container.querySelector('.investment-trend-allocated-line')).toBeInTheDocument()
+    expect(container.querySelector('.investment-trend-allocated-point')).toBeInTheDocument()
+  })
 })

@@ -20,15 +20,13 @@ def _current_alembic_head() -> str:
     return result.stdout.strip().split()[0]
 
 
-def test_broken_migration_exits_non_zero_and_blocks_deploy(tmp_path):
-    """render.yaml's preDeployCommand is `alembic upgrade head`. Render's own
-    docs state: "If any command fails or times out, the entire deploy
-    fails... Your service continues running its most recent successful
-    deploy". That behavior lives entirely in Render's infrastructure and
-    can't be exercised from here - but it depends on `alembic upgrade head`
-    exiting non-zero when a migration is broken. This test proves that half
-    directly, using a real broken migration chained onto the real head, run
-    against a real (temporary) database.
+def test_broken_migration_exits_non_zero(tmp_path):
+    """A broken migration must make `alembic upgrade head` fail.
+
+    Production Cloud Run releases use an explicit migration Job before
+    schema-changing service deployments. This test verifies the application
+    half of that gate: a real broken migration chained onto the current head
+    exits non-zero against a temporary database.
     """
 
     migrations_copy = tmp_path / "migrations"
@@ -38,7 +36,7 @@ def test_broken_migration_exits_non_zero_and_blocks_deploy(tmp_path):
 
     broken_revision = migrations_copy / "versions" / "zzzz_simulated_broken_migration.py"
     broken_revision.write_text(
-        '"""simulated broken migration, for test_migration_failure_blocks_deploy only"""\n'
+        '"""simulated broken migration for migration failure test"""\n'
         "revision = \"zzzz_simulated_broken_migration\"\n"
         f"down_revision = \"{current_head}\"\n"
         "branch_labels = None\n"

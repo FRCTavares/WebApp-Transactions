@@ -14,6 +14,10 @@ const en = {
   monthlyInvestmentGoalHint:
     'Used to track monthly investment progress on the Dashboard.',
   investmentGoalInvalid: 'Enter an amount greater than zero.',
+  monthlyTripSavingsGoal: 'Monthly trip-savings default',
+  monthlyTripSavingsGoalHint:
+    'Normal amount reserved for travel each month unless that month has an override.',
+  tripSavingsGoalInvalid: 'Enter an amount greater than zero.',
   short: 'Short',
   medium: 'Medium',
   long: 'Long',
@@ -54,6 +58,10 @@ const pt: Record<MessageKey, string> = {
   monthlyInvestmentGoalHint:
     'Utilizado para acompanhar o progresso mensal de investimento no Dashboard.',
   investmentGoalInvalid: 'Introduza um valor superior a zero.',
+  monthlyTripSavingsGoal: 'Poupança mensal predefinida para viagens',
+  monthlyTripSavingsGoalHint:
+    'Valor normalmente reservado para viagens em cada mês, salvo uma alteração nesse mês.',
+  tripSavingsGoalInvalid: 'Introduza um valor superior a zero.',
   short: 'Curto',
   medium: 'Médio',
   long: 'Longo',

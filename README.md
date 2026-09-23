@@ -22,7 +22,7 @@ tracked in [`TODO_LIST.md`](TODO_LIST.md) and in the repository's GitHub issues.
 ### Backend
 
 - FastAPI, SQLAlchemy, Pydantic, Alembic
-- Hosted on Render
+- Hosted on Google Cloud Run
 - Repository and service layers
 - Supabase JWT verification through JWKS or legacy secret
 - Email allowlist
@@ -47,8 +47,8 @@ tracked in [`TODO_LIST.md`](TODO_LIST.md) and in the repository's GitHub issues.
 
 ### Deployment
 
-- Vercel Hobby (frontend), Render free tier (backend), Supabase free project
-- Render pre-deploy Alembic migration, manual Render deployment
+- Vercel Hobby (frontend), Google Cloud Run scale-to-zero backend, Supabase free project
+- Manual Cloud Run backend deployment with an explicit Cloud Run Alembic migration job before schema-changing releases
 - GitHub Actions keep-warm workflow
 - Required GitHub Actions CI covering backend tests, database/recovery checks,
   frontend lint and build, dependency audits, and repository hygiene
@@ -71,15 +71,14 @@ free-tier fix list, likely paid-tier triggers, and the readiness scorecard.
 There are no semantic version numbers; deployments are identified by short
 git commit hashes instead.
 
-- **Frontend**: `vite.config.ts` embeds the commit (from `VERCEL_GIT_COMMIT_SHA`,
-  falling back to `RENDER_GIT_COMMIT`, falling back to running `git rev-parse
-  --short HEAD` locally) and the build timestamp into the bundle at build
-  time. Visible in **Settings → Build** in the app.
-- **Backend**: `app/services/health_service.py` reads `RENDER_GIT_COMMIT` at
-  runtime, falling back to `git rev-parse --short HEAD`. Exposed in the
-  `version` field of `GET /api/health`.
-- Both approaches work the same way locally, in Vercel/Render previews, and
-  in production — only the source of the commit hash changes.
+- **Frontend**: `vite.config.ts` embeds `APP_GIT_COMMIT` when explicitly
+  supplied, otherwise `VERCEL_GIT_COMMIT_SHA`, then local
+  `git rev-parse --short HEAD`; the build timestamp is embedded alongside it.
+  Both are visible in **Settings → Build**.
+- **Backend**: `app/services/health_service.py` prefers the provider-neutral
+  `APP_GIT_COMMIT`, retains `RENDER_GIT_COMMIT` only as a legacy fallback, and
+  finally tries local git metadata. Cloud Run releases explicitly supply
+  `APP_GIT_COMMIT` so `GET /api/health` identifies the release.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for release notes and how to maintain them.
 
@@ -99,7 +98,7 @@ Full index: [`docs/README.md`](docs/README.md).
 - [`docs/pwa-offline.md`](docs/pwa-offline.md) — offline support decision and how the service worker works
 - [`docs/incident-response.md`](docs/incident-response.md) — detection, triage, communication, and recovery steps
 - [`docs/release-and-rollback.md`](docs/release-and-rollback.md) — how releases happen and how to roll one back
-- [`docs/oauth-and-hosting-checklist.md`](docs/oauth-and-hosting-checklist.md) — dashboard-only items the owner must verify directly (Google/Supabase/Render/Vercel)
+- [`docs/oauth-and-hosting-checklist.md`](docs/oauth-and-hosting-checklist.md) — dashboard-only items the owner must verify directly (Google/Supabase/Cloud Run/Vercel)
 - [`CHANGELOG.md`](CHANGELOG.md) — release notes
 - [`frontend/README.md`](frontend/README.md) — frontend-specific setup, commands, and project structure
 - [`TODO_LIST.md`](TODO_LIST.md) — open, actionable tasks only

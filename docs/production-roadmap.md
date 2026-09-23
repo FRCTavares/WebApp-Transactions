@@ -1,10 +1,13 @@
 # Production Roadmap and Release Readiness
 
-Last audited: 2026-08-07
+Last full readiness audit: 2026-08-07
 Current audit baseline: commit `8066189`
 Original audit baseline: commit `96c3f0c`
+Hosting and deployment details refreshed: 2026-09-22
 
 This document tracks project status, evidence, and standing decisions.
+Readiness scores and test counts retain the 2026-08-07 full-audit baseline
+unless a later date is stated explicitly.
 Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 
 ## 1. Readiness Scorecard
@@ -25,8 +28,8 @@ Actionable, open work lives in [`TODO_LIST.md`](../TODO_LIST.md) instead.
 | Internationalization | 4/5 | Locale, currency, date/time-zone preferences, and an English/Portuguese translation layer are implemented |
 | Testing | 4/5 | 553 backend tests pass; frontend lint, unit tests, production build, and the sharded Playwright Chromium/Firefox/WebKit desktop+mobile suite are CI-gated and passing |
 | CI/CD | 4/5 | The required CI aggregate gates backend, recovery, frontend lint/unit/build, all four Playwright e2e shards, dependency audit, and repository hygiene |
-| Observability | 4/5 | Structured logging, readiness checks, monitoring, and the incident runbook exist; the dashboard-side GitHub, Supabase, Render, Vercel, and OAuth checks from #33 were completed 2026-07-20 and are documented in `docs/oauth-and-hosting-checklist.md` |
-| Performance | 3/5 | Free-host cold starts remain (accepted, see Upgrade Triggers); request/database timeouts are enforced |
+| Observability | 4/5 | Structured logging, readiness checks, monitoring, and the incident runbook exist; current Cloud Run deployment checks and historical hosting verification are documented in `docs/oauth-and-hosting-checklist.md` |
+| Performance | 3/5 | Cloud Run intentionally scales to zero, so cold starts remain an accepted limitation; request/database timeouts are enforced |
 | Documentation | 4/5 | Privacy, i18n, security/timeouts, deployment, browser-support, offline, incident-response, release/rollback, ownership, and recovery documentation exists; #34's broader documentation refresh is completed, with ongoing accuracy maintained as the code evolves |
 | Global release readiness | 3/5 | Suitable for controlled personal/invited use; wider public or commercial release remains blocked by the unresolved Yahoo/yfinance market-data licensing risk in decision #13 |
 
@@ -97,22 +100,16 @@ breakdown. No production source file exceeds the 1,000-line hard limit.
 
 ## 5. Upgrade Triggers
 
-### Render
+### Backend hosting (Cloud Run)
 
-Upgrade when: cold starts are unacceptable; users expect reliable access; the
-app is publicly promoted; support commitments exist; free hours are exhausted.
+Reassess the current scale-to-zero configuration when cold starts become
+unacceptable, users expect reliable low-latency access, the app is publicly
+promoted, or support commitments exist.
 
-**Policy decision (2026-07-19, resolving #33's cold-start reassessment):**
-accepted for now. The ~53-second cold start is a known, documented
-limitation (`docs/production-roadmap.md` free-tier viability section) that
-the resolved decisions above explicitly accept the app must tolerate
-(decision #6: "must work during backend cold starts? Yes" — meaning the
-frontend's own loading states handle it, not that the cold start itself is
-eliminated). The keep-warm ping in
-`.github/workflows/keep-backend-warm.yml` reduces how often a cold start is
-actually hit, but Render's own docs are explicit that this doesn't
-guarantee uptime the way a paid always-on instance would. Revisit this
-decision, not the ping, when any of the triggers above are met.
+The backend currently runs on Cloud Run with zero minimum instances and a
+bounded maximum scale. Cold starts are an accepted tradeoff rather than
+something the monitoring workflow should try to eliminate. Decision #6 still
+applies: the frontend must tolerate backend cold starts cleanly.
 
 ### Supabase
 
@@ -140,7 +137,7 @@ consequential implementation work tracked as its own task.
 8. Deleted-account retention outside the backup schedule? **1 week.**
 9. Should transaction categories become foreign-key references? **No** (confirmed 2026-07-20) — freeform strings are fine for personal use at this scale; not worth the migration complexity/risk right now. Revisit if that changes.
 10. Is offline use real or only installability? **Real offline use is required, not just installability** — not expected to be exercised often, but must work when it is. **Implemented**: see `docs/pwa-offline.md`.
-11. When does availability justify paid Render? **Never, by owner preference** (confirmed 2026-07-20) — the owner does not want to pay for hosting regardless of cold-start/availability tradeoffs. The Upgrade Triggers above remain documented for reference but are not something the owner intends to act on.
+11. When does availability justify paid backend hosting? **Not at the current personal/invited scale, by owner preference.** The backend has moved from Render to Cloud Run scale-to-zero; recurring paid hosting remains outside the intended operating model unless product requirements change.
 12. Are users outside Portugal targeted immediately? **No.**
 13. Are market-data terms compatible with public release? **No — real, unresolved legal risk if released beyond personal/small-invited-group use.** Researched 2026-07-20: Yahoo's Terms of Service explicitly prohibit automated access/scraping without express written permission, and separately prohibit commercial use of Yahoo API data without permission. `yfinance` (used here) wraps Yahoo's unofficial endpoints — acceptable risk for personal/small-scale use like this project's current "controlled personal and invited-user deployment" (`docs/privacy.md`), but this must be resolved (switch to a licensed market-data provider) before any wider or genuinely public release. Do not treat the Global release readiness scorecard as met until this is addressed.
 

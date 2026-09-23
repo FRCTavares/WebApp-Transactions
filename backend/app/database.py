@@ -123,10 +123,11 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def run_postgres_startup_migrations(database_engine: Engine) -> None:
-    """Run small hosted Postgres compatibility migrations.
+    """Run legacy hosted Postgres compatibility migrations.
 
-    Render's free tier does not provide shell access, so narrowly scoped,
-    idempotent startup migrations are used for production constraint fixes.
+    These narrowly scoped, idempotent startup fixes predate the current
+    Alembic production migration workflow and remain for compatibility with
+    already-deployed databases.
     """
 
     if database_engine.dialect.name != "postgresql":

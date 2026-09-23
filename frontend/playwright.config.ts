@@ -1,6 +1,11 @@
 import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
+const backendPort = process.env.E2E_BACKEND_PORT ?? '8000'
+const frontendPort = process.env.E2E_FRONTEND_PORT ?? '4173'
+const backendUrl = `http://127.0.0.1:${backendPort}`
+const frontendUrl = `http://127.0.0.1:${frontendPort}`
+
 try {
   process.loadEnvFile(path.join(import.meta.dirname, 'e2e/.env.e2e.local'))
 } catch {
@@ -17,7 +22,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   globalSetup: './e2e/global-setup.ts',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: frontendUrl,
     storageState: './e2e/.auth/session.json',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
@@ -37,17 +42,17 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: '../backend/scripts/start_e2e_backend.sh 8000',
-      url: 'http://127.0.0.1:8000/api/health',
-      reuseExistingServer: true,
+      command: `../backend/scripts/start_e2e_backend.sh ${backendPort}`,
+      url: `${backendUrl}/api/health`,
+      reuseExistingServer: false,
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1 --port 4173',
-      url: 'http://127.0.0.1:4173',
-      reuseExistingServer: !process.env.CI,
+      command: `npm run dev -- --host 127.0.0.1 --port ${frontendPort}`,
+      url: frontendUrl,
+      reuseExistingServer: false,
       env: {
         NODE_ENV: 'development',
-        VITE_API_BASE_URL: 'http://127.0.0.1:8000',
+        VITE_API_BASE_URL: backendUrl,
         VITE_SUPABASE_AUTH_ENABLED: 'true',
         VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? '',
         VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? '',

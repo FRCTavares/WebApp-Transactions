@@ -73,12 +73,14 @@ export default async function globalSetup(): Promise<void> {
 
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
   const storageKey = `sb-${projectRef}-auth-token`
+  const frontendPort = process.env.E2E_FRONTEND_PORT ?? '4173'
+  const frontendOrigin = `http://127.0.0.1:${frontendPort}`
 
   const storageState = {
     cookies: [],
     origins: [
       {
-        origin: 'http://127.0.0.1:4173',
+        origin: frontendOrigin,
         localStorage: [{ name: storageKey, value: JSON.stringify(session) }],
       },
     ],

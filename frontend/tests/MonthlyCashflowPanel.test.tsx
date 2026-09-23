@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
 import { MonthlyCashflowPanel } from '../src/components/dashboard/MonthlyCashflowPanel'
 import type { InvestmentMonthlyChange, MonthlySummary } from '../src/types/api'
 
@@ -15,7 +16,11 @@ const SUMMARY: MonthlySummary = {
   net: '1400.00',
   personal_net: '1600.00',
   net_invested_cash: '800.00',
-  available_net: '800.00',
+  available_net: '750.00',
+  trip_savings_goal_eur: '50.00',
+  trip_savings_allocated_eur: '50.00',
+  trip_savings_allocation_source: 'default',
+  trip_savings_goal_status: 'reached',
   investment_cashflow_status: 'available',
   investment_reconciliation_status: 'complete',
   investment_goal_eur: '1000.00',
@@ -35,77 +40,167 @@ const CHANGE: InvestmentMonthlyChange = {
   is_estimated: false,
 }
 
+function renderPanel(
+  overrides: Partial<{
+    summary: MonthlySummary
+    onSaveTripSavings: (amountEur: string | null) => Promise<void>
+  }> = {},
+) {
+  const onSaveTripSavings =
+    overrides.onSaveTripSavings ?? vi.fn(async () => undefined)
+
+  render(
+    <MonthlyCashflowPanel
+      summary={overrides.summary ?? SUMMARY}
+      monthLabel="July 2026"
+      investmentChange={CHANGE}
+      onSaveTripSavings={onSaveTripSavings}
+    />,
+  )
+
+  return { onSaveTripSavings }
+}
+
 describe('MonthlyCashflowPanel', () => {
-  it('breaks income into spent, invested and available-net segments', () => {
-    render(
-      <MonthlyCashflowPanel
-        summary={SUMMARY}
-        monthLabel="July 2026"
-        investmentChange={CHANGE}
-      />,
-    )
+  it('shows the five monthly cash-flow figures in the required order', () => {
+    renderPanel()
 
     const bar = screen.getByRole('img')
-    // 2400 spent + 800 invested + 800 left = 4000 in → three segments.
-    expect(bar.querySelectorAll('span')).toHaveLength(3)
+    expect(bar.querySelectorAll('span')).toHaveLength(4)
     expect(bar).toHaveAccessibleName(
-      'Of €4,000.00 in, €2,400.00 spent, €800.00 invested, €800.00 left.',
+      'Of €4,000.00 in, €2,400.00 spent, €800.00 invested, €50.00 trip savings, €750.00 available.',
     )
 
-    expect(screen.getByText('€2,400.00')).toBeInTheDocument()
-    expect(screen.getByText('60% of money in')).toBeInTheDocument()
+    const labels = Array.from(
+      document.querySelectorAll('.cashflow-stat > span'),
+    ).map((element) => element.textContent)
+
+    expect(labels).toEqual([
+      'Income',
+      'Spent',
+      'Invested',
+      'Trip savings',
+      'Available net',
+    ])
   })
 
-  it('leads with available net and keeps performance labelled as excluded', () => {
+  it('distinguishes the target from the actual monthly allocation', () => {
+    renderPanel({
+      summary: {
+        ...SUMMARY,
+        trip_savings_allocated_eur: '80.00',
+        trip_savings_allocation_source: 'override',
+        trip_savings_goal_status: 'exceeded',
+        available_net: '720.00',
+      },
+    })
+
+    expect(screen.getByText('€80.00')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Target €50.00 • month override • €30.00 above target',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('records an explicit zero month override', async () => {
+    const user = userEvent.setup()
+    const onSaveTripSavings = vi.fn(async () => undefined)
+
+    renderPanel({ onSaveTripSavings })
+
+    await user.click(screen.getByRole('button', { name: 'Edit month' }))
+
+    const input = screen.getByRole('spinbutton', {
+      name: 'Trip savings for July 2026',
+    })
+    await user.clear(input)
+    await user.type(input, '0')
+    await user.click(screen.getByRole('button', { name: 'Save month' }))
+
+    expect(onSaveTripSavings).toHaveBeenCalledWith('0')
+  })
+
+  it('can return the selected month to the normal default', async () => {
+    const user = userEvent.setup()
+    const onSaveTripSavings = vi.fn(async () => undefined)
+
+    renderPanel({
+      summary: {
+        ...SUMMARY,
+        trip_savings_allocated_eur: '80.00',
+        trip_savings_allocation_source: 'override',
+        trip_savings_goal_status: 'exceeded',
+      },
+      onSaveTripSavings,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Edit month' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Use normal default' }),
+    )
+
+    expect(onSaveTripSavings).toHaveBeenCalledWith(null)
+  })
+
+  it('leads with authoritative Available Net', () => {
     const { container } = render(
       <MonthlyCashflowPanel
         summary={SUMMARY}
         monthLabel="July 2026"
         investmentChange={CHANGE}
+        onSaveTripSavings={vi.fn(async () => undefined)}
       />,
     )
 
     const headline = container.querySelector('.cashflow-headline') as HTMLElement
+
     expect(within(headline).getByText('Available net')).toBeInTheDocument()
-    expect(within(headline).getByText('€800.00')).toBeInTheDocument()
+    expect(within(headline).getByText('€750.00')).toBeInTheDocument()
+    expect(
+      within(headline).getByText(
+        'after spending, investing and trip savings',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('keeps investment performance outside cash flow', () => {
+    renderPanel()
+
     expect(screen.getByText('+€500.00')).toBeInTheDocument()
     expect(
       screen.getByText('unrealised market/FX — not part of cash flow'),
     ).toBeInTheDocument()
   })
 
-  it('shows the goal shortfall and progress', () => {
-    render(
-      <MonthlyCashflowPanel
-        summary={SUMMARY}
-        monthLabel="July 2026"
-        investmentChange={CHANGE}
-      />,
-    )
+  it('shows investment goal progress separately', () => {
+    renderPanel()
 
     expect(screen.getByText('€200.00 to go')).toBeInTheDocument()
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '800')
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '800',
+    )
   })
 
-  it('drops the invested and net segments when investment cash flow is unavailable', () => {
-    render(
-      <MonthlyCashflowPanel
-        summary={{
-          ...SUMMARY,
-          net_invested_cash: null,
-          available_net: null,
-          investment_reconciliation_status: 'partial',
-          investment_goal_status: 'unavailable',
-        }}
-        monthLabel="July 2026"
-        investmentChange={null}
-      />,
-    )
+  it('keeps trip savings known when investment cash flow is unavailable', () => {
+    renderPanel({
+      summary: {
+        ...SUMMARY,
+        net_invested_cash: null,
+        available_net: null,
+        investment_reconciliation_status: 'partial',
+        investment_goal_status: 'unavailable',
+      },
+    })
 
-    expect(screen.getByRole('img').querySelectorAll('span')).toHaveLength(1)
-    expect(
-      screen.getByText('Some investment funding is not fully reconciled.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Trip savings')).toBeInTheDocument()
+    expect(screen.getByText('€50.00')).toBeInTheDocument()
     expect(screen.getByText('Cash flow unavailable')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Some investment funding is not fully reconciled.',
+      ),
+    ).toBeInTheDocument()
   })
 })

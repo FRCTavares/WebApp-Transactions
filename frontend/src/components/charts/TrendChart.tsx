@@ -43,9 +43,6 @@ export type TrendChartProps = {
   baselineClassName: string
   /** Optional short suffix for a point's tooltip title (e.g. "estimated"). */
   pointNote?: (pointKey: string) => string | null
-  /** Annotate the latest value directly at the end of the line (wealth trend). */
-  showEdgeValueLabels?: boolean
-  currentEdgeValueLabelClassName?: string
 }
 
 type PlotSeries = TrendChartSeries & {
@@ -86,15 +83,13 @@ export function TrendChart({
   xLabelClassName,
   baselineClassName,
   pointNote,
-  showEdgeValueLabels = false,
-  currentEdgeValueLabelClassName,
 }: TrendChartProps) {
   const { ref, width } = useElementWidth(FALLBACK_WIDTH)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const height = useMemo(() => {
-    const ratio = width < 480 ? 2.1 : 3.8
-    return Math.round(clamp(width / ratio, 150, 280))
+    const ratio = width < 480 ? 1.8 : 4.2
+    return Math.round(clamp(width / ratio, 160, 180))
   }, [width])
 
   const domain = useMemo(() => {
@@ -310,24 +305,6 @@ export function TrendChart({
           )
         })}
 
-        {showEdgeValueLabels && plotSeries[0]?.coordinates.length
-          ? (() => {
-              const coordinates = plotSeries[0].coordinates
-              const last = coordinates[coordinates.length - 1]
-
-              return (
-                <text
-                  className={currentEdgeValueLabelClassName}
-                  x={last.x}
-                  y={clamp(last.y - 12, PADDING.top - 4, height)}
-                  textAnchor="end"
-                >
-                  {formatValue(last.value)}
-                </text>
-              )
-            })()
-          : null}
-
         {xLabelIndexes.map((index) => (
           <text
             key={points[index]}
@@ -351,7 +328,7 @@ export function TrendChart({
               x2={activeX}
               y2={height - PADDING.bottom}
             />
-            {plotSeries.map((line) => {
+            {plotSeries.map((line, seriesIndex) => {
               const match = line.coordinates.find(
                 (point) => point.index === activeIndex,
               )
@@ -359,7 +336,7 @@ export function TrendChart({
               return match ? (
                 <circle
                   key={`${line.key}-active`}
-                  className="trend-chart-active-point trend-chart-active-point-primary"
+                  className={`trend-chart-active-point trend-chart-active-point-${seriesIndex === 0 ? 'primary' : 'secondary'}`}
                   cx={match.x}
                   cy={match.y}
                   r="4.6"
