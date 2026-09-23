@@ -15,6 +15,18 @@ jobs:
     name: Dump, validate, encrypt, upload
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      restore-check:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: restore-check-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Check out repository
@@ -66,6 +78,23 @@ jobs:
           # pg_restore --list before considering it successful."
           pg_restore --list backup.dump > /dev/null
           echo "pg_restore --list succeeded: dump is structurally valid."
+
+      - name: Restore into isolated PostgreSQL and verify schema
+        env:
+          RESTORE_DATABASE_URL: postgresql://postgres:restore-check-only@127.0.0.1:5432/restore_check
+        run: |
+          set -euo pipefail
+          export PGPASSWORD=restore-check-only
+
+          createdb --host=127.0.0.1 --username=postgres restore_check
+          pg_restore --exit-on-error --no-owner --no-privileges \
+            --dbname="$RESTORE_DATABASE_URL" backup.dump
+
+          table_count="$(psql --dbname="$RESTORE_DATABASE_URL" --no-psqlrc --tuples-only \
+            --no-align --command="SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")"
+          test "$table_count" -gt 0
+          test -n "$(psql --dbname="$RESTORE_DATABASE_URL" --no-psqlrc --tuples-only --no-align --command='SELECT version_num FROM alembic_version')"
+          echo "Isolated restore passed: $table_count public tables and Alembic revision verified."
 
       - name: Checksum the dump
         run: |
