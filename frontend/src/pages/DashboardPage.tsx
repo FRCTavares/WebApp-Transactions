@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getInvestmentMonthlyChange } from '../api/investmentEvents'
 import { listTransactions } from '../api/transactions'
-import { getCategorySummary, getMonthlySummary } from '../api/summary'
+import {
+  getCategorySummary,
+  getMonthlySummary,
+  updateTripSavingsAllocation,
+} from '../api/summary'
 import type {
   CategorySummaryItem,
   CategorySummaryResponse,
@@ -221,6 +225,12 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       })
   }
 
+  async function handleSaveTripSavings(amountEur: string | null) {
+    await updateTripSavingsAllocation(year, month, amountEur)
+    const refreshedSummary = await getMonthlySummary(year, month)
+    setSummary(refreshedSummary)
+  }
+
   const monthLabel = formatMonthLabel(
     `${year}-${String(month).padStart(2, '0')}`,
     'long',
@@ -276,9 +286,11 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
       {summary && (
         <>
           <MonthlyCashflowPanel
+            key={summary.month}
             summary={summary}
             monthLabel={monthLabel}
             investmentChange={investmentMonthlyChange}
+            onSaveTripSavings={handleSaveTripSavings}
           />
 
           <div className="dashboard-main-grid">

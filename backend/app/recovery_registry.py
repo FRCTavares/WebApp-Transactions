@@ -9,12 +9,13 @@ from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
+from app.models.trip_savings_allocation import TripSavingsAllocation
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.models.user_preferences import UserPreferences
 
 
-EXPORT_FORMAT_VERSION = 5
+EXPORT_FORMAT_VERSION = 6
 
 NON_RECOVERABLE_USER_TABLE_NAMES = (
     "import_previews",
@@ -45,6 +46,10 @@ USER_RECOVERY_TABLES = (
     UserRecoveryTable('cashflow_rules', CashflowRule),
     UserRecoveryTable('description_rules', DescriptionRule),
     UserRecoveryTable('user_preferences', UserPreferences),
+    UserRecoveryTable(
+        'trip_savings_allocations',
+        TripSavingsAllocation,
+    ),
 )
 
 
@@ -74,5 +79,6 @@ MIGRATION_TABLE_ORDER = (
     'cashflow_rules',
     'description_rules',
     'user_preferences',
+    'trip_savings_allocations',
     'pending_signups',
 )

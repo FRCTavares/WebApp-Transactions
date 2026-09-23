@@ -8,6 +8,31 @@ test('authenticated user lands on the dashboard', async ({ page }) => {
   await expect(page.getByText(/Good (morning|afternoon|evening)/)).toBeVisible()
 })
 
+test('trip savings exposes the selected-month allocation controls', async ({ page }) => {
+  await page.goto('/dashboard')
+
+  await expect(page.getByText('Trip savings', { exact: true })).toBeVisible()
+
+  const editButton = page.getByRole('button', { name: 'Edit month' })
+  await expect(editButton).toBeVisible()
+  await editButton.click()
+
+  await expect(
+    page.getByRole('spinbutton', { name: /Trip savings for/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Save month' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Use normal default' }),
+  ).toBeVisible()
+  await expect(
+    page.getByText(
+      /Zero explicitly records no trip savings for this month/i,
+    ),
+  ).toBeVisible()
+})
+
 test('desktop sidebar navigation reaches the main screens', async ({ page, isMobile }) => {
   test.skip(isMobile, 'desktop-only sidebar; see mobile bottom nav test below')
   await page.goto('/')

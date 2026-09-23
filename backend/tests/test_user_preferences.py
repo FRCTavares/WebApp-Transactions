@@ -8,6 +8,7 @@ def test_preferences_have_defaults_and_are_persisted(client):
         "date_format": "medium",
         "language": "en",
         "monthly_investment_goal_eur": "100.00",
+        "monthly_trip_savings_goal_eur": "50.00",
         "has_completed_onboarding": False,
     }
 
@@ -50,6 +51,19 @@ def test_preferences_reject_non_positive_investment_goal(client):
         "date_format": "medium",
         "language": "en",
         "monthly_investment_goal_eur": "0.00",
+    }
+
+    assert client.put("/api/preferences", json=payload).status_code == 422
+
+
+def test_preferences_reject_non_positive_trip_savings_goal(client):
+    payload = {
+        "locale": "en-GB",
+        "currency": "EUR",
+        "time_zone": "Europe/Lisbon",
+        "date_format": "medium",
+        "language": "en",
+        "monthly_trip_savings_goal_eur": "0.00",
     }
 
     assert client.put("/api/preferences", json=payload).status_code == 422

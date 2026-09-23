@@ -11,6 +11,7 @@ from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.pending_signup import PendingSignup
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
+from app.models.trip_savings_allocation import TripSavingsAllocation
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.models.user_preferences import UserPreferences
@@ -30,6 +31,7 @@ __all__ = [
     "PendingSignup",
     "Transaction",
     "TransactionCategory",
+    "TripSavingsAllocation",
     "WealthAccount",
     "WealthSnapshot",
     "UserPreferences",

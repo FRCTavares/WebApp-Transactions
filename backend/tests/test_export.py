@@ -17,6 +17,7 @@ from app.models.owed_item_event import OwedItemEvent
 from app.models.owed_payment import OwedPayment, OwedPaymentAllocation
 from app.models.transaction import Transaction
 from app.models.transaction_category import TransactionCategory
+from app.models.trip_savings_allocation import TripSavingsAllocation
 from app.models.wealth_account import WealthAccount
 from app.models.wealth_snapshot import WealthSnapshot
 from app.models.user_preferences import UserPreferences
@@ -185,6 +186,16 @@ def add_export_fixture_rows(db_session, user_id: str) -> None:
         )
     )
 
+    db_session.add(
+        TripSavingsAllocation(
+            user_id=user_id,
+            month="2026-06",
+            amount_eur=Decimal("50.00"),
+            goal_eur=Decimal("50.00"),
+            source="default",
+        )
+    )
+
     db_session.commit()
 
 
@@ -204,7 +215,7 @@ def test_export_json_returns_current_user_data_only(db_session):
     body = response.json()
     tables = body["tables"]
 
-    assert body["format_version"] == 5
+    assert body["format_version"] == 6
     assert body["user_id"] == current_user.id
     assert body["email"] is None
 
@@ -222,6 +233,7 @@ def test_export_json_returns_current_user_data_only(db_session):
         "cashflow_rules",
         "description_rules",
         "user_preferences",
+        "trip_savings_allocations",
     }
 
     assert set(tables) == expected_tables

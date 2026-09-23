@@ -107,11 +107,18 @@ export function SettingsPage({
     || investmentGoalValue <= 0
       ? t('investmentGoalInvalid')
       : null
+  const tripSavingsGoalValue = Number(draft.monthly_trip_savings_goal_eur)
+  const tripSavingsGoalError =
+    draft.monthly_trip_savings_goal_eur.trim() === ''
+    || !Number.isFinite(tripSavingsGoalValue)
+    || tripSavingsGoalValue <= 0
+      ? t('tripSavingsGoalInvalid')
+      : null
 
   async function handleSavePreferences(event: FormEvent) {
     event.preventDefault()
 
-    if (investmentGoalError) {
+    if (investmentGoalError || tripSavingsGoalError) {
       setSaveState(null)
       return
     }
@@ -259,6 +266,36 @@ export function SettingsPage({
             )}
           </Field>
 
+          <Field
+            label={t('monthlyTripSavingsGoal')}
+            hint={t('monthlyTripSavingsGoalHint')}
+            error={tripSavingsGoalError}
+            required
+          >
+            {(controlProps) => (
+              <div className="settings-input-suffix">
+                <input
+                  {...controlProps}
+                  type="number"
+                  inputMode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  value={draft.monthly_trip_savings_goal_eur}
+                  onChange={(event) => {
+                    setDraft({
+                      ...draft,
+                      monthly_trip_savings_goal_eur: event.target.value,
+                    })
+                    setSaveState(null)
+                  }}
+                />
+                <span className="settings-input-suffix-label" aria-hidden="true">
+                  {draft.currency || 'EUR'}
+                </span>
+              </div>
+            )}
+          </Field>
+
           <div className="settings-preferences-actions">
             {(preferencesError || saveState) && (
               <p className={preferencesError ? 'error-text' : 'muted'} role="status">
@@ -273,6 +310,7 @@ export function SettingsPage({
                 preferencesLoading
                 || draft.currency.length !== 3
                 || investmentGoalError !== null
+                || tripSavingsGoalError !== null
               }
             >
               {t('savePreferences')}

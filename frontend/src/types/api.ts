@@ -451,6 +451,10 @@ export type MonthlySummary = {
   personal_net: string
   net_invested_cash: string | null
   available_net: string | null
+  trip_savings_goal_eur: string
+  trip_savings_allocated_eur: string
+  trip_savings_allocation_source: 'default' | 'override'
+  trip_savings_goal_status: 'in_progress' | 'reached' | 'exceeded'
   investment_cashflow_status: 'available' | 'unavailable'
   investment_reconciliation_status:
     | 'not_applicable'
@@ -466,6 +470,13 @@ export type MonthlySummary = {
     | 'unavailable'
   open_owed_amount: string
   top_expense_categories: CategoryTotal[]
+}
+
+export type TripSavingsAllocation = {
+  month: string
+  amount_eur: string
+  goal_eur: string
+  source: 'default' | 'override'
 }
 
 export type CategorySummaryItem = {

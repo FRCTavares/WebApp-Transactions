@@ -24,6 +24,13 @@ def test_initialise_database_creates_sqlite_schema():
     assert "owed_items" in table_names
     assert "import_batches" in table_names
     assert "import_previews" in table_names
+    assert "trip_savings_allocations" in table_names
+
+    preference_columns = {
+        column["name"]
+        for column in inspector.get_columns("user_preferences")
+    }
+    assert "monthly_trip_savings_goal_eur" in preference_columns
 
 
 def test_initialise_database_keeps_user_scoped_dedupe_index():

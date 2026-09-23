@@ -22,6 +22,14 @@ class MonthlySummary(BaseModel):
     personal_net: Decimal
     net_invested_cash: Decimal | None
     available_net: Decimal | None
+    trip_savings_goal_eur: Decimal
+    trip_savings_allocated_eur: Decimal
+    trip_savings_allocation_source: Literal["default", "override"]
+    trip_savings_goal_status: Literal[
+        "in_progress",
+        "reached",
+        "exceeded",
+    ]
     investment_cashflow_status: Literal[
         "available",
         "unavailable",

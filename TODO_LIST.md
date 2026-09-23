@@ -10,19 +10,14 @@ at [`docs/frontend-design-system.md`](docs/frontend-design-system.md).
 
 ## Current state
 
-As of the 2026-08-07 repository audit, there are no unresolved, actionable
-repository tasks recorded here.
-
-New work belongs in this file only when it is concrete and actionable. Add it
-in priority order: security, ownership, financial correctness, atomicity,
-backup and recovery, data integrity, CI/deployment reliability,
-accessibility, then UI maintainability.
+The production Cloud Run deployment reconciliation was completed and
+validated on 2026-09-22. New actionable work should be added here in
+project-priority order.
 
 Conditional future release gates that do not apply to the current controlled
-deployment remain documented in `docs/production-roadmap.md` rather than being
-treated as active implementation work. In particular, Yahoo/yfinance market
-data must be replaced or licensed before any wider public or commercial
-release.
+deployment remain documented in `docs/production-roadmap.md`. In particular,
+Yahoo/yfinance market data must be replaced or licensed before any wider
+public or commercial release.
 
 ## Completion requirements for future tasks
 

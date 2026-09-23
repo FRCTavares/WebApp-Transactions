@@ -25,6 +25,11 @@ class UserPreferences(Base):
         default=Decimal("100.00"),
         server_default="100.00",
     )
+    monthly_trip_savings_goal_eur: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2),
+        default=Decimal("50.00"),
+        server_default="50.00",
+    )
     has_completed_onboarding: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

@@ -8,11 +8,17 @@ from app.repositories.investment_event_repository import (
 )
 from app.repositories.summary_repository import SummaryRepository
 from app.repositories.transaction_repository import TransactionRepository
+from app.repositories.trip_savings_repository import TripSavingsRepository
 from app.schemas.summary import CategorySummaryResponse, MonthlySummary
+from app.schemas.trip_savings import (
+    TripSavingsAllocationRead,
+    TripSavingsAllocationUpdate,
+)
 from app.services.investment_cashflow_service import (
     InvestmentCashflowService,
 )
 from app.services.summary_service import SummaryService
+from app.services.trip_savings_service import TripSavingsService
 
 
 router = APIRouter(prefix="/api/summary", tags=["summary"])
@@ -30,6 +36,19 @@ def get_summary_service(db: Session = Depends(get_db)) -> SummaryService:
         repository=summary_repository,
         transaction_repository=transaction_repository,
         investment_cashflow_service=investment_cashflow_service,
+        trip_savings_service=TripSavingsService(
+            db,
+            TripSavingsRepository(db),
+        ),
+    )
+
+
+def get_trip_savings_service(
+    db: Session = Depends(get_db),
+) -> TripSavingsService:
+    return TripSavingsService(
+        db,
+        TripSavingsRepository(db),
     )
 
 
@@ -44,6 +63,24 @@ def get_monthly_summary(
         year=year,
         month=month,
         current_user=current_user,
+    )
+
+
+@router.put(
+    "/trip-savings",
+    response_model=TripSavingsAllocationRead,
+)
+def update_trip_savings(
+    payload: TripSavingsAllocationUpdate,
+    year: int = Query(ge=2000, le=2100),
+    month: int = Query(ge=1, le=12),
+    service: TripSavingsService = Depends(get_trip_savings_service),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    return service.set_month(
+        user_id=current_user.id,
+        month=f"{year:04d}-{month:02d}",
+        amount_eur=payload.amount_eur,
     )
 
 
