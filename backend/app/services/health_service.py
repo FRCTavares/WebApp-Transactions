@@ -24,10 +24,14 @@ def get_build_commit() -> str:
     (or git at all).
     """
 
-    render_commit = os.getenv("RENDER_GIT_COMMIT", "").strip()
+    app_commit = os.getenv("APP_GIT_COMMIT", "").strip()
+    legacy_render_commit = os.getenv("RENDER_GIT_COMMIT", "").strip()
 
-    if render_commit:
-        return render_commit[:7]
+    if app_commit:
+        return app_commit[:7]
+
+    if legacy_render_commit:
+        return legacy_render_commit[:7]
 
     try:
         result = subprocess.run(

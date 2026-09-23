@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_BASE_URL="${API_BASE_URL:-https://f-transactions-api.onrender.com}"
+API_BASE_URL="${API_BASE_URL:-https://webapp-transactions-backend-1025162530033.europe-west1.run.app}"
 ORIGIN="${ORIGIN:-https://web-app-transactions.vercel.app}"
 
 echo "Checking health..."

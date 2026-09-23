@@ -11,17 +11,17 @@ The data is processed only to provide the finance-tracking, import, export, reco
 ## Processors and hosting
 
 - Supabase provides authentication and the production PostgreSQL database.
-- Render hosts the backend API.
+- Google Cloud Run hosts the backend API.
 - Vercel hosts the static frontend.
 - Google provides OAuth authentication when Google sign-in is used.
 
 Provider regions and subprocessors follow the configuration and terms of the deployed projects.
 
-**Recorded hosting regions (confirmed 2026-07-20):**
+**Recorded hosting regions:**
 
-- Supabase (auth + database): `eu-north-1` (Stockholm, Sweden).
-- Render (backend API): Frankfurt, Germany (EU Central).
-- Vercel (frontend): global edge network; no single region pinned.
+- Supabase (auth + database): `eu-north-1` (Stockholm, Sweden), confirmed 2026-07-20.
+- Google Cloud Run (backend API): `europe-west1`, confirmed 2026-09-22.
+- Vercel (frontend): global edge network; no single region pinned, confirmed 2026-07-20.
 
 All data-storing providers are within the EU/EEA.
 

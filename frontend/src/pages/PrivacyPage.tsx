@@ -41,7 +41,7 @@ export function PrivacyPage() {
         <h2>Processors and hosting</h2>
         <ul>
           <li>Supabase provides authentication and the production database (hosted in the EU).</li>
-          <li>Render hosts the backend API (hosted in the EU).</li>
+          <li>Google Cloud Run hosts the backend API in europe-west1.</li>
           <li>Vercel hosts the static frontend (global edge network).</li>
           <li>Google provides OAuth authentication when Google sign-in is used.</li>
         </ul>

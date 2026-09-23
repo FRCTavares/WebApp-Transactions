@@ -11,6 +11,7 @@
 set -euo pipefail
 
 port="${1:-8000}"
+frontend_port="${E2E_FRONTEND_PORT:-4173}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 env_file="${repo_root}/frontend/e2e/.env.e2e.local"
 
@@ -41,7 +42,7 @@ db_path="$(mktemp -t e2e-backend-XXXXXX).db"
 export APP_ENV="e2e"
 export DATABASE_URL="sqlite:///${db_path}"
 export ALLOWED_USER_EMAILS="${E2E_TEST_EMAIL}"
-export CORS_ORIGINS="http://127.0.0.1:4173,http://localhost:4173"
+export CORS_ORIGINS="http://127.0.0.1:${frontend_port},http://localhost:${frontend_port}"
 
 echo "Throwaway database: ${db_path}"
 

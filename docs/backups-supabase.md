@@ -28,13 +28,15 @@ dashboard's Database → Backups page) — everything below is this project's
 own, fully independent backup mechanism; it does not build on top of
 anything Supabase provides automatically.
 
-**Automated since 2026-07-20**:
-`.github/workflows/backup-database.yml` runs this daily on a schedule (plus
-`workflow_dispatch` for on-demand runs) so it no longer depends on the
-owner remembering to run it manually. It dumps, validates, checksums,
-encrypts, and uploads the result as a GitHub Actions artifact. A failed run
-surfaces through the same GitHub Actions notification settings covered in
-`docs/oauth-and-hosting-checklist.md` (failed-workflows-only).
+`.github/workflows/backup-database.yml` is configured for daily and on-demand
+runs. It dumps, validates, checksums, encrypts, and uploads a GitHub Actions
+artifact. The 2026-09-23 release audit found it manually disabled since
+2026-08-16. It was re-enabled and on-demand run
+[`35848082600`](https://github.com/FRCTavares/WebApp-Transactions/actions/runs/35848082600)
+succeeded, producing a validated encrypted artifact. A fresh restore drill
+must still be recorded before a production schema migration. Failed runs
+surface through the GitHub Actions notification
+settings covered in `docs/oauth-and-hosting-checklist.md`.
 
 Required repository secrets (set via `gh secret set <NAME>` or GitHub →
 Settings → Secrets and variables → Actions):
@@ -42,7 +44,7 @@ Settings → Secrets and variables → Actions):
 - `BACKUP_DATABASE_URL`: a direct (non-pooled) Postgres connection string
   for the production Supabase database, with a role that can read all
   tables. Keep this separate from the backend's own `DATABASE_URL` secret
-  on Render — same database, but this one only needs read access.
+  on Cloud Run — same database, but this one only needs read access.
 - `BACKUP_ENCRYPTION_PASSPHRASE`: a long, random passphrase used to encrypt
   the dump with GPG symmetric (AES-256) encryption before upload. Store
   this passphrase itself somewhere durable and separate from the repository
@@ -115,8 +117,8 @@ The script must run `PRAGMA integrity_check` against the completed backup before
 
 ### Daily
 
-Automated: `.github/workflows/backup-database.yml` runs daily. The owner
-should still glance at the Actions tab occasionally (a failed run also
+Target: `.github/workflows/backup-database.yml` runs daily now that it is re-enabled.
+The owner should still glance at the Actions tab occasionally (a failed run also
 triggers the account's GitHub Actions failure notification), and confirm at
 least once a month that recent artifacts are actually restorable, not just
 present — an automated dump that silently produces a corrupt file is worse
@@ -151,12 +153,11 @@ Keep successful production PostgreSQL backups using this minimum schedule:
 - four weekly backups,
 - twelve monthly backups.
 
-**As of 2026-07-20, the automated GitHub Actions workflow only satisfies the
-first two tiers** — GitHub Actions artifacts expire after a maximum of 90
-days, so nothing survives to fill the twelve-month tier without a separate,
-manual step to archive an artifact somewhere longer-lived before it expires.
-This is a known, accepted gap for now given the project's scale — revisit
-if that changes.
+When enabled and running, GitHub Actions artifacts can cover the seven-daily
+and four-weekly tiers, but expire after a maximum of 90 days. A separate
+archive is needed for the twelve-month tier. The August–September 2026
+disabled interval left a gap in daily and weekly retention that the new run
+does not retroactively fill.
 
 Keep at least the two most recent successful JSON exports.
 
@@ -184,7 +185,7 @@ The repository ignores `backups/`, database files, spreadsheets, PDFs, and envir
 At least one current production backup must be stored outside:
 
 - the Supabase project,
-- the Render service,
+- the Cloud Run service,
 - the development Mac,
 - the Git repository.
 
@@ -192,8 +193,8 @@ The off-device copy must be encrypted and accessible to the recovery owner.
 
 A backup stored only on the same machine or provider as the source is not sufficient.
 
-**GitHub Actions artifacts satisfy this today** — they're outside Supabase,
-Render, and the development Mac. They are, however, hosted by the same
+**The 2026-09-23 encrypted GitHub Actions artifact is current** and outside
+Supabase, Cloud Run, and the development Mac. It is, however, hosted by the same
 provider (GitHub) as the source code itself, which is not full independence
 in the strictest sense: a GitHub account-level incident (not just a repo or
 Actions issue) could plausibly affect both at once. Accepted tradeoff for
