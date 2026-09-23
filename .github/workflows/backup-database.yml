@@ -79,7 +79,7 @@ jobs:
           pg_restore --list backup.dump > /dev/null
           echo "pg_restore --list succeeded: dump is structurally valid."
 
-      - name: Restore into isolated PostgreSQL and verify schema
+      - name: Restore application schema into isolated PostgreSQL
         env:
           RESTORE_DATABASE_URL: postgresql://postgres:restore-check-only@127.0.0.1:5432/restore_check
         run: |
@@ -87,14 +87,17 @@ jobs:
           export PGPASSWORD=restore-check-only
 
           createdb --host=127.0.0.1 --username=postgres restore_check
-          pg_restore --exit-on-error --no-owner --no-privileges \
+          # Supabase-managed schemas require provider extensions (for example,
+          # supabase_vault) that plain PostgreSQL does not provide. Restore the
+          # application-owned public schema from the same full archive.
+          pg_restore --exit-on-error --no-owner --no-privileges --schema=public \
             --dbname="$RESTORE_DATABASE_URL" backup.dump
 
           table_count="$(psql --dbname="$RESTORE_DATABASE_URL" --no-psqlrc --tuples-only \
             --no-align --command="SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")"
           test "$table_count" -gt 0
           test -n "$(psql --dbname="$RESTORE_DATABASE_URL" --no-psqlrc --tuples-only --no-align --command='SELECT version_num FROM alembic_version')"
-          echo "Isolated restore passed: $table_count public tables and Alembic revision verified."
+          echo "Isolated public-schema restore passed: $table_count tables and Alembic revision verified."
 
       - name: Checksum the dump
         run: |
