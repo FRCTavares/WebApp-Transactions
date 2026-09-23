@@ -34,7 +34,15 @@ artifact. The 2026-09-23 release audit found it manually disabled since
 2026-08-16. It was re-enabled and on-demand run
 [`35848082600`](https://github.com/FRCTavares/WebApp-Transactions/actions/runs/35848082600)
 succeeded, producing a validated encrypted artifact. A fresh restore drill
-must still be recorded before a production schema migration. Failed runs
+was completed by
+[`35849326527`](https://github.com/FRCTavares/WebApp-Transactions/actions/runs/35849326527):
+the full dump passed archive validation, and its application-owned `public`
+schema restored into isolated PostgreSQL with 18 tables and a verified
+Alembic revision. The resulting encrypted artifact is
+`postgres-backup-35849326527`. This automated drill does not restore
+Supabase-managed schemas, which require provider extensions unavailable in
+plain PostgreSQL; the quarterly full restore procedure below remains separate.
+Failed runs
 surface through the GitHub Actions notification
 settings covered in `docs/oauth-and-hosting-checklist.md`.
 
@@ -71,7 +79,8 @@ A valid production backup must include:
 
 Validate each dump with `pg_restore --list` before considering it successful
 — the workflow does this automatically; do the same by hand for any manual
-dump.
+dump. The workflow also restores the `public` schema into an isolated
+PostgreSQL 17 service and verifies that its tables and Alembic revision exist.
 
 To create one manually (e.g. before a risky migration, or on demand rather
 than waiting for the schedule), either trigger
