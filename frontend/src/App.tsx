@@ -21,7 +21,9 @@ import { useAuth } from './hooks/useAuth'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { usePresentationPreferences } from './hooks/usePresentationPreferences'
 import { deleteCurrentAccount } from './api/account'
-import type { User } from '@supabase/supabase-js'
+import type { AuthUser } from './auth/authContext'
+import { GoogleSignInButton } from './auth/GoogleSignInButton'
+import { usesGoogleAuth } from './auth/authMode'
 import {
   getPageFromPath,
   getPathForPage,
@@ -50,7 +52,7 @@ function titleCaseName(value: string) {
     .join(' ')
 }
 
-function getUserDisplayName(user: User | null) {
+function getUserDisplayName(user: AuthUser | null) {
   const fullName = user?.user_metadata?.full_name
   const name = user?.user_metadata?.name
   const metadataName =
@@ -70,7 +72,7 @@ function getUserDisplayName(user: User | null) {
   return fallbackName || 'there'
 }
 
-function getUserAvatarUrl(user: User | null) {
+function getUserAvatarUrl(user: AuthUser | null) {
   const avatarUrl = user?.user_metadata?.avatar_url
   const picture = user?.user_metadata?.picture
 
@@ -187,9 +189,11 @@ function App() {
       <div className="unlock-page">
         <section className="unlock-card">
           <p className="eyebrow">Configuration missing</p>
-          <h1>Supabase auth is not configured</h1>
+          <h1>{usesGoogleAuth ? 'Google sign-in is not configured' : 'Supabase auth is not configured'}</h1>
           <p>
-            Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using Google login.
+            {usesGoogleAuth
+              ? 'Set VITE_GOOGLE_CLIENT_ID before using Google login.'
+              : 'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using Google login.'}
           </p>
         </section>
       </div>
@@ -208,9 +212,13 @@ function App() {
 
           {authError && <p className="error-text">{authError}</p>}
 
-          <button type="button" onClick={handleLogin}>
-            Sign in with Google
-          </button>
+          {usesGoogleAuth ? (
+            <GoogleSignInButton onError={setAuthError} />
+          ) : (
+            <button type="button" onClick={handleLogin}>
+              Sign in with Google
+            </button>
+          )}
         </section>
       </div>
     )

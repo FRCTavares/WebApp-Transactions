@@ -1,0 +1,51 @@
+# Static frontend + API reverse proxy for the self-hosted Finance app.
+#
+# TLS is terminated one hop earlier (Tailscale Serve), so this listens on plain
+# HTTP (port 8080, unprivileged) inside the private Docker network. Nothing here is published to a host
+# port: only the Tailscale sidecar can reach it.
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:8080 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000"
+		# Google Identity Services (sign-in) is the only third party the browser talks to.
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; manifest-src 'self'; worker-src 'self'"
+		-Server
+	}
+
+	handle /api/* {
+		# The API accepts statement imports up to 21 MB.
+		request_body {
+			max_size 22MB
+		}
+		reverse_proxy api:8080
+	}
+
+	handle {
+		root * /srv
+
+		# Hashed build output never changes under the same name.
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+		# The shell, service worker and manifest must revalidate so a release
+		# is picked up on the next load.
+		@shell path / /index.html /sw.js /manifest.webmanifest
+		header @shell Cache-Control "no-cache"
+
+		try_files {path} /index.html
+		file_server
+	}
+}

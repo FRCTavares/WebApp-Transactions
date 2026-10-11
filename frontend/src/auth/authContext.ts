@@ -1,5 +1,16 @@
 import { createContext } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+
+/** The part of a signed-in user the app reads; Supabase's and Google's both satisfy it. */
+export type AuthUser = {
+  id: string
+  email?: string | null
+  user_metadata?: Record<string, unknown>
+}
+
+export type AuthSession = {
+  access_token: string
+  user: AuthUser
+}
 
 export type AuthContextValue = {
   accessToken: string | null
@@ -7,10 +18,10 @@ export type AuthContextValue = {
   isAuthConfigured: boolean
   isAuthEnabled: boolean
   isLoading: boolean
-  session: Session | null
+  session: AuthSession | null
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
-  user: User | null
+  user: AuthUser | null
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

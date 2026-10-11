@@ -9,6 +9,7 @@ from jwt import PyJWKClient
 from jwt.exceptions import InvalidTokenError, PyJWKClientError
 from sqlalchemy.orm import Session
 
+from app.auth.google_session import uses_google_auth, verify_session_token
 from app.database import get_db
 from app.middleware.request_logging import set_request_log_user_id
 from app.repositories.pending_signup_repository import PendingSignupRepository
@@ -143,7 +144,24 @@ def decode_supabase_jwt_with_jwks(token: str) -> dict[str, Any]:
     )
 
 
+def decode_session_token(token: str) -> dict[str, Any]:
+    """Claims from this API's own session token (AUTH_MODE=google)."""
+
+    claims = verify_session_token(token)
+
+    if claims is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
+        )
+
+    return claims
+
+
 def decode_supabase_jwt(token: str) -> dict[str, Any]:
+    if uses_google_auth():
+        return decode_session_token(token)
+
     try:
         header = jwt.get_unverified_header(token)
     except InvalidTokenError:

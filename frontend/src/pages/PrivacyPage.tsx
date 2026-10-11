@@ -1,3 +1,5 @@
+import { usesGoogleAuth } from '../auth/authMode'
+
 const PRIVACY_CONTACT =
   import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
 
@@ -23,7 +25,7 @@ export function PrivacyPage() {
 
         <h2>Data collected and purpose</h2>
         <p>
-          The application stores the authenticated Supabase user identifier
+          The application stores the authenticated user identifier
           and email address together with financial records the user
           creates or imports. These records can include transactions,
           categories, rules, owed-money records, investments, wealth
@@ -40,9 +42,18 @@ export function PrivacyPage() {
 
         <h2>Processors and hosting</h2>
         <ul>
-          <li>Supabase provides authentication and the production database (hosted in the EU).</li>
-          <li>Google Cloud Run hosts the backend API in europe-west1.</li>
-          <li>Vercel hosts the static frontend (global edge network).</li>
+          {usesGoogleAuth ? (
+            <li>
+              The application and its PostgreSQL database run on the operator&apos;s own
+              server and are reachable only over a private network.
+            </li>
+          ) : (
+            <>
+              <li>Supabase provides authentication and the production database (hosted in the EU).</li>
+              <li>Google Cloud Run hosts the backend API in europe-west1.</li>
+              <li>Vercel hosts the static frontend (global edge network).</li>
+            </>
+          )}
           <li>Google provides OAuth authentication when Google sign-in is used.</li>
         </ul>
 
