@@ -27,11 +27,11 @@ MIN_SESSION_SECRET_LENGTH = 32
 DEFAULT_SESSION_TTL_HOURS = 24 * 30
 
 
-class GoogleCredentialRejected(Exception):
+class GoogleCredentialRejectedError(Exception):
     """The Google ID token is invalid, expired, or for another audience."""
 
 
-class GoogleVerificationUnavailable(Exception):
+class GoogleVerificationUnavailableError(Exception):
     """Google's signing keys could not be fetched right now."""
 
 
@@ -165,6 +165,6 @@ def verify_google_credential(credential: str) -> dict:
             clock_skew_in_seconds=30,
         )
     except google_auth_exceptions.TransportError as error:
-        raise GoogleVerificationUnavailable from error
+        raise GoogleVerificationUnavailableError from error
     except (ValueError, google_auth_exceptions.GoogleAuthError) as error:
-        raise GoogleCredentialRejected from error
+        raise GoogleCredentialRejectedError from error

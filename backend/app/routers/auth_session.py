@@ -4,8 +4,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.auth.google_session import (
-    GoogleCredentialRejected,
-    GoogleVerificationUnavailable,
+    GoogleCredentialRejectedError,
+    GoogleVerificationUnavailableError,
     issue_session_token,
     resolve_user_id,
     uses_google_auth,
@@ -37,12 +37,12 @@ def sign_in_with_google(payload: GoogleSignInPayload) -> dict[str, object]:
 
     try:
         claims = verify_google_credential(payload.credential)
-    except GoogleVerificationUnavailable as error:
+    except GoogleVerificationUnavailableError as error:
         raise HTTPException(
             status_code=503,
             detail="Google sign-in verification is temporarily unavailable.",
         ) from error
-    except GoogleCredentialRejected as error:
+    except GoogleCredentialRejectedError as error:
         raise HTTPException(status_code=401, detail="Invalid Google credential.") from error
 
     email = str(claims.get("email") or "").strip().lower()

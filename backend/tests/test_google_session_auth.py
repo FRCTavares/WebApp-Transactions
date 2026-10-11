@@ -3,8 +3,8 @@ import pytest
 from app.auth import google_session
 from app.auth.current_user import get_current_user, get_privileged_user
 from app.auth.google_session import (
-    GoogleCredentialRejected,
-    GoogleVerificationUnavailable,
+    GoogleCredentialRejectedError,
+    GoogleVerificationUnavailableError,
     issue_session_token,
     resolve_user_id,
     verify_session_token,
@@ -94,7 +94,7 @@ def test_sign_in_requires_a_verified_email(real_auth, monkeypatch):
 
 @pytest.mark.parametrize(
     ("error", "status"),
-    [(GoogleCredentialRejected, 401), (GoogleVerificationUnavailable, 503)],
+    [(GoogleCredentialRejectedError, 401), (GoogleVerificationUnavailableError, 503)],
 )
 def test_sign_in_maps_google_failures(real_auth, monkeypatch, error, status):
     def fail(credential):
