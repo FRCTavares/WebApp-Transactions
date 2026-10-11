@@ -1,5 +1,7 @@
 # Release and Rollback
 
+> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+
 ## How a release happens
 
 1. Work happens on a feature branch, opened as a pull request against `main`.

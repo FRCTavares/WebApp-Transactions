@@ -1,5 +1,7 @@
 # Backup and Recovery Policy
 
+> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+
 This document defines the current backup and recovery objectives for F - Transactions.
 
 The application is currently operated on free-tier infrastructure for controlled personal or invited use. These objectives are operational targets, not contractual availability guarantees.

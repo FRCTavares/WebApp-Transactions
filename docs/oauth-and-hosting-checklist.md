@@ -1,5 +1,7 @@
 # OAuth and Hosting Checklist
 
+> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+
 Part of #33 (closed). Some items require dashboard access outside the
 repository: Google Cloud Console, Supabase, Google Cloud Run, Vercel, and
 GitHub notification settings.

@@ -1,5 +1,7 @@
 # Authentication Options
 
+> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+
 ## The two states
 
 Authentication is controlled by one frontend flag and mirrored backend
