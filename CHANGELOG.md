@@ -12,6 +12,7 @@ that's generated. The current running build's commit is shown in
 
 ### Removed
 
+- GitHub Actions CI is removed (no hosted workflows remain); run the backend tests, frontend lint/tests/build and e2e locally before merging.
 - The Supabase/Cloud Run/Vercel deployment is decommissioned. The scheduled production-backup and keep-warm workflows are deleted (the HomeServer backup job replaces them); merging to `main` no longer deploys anything. The deployment docs are marked as retired history.
 
 ### Added

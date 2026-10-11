@@ -1,5 +1,7 @@
 # Supported Browsers
 
+> **Note (2026-10-11).** GitHub Actions CI was removed. The Playwright matrix described below can still be run locally (`npm run test:e2e`); it is no longer a hosted gate.
+
 ## Matrix
 
 | Browser | Platform | Minimum version | Status |
