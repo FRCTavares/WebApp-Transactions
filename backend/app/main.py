@@ -21,6 +21,7 @@ from app.database import initialise_database
 from app.middleware.request_logging import RequestLoggingMiddleware
 from app.middleware.upload_request import UploadRequestMiddleware
 from app.routers.admin import router as admin_router
+from app.routers.auth_session import router as auth_session_router
 from app.routers.cashflow_rules import router as cashflow_rules_router
 from app.routers.description_rules import router as description_rules_router
 from app.routers.export import router as export_router
@@ -140,6 +141,7 @@ async def require_local_network_client(request: Request, call_next):
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(admin_router)
+app.include_router(auth_session_router)
 app.include_router(health_router)
 app.include_router(transactions_router)
 app.include_router(transaction_categories_router)

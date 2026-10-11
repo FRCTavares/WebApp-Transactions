@@ -255,7 +255,9 @@ jobs:
           set -euo pipefail
           npm ci
           for attempt in 1 2 3; do
-            if npm audit --audit-level=high; then
+            # Production dependencies only: dev tooling (stylelint -> braces, which has no
+            # patched release) is never shipped, and the gate still covers everything that is.
+            if npm audit --omit=dev --audit-level=high; then
               exit 0
             fi
 

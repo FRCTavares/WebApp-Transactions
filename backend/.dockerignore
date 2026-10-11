@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.selfhosted.example
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+tests/

@@ -10,6 +10,7 @@ stack, and build versioning. This folder holds the detailed docs it links to.
 
 ## Setup and operations
 
+- [`self-hosted.md`](self-hosted.md) — running on the home server (Google sign-in, Caddy, Postgres, releases)
 - [`deployment.md`](deployment.md) — full environment variable reference, local/production setup
 - [`backups-supabase.md`](backups-supabase.md) — backup and recovery policy and procedure
 - [`incident-response.md`](incident-response.md) — detection, triage, communication

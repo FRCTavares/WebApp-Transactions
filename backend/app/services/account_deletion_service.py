@@ -5,6 +5,7 @@ import requests
 from fastapi import HTTPException, status
 
 from app.auth.current_user import CurrentUser, get_supabase_url
+from app.auth.google_session import uses_google_auth
 from app.repositories.account_deletion_repository import AccountDeletionRepository
 
 
@@ -14,6 +15,13 @@ class AuthIdentityDeletionClient(Protocol):
 
 class SupabaseAuthIdentityDeletionClient:
     def delete_user(self, user_id: str) -> None:
+        if uses_google_auth():
+            # Self-hosted: there is no separate identity store to clean up. The
+            # person signs in with Google; removing their data (done by the
+            # caller) is the whole deletion, and removing the email from
+            # ALLOWED_USER_EMAILS is the operator's access decision.
+            return
+
         supabase_url = get_supabase_url()
         service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 

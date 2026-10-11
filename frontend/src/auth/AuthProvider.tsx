@@ -6,6 +6,8 @@ import {
   setUnauthorizedHandler,
 } from '../api/client'
 import { AuthContext, type AuthContextValue } from './authContext'
+import { usesGoogleAuth } from './authMode'
+import { GoogleAuthProvider } from './GoogleAuthProvider'
 import { isSupabaseAuthConfigured, isSupabaseAuthEnabled, supabase } from './supabaseClient'
 
 type AuthProviderProps = {
@@ -17,7 +19,7 @@ async function clearOfflineApiCache() {
   registration?.active?.postMessage({ type: 'CLEAR_API_CACHE' })
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+function SupabaseAuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(Boolean(supabase))
 
@@ -128,4 +130,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  return usesGoogleAuth ? (
+    <GoogleAuthProvider>{children}</GoogleAuthProvider>
+  ) : (
+    <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
+  )
 }
