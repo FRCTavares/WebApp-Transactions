@@ -1,5 +1,7 @@
 # Deployment
 
+> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+
 ## Environment variables
 
 ### Backend (`backend/.env` locally; Google Cloud Run in production)

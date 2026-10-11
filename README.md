@@ -10,48 +10,22 @@ tracked in [`TODO_LIST.md`](TODO_LIST.md) and in the repository's GitHub issues.
 
 ## Stack
 
-### Frontend
+Self-hosted on the home server, reachable only over Tailscale
+(`https://finance.<tailnet>.ts.net`); see [`docs/self-hosted.md`](docs/self-hosted.md).
+The former Vercel / Google Cloud Run / Supabase deployment was decommissioned on
+2026-10-11.
 
-- React 19, TypeScript, Vite
-- Minimal custom CSS
-- Hosted on Vercel
-- Supabase JavaScript client
-- Google OAuth through Supabase Auth
-- API access isolated in frontend API modules
-
-### Backend
-
-- FastAPI, SQLAlchemy, Pydantic, Alembic
-- Hosted on Google Cloud Run
-- Repository and service layers
-- Supabase JWT verification through JWKS or legacy secret
-- Email allowlist
-- Application-level user isolation
-
-### Database
-
-- SQLite for local development
-- Supabase Postgres for production
-- Alembic migrations in production
-- Legacy SQLite startup migrations remain active for local databases
-- No database Row Level Security policies; ownership is enforced at the application layer
-- Relational foreign keys and deliberate delete behavior protect linked financial records
-
-### Authentication
-
-- Supabase Auth with Google OAuth
-- Bearer tokens sent from frontend to backend
-- JWT signature, expiration, audience, and issuer validation
-- Email-based allowlist
-- Application owner ID derived from the validated Supabase `sub`
-
-### Deployment
-
-- Vercel Hobby (frontend), Google Cloud Run scale-to-zero backend, Supabase free project
-- Manual Cloud Run backend deployment with an explicit Cloud Run Alembic migration job before schema-changing releases
-- GitHub Actions keep-warm workflow
-- Required GitHub Actions CI covering backend tests, database/recovery checks,
-  frontend lint and build, dependency audits, and repository hygiene
+- **Frontend**: React 19, TypeScript, Vite, minimal custom CSS, served by Caddy.
+- **Backend**: FastAPI, SQLAlchemy, Pydantic, Alembic; repository and service
+  layers; application-level user isolation (no database RLS).
+- **Database**: PostgreSQL 17 on the server; SQLite for local development;
+  Alembic migrations run by a one-shot job before each release. Backups are
+  taken by the HomeServer backup job and restore-tested.
+- **Authentication**: Google sign-in verified once by the API, which issues its
+  own signed session (`AUTH_MODE=google`), plus an email allowlist and a pending
+  sign-up approval flow. (The Supabase mode remains in the code for local use.)
+- **Releases**: manual. `deploy/package-release.sh`, then `deploy-finance` on the
+  server. Merging to `main` deploys nothing.
 
 ## Free-tier viability
 

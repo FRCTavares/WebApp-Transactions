@@ -10,6 +10,11 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Removed
+
+- GitHub Actions CI is removed (no hosted workflows remain); run the backend tests, frontend lint/tests/build and e2e locally before merging.
+- The Supabase/Cloud Run/Vercel deployment is decommissioned. The scheduled production-backup and keep-warm workflows are deleted (the HomeServer backup job replaces them); merging to `main` no longer deploys anything. The deployment docs are marked as retired history.
+
 ### Added
 
 - Self-hosted mode (`AUTH_MODE=google`, off by default): Google sign-in verified once by the API, which then issues its own signed session; an `AUTH_USER_ID_MAP` keeps existing data attached to the right person; account deletion no longer needs Supabase. Includes a backend `Dockerfile`, a Caddy web image and a release packager for the HomeServer. See `docs/self-hosted.md`.
