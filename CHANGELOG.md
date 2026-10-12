@@ -10,6 +10,10 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Renamed
+
+- The app is now called **Vault** everywhere you see a name: the browser tab and phone home-screen name, the sidebar, the welcome and privacy text, the API title and the sign-up email. Hostnames (`finance.<tailnet>.ts.net`), the compose project and the database keep the name `finance`, so sign-in and installed copies keep working.
+
 ### Docs
 
 - The retired Vercel / Cloud Run / Supabase docs are replaced by current ones: `backups.md` (the HomeServer's backups, retention and recovery; replaces `backups-supabase.md`), `deployment.md` (environment reference and a local setup that needs no Google or Supabase account), `release-and-rollback.md` (package, `deploy-finance`, rollback), `auth-options.md` (Google session vs the legacy Supabase mode), `incident-response.md`, `oauth-and-hosting-checklist.md` and `privacy.md`. `production-roadmap.md` is now a short status and decisions page; the README, frontend README and TODO list no longer describe the old hosting.

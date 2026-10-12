@@ -1,4 +1,6 @@
-# F - Transactions
+# Vault
+
+Vault is the name you see in the app. Its hostname (`finance.<tailnet>.ts.net`), compose project and database are still called `finance`.
 
 A personal finance web app for storing, importing, cleaning, categorising, and
 analysing financial data on Mac and iPhone: transactions, money owed, investments,

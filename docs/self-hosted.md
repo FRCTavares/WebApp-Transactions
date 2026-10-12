@@ -1,6 +1,6 @@
 # Self-hosted deployment (HomeServer)
 
-This is the app side of running F - Transactions on the home server with **no
+This is the app side of running Vault on the home server with **no
 Supabase, no Google Cloud and no Vercel**. The server side (Postgres, compose,
 Tailscale, backups) lives in the HomeServer repository. This is how the app has
 run since 2026-10-11. In the code the self-hosted behaviour is still switched by

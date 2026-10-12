@@ -117,7 +117,7 @@ def print_results(path: Path, data: Any, issues: list[ValidationIssue]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate a downloaded F - Transactions JSON export.",
+        description="Validate a downloaded Vault JSON export.",
     )
     parser.add_argument(
         "export_path",
