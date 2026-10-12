@@ -4,8 +4,8 @@
 
 There's no local `users` table — the verified session is the source of truth
 for identity. A row's owner is a plain `user_id` string column holding the
-session's user id (in `AUTH_MODE=google`: the pinned id from `AUTH_USER_ID_MAP`,
-otherwise `google:<sub>`; in the legacy Supabase mode: the JWT's `sub`), set by
+session's user id (the pinned id from `AUTH_USER_ID_MAP`,
+otherwise `google:<sub>`), set by
 the service layer from the authenticated request, never from anything the
 client sends directly.
 

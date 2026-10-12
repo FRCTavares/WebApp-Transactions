@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-/** The part of a signed-in user the app reads; Supabase's and Google's both satisfy it. */
+/** The part of a signed-in user the app reads. */
 export type AuthUser = {
   id: string
   email?: string | null
@@ -19,7 +19,6 @@ export type AuthContextValue = {
   isAuthEnabled: boolean
   isLoading: boolean
   session: AuthSession | null
-  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   user: AuthUser | null
 }

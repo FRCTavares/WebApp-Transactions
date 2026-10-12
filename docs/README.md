@@ -6,7 +6,7 @@ stack, and build versioning. This folder holds the detailed docs it links to.
 ## Architecture and data model
 
 - [`multi-user-data-model.md`](multi-user-data-model.md) — ownership, ownership enforcement, shared vs. per-user data
-- [`auth-options.md`](auth-options.md) — Google sign-in and the API's own session, allowlist/admin, the legacy Supabase mode
+- [`auth-options.md`](auth-options.md) — Google sign-in and the API's own session, allowlist/admin
 
 ## Setup and operations
 

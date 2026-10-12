@@ -24,12 +24,12 @@ def test_empty_database_url_uses_local_sqlite_default(monkeypatch):
 def test_database_url_can_use_postgres(monkeypatch):
     monkeypatch.setenv(
         "DATABASE_URL",
-        "postgresql://postgres:password@example.supabase.co:5432/postgres",
+        "postgresql://postgres:password@db.example.com:5432/postgres",
     )
 
     assert (
         get_database_url()
-        == "postgresql+psycopg://postgres:password@example.supabase.co:5432/postgres"
+        == "postgresql+psycopg://postgres:password@db.example.com:5432/postgres"
     )
 
 

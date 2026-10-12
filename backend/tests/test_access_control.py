@@ -32,10 +32,7 @@ def test_options_request_does_not_require_local_network_client(monkeypatch):
     assert response.status_code == 200
 
 
-def test_me_route_requires_bearer_token_when_supabase_auth_is_enabled(monkeypatch):
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+def test_me_route_requires_a_bearer_token(monkeypatch):
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
 
     with TestClient(app) as client:
@@ -47,9 +44,6 @@ def test_me_route_requires_bearer_token_when_supabase_auth_is_enabled(monkeypatc
 
 def test_security_headers_are_set(monkeypatch):
     monkeypatch.delenv("APP_ENV", raising=False)
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
     monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
 
     with TestClient(app) as client:
@@ -72,7 +66,8 @@ def test_security_headers_are_set(monkeypatch):
 def test_production_responses_enable_hsts(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/database")
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://app.example.com")
@@ -89,7 +84,8 @@ def test_production_responses_enable_hsts(monkeypatch):
 def test_production_config_requires_database_url(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.delenv("DATABASE_URL", raising=False)
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
@@ -100,16 +96,17 @@ def test_production_config_requires_database_url(monkeypatch):
             pass
 
 
-def test_production_config_requires_supabase_url(monkeypatch):
+def test_production_config_requires_google_client_id_and_session_secret(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("SESSION_SECRET", raising=False)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
 
-    with pytest.raises(RuntimeError, match="SUPABASE_URL is required"):
+    with pytest.raises(RuntimeError, match="GOOGLE_CLIENT_ID is required"):
         with TestClient(app):
             pass
 
@@ -117,7 +114,8 @@ def test_production_config_requires_supabase_url(monkeypatch):
 def test_production_config_requires_allowed_user_emails(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
     monkeypatch.setenv("LOCAL_NETWORK_ONLY", "false")
@@ -133,7 +131,8 @@ def test_production_config_requires_admin_user_emails(monkeypatch):
         "DATABASE_URL",
         "postgresql://user:pass@example.com/db",
     )
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.delenv("ADMIN_USER_EMAILS", raising=False)
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
@@ -147,7 +146,8 @@ def test_production_config_requires_admin_user_emails(monkeypatch):
 def test_production_config_rejects_wildcard_cors(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "*")
@@ -161,7 +161,8 @@ def test_production_config_rejects_wildcard_cors(monkeypatch):
 def test_production_config_rejects_local_network_only(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")
@@ -175,7 +176,8 @@ def test_production_config_rejects_local_network_only(monkeypatch):
 def test_production_config_accepts_required_settings(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@example.com/db")
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("CORS_ORIGINS", "https://example.com")

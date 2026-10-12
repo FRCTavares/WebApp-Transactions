@@ -5,7 +5,6 @@ token once. We verify Google's signature and audience and answer with a compact
 token signed with SESSION_SECRET (HMAC-SHA256). Every later API call presents
 that token, so no request depends on Google or any third party being reachable.
 
-Only active with AUTH_MODE=google; the default (Supabase) is unchanged.
 """
 
 from __future__ import annotations
@@ -33,14 +32,6 @@ class GoogleCredentialRejectedError(Exception):
 
 class GoogleVerificationUnavailableError(Exception):
     """Google's signing keys could not be fetched right now."""
-
-
-def get_auth_mode() -> str:
-    return os.getenv("AUTH_MODE", "supabase").strip().lower() or "supabase"
-
-
-def uses_google_auth() -> bool:
-    return get_auth_mode() == "google"
 
 
 def get_google_client_id() -> str:

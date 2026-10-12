@@ -1,6 +1,5 @@
 import pytest
 
-from app.auth import google_session
 from app.auth.current_user import get_current_user, get_privileged_user
 from app.auth.google_session import (
     GoogleCredentialRejectedError,
@@ -17,7 +16,6 @@ CREDENTIAL = "g" * 40
 
 @pytest.fixture(autouse=True)
 def google_mode(monkeypatch):
-    monkeypatch.setenv("AUTH_MODE", "google")
     monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "client.apps.googleusercontent.com")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
@@ -105,12 +103,6 @@ def test_sign_in_maps_google_failures(real_auth, monkeypatch, error, status):
     assert real_auth.post("/api/auth/google", json={"credential": CREDENTIAL}).status_code == status
 
 
-def test_sign_in_is_absent_outside_google_mode(real_auth, monkeypatch):
-    monkeypatch.setenv("AUTH_MODE", "supabase")
-
-    assert real_auth.post("/api/auth/google", json={"credential": CREDENTIAL}).status_code == 404
-
-
 def test_uninvited_email_is_blocked_by_the_normal_gate(real_auth):
     response = real_auth.get(
         "/api/me", headers={"Authorization": f"Bearer {token_for(email='stranger@example.com')}"}
@@ -124,27 +116,10 @@ def test_api_rejects_a_missing_or_forged_session(real_auth):
     assert real_auth.get("/api/me", headers={"Authorization": "Bearer forged.token.value"}).status_code == 401
 
 
-def test_account_deletion_needs_no_identity_provider(real_auth, monkeypatch):
-    monkeypatch.setattr(
-        "app.services.account_deletion_service.requests.delete",
-        lambda *a, **k: pytest.fail("must not call Supabase in google mode"),
-    )
-    token = token_for()
-
-    response = real_auth.delete(
-        "/api/me",
-        headers={"Authorization": f"Bearer {token}", "X-Confirm-Account-Deletion": "me@example.com"},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["status"] == "deleted"
-
-
 def test_production_validation_for_google_mode(monkeypatch):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@db/fitness")
     monkeypatch.setenv("CORS_ORIGINS", "https://finance.example.test")
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
 
     validate_production_config()
 
@@ -156,9 +131,3 @@ def test_production_validation_for_google_mode(monkeypatch):
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "nope")
     with pytest.raises(RuntimeError, match="GOOGLE_CLIENT_ID"):
         validate_production_config()
-
-
-def test_google_session_module_defaults_to_supabase(monkeypatch):
-    monkeypatch.delenv("AUTH_MODE", raising=False)
-
-    assert google_session.uses_google_auth() is False

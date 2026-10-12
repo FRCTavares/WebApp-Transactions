@@ -22,7 +22,6 @@ import { usePresentationPreferences } from './hooks/usePresentationPreferences'
 import { deleteCurrentAccount } from './api/account'
 import type { AuthUser } from './auth/authContext'
 import { GoogleSignInButton } from './auth/GoogleSignInButton'
-import { usesGoogleAuth } from './auth/authMode'
 import {
   getPageFromPath,
   getPathForPage,
@@ -98,7 +97,6 @@ function App() {
     isAuthEnabled,
     isLoading,
     session,
-    signInWithGoogle,
     signOut,
     user,
   } = useAuth()
@@ -130,16 +128,6 @@ function App() {
 
   function handlePageChange(nextPage: Page) {
     navigate(getPathForPage(nextPage))
-  }
-
-  async function handleLogin() {
-    setAuthError(null)
-
-    try {
-      await signInWithGoogle()
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : 'Login failed.')
-    }
   }
 
   async function handleLogout() {
@@ -182,12 +170,8 @@ function App() {
       <div className="unlock-page">
         <section className="unlock-card">
           <p className="eyebrow">Configuration missing</p>
-          <h1>{usesGoogleAuth ? 'Google sign-in is not configured' : 'Supabase auth is not configured'}</h1>
-          <p>
-            {usesGoogleAuth
-              ? 'Set VITE_GOOGLE_CLIENT_ID before using Google login.'
-              : 'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using Google login.'}
-          </p>
+          <h1>Google sign-in is not configured</h1>
+          <p>Set VITE_GOOGLE_CLIENT_ID before using Google login.</p>
         </section>
       </div>
     )
@@ -205,13 +189,7 @@ function App() {
 
           {authError && <p className="error-text">{authError}</p>}
 
-          {usesGoogleAuth ? (
-            <GoogleSignInButton onError={setAuthError} />
-          ) : (
-            <button type="button" onClick={handleLogin}>
-              Sign in with Google
-            </button>
-          )}
+          <GoogleSignInButton onError={setAuthError} />
         </section>
       </div>
     )

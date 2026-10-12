@@ -53,9 +53,7 @@ export default defineConfig({
       env: {
         NODE_ENV: 'development',
         VITE_API_BASE_URL: backendUrl,
-        VITE_SUPABASE_AUTH_ENABLED: 'true',
-        VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? '',
-        VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? '',
+        VITE_GOOGLE_CLIENT_ID: 'e2e.apps.googleusercontent.com',
       },
     },
   ],

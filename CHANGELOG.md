@@ -10,6 +10,10 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Removed
+
+- All Supabase code: the legacy Supabase sign-in mode (the JWT/JWKS verification, `AUTH_MODE`, `VITE_AUTH_MODE`, the `@supabase/supabase-js` client and the `PyJWT` dependency) and the Supabase account-deletion client. Sign-in is Google Identity Services verified once by the API, which issues its own session token; account deletion removes the person's data. Production now requires `GOOGLE_CLIENT_ID` and a `SESSION_SECRET` of at least 32 characters (already set on the server; the leftover `AUTH_MODE` and `VITE_AUTH_MODE` settings are ignored). The e2e setup mints session tokens instead of Supabase JWTs (not run here).
+
 ### Renamed
 
 - The app is now called **Vault** everywhere you see a name: the browser tab and phone home-screen name, the sidebar, the welcome and privacy text, the API title and the sign-up email. Hostnames (`finance.<tailnet>.ts.net`), the compose project and the database keep the name `finance`, so sign-in and installed copies keep working.

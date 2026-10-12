@@ -1,8 +1,6 @@
-import time
 from datetime import date
 from decimal import Decimal
 
-import jwt
 import pytest
 
 from app.auth.current_user import (
@@ -13,26 +11,14 @@ from app.auth.current_user import (
 )
 from app.models.investment_event import InvestmentEvent
 from app.models.market_price import MarketPrice
+from tests.session_tokens import make_session_token
 
 
 def make_market_price_token(
     email: str,
     secret: str = "test-secret-at-least-thirty-two-bytes-long",
 ) -> str:
-    now = int(time.time())
-
-    return jwt.encode(
-        {
-            "aud": "authenticated",
-            "exp": now + 3600,
-            "iat": now,
-            "sub": "00000000-0000-0000-0000-000000000000",
-            "email": email,
-            "role": "authenticated",
-        },
-        secret,
-        algorithm="HS256",
-    )
+    return make_session_token(email, secret)
 
 
 @pytest.fixture(autouse=True)
@@ -343,14 +329,14 @@ def test_positions_derive_market_fx_rate_from_eur_market_buy(client, db_session)
         ("POST", "/api/market-prices/fetch/history", {}),
     ],
 )
-def test_market_price_routes_require_authentication_when_supabase_is_enabled(
+def test_market_price_routes_require_authentication(
     client,
     monkeypatch,
     method,
     path,
     request_body,
 ):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     use_real_market_price_auth(client)
 
@@ -380,7 +366,7 @@ def test_market_price_mutations_reject_authenticated_non_admin(
     request_body,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_market_price_auth(client)
@@ -404,7 +390,7 @@ def test_market_price_fetch_latest_accepts_configured_admin(
     monkeypatch,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_market_price_auth(client)
@@ -435,7 +421,7 @@ def test_market_price_reads_accept_authenticated_non_admin(
     monkeypatch,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv(
         "ALLOWED_USER_EMAILS",
         "admin@example.com,me@example.com",

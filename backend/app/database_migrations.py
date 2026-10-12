@@ -15,7 +15,7 @@ def run_startup_migrations(engine: Engine) -> None:
     """Run legacy startup migrations.
 
     These migrations are intentionally SQLite-only. They exist to keep the
-    current local database evolving safely. Postgres/Supabase should use a
+    current local database evolving safely. Postgres should use a
     proper migration tool before deployment instead of these raw SQLite-era
     startup migrations.
     """

@@ -3,19 +3,17 @@
 This is the app side of running Vault on the home server with **no
 Supabase, no Google Cloud and no Vercel**. The server side (Postgres, compose,
 Tailscale, backups) lives in the HomeServer repository. This is how the app has
-run since 2026-10-11. In the code the self-hosted behaviour is still switched by
-`AUTH_MODE=google`; with it unset the app falls back to the legacy Supabase mode,
-which is kept for local use.
+run since 2026-10-11.
 
 ## What is replaced
 
-| Was | Now | Switch |
-|---|---|---|
-| Supabase Auth | Google Identity Services → `POST /api/auth/google` → an API-issued signed session | `AUTH_MODE=google` / `VITE_AUTH_MODE=google` |
-| Supabase account deletion | Deleting an account removes its data; the Google identity is not ours to delete | `AUTH_MODE=google` |
-| Supabase Postgres | Postgres 17 on the server | `DATABASE_URL` |
-| Vercel | Caddy serves the build and proxies `/api` (`deploy/web`) | image build |
-| Cloud Run + migrate job | `backend/Dockerfile`; the one-shot job runs `python -m alembic upgrade head` | image |
+| Was | Now |
+|---|---|
+| Supabase Auth | Google Identity Services → `POST /api/auth/google` → an API-issued signed session |
+| Supabase account deletion | Deleting an account removes its data; the Google identity is not ours to delete |
+| Supabase Postgres | Postgres 17 on the server (`DATABASE_URL`) |
+| Vercel | Caddy serves the build and proxies `/api` (`deploy/web`) |
+| Cloud Run + migrate job | `backend/Dockerfile`; the one-shot job runs `python -m alembic upgrade head` |
 
 Google is still used for **one thing**: proving who is signing in. The API
 verifies Google's ID token once and issues its own session; no later request
@@ -28,15 +26,15 @@ needs Google or any third party.
   that is neither allowed nor approved, and the access-status screen still tells
   a new person they are pending. `ADMIN_USER_EMAILS` still gates market-data
   maintenance.
-- Rows are keyed by `user_id`. Today that is the Supabase `sub`, which the
-  database dump does not tell the new sign-in about. **`AUTH_USER_ID_MAP`**
+- Rows are keyed by `user_id`. They were created under the old Supabase user id, which the
+  database dump does not tell the Google sign-in about. **`AUTH_USER_ID_MAP`**
   (`email=user-id,email2=user-id2`) pins each email to the id its rows already
   carry; an email with no entry gets `google:<sub>` and starts empty.
 
 ## Environment contract
 
 Backend: [`backend/.env.selfhosted.example`](../backend/.env.selfhosted.example).
-With `APP_ENV=production` the app refuses to start when `AUTH_MODE=google` lacks a
+With `APP_ENV=production` the app refuses to start without a
 `GOOGLE_CLIENT_ID` or a `SESSION_SECRET` of at least 32 characters.
 
 Web image build args (`deploy/web/Dockerfile`): `VITE_API_BASE_URL` (the site

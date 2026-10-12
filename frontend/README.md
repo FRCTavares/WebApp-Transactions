@@ -13,9 +13,9 @@ npm run dev                  # http://localhost:5173
 
 The app needs a signed-in session even locally: the backend requires a valid
 bearer token on every request and there is no bypass. The quickest local setup
-is the API in `AUTH_MODE=google` against SQLite with a session token you mint
+is the API against SQLite with a session token you mint
 yourself; the steps are in [`../docs/deployment.md`](../docs/deployment.md#local-development).
-Build-time variables (`VITE_API_BASE_URL`, `VITE_AUTH_MODE`, `VITE_GOOGLE_CLIENT_ID`)
+Build-time variables (`VITE_API_BASE_URL`, `VITE_GOOGLE_CLIENT_ID`)
 are listed there too.
 
 ## Commands
@@ -32,17 +32,15 @@ are listed there too.
 
 ## Running the e2e suite locally
 
-The e2e suite runs against the legacy `supabase` auth mode (see
-[`../docs/auth-options.md`](../docs/auth-options.md); there's no auth-bypass
-mode). `frontend/e2e/global-setup.ts` mints a Supabase-shaped JWT locally
-rather than driving an actual OAuth flow. No Supabase project is involved: the
-backend just verifies a token signed with the shared test secret.
+The e2e suite needs a real backend (there's no auth-bypass mode).
+`frontend/e2e/global-setup.ts` mints a session token locally rather than driving
+a Google sign-in, and stores it in the browser state.
 
-1. `frontend/e2e/.env.e2e.local` (gitignored) needs `SUPABASE_JWT_SECRET`,
-   `E2E_TEST_EMAIL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-2. Start the backend with the matching `SUPABASE_JWT_SECRET` and
-   `CORS_ORIGINS` including `http://127.0.0.1:4173` (Playwright's preview
-   server origin).
+1. `frontend/e2e/.env.e2e.local` (gitignored) needs `SESSION_SECRET` (at least
+   32 characters) and `E2E_TEST_EMAIL`.
+2. The backend is started for you by `backend/scripts/start_e2e_backend.sh` (a
+   throwaway SQLite database, `CORS_ORIGINS` including Playwright's preview
+   origin `http://127.0.0.1:4173`).
 3. `npx playwright test`.
 
 See [`../docs/browser-support.md`](../docs/browser-support.md) for which
@@ -57,7 +55,7 @@ skip (the offline test).
   presentation preferences, online status, etc.)
 - `src/api/` — all backend API calls; components never call `fetch`
   directly
-- `src/auth/` — Google sign-in (`GoogleAuthProvider`), the legacy Supabase client and the auth context
+- `src/auth/` — Google sign-in (`GoogleAuthProvider`), the session store and the auth context
 - `src/i18n/` — English/Portuguese translation strings
 - `src/utils/` — date, currency, and amount formatting
 - `public/sw.js` — the offline-support service worker, see

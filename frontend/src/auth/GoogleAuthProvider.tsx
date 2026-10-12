@@ -61,8 +61,6 @@ export function GoogleAuthProvider({ children }: { children: ReactNode }) {
       isAuthEnabled: true,
       isLoading: false,
       session,
-      // The Google button on the sign-in screen does the sign-in itself.
-      signInWithGoogle: async () => {},
       signOut: async () => {
         await clearOfflineApiCache()
         clearGoogleSession()

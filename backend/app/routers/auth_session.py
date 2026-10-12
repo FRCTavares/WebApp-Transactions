@@ -8,7 +8,6 @@ from app.auth.google_session import (
     GoogleVerificationUnavailableError,
     issue_session_token,
     resolve_user_id,
-    uses_google_auth,
     verify_google_credential,
 )
 
@@ -26,14 +25,10 @@ class GoogleSignInPayload(BaseModel):
 def sign_in_with_google(payload: GoogleSignInPayload) -> dict[str, object]:
     """Exchange a Google ID token for this API's session token.
 
-    Reachable without a bearer token (it is how a client gets its first one) and
-    only present in AUTH_MODE=google. Like the Supabase flow it does not apply
+    Reachable without a bearer token (it is how a client gets its first one). It does not apply
     the invite list: that gate stays in `get_current_user`, so an email that is
     not invited yet can still sign in and be told its sign-up is pending.
     """
-
-    if not uses_google_auth():
-        raise HTTPException(status_code=404, detail="Not found.")
 
     try:
         claims = verify_google_credential(payload.credential)

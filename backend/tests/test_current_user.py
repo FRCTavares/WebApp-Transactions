@@ -1,9 +1,10 @@
+import json
 import time
 
-import jwt
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
+from app.auth import google_session
 from app.auth.current_user import (
     CurrentUser,
     get_admin_user_emails,
@@ -11,37 +12,40 @@ from app.auth.current_user import (
     get_current_user,
     get_privileged_user,
     is_allowed_user_email,
-    is_supabase_auth_enabled,
     normalise_user_email,
 )
 
+SECRET = "test-secret-at-least-thirty-two-bytes-long"
+SUBJECT = "00000000-0000-0000-0000-000000000000"
 
-def make_supabase_token(
-    email: str,
-    secret: str = "test-secret",
-    subject: str = "00000000-0000-0000-0000-000000000000",
-    issuer: str | None = None,
-) -> str:
+
+def make_token(email: str | None, subject: str | None = SUBJECT, secret: str = SECRET, ttl: int = 3600) -> str:
+    """A session token in the format the API issues, signed with `secret`."""
+
     now = int(time.time())
-    payload = {
-        "aud": "authenticated",
-        "exp": now + 3600,
-        "iat": now,
-        "sub": subject,
-        "email": email,
-        "role": "authenticated",
-    }
-
-    if issuer is not None:
-        payload["iss"] = issuer
-
-    return jwt.encode(
-        payload,
-        secret,
-        algorithm="HS256",
-    )
+    claims: dict[str, object] = {"iat": now, "exp": now + ttl, "name": "Test"}
+    if subject is not None:
+        claims["sub"] = subject
+    if email is not None:
+        claims["email"] = email
+    signing_input = f"{google_session.TOKEN_VERSION}.{google_session._b64(json.dumps(claims).encode())}"
+    return f"{signing_input}.{google_session._signature(secret, signing_input)}"
 
 
+def whoami_app(dependency=get_current_user) -> FastAPI:
+    app = FastAPI()
+
+    @app.get("/whoami")
+    def whoami(current_user: CurrentUser = Depends(dependency)):
+        return {"user_id": current_user.id, "email": current_user.email}
+
+    return app
+
+
+def get(app: FastAPI, token: str | None):
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    with TestClient(app) as client:
+        return client.get("/whoami", headers=headers)
 
 
 def test_allowed_user_email_helpers(monkeypatch):
@@ -53,329 +57,101 @@ def test_allowed_user_email_helpers(monkeypatch):
     assert is_allowed_user_email("other@example.com") is False
 
 
-
-
-def test_supabase_auth_enabled_when_jwt_secret_is_configured(monkeypatch):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
-
-    assert is_supabase_auth_enabled() is True
-
-
-def test_current_user_dependency_returns_allowed_supabase_jwt_user(monkeypatch):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+def test_current_user_returns_the_allowed_session_user(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
 
-    token = make_supabase_token("ME@example.com")
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id, "email": current_user.email}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    response = get(whoami_app(), make_token("ME@example.com"))
 
     assert response.status_code == 200
-    assert response.json() == {
-        "user_id": "00000000-0000-0000-0000-000000000000",
-        "email": "me@example.com",
-    }
+    assert response.json() == {"user_id": SUBJECT, "email": "me@example.com"}
 
 
-def test_current_user_accepts_expected_supabase_issuer(monkeypatch):
-    secret = "test-secret-at-least-thirty-two-bytes-long"
-    supabase_url = "https://example.supabase.co"
-    expected_issuer = f"{supabase_url}/auth/v1"
+def test_current_user_rejects_a_missing_bearer_token(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
 
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
-    monkeypatch.setenv("SUPABASE_URL", supabase_url)
-    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
-
-    token = make_supabase_token(
-        "me@example.com",
-        secret=secret,
-        issuer=expected_issuer,
-    )
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "user_id": "00000000-0000-0000-0000-000000000000"
-    }
-
-
-def test_current_user_rejects_wrong_supabase_issuer(monkeypatch):
-    secret = "test-secret-at-least-thirty-two-bytes-long"
-
-    monkeypatch.setenv(
-        "SUPABASE_JWT_SECRET",
-        secret,
-    )
-    monkeypatch.setenv(
-        "SUPABASE_URL",
-        "https://expected-project.supabase.co",
-    )
-    monkeypatch.setenv(
-        "ALLOWED_USER_EMAILS",
-        "me@example.com",
-    )
-
-    token = make_supabase_token(
-        "me@example.com",
-        secret=secret,
-        issuer="https://different-project.supabase.co/auth/v1",
-    )
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-
-    assert response.status_code == 401
-    assert response.json() == {
-        "detail": "Invalid bearer token"
-    }
-
-
-def test_current_user_dependency_rejects_missing_bearer_token_when_supabase_enabled(monkeypatch):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
-    monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get("/whoami")
+    response = get(whoami_app(), None)
 
     assert response.status_code == 401
     assert response.json() == {"detail": "Missing bearer token"}
 
 
-def test_current_user_dependency_rejects_invalid_supabase_jwt(monkeypatch):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+def test_current_user_rejects_garbage_a_bad_signature_and_an_expired_token(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    app = whoami_app()
 
-    app = FastAPI()
+    for token in ("not-a-token", make_token("me@example.com", secret="another-secret-of-thirty-two-bytes-x"), make_token("me@example.com", ttl=-10)):
+        response = get(app, token)
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid bearer token"}
 
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
 
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": "Bearer invalid-token"},
-        )
+def test_current_user_rejects_tokens_when_no_session_secret_is_configured(monkeypatch):
+    monkeypatch.delenv("SESSION_SECRET", raising=False)
+
+    response = get(whoami_app(), make_token("me@example.com"))
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid bearer token"}
 
 
-def test_current_user_dependency_rejects_disallowed_supabase_jwt_user(monkeypatch):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+def test_current_user_rejects_an_email_that_is_not_allowed(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
 
-    token = make_supabase_token("other@example.com")
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    response = get(whoami_app(), make_token("other@example.com"))
 
     assert response.status_code == 403
     assert response.json() == {"detail": "User email is not allowed"}
 
 
 def test_admin_user_email_helpers(monkeypatch):
-    monkeypatch.setenv(
-        "ADMIN_USER_EMAILS",
-        " ADMIN@example.com, second@example.com ",
-    )
+    monkeypatch.setenv("ADMIN_USER_EMAILS", " ADMIN@example.com, second@example.com ")
 
-    assert get_admin_user_emails() == {
-        "admin@example.com",
-        "second@example.com",
-    }
-
+    assert get_admin_user_emails() == {"admin@example.com", "second@example.com"}
 
 
 def test_privileged_user_rejects_authenticated_non_admin(monkeypatch):
-    monkeypatch.setenv(
-        "SUPABASE_JWT_SECRET",
-        "test-secret-at-least-thirty-two-bytes-long",
-    )
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
 
-    token = make_supabase_token(
-        "me@example.com",
-        secret="test-secret-at-least-thirty-two-bytes-long",
-    )
-
-    app = FastAPI()
-
-    @app.get("/privileged")
-    def privileged(
-        current_user: CurrentUser = Depends(get_privileged_user),
-    ):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/privileged",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    response = get(whoami_app(get_privileged_user), make_token("me@example.com"))
 
     assert response.status_code == 403
     assert response.json() == {"detail": "Privileged access is required"}
 
 
 def test_privileged_user_accepts_configured_admin(monkeypatch):
-    monkeypatch.setenv(
-        "SUPABASE_JWT_SECRET",
-        "test-secret-at-least-thirty-two-bytes-long",
-    )
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
 
-    token = make_supabase_token(
-        "ADMIN@example.com",
-        secret="test-secret-at-least-thirty-two-bytes-long",
-    )
-
-    app = FastAPI()
-
-    @app.get("/privileged")
-    def privileged(
-        current_user: CurrentUser = Depends(get_privileged_user),
-    ):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/privileged",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    response = get(whoami_app(get_privileged_user), make_token("ADMIN@example.com"))
 
     assert response.status_code == 200
-    assert response.json() == {
-        "user_id": "00000000-0000-0000-0000-000000000000"
-    }
+    assert response.json()["user_id"] == SUBJECT
 
 
-def test_supabase_user_id_remains_stable_when_email_changes(monkeypatch):
-    secret = "test-secret-at-least-thirty-two-bytes-long"
+def test_user_id_remains_stable_when_email_changes(monkeypatch):
     subject = "11111111-2222-3333-4444-555555555555"
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
+    monkeypatch.setenv("ALLOWED_USER_EMAILS", "old@example.com,new@example.com")
+    app = whoami_app()
 
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
-    monkeypatch.setenv(
-        "ALLOWED_USER_EMAILS",
-        "old@example.com,new@example.com",
-    )
+    old = get(app, make_token("old@example.com", subject=subject))
+    new = get(app, make_token("new@example.com", subject=subject))
 
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id, "email": current_user.email}
-
-    old_email_token = make_supabase_token(
-        "old@example.com",
-        secret=secret,
-        subject=subject,
-    )
-    new_email_token = make_supabase_token(
-        "new@example.com",
-        secret=secret,
-        subject=subject,
-    )
-
-    with TestClient(app) as client:
-        old_response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {old_email_token}"},
-        )
-        new_response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {new_email_token}"},
-        )
-
-    assert old_response.status_code == 200
-    assert new_response.status_code == 200
-    assert old_response.json() == {
-        "user_id": subject,
-        "email": "old@example.com",
-    }
-    assert new_response.json() == {
-        "user_id": subject,
-        "email": "new@example.com",
-    }
+    assert old.json() == {"user_id": subject, "email": "old@example.com"}
+    assert new.json() == {"user_id": subject, "email": "new@example.com"}
 
 
-def test_supabase_user_rejects_token_without_subject(monkeypatch):
-    secret = "test-secret-at-least-thirty-two-bytes-long"
-    now = int(time.time())
-
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+def test_current_user_rejects_a_token_without_subject_or_email(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", SECRET)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
+    app = whoami_app()
 
-    token = jwt.encode(
-        {
-            "aud": "authenticated",
-            "exp": now + 3600,
-            "iat": now,
-            "email": "me@example.com",
-            "role": "authenticated",
-        },
-        secret,
-        algorithm="HS256",
-    )
-
-    app = FastAPI()
-
-    @app.get("/whoami")
-    def whoami(current_user: CurrentUser = Depends(get_current_user)):
-        return {"user_id": current_user.id}
-
-    with TestClient(app) as client:
-        response = client.get(
-            "/whoami",
-            headers={"Authorization": f"Bearer {token}"},
-        )
-
-    assert response.status_code == 401
-    assert response.json() == {
-        "detail": "Bearer token does not include a subject"
-    }
+    for token in (make_token("me@example.com", subject=None), make_token(None)):
+        response = get(app, token)
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid bearer token"}

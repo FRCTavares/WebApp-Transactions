@@ -1,15 +1,11 @@
 import os
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import Any
 
-import jwt
 from fastapi import Depends, HTTPException, Request, status
-from jwt import PyJWKClient
-from jwt.exceptions import InvalidTokenError, PyJWKClientError
 from sqlalchemy.orm import Session
 
-from app.auth.google_session import uses_google_auth, verify_session_token
+from app.auth.google_session import verify_session_token
 from app.database import get_db
 from app.middleware.request_logging import set_request_log_user_id
 from app.repositories.pending_signup_repository import PendingSignupRepository
@@ -50,50 +46,6 @@ def is_allowed_user_email(email: str) -> bool:
 
 
 
-def get_supabase_jwt_secret() -> str:
-    return os.getenv("SUPABASE_JWT_SECRET", "").strip()
-
-
-def get_supabase_url() -> str:
-    return os.getenv("SUPABASE_URL", "").strip().rstrip("/")
-
-
-def get_supabase_issuer() -> str:
-    supabase_url = get_supabase_url()
-
-    if not supabase_url:
-        return ""
-
-    return f"{supabase_url}/auth/v1"
-
-
-def get_supabase_decode_options() -> dict[str, str]:
-    issuer = get_supabase_issuer()
-
-    if not issuer:
-        return {}
-
-    return {"issuer": issuer}
-
-
-def get_supabase_jwks_url() -> str:
-    explicit_url = os.getenv("SUPABASE_JWKS_URL", "").strip()
-
-    if explicit_url:
-        return explicit_url
-
-    supabase_url = get_supabase_url()
-
-    if not supabase_url:
-        return ""
-
-    return f"{supabase_url}/auth/v1/.well-known/jwks.json"
-
-
-def is_supabase_auth_enabled() -> bool:
-    return bool(get_supabase_jwt_secret() or get_supabase_jwks_url())
-
-
 def get_authorization_bearer_token(request: Request) -> str:
     authorization = request.headers.get("Authorization", "")
     scheme, _, token = authorization.partition(" ")
@@ -107,45 +59,8 @@ def get_authorization_bearer_token(request: Request) -> str:
     return token.strip()
 
 
-@lru_cache(maxsize=4)
-def get_jwks_client(jwks_url: str) -> PyJWKClient:
-    return PyJWKClient(jwks_url)
-
-
-def decode_supabase_jwt_with_legacy_secret(token: str) -> dict[str, Any]:
-    secret = get_supabase_jwt_secret()
-
-    if not secret:
-        raise InvalidTokenError("Legacy JWT secret is not configured")
-
-    return jwt.decode(
-        token,
-        secret,
-        algorithms=["HS256"],
-        audience="authenticated",
-        **get_supabase_decode_options(),
-    )
-
-
-def decode_supabase_jwt_with_jwks(token: str) -> dict[str, Any]:
-    jwks_url = get_supabase_jwks_url()
-
-    if not jwks_url:
-        raise InvalidTokenError("Supabase JWKS URL is not configured")
-
-    signing_key = get_jwks_client(jwks_url).get_signing_key_from_jwt(token)
-
-    return jwt.decode(
-        token,
-        signing_key.key,
-        algorithms=["ES256", "RS256"],
-        audience="authenticated",
-        **get_supabase_decode_options(),
-    )
-
-
 def decode_session_token(token: str) -> dict[str, Any]:
-    """Claims from this API's own session token (AUTH_MODE=google)."""
+    """Claims from this API's own session token."""
 
     claims = verify_session_token(token)
 
@@ -158,41 +73,7 @@ def decode_session_token(token: str) -> dict[str, Any]:
     return claims
 
 
-def decode_supabase_jwt(token: str) -> dict[str, Any]:
-    if uses_google_auth():
-        return decode_session_token(token)
-
-    try:
-        header = jwt.get_unverified_header(token)
-    except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token",
-        )
-
-    algorithm = header.get("alg")
-
-    try:
-        if algorithm == "HS256":
-            payload = decode_supabase_jwt_with_legacy_secret(token)
-        else:
-            payload = decode_supabase_jwt_with_jwks(token)
-    except (InvalidTokenError, PyJWKClientError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token",
-        )
-
-    if not isinstance(payload, dict):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token",
-        )
-
-    return payload
-
-
-def get_subject_from_supabase_payload(payload: dict[str, Any]) -> str:
+def get_subject_from_claims(payload: dict[str, Any]) -> str:
     raw_subject = payload.get("sub")
 
     if not isinstance(raw_subject, str) or not raw_subject.strip():
@@ -212,14 +93,8 @@ def get_subject_from_supabase_payload(payload: dict[str, Any]) -> str:
     return subject
 
 
-def get_email_from_supabase_payload(payload: dict[str, Any]) -> str:
+def get_email_from_claims(payload: dict[str, Any]) -> str:
     raw_email = payload.get("email")
-
-    if not isinstance(raw_email, str) or not raw_email.strip():
-        user_metadata = payload.get("user_metadata")
-
-        if isinstance(user_metadata, dict):
-            raw_email = user_metadata.get("email")
 
     if not isinstance(raw_email, str) or not raw_email.strip():
         raise HTTPException(
@@ -235,31 +110,31 @@ def is_approved_pending_signup(email: str, *, db: Session) -> bool:
     return pending_signup is not None and pending_signup.status == "approved"
 
 
-def get_authenticated_supabase_user(request: Request) -> CurrentUser:
+def get_authenticated_user(request: Request) -> CurrentUser:
     """Validate the bearer JWT only - no allow-list/approval gate.
 
     Used solely by the access-status endpoint, which must be reachable by
-    any successfully authenticated Supabase user (including someone whose
+    any successfully authenticated user (including someone whose
     sign-up is still pending approval) so they can be told their status.
     Every other endpoint must keep using `get_current_user` below.
     """
 
     token = get_authorization_bearer_token(request)
-    payload = decode_supabase_jwt(token)
-    subject = get_subject_from_supabase_payload(payload)
-    email = get_email_from_supabase_payload(payload)
+    payload = decode_session_token(token)
+    subject = get_subject_from_claims(payload)
+    email = get_email_from_claims(payload)
 
     return CurrentUser(id=subject, email=email)
 
 
-def get_supabase_user_from_request(
+def get_user_from_request(
     request: Request,
     db: Session,
 ) -> CurrentUser:
     token = get_authorization_bearer_token(request)
-    payload = decode_supabase_jwt(token)
-    subject = get_subject_from_supabase_payload(payload)
-    email = get_email_from_supabase_payload(payload)
+    payload = decode_session_token(token)
+    subject = get_subject_from_claims(payload)
+    email = get_email_from_claims(payload)
 
     if not is_allowed_user_email(email) and not is_approved_pending_signup(
         email,
@@ -278,9 +153,9 @@ def get_current_user(
     request: Request,
     db: Session = Depends(get_db),
 ) -> CurrentUser:
-    """Return the authenticated Supabase user."""
+    """Return the authenticated user."""
 
-    current_user = get_supabase_user_from_request(request, db=db)
+    current_user = get_user_from_request(request, db=db)
     set_request_log_user_id(
         request.scope,
         current_user.id,

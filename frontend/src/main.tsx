@@ -35,16 +35,16 @@ import './styles/settings.css'
 import './styles/charts.css'
 import './styles/privacy.css'
 import App from './App.tsx'
-import { AuthProvider } from './auth/AuthProvider.tsx'
+import { GoogleAuthProvider } from './auth/GoogleAuthProvider.tsx'
 import { ThemeProvider } from './context/ThemeContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <BrowserRouter>
-        <AuthProvider>
+        <GoogleAuthProvider>
           <App />
-        </AuthProvider>
+        </GoogleAuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   </StrictMode>,
