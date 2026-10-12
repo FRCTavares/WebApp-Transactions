@@ -920,3 +920,23 @@
   width: auto;
   white-space: normal;
 }
+
+/* Long lists show their first five items; the toggle under the card shows the rest. */
+.owed-person-groups .owed-person-items[data-collapsed="true"] > .owed-person-item:nth-child(n + 6) {
+  display: none !important;
+}
+
+.owed-person-groups .owed-person-more {
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  background: transparent;
+  color: var(--color-accent-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.owed-person-groups .owed-person-more:hover {
+  background: var(--color-surface-hover);
+}

@@ -7,6 +7,11 @@ import '../../styles/monthly-trend.css'
 
 const MONTHS = 6
 
+/** "€1.9K": the six columns are narrow on a phone, where full amounts run into each other. */
+function formatCompact(value: number) {
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', notation: 'compact', maximumFractionDigits: value >= 1000 ? 1 : 0 }).format(value)
+}
+
 type TrendMonth = { year: number; month: number; key: string; moneyIn: number; spent: number }
 
 function monthsEndingAt(year: number, month: number) {
@@ -74,7 +79,8 @@ export function MonthlyTrendPanel({ year, month }: { year: number; month: number
               <span className={`monthly-trend-bar is-in${isCut(entry.moneyIn) ? ' is-cut' : ''}`} style={{ height: heightOf(entry.moneyIn) }} />
               <span className={`monthly-trend-bar is-out${isCut(entry.spent) ? ' is-cut' : ''}`} style={{ height: heightOf(entry.spent) }} />
             </span>
-            <span className="monthly-trend-spent">{formatMoney(entry.spent.toFixed(0))}</span>
+            <span className="monthly-trend-spent monthly-trend-full">{formatMoney(entry.spent.toFixed(0))}</span>
+            <span className="monthly-trend-spent monthly-trend-compact">{formatCompact(entry.spent)}</span>
             <span className="monthly-trend-label">{new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(entry.year, entry.month - 1, 1))}</span>
           </button>
         ))}

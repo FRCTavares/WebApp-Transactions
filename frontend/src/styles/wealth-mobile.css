@@ -77,12 +77,6 @@
     min-height: 12.8rem !important;
   }
 
-  .wealth-page .wealth-chart-label {
-    fill: var(--chart-axis-text) !important;
-    font-size: 15px !important;
-    font-weight: 900 !important;
-  }
-
   .wealth-page .wealth-chart-footer,
   .wealth-page .investment-trend-footer {
     margin-top: 0.12rem !important;
@@ -178,12 +172,6 @@
     stroke-width: 2.5 !important;
   }
 
-  .wealth-page .wealth-chart-label {
-    fill: var(--chart-axis-text) !important;
-    font-size: 16px !important;
-    font-weight: 900 !important;
-  }
-
   .wealth-page .wealth-chart-footer {
     gap: 0.62rem !important;
   }
@@ -206,10 +194,6 @@
     height: 13.2rem !important;
     min-height: 13.2rem !important;
   }
-
-  .wealth-page .wealth-chart-label {
-    font-size: 17px !important;
-  }
 }
 
 /* Wealth mobile real plot geometry fix. */
@@ -231,20 +215,8 @@
     stroke-width: 2.6 !important;
   }
 
-  .wealth-page .wealth-chart-label {
-    fill: var(--chart-axis-text) !important;
-    font-size: 18px !important;
-    font-weight: 900 !important;
-  }
-
   .wealth-page .wealth-chart-footer {
     margin-top: 0.2rem !important;
-  }
-}
-
-@media (max-width: 430px) {
-  .wealth-page .wealth-chart-label {
-    font-size: 19px !important;
   }
 }
 
@@ -291,10 +263,6 @@
   .wealth-page .investment-trend-window-selector button.active {
     background: var(--color-accent-subtle) !important;
     color: var(--color-accent-text) !important;
-  }
-
-  .wealth-page .wealth-chart-label {
-    fill: var(--chart-axis-text) !important;
   }
 
 }

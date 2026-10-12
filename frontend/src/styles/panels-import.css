@@ -382,3 +382,11 @@
 .export-page > .ui-page-header {
   margin-bottom: var(--space-6);
 }
+
+/* Four short counters read better two by two than as four full-height cards on a phone. */
+@media (max-width: 420px) {
+  .summary-grid.import-history-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
