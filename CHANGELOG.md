@@ -10,6 +10,13 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Changed (desktop pages)
+
+- Wealth: the Snapshots list shows the latest 12 with "Show N more" (it used to render every snapshot, a page thousands of pixels tall), can be filtered by account, and has icon Edit/Delete.
+- Transactions: the "Month" field under More filters is gone (the header's month switcher does that job); Date from/to remain.
+- Categories: icon buttons for Rename, Disable/Enable and Delete, and only inactive categories carry a status label.
+- Export / Backup no longer says "production database"; the Privacy page has a "Back to Finance" link.
+
 ### Changed (desktop)
 
 - Owed: the duplicate full table under the person cards is gone. Each item's expanded detail in its card now carries everything the table had: status, due date, total, paid, linked transaction, notes and the Edit / Mark paid / Delete actions.

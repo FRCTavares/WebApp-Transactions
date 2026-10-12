@@ -16,7 +16,9 @@ export function PrivacyPage() {
   return (
     <div className="privacy-page">
       <div className="privacy-page-card">
-        <p className="eyebrow">Privacy</p>
+        <p className="eyebrow">
+          <a href="/">← Back to Finance</a>
+        </p>
         <h1>Privacy and Account Deletion</h1>
         <p>
           This policy describes how F - Transactions handles personal data

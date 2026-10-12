@@ -1,6 +1,7 @@
 import type { TransactionCategory } from '../../types/api'
 import { getTransferDirectionLabel } from '../../utils/transactionCategoriesPanelUtils'
-import { Button } from '../ui'
+import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
+import { Button, IconButton } from '../ui'
 
 /**
  * A single row in `TransactionCategoriesPanel`'s category list. Split
@@ -57,15 +58,11 @@ export function CategoryRow({
         )}
       </div>
 
-      <span
-        className={`transaction-category-status ${
-          category.is_active
-            ? 'transaction-category-status-active'
-            : 'transaction-category-status-inactive'
-        }`}
-      >
-        {category.is_active ? 'Active' : 'Inactive'}
-      </span>
+      {!category.is_active && (
+        <span className="transaction-category-status transaction-category-status-inactive">
+          Inactive
+        </span>
+      )}
 
       <div className="transaction-category-actions">
         {isEditing ? (
@@ -78,18 +75,17 @@ export function CategoryRow({
             </Button>
           </>
         ) : (
-          <Button type="button" size="sm" onClick={() => onStartEditing(category)}>
-            Rename
-          </Button>
+          <IconButton icon={Pencil} size="md" label="Rename" onClick={() => onStartEditing(category)} />
         )}
 
-        <Button type="button" size="sm" onClick={() => onToggle(category)}>
-          {category.is_active ? 'Disable' : 'Enable'}
-        </Button>
+        <IconButton
+          icon={category.is_active ? EyeOff : Eye}
+          size="md"
+          label={category.is_active ? 'Disable' : 'Enable'}
+          onClick={() => onToggle(category)}
+        />
 
-        <Button type="button" size="sm" variant="danger" onClick={() => onDelete(category)}>
-          Delete
-        </Button>
+        <IconButton icon={Trash2} size="md" variant="danger" label="Delete" onClick={() => onDelete(category)} />
       </div>
     </article>
   )

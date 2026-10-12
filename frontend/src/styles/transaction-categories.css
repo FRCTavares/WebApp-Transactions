@@ -554,3 +554,11 @@
   }
 }
 
+
+.transaction-category-actions .ui-icon-button-ghost {
+  color: var(--color-text);
+}
+
+.transaction-category-actions .ui-icon-button-danger {
+  color: var(--color-negative);
+}

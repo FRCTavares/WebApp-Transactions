@@ -142,15 +142,6 @@ export function TransactionFilters({
 
           <div className="transaction-filter-dates">
             <label>
-              Month
-              <input
-                type="month"
-                value={filters.month}
-                onChange={(event) => onChange('month', event.target.value)}
-              />
-            </label>
-
-            <label>
               Date from
               <input
                 type="date"

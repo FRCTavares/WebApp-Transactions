@@ -840,3 +840,28 @@
     height: 1rem;
   }
 }
+
+.wealth-snapshots-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.wealth-snapshots-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.wealth-table-wrap .table-action-group .ui-icon-button-ghost {
+  color: var(--color-text);
+}
+
+.wealth-table-wrap .table-action-group .ui-icon-button-danger {
+  color: var(--color-negative);
+}

@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { getAccountName } from '../../utils/wealthPageUtils'
 import type { WealthAccount, WealthSnapshot } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
-import { Button, EmptyState } from '../ui'
+import { Button, EmptyState, IconButton } from '../ui'
 import { CalendarClock, Pencil, Trash2 } from 'lucide-react'
 
 /**
@@ -9,6 +10,8 @@ import { CalendarClock, Pencil, Trash2 } from 'lucide-react'
  * (which was approaching the project's 900-line soft limit) — purely
  * presentational, all state lives in the parent page.
  */
+const SNAPSHOT_PAGE = 12
+
 export function WealthSnapshotsTablePanel({
   sortedSnapshots,
   accounts,
@@ -24,6 +27,13 @@ export function WealthSnapshotsTablePanel({
   onStartEdit: (snapshot: WealthSnapshot) => void
   onRemove: (snapshot: WealthSnapshot) => void
 }) {
+  const [accountId, setAccountId] = useState('')
+  const [visible, setVisible] = useState(SNAPSHOT_PAGE)
+  const filtered = accountId
+    ? sortedSnapshots.filter((snapshot) => String(snapshot.account_id) === accountId)
+    : sortedSnapshots
+  const shown = filtered.slice(0, visible)
+
   return (
     <section className="content-card panel-card wealth-snapshots-panel">
       <div className="section-header">
@@ -38,6 +48,26 @@ export function WealthSnapshotsTablePanel({
           {isOpen ? 'Hide snapshots' : 'Show snapshots'}
         </Button>
       </div>
+
+      {isOpen && accounts.length > 1 ? (
+        <label className="wealth-snapshots-filter">
+          <span>Account</span>
+          <select
+            value={accountId}
+            onChange={(event) => {
+              setAccountId(event.target.value)
+              setVisible(SNAPSHOT_PAGE)
+            }}
+          >
+            <option value="">All accounts</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
 
       {isOpen ? (
         <div className="table-wrap wealth-table-wrap">
@@ -56,7 +86,7 @@ export function WealthSnapshotsTablePanel({
             </tr>
           </thead>
           <tbody>
-            {sortedSnapshots.map((snapshot) => (
+            {shown.map((snapshot) => (
               <tr key={snapshot.id}>
                 <td>{formatDate(snapshot.snapshot_date)}</td>
                 <td>{getAccountName(accounts, snapshot.account_id)}</td>
@@ -70,29 +100,25 @@ export function WealthSnapshotsTablePanel({
                 <td>{snapshot.notes ?? '-'}</td>
                 <td>
                   <div className="table-action-group">
-                    <Button
-                      type="button"
-                      size="sm"
-                      iconLeft={Pencil}
+                    <IconButton
+                      icon={Pencil}
+                      size="md"
+                      label={`Edit snapshot ${formatDate(snapshot.snapshot_date)}`}
                       onClick={() => onStartEdit(snapshot)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
+                    />
+                    <IconButton
+                      icon={Trash2}
+                      size="md"
                       variant="danger"
-                      iconLeft={Trash2}
+                      label={`Delete snapshot ${formatDate(snapshot.snapshot_date)}`}
                       onClick={() => onRemove(snapshot)}
-                    >
-                      Delete
-                    </Button>
+                    />
                   </div>
                 </td>
               </tr>
             ))}
 
-            {sortedSnapshots.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan={9}>
                   <EmptyState
@@ -105,6 +131,17 @@ export function WealthSnapshotsTablePanel({
             ) : null}
           </tbody>
         </table>
+        </div>
+      ) : null}
+
+      {isOpen && filtered.length > visible ? (
+        <div className="wealth-snapshots-more">
+          <span className="muted small">
+            Showing {shown.length} of {filtered.length}
+          </span>
+          <Button type="button" size="sm" onClick={() => setVisible((count) => count + SNAPSHOT_PAGE)}>
+            Show {Math.min(SNAPSHOT_PAGE, filtered.length - visible)} more
+          </Button>
         </div>
       ) : null}
     </section>
