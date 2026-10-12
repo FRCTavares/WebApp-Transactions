@@ -23,6 +23,28 @@ export type { OwedFormState } from './OwedInlineForm'
 
 const COLLAPSED_ITEMS = 5
 
+/**
+ * Desktop shows the person cards in two columns. Each card goes into the shorter column (by how many rows it shows),
+ * so a tall card does not leave a hole beside the next one. On a phone the columns dissolve and `order` restores the
+ * sorted sequence for the swipe list.
+ */
+function splitIntoColumns<T extends { person: string; items: unknown[] }>(
+  groups: T[],
+  expanded: ReadonlySet<string>,
+): { group: T; groupIndex: number }[][] {
+  const columns: { group: T; groupIndex: number }[][] = [[], []]
+  const heights = [0, 0]
+
+  groups.forEach((group, groupIndex) => {
+    const rows = expanded.has(group.person) ? group.items.length : Math.min(group.items.length, COLLAPSED_ITEMS)
+    const target = heights[1]! < heights[0]! ? 1 : 0
+    columns[target]!.push({ group, groupIndex })
+    heights[target]! += rows + 3
+  })
+
+  return columns.filter((column) => column.length > 0)
+}
+
 function getPersonGroups(items: OwedItem[]) {
   const groups = new Map<string, { person: string; items: OwedItem[] }>()
 
@@ -138,6 +160,7 @@ export function OwedItemsTable({
 }: OwedItemsTableProps) {
   const personGroups = getPersonGroups(items)
   const [expandedPeople, setExpandedPeople] = useState<ReadonlySet<string>>(new Set())
+  const personColumns = splitIntoColumns(personGroups, expandedPeople)
 
   return (
     <>
@@ -187,8 +210,10 @@ export function OwedItemsTable({
               description="Add a new item when someone owes you money, or switch the view filter."
             />
           ) : (
-            personGroups.map((group, groupIndex) => (
-              <article key={group.person} className="owed-person-card">
+            personColumns.map((column, columnIndex) => (
+              <div key={columnIndex} className="owed-person-column">
+                {column.map(({ group, groupIndex }) => (
+              <article key={group.person} className="owed-person-card" style={{ order: groupIndex }}>
                 <div className="owed-person-card-header">
                   <div>
                     <h2>{group.person}</h2>
@@ -319,6 +344,8 @@ export function OwedItemsTable({
                   </button>
                 )}
               </article>
+                ))}
+              </div>
             ))
           )}
         </div>

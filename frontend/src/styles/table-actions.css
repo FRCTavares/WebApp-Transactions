@@ -16,3 +16,22 @@
   white-space: nowrap;
   min-width: 72px;
 }
+
+/* Row actions are icon-only, so they need to read at a glance: full-contrast icons, a red delete. */
+.transaction-desktop-table-wrap .action-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.transaction-desktop-table-wrap .action-group .ui-icon-button-ghost {
+  color: var(--color-text);
+}
+
+.transaction-desktop-table-wrap .action-group .ui-icon-button-ghost:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+}
+
+.transaction-desktop-table-wrap .action-group .ui-icon-button-danger {
+  color: var(--color-negative);
+}

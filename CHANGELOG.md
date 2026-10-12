@@ -10,6 +10,12 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Changed (UI polish)
+
+- Owed: the person cards sit in two balanced columns (each card goes in the shorter one), so a tall card no longer leaves a hole beside the next. On a phone they still swipe as one list in the same order.
+- Dashboard "Last 6 months": bars are scaled to about twice a typical month and an unusually big month is cut off with a notch, so one large purchase no longer flattens the others (exact spending is printed under each column).
+- Transactions: the row action icons are larger and full contrast, with a red delete.
+
 ### Fixed
 
 - **Settings showed "Missing bearer token" and preferences could fail to load** after opening the app: the first data requests left before the Google sign-in attached its session token. The token is now in place before any page loads data.

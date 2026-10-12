@@ -2,9 +2,16 @@
 @media (min-width: 801px) {
   .owed-person-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
     gap: 1rem;
+  }
+
+  .owed-person-groups .owed-person-column {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    min-width: 0;
   }
 
   .owed-person-groups .owed-person-card {
