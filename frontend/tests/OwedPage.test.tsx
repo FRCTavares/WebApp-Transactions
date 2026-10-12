@@ -82,6 +82,30 @@ describe('owed page payment workflow', () => {
     })
   })
 
+  it('balances the person cards across two columns and collapses long lists behind Show all', async () => {
+    const make = (id: number, person: string, remaining: string) => ({
+      ...OPEN_OWED_ITEM, id, person, reason: `Item ${id}`, amount_total: remaining, amount_remaining: remaining,
+    })
+    mocks.listOwedItems.mockResolvedValue([
+      make(1, 'Ana', '900.00'),
+      ...Array.from({ length: 7 }, (_, index) => make(10 + index, 'Bruno', '50.00')),
+      make(30, 'Carla', '20.00'),
+    ])
+    const user = userEvent.setup()
+    const { container } = render(<OwedPage />)
+
+    await screen.findByRole('heading', { name: 'Ana' })
+    const columns = [...container.querySelectorAll('.owed-person-column')]
+    expect(columns).toHaveLength(2)
+    expect(within(columns[0] as HTMLElement).getByRole('heading', { name: 'Ana' })).toBeTruthy()
+    expect(within(columns[0] as HTMLElement).getByRole('heading', { name: 'Carla' })).toBeTruthy()
+    expect(within(columns[1] as HTMLElement).getByRole('heading', { name: 'Bruno' })).toBeTruthy()
+
+    expect(container.querySelectorAll('[data-collapsed="true"]')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Show all 7' }))
+    expect(container.querySelectorAll('[data-collapsed="true"]')).toHaveLength(0)
+  })
+
   it('records a payment with a manual allocation', async () => {
     mocks.createOwedPayment.mockResolvedValue({ unallocated_amount: '0.00' })
     const user = userEvent.setup()

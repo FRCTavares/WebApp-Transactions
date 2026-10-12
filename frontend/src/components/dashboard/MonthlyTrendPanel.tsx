@@ -43,7 +43,14 @@ export function MonthlyTrendPanel({ year, month }: { year: number; month: number
   }, [year, month])
 
   if (!months || months.every((entry) => entry.moneyIn === 0 && entry.spent === 0)) return null
-  const peak = Math.max(...months.map((entry) => Math.max(entry.moneyIn, entry.spent)), 1)
+  // One unusual month (a big purchase) would flatten the rest, so bars are scaled to about twice a typical month and
+  // anything above is cut off with a break mark; the exact spending is printed under every column.
+  const peaks = months.map((entry) => Math.max(entry.moneyIn, entry.spent)).sort((a, b) => a - b)
+  const median = ((peaks[Math.floor((peaks.length - 1) / 2)] ?? 0) + (peaks[Math.ceil((peaks.length - 1) / 2)] ?? 0)) / 2
+  const cap = Math.max(median * 2, 1)
+  const scale = Math.min(Math.max(...peaks, 1), cap)
+  const heightOf = (value: number) => `${Math.min(value / scale, 1) * 100}%`
+  const isCut = (value: number) => value > scale
 
   return (
     <Card as="section" padding="md" className="monthly-trend" aria-label="Last six months">
@@ -64,8 +71,8 @@ export function MonthlyTrendPanel({ year, month }: { year: number; month: number
             onClick={() => setPeriod(entry.year, entry.month)}
           >
             <span className="monthly-trend-bars">
-              <span className="monthly-trend-bar is-in" style={{ height: `${(entry.moneyIn / peak) * 100}%` }} />
-              <span className="monthly-trend-bar is-out" style={{ height: `${(entry.spent / peak) * 100}%` }} />
+              <span className={`monthly-trend-bar is-in${isCut(entry.moneyIn) ? ' is-cut' : ''}`} style={{ height: heightOf(entry.moneyIn) }} />
+              <span className={`monthly-trend-bar is-out${isCut(entry.spent) ? ' is-cut' : ''}`} style={{ height: heightOf(entry.spent) }} />
             </span>
             <span className="monthly-trend-spent">{formatMoney(entry.spent.toFixed(0))}</span>
             <span className="monthly-trend-label">{new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(entry.year, entry.month - 1, 1))}</span>

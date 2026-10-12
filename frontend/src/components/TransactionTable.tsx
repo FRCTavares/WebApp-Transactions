@@ -506,7 +506,7 @@ export function TransactionTable({
                       {!transaction.is_grouped && onEdit && (
                         <IconButton
                           icon={Pencil}
-                          size="sm"
+                          size="md"
                           label={`Edit ${transaction.description}`}
                           onClick={() => onEdit(transaction)}
                         />
@@ -514,7 +514,7 @@ export function TransactionTable({
                       {!transaction.is_grouped && onMarkOwed && canCreateOwedShare(transaction) && (
                         <IconButton
                           icon={HandCoins}
-                          size="sm"
+                          size="md"
                           label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                           onClick={() => onMarkOwed(transaction)}
                         />
@@ -522,7 +522,7 @@ export function TransactionTable({
                       {!transaction.is_grouped && onDelete && (
                         <IconButton
                           icon={Trash2}
-                          size="sm"
+                          size="md"
                           variant="danger"
                           label={`Delete ${transaction.description}`}
                           onClick={() => onDelete(transaction)}
