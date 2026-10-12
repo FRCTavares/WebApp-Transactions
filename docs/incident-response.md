@@ -1,12 +1,12 @@
 # Incident Response
 
-How outages, bad releases and auth problems are handled for F - Transactions. For getting data back see
+How outages, bad releases and auth problems are handled for Vault. For getting data back see
 [backups.md](backups.md). This is a personal/small-group project with one owner, so the process is deliberately
 light: a repeatable checklist, not an on-call rotation.
 
 ## Detection
 
-- **Control Center** (HomeServer): the Applications page shows F-Transactions' components (API, web, database)
+- **Control Center** (HomeServer): the Applications page shows Vault' components (API, web, database)
   and version, and its alerts report failing health checks.
 - **Manual**: you notice broken behaviour, or someone using the app tells you.
 

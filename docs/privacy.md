@@ -1,6 +1,6 @@
 # Privacy and Account Deletion
 
-This policy describes how F - Transactions handles personal data for its controlled personal and invited-user deployment.
+This policy describes how Vault handles personal data for its controlled personal and invited-user deployment.
 
 ## Data collected and purpose
 

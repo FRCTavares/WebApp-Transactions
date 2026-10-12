@@ -85,7 +85,7 @@ export function AppSidebar({
             className="sidebar-brand-icon"
           />
           <div className="account-summary">
-            <p className="account-greeting">Finance</p>
+            <p className="account-greeting">Vault</p>
           </div>
         </div>
         {authError && <p className="error-text">{authError}</p>}

@@ -1,4 +1,4 @@
-# F - Transactions: Open Tasks
+# Vault: Open Tasks
 
 Project overview and stack: [`README.md`](README.md).
 

@@ -21,7 +21,7 @@ export function PrivacyPage() {
         </p>
         <h1>Privacy and Account Deletion</h1>
         <p>
-          This policy describes how F - Transactions handles personal data
+          This policy describes how Vault handles personal data
           for its controlled personal and invited-user deployment.
         </p>
 

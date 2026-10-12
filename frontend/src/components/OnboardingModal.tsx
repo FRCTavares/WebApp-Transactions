@@ -45,7 +45,7 @@ export function OnboardingModal({ preferences, onSave }: OnboardingModalProps) {
 
   if (step === 'welcome') {
     return (
-      <Modal title="Welcome to F - Transactions" onClose={() => finish()} isCloseDisabled={isSaving}>
+      <Modal title="Welcome to Vault" onClose={() => finish()} isCloseDisabled={isSaving}>
         <p>
           This is your personal finance tracker: transactions, investments, and net worth in one
           place. It takes a minute to set up your defaults - you can change any of this later in

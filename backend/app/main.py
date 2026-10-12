@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 api_docs_enabled = get_api_docs_enabled()
 
 app = FastAPI(
-    title="F - Transactions API",
+    title="Vault API",
     lifespan=lifespan,
     docs_url="/docs" if api_docs_enabled else None,
     redoc_url="/redoc" if api_docs_enabled else None,

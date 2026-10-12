@@ -36,9 +36,9 @@ def notify_admin_of_pending_signup(email: str) -> None:
             RESEND_API_URL,
             headers={"Authorization": f"Bearer {api_key}"},
             json={
-                "from": "F - Transactions <onboarding@resend.dev>",
+                "from": "Vault <onboarding@resend.dev>",
                 "to": [notify_email],
-                "subject": "New sign-up request for F - Transactions",
+                "subject": "New sign-up request for Vault",
                 "text": (
                     f"{email} signed in with Google and is waiting for "
                     "approval. Approve or deny it from Settings in the app."
