@@ -336,7 +336,7 @@ export function OwedItemsTable({
                 {group.items.length > COLLAPSED_ITEMS && (
                   <button
                     type="button"
-                    className="owed-person-more desktop-only"
+                    className="owed-person-more"
                     aria-expanded={expandedPeople.has(group.person)}
                     onClick={() =>
                       setExpandedPeople((current) => {

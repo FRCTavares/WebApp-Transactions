@@ -69,33 +69,23 @@
     font-size: 0.94rem !important;
   }
 
+  /* One card per person stacked down the page (they used to be a swipe carousel of fixed-height cards, which hid
+     everyone but the first person and left empty space under short lists). */
   .owed-mobile-groups {
-    display: flex;
+    display: grid;
     gap: 0.75rem;
-    overflow-x: auto;
     padding: 0.05rem 0.05rem calc(7.5rem + env(safe-area-inset-bottom));
-    scroll-padding: 0.05rem;
-    scroll-snap-type: x mandatory;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .owed-mobile-groups::-webkit-scrollbar {
-    display: none;
   }
 
   .owed-page-polished .owed-person-card {
     display: flex !important;
-    flex: 0 0 100%;
     flex-direction: column;
     width: 100%;
     max-width: 100%;
-    height: min(48dvh, 30rem) !important;
-    min-height: min(48dvh, 30rem) !important;
-    max-height: min(48dvh, 30rem) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow: hidden !important;
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
     gap: 0.55rem;
     padding: 0.75rem;
     border-radius: 1rem;
@@ -121,35 +111,16 @@
   }
 
   .owed-person-card-hint {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem;
-    margin-top: -0.15rem;
-    color: var(--color-text-muted);
-    font-size: 0.72rem;
-    font-weight: 850;
-  }
-
-  .owed-person-card-hint span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: none;
   }
 
   .owed-person-items {
     display: grid !important;
     flex: 0 1 auto;
-    height: calc(min(48dvh, 30rem) - 6.55rem) !important;
     min-height: 0 !important;
-    max-height: calc(min(48dvh, 30rem) - 6.55rem) !important;
     align-content: start;
     gap: 0.4rem !important;
-    overflow-y: auto !important;
     padding: 0 0 0.65rem;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
   }
 
   .owed-page-polished .owed-person-item {
@@ -260,16 +231,6 @@
     font-size: clamp(1.82rem, 8vw, 2.15rem) !important;
   }
 
-  .owed-page-polished .owed-person-card {
-    height: min(46dvh, 28rem) !important;
-    min-height: min(46dvh, 28rem) !important;
-    max-height: min(46dvh, 28rem) !important;
-  }
-
-  .owed-person-items {
-    height: calc(min(46dvh, 28rem) - 6.55rem) !important;
-    max-height: calc(min(46dvh, 28rem) - 6.55rem) !important;
-  }
 }
 /* Remove mobile filter outer cards. */
 @media (max-width: 800px) {

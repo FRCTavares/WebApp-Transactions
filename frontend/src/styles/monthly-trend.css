@@ -115,3 +115,17 @@
   background: var(--color-surface);
   transform: skewY(-12deg);
 }
+
+.monthly-trend-compact {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .monthly-trend-full {
+    display: none;
+  }
+
+  .monthly-trend-compact {
+    display: block;
+  }
+}

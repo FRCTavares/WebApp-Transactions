@@ -10,6 +10,14 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Changed (iPhone pass)
+
+- Owed: person cards stack down the page at their natural height instead of a swipe carousel of fixed-height cards (which hid everyone but the first person and left empty space under short lists); long lists show five items and "Show all N", on the phone too.
+- Wealth: the chart's date labels were drawn at 19 px (several layered overrides from when the chart was scaled) and ran into each other; they are now small like the amounts.
+- Dashboard: the six-month spending labels no longer run together on a phone ("€1.9k" instead of "€1,908.00").
+- Categories: the Rename/Disable/Delete icons sit beside the name instead of on a second line.
+- Import: the four history counters sit two by two.
+
 ### Changed (desktop pages)
 
 - Wealth: the Snapshots list shows the latest 12 with "Show N more" (it used to render every snapshot, a page thousands of pixels tall), can be filtered by account, and has icon Edit/Delete.
