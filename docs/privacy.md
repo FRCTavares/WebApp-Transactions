@@ -4,32 +4,25 @@ This policy describes how F - Transactions handles personal data for its control
 
 ## Data collected and purpose
 
-The application stores the authenticated Supabase user identifier and email address together with financial records the user creates or imports. These records can include transactions, categories, rules, owed-money records, investments, wealth accounts and snapshots, import history, and temporary import previews.
+The application stores the authenticated user identifier and email address (from Google sign-in) together with financial records the user creates or imports. These records can include transactions, categories, rules, owed-money records, investments, wealth accounts and snapshots, import history, and temporary import previews.
 
 The data is processed only to provide the finance-tracking, import, export, recovery, and authentication features requested by the user. The application does not use financial data for advertising and does not currently enable product analytics or behavioral telemetry.
 
 ## Processors and hosting
 
-- Supabase provides authentication and the production PostgreSQL database.
-- Google Cloud Run hosts the backend API.
-- Vercel hosts the static frontend.
-- Google provides OAuth authentication when Google sign-in is used.
+- The application and its PostgreSQL database run on the operator's own home server and are reachable only over a
+  private network (Tailscale). No cloud host stores the financial data.
+- Google provides sign-in: it proves who the person is once, after which the application issues its own session.
+- Market prices are fetched from Yahoo Finance's public endpoints from the server (see `docs/production-roadmap.md`,
+  decision 13).
 
-Provider regions and subprocessors follow the configuration and terms of the deployed projects.
-
-**Recorded hosting regions:**
-
-- Supabase (auth + database): `eu-north-1` (Stockholm, Sweden), confirmed 2026-07-20.
-- Google Cloud Run (backend API): `europe-west1`, confirmed 2026-09-22.
-- Vercel (frontend): global edge network; no single region pinned, confirmed 2026-07-20.
-
-All data-storing providers are within the EU/EEA.
+Data is stored in Portugal on the operator's hardware.
 
 ## Retention and backups
 
 Active application data is retained until the user deletes it or the service is retired. Temporary import previews expire according to the application preview policy.
 
-Production backups follow `docs/backups-supabase.md`: seven daily, four weekly, and twelve monthly backups. Account deletion removes active application data and the Supabase sign-in identity immediately. Existing encrypted backups age out under the normal retention schedule and are not selectively rewritten. Deleted data must not be restored into the active service except for a documented legal or security requirement.
+Backups follow `docs/backups.md`: database dumps three times a day, kept for 90 days, with a copy on a second machine on the same private network. Account deletion removes active application data immediately. Existing backups age out under that retention and are not selectively rewritten. Deleted data must not be restored into the active service except for a documented legal or security requirement.
 
 ## Export
 
@@ -40,10 +33,9 @@ An authenticated user can download a JSON export from **Settings → Export / Ba
 An authenticated user can delete the account from **Settings → Delete account**. The user must type the signed-in email address. The backend then:
 
 1. atomically deletes every active user-owned application row, including transient import previews;
-2. removes the corresponding Supabase Auth identity;
-3. signs the browser out after successful confirmation.
+2. signs the browser out after successful confirmation.
 
-Deletion cannot be undone. If application data is deleted but the external identity removal fails, the API reports this explicitly and directs the user to the privacy support contact.
+The Google identity itself is not ours to delete: remove the app's access from the Google account if you want that too. Deletion cannot be undone.
 
 ## Privacy requests and incidents
 
@@ -63,5 +55,5 @@ that gap should be closed before a large public user base exists, but does
 not block the current small/invited scale.
 
 All three original release gates are now satisfied: a monitored privacy
-contact, a recorded hosting-region set (all EU/EEA), and an established
+contact, a recorded hosting location (the operator's own server in Portugal), and an established
 incident-response procedure.

@@ -11,4 +11,4 @@ All timeout values must be positive integers. Timeout responses use generic mess
 
 ## HTTP response hardening
 
-The API returns `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, and a restrictive `Content-Security-Policy` suitable for a JSON API. Production also returns one-year HSTS with subdomains. The frontend host should independently set a CSP matching its configured API and Supabase origins because those origins are deployment-specific.
+The API returns `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, and a restrictive `Content-Security-Policy` suitable for a JSON API. Production also returns one-year HSTS with subdomains. The web tier (Caddy, `deploy/web`) serves the frontend and proxies `/api` on the same origin, so its CSP only needs that origin and Google's sign-in script.

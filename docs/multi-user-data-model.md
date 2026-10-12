@@ -2,9 +2,10 @@
 
 ## Ownership: how a row belongs to a user
 
-There's no local `users` table — Supabase Auth is the source of truth for
-identity. A row's owner is a plain `user_id` string column holding the
-Supabase JWT's `sub` claim (a UUID Supabase assigns per account), set by
+There's no local `users` table — the verified session is the source of truth
+for identity. A row's owner is a plain `user_id` string column holding the
+session's user id (in `AUTH_MODE=google`: the pinned id from `AUTH_USER_ID_MAP`,
+otherwise `google:<sub>`; in the legacy Supabase mode: the JWT's `sub`), set by
 the service layer from the authenticated request, never from anything the
 client sends directly.
 
@@ -27,7 +28,7 @@ as defense in depth beyond the application-layer checks.
 
 ## No database-level Row Level Security
 
-Supabase Postgres supports RLS policies; this project doesn't use them.
+PostgreSQL supports RLS policies; this project doesn't use them.
 Ownership is enforced entirely in the FastAPI service layer. The resolved
 decision in `docs/production-roadmap.md` is to evaluate RLS as defense in
 depth only after the backend's own role/service-account strategy is

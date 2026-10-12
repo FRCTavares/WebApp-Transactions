@@ -1,80 +1,43 @@
-# Authentication Options
+# Authentication
 
-> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+Sign-in is chosen by `AUTH_MODE` on the backend and `VITE_AUTH_MODE` in the frontend build.
 
-## The two states
-
-Authentication is controlled by one frontend flag and mirrored backend
-configuration:
-
-| | `VITE_SUPABASE_AUTH_ENABLED=true` | unset / anything else |
+| | `google` (production, home server) | `supabase` (legacy, kept for local use) |
 |---|---|---|
-| Frontend | Shows Google sign-in via Supabase Auth | Skips straight to the app UI, no login screen |
-| Backend | Verifies a real Supabase JWT on every request | Still verifies a real Supabase JWT on every request |
+| Sign-in | Google Identity Services in the browser | Supabase Auth with Google |
+| After sign-in | the API verifies Google's ID token **once** (`POST /api/auth/google`) and issues its own signed session token | the Supabase JWT is verified on every request |
+| Every later request | `Authorization: Bearer <session token>`, verified with `SESSION_SECRET` (HMAC-SHA256); no third party involved | verified against Supabase's JWKS or `SUPABASE_JWT_SECRET` |
+| Where the code is | `app/auth/google_session.py`, `app/routers/auth_session.py`, `frontend/src/auth/GoogleAuthProvider.tsx` | `app/auth/current_user.py`, `frontend/src/auth/AuthProvider.tsx` |
 
-**These are not independent local vs. hosted modes.** The backend's
-`get_current_user` dependency (`app/auth/current_user.py`) unconditionally
-requires a valid `Authorization: Bearer <token>` header and decodes it as a
-real Supabase JWT — there is no backend-side bypass. A previous local-auth
-bypass was removed (see the `LOCAL_DEFAULT_USER_ID` constant in
-`current_user.py`, which is now dead code left over from that removal).
+`get_current_user` always requires a valid bearer token: there is no bypass mode. For local development in
+`google` mode you mint a token yourself ([deployment.md](deployment.md#local-development)).
 
-**Practical consequence**: setting `VITE_SUPABASE_AUTH_ENABLED` to anything
-other than `true` only hides the login screen. It does not give you a
-working local mode — every page that fetches data will get `401`s, because
-no request carries a token. To actually use the app, including locally,
-the backend needs a real Supabase project configured
-(`SUPABASE_URL` + either `SUPABASE_JWKS_URL` or `SUPABASE_JWT_SECRET`), and
-the frontend needs `VITE_SUPABASE_AUTH_ENABLED=true` with matching
-`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.
+## Session tokens
 
-The one working exception: `frontend/e2e/global-setup.ts` mints a real
-Supabase-shaped JWT locally (HS256, signed with the same
-`SUPABASE_JWT_SECRET` the backend is configured with) and injects it
-directly into `localStorage`, bypassing the Google OAuth flow but still
-producing a token the backend genuinely verifies. This is how the
-Playwright e2e suite runs without a browser-based OAuth flow. See
-`frontend/e2e/.env.e2e.local` (gitignored) for the secrets this needs.
+`v1.<payload>.<signature>`: the payload carries the user id, email, name and expiry; the signature is
+HMAC-SHA256 over it with `SESSION_SECRET` (at least 32 characters). Tokens last `SESSION_TTL_HOURS`
+(default 30 days). Changing `SESSION_SECRET` signs everyone out. The browser keeps the token in
+`localStorage` under `finance.session.v1`; the API clearing a rejected token sends the person back to the
+sign-in screen.
 
-## Verification: HS256 legacy secret vs. JWKS
+## Authorization
 
-`decode_supabase_jwt` (`app/auth/current_user.py`) branches on the JWT's
-`alg` header:
+- **`ALLOWED_USER_EMAILS`**: the invite list. Any verified Google account can sign in, but an email that is
+  neither allowed nor approved is rejected with `403`; the access-status screen tells a new person they are
+  pending, and an admin can approve them (pending sign-up approval).
+- **`ADMIN_USER_EMAILS`**: may maintain shared market data. Being allowed to sign in does not make someone an admin.
 
-- **`HS256`** → verified against `SUPABASE_JWT_SECRET` (the older,
-  shared-secret Supabase Auth signing method).
-- **Anything else** (Supabase's current default, asymmetric signing) →
-  verified against `SUPABASE_JWKS_URL`, fetched from Supabase's JWKS
-  endpoint. If `SUPABASE_JWKS_URL` isn't set explicitly, it's derived
-  automatically from `SUPABASE_URL`
-  (`<SUPABASE_URL>/auth/v1/.well-known/jwks.json`).
-
-In both cases, the token's issuer is also checked against
-`<SUPABASE_URL>/auth/v1` and the audience against `"authenticated"`.
-
-For a current Supabase project, you generally only need `SUPABASE_URL` —
-JWKS derivation handles the rest. `SUPABASE_JWT_SECRET` only matters for
-projects still issuing HS256 tokens.
-
-## Authorization: allowlist and admin emails
-
-Authentication (who you are) is separate from authorization (what you can
-do):
-
-- **`ALLOWED_USER_EMAILS`**: comma-separated list. If set, only these
-  emails can authenticate at all (`is_allowed_user_email` returns `403`
-  otherwise). If unset, any authenticated Supabase user is allowed — see
-  the resolved "open registration" decision in `docs/production-roadmap.md`.
-- **`ADMIN_USER_EMAILS`**: comma-separated list. Controls
-  `get_privileged_user`, used for admin-only mutation endpoints (shared
-  market data management). Separate from `ALLOWED_USER_EMAILS` — being
-  allowed to sign in doesn't imply admin access.
-
-Both are required (non-empty) when `APP_ENV=production`, enforced by
-`validate_production_config()` at startup.
+Both are required in production (`validate_production_config()`).
 
 ## Ownership
 
-The authenticated user's identity for data-ownership purposes is the
-Supabase JWT's `sub` claim, never anything the frontend sends directly —
-see `docs/multi-user-data-model.md` for how that's used across the schema.
+A row's owner is the user id from the verified session, never anything the browser sends: see
+[multi-user-data-model.md](multi-user-data-model.md). `AUTH_USER_ID_MAP` (`email=user-id,...`) pins an email to
+the id its existing rows carry (the former Supabase user id); an email without an entry gets `google:<sub>` and
+starts empty.
+
+## Legacy Supabase mode
+
+Left in place for local use. It verifies Supabase JWTs by `alg`: HS256 against `SUPABASE_JWT_SECRET`, anything
+else against the JWKS derived from `SUPABASE_URL`, and checks issuer and audience. It needs a real Supabase
+project; there is no backend bypass.

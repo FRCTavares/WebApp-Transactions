@@ -1,134 +1,72 @@
-# Deployment
+# Configuration and Local Setup
 
-> **Retired (2026-10-11).** This describes the former Vercel / Cloud Run / Supabase deployment, which was decommissioned. Current setup: [self-hosted.md](self-hosted.md).
+Production is the home server: see [self-hosted.md](self-hosted.md) for the topology and
+[release-and-rollback.md](release-and-rollback.md) for releases. This page is the environment reference and the
+local development setup.
 
-## Environment variables
+## Backend environment
 
-### Backend (`backend/.env` locally; Google Cloud Run in production)
+Production values live in `/etc/homeserver/secrets/apps/finance.env` on the server (template:
+`backend/.env.selfhosted.example`). Local development uses `backend/.env` (template: `backend/.env.example`).
 
-See `backend/.env.example` for a filled-in template.
-
-| Variable | Required in production? | Default | Notes |
-|---|---|---|---|
-| `DATABASE_URL` | Yes | local SQLite (`backend/data/finance.db`) | Postgres in production |
-| `SUPABASE_URL` | Yes | — | Also derives the JWKS URL and JWT issuer; see `docs/auth-options.md` |
-| `SUPABASE_JWKS_URL` | No | derived from `SUPABASE_URL` | Only set to override the derivation |
-| `SUPABASE_JWT_SECRET` | No | — | Only needed for Supabase projects still issuing HS256 (legacy) JWTs |
-| `SUPABASE_SERVICE_ROLE_KEY` | Only if account deletion is used | — | Backend only, never exposed to the frontend |
-| `ALLOWED_USER_EMAILS` | Yes | — | Comma-separated; empty/unset means anyone can sign in |
-| `ADMIN_USER_EMAILS` | Yes | — | Comma-separated; controls privileged market-data mutations |
-| `CORS_ORIGINS` | Yes (must not contain `*`) | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated |
-| `APP_ENV` | — | `development` | `production` enables `validate_production_config()` |
-| `LOCAL_NETWORK_ONLY` | Must be `false` | `false` | |
-| `API_DOCS_ENABLED` | — | enabled outside production, disabled in production | See policy below |
-| `MARKET_DATA_TIMEOUT_SECONDS` | No | `15` | |
-| `DATABASE_CONNECT_TIMEOUT_SECONDS` | No | `10` | |
-| `DATABASE_STATEMENT_TIMEOUT_MS` | No | `30000` | |
-| `APP_GIT_COMMIT` | No | — | Release commit supplied explicitly during Cloud Run deployment; exposed as the short `version` in `GET /api/health` |
-| `RENDER_GIT_COMMIT` | No | — | Legacy compatibility fallback only; do not set for new Cloud Run releases |
-
-`validate_production_config()` (`app/config.py`) raises at startup if
-`APP_ENV=production` and any of `DATABASE_URL`, `SUPABASE_URL`,
-`ALLOWED_USER_EMAILS`, `ADMIN_USER_EMAILS` are missing, `CORS_ORIGINS`
-contains `*`, or `LOCAL_NETWORK_ONLY` is true — this is the reproducible
-check that production misconfiguration fails loudly instead of silently.
-
-### Frontend (`frontend/.env.local` locally; Vercel dashboard in production)
-
-See `frontend/.env.example` for a filled-in template.
-
-| Variable | Default | Notes |
+| Variable | Production | Notes |
 |---|---|---|
-| `VITE_API_BASE_URL` | `http://localhost:8000` | |
-| `VITE_SUPABASE_URL` | — | |
-| `VITE_SUPABASE_ANON_KEY` | — | Public anon/publishable key, never a service-role key |
-| `VITE_SUPABASE_AUTH_ENABLED` | disabled unless exactly `"true"` | Only controls whether the login screen shows — see `docs/auth-options.md`, it does **not** give you a working backend-auth-free local mode |
-| `VITE_PRIVACY_CONTACT_EMAIL` | `"the deployment owner"` | Shown on Settings → Privacy |
+| `APP_ENV` | `production` | turns on `validate_production_config()`, which refuses to start on a bad configuration |
+| `DATABASE_URL` | required | PostgreSQL in production; local SQLite (`backend/data/finance.db`) when unset |
+| `AUTH_MODE` | `google` | `supabase` is the legacy mode, kept for local use (see [auth-options.md](auth-options.md)) |
+| `GOOGLE_CLIENT_ID` | required for `google` | must end in `.apps.googleusercontent.com` |
+| `SESSION_SECRET` | required for `google` | at least 32 characters; signs the API's own session tokens |
+| `SESSION_TTL_HOURS` | optional | default 720 (30 days) |
+| `AUTH_USER_ID_MAP` | optional | `email=user-id,...` pins an email to the id its rows already carry |
+| `ALLOWED_USER_EMAILS` | required | comma-separated invite list |
+| `ADMIN_USER_EMAILS` | required | may maintain shared market data |
+| `CORS_ORIGINS` | required | must not contain `*`; the site origin |
+| `LOCAL_NETWORK_ONLY` | `false` | must be false in production |
+| `API_DOCS_ENABLED` | `false` | `/docs`, `/redoc` and `/openapi.json` are not registered when false (the default in production) |
+| `APP_GIT_COMMIT` | set by the build | the short commit reported by `GET /api/health` |
+| `DATABASE_CONNECT_TIMEOUT_SECONDS`, `DATABASE_STATEMENT_TIMEOUT_MS`, `MARKET_DATA_TIMEOUT_SECONDS` | optional | defaults 10 s, 30 000 ms, 15 s |
 
-## Local setup
+The `SUPABASE_*` variables only matter in `AUTH_MODE=supabase`.
 
-1. **Backend**: `cd backend && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`, then copy `.env.example` to `.env` and fill in Supabase values (see `docs/auth-options.md` for why these are required even locally). Run migrations: `alembic upgrade head` (or let `initialise_database()` handle it on startup for SQLite). Start: `uvicorn app.main:app --reload`.
-2. **Frontend**: `cd frontend && npm install`, copy `.env.example` to `.env.local` and fill in matching values, `npm run dev`.
-3. **Verify**: `curl http://localhost:8000/api/health` should return `{"status": "ok", "version": "..."}`; the frontend at `http://localhost:5173` should reach a real sign-in screen if `VITE_SUPABASE_AUTH_ENABLED=true`.
+## Frontend build variables
 
-## Production setup
+Baked into the bundle at image build time (`/etc/homeserver/config/apps/finance-build.env`), so changing the
+hostname means rebuilding.
 
-Current production topology: Vercel (frontend), Google Cloud Run (backend),
-and Supabase (Postgres + Auth).
+| Variable | Notes |
+|---|---|
+| `VITE_API_BASE_URL` | the site origin, no `/api` (e.g. `https://finance.<tailnet>.ts.net`) |
+| `VITE_AUTH_MODE` | `google` for the server build |
+| `VITE_GOOGLE_CLIENT_ID` | the public OAuth client id |
+| `VITE_PRIVACY_CONTACT_EMAIL` | shown on the Privacy page and Settings |
 
-The live backend service is `webapp-transactions-backend` in `europe-west1`.
-It is deployed from `./backend` with Google Cloud source deployment/buildpacks;
-`backend/Procfile` defines the Uvicorn web process. The production database
-schema is managed by the separate `f-transactions-migrate` Cloud Run Job.
+## Local development
 
-For a backend release:
+The simplest local setup needs no Google or Supabase account: run the API in `AUTH_MODE=google` against SQLite
+and give the browser a session token you mint yourself.
 
-1. Confirm CI is green and the intended release commit is checked out.
-2. If `backend/migrations/` changed, rebuild `f-transactions-migrate` from the
-   same release `./backend` source, preserving its `DATABASE_URL` Secret Manager
-   reference, `/cnb/lifecycle/launcher -- python -m alembic upgrade head`
-   command, and `maxRetries=0`.
-3. Execute `gcloud run jobs execute f-transactions-migrate
-   --region=europe-west1 --wait`. Do not deploy the service unless it succeeds.
-4. Confirm the production `alembic_version` matches the repository Alembic
-   head.
-5. Capture the release commit and manually deploy
-   `webapp-transactions-backend` from `./backend` to `europe-west1`. Preserve
-   the existing secrets and service configuration while updating the build
-   identifier with `APP_GIT_COMMIT`.
-6. Run `scripts/smoke_production.sh`, confirm `/api/ready`, confirm
-   `/api/health` reports the expected short release commit, and inspect Cloud
-   Run logs.
-7. Frontend environment variables remain managed in Vercel per environment.
+1. **Backend** (`backend/`): `python -m venv .venv && source .venv/bin/activate && pip install -r requirements-dev.txt`.
+2. Start it with a throwaway database and secret:
 
-Cloud Run has no Render-style automatic `preDeployCommand`; the migration Job
-is therefore an explicit human-controlled release gate, not an implicit
-platform guarantee. See `docs/release-and-rollback.md` for the full order and
-rollback procedure.
+   ```bash
+   export DATABASE_URL=sqlite:////tmp/finance-demo.db AUTH_MODE=google \
+     GOOGLE_CLIENT_ID=demo.apps.googleusercontent.com SESSION_SECRET=$(openssl rand -hex 32) \
+     ALLOWED_USER_EMAILS=demo@example.com ADMIN_USER_EMAILS=demo@example.com CORS_ORIGINS=http://localhost:5174
+   python -m alembic upgrade head
+   uvicorn app.main:app --port 8001
+   ```
 
-## Production API documentation policy
+3. **Session token**: `python -c "from app.auth.google_session import issue_session_token as t; print(t(user_id='demo-user', email='demo@example.com', name='Demo'))"`
+   (same environment). In the browser console on the app's origin, store it under `finance.session.v1` as
+   `{"token": "...", "expiresAt": "<ISO time>", "user": {"id": "demo-user", "email": "demo@example.com", "displayName": "Demo"}}`.
+4. **Frontend** (`frontend/`): `npm install`, then
+   `VITE_API_BASE_URL=http://localhost:8001 VITE_AUTH_MODE=google VITE_GOOGLE_CLIENT_ID=demo.apps.googleusercontent.com npx vite --port 5174`.
+5. Seed data through the API (categories first, then transactions, owed items and wealth accounts) or import a CSV.
 
-FastAPI documentation exposure is controlled by `API_DOCS_ENABLED`.
+`GET http://localhost:8001/api/health` should return `{"status": "ok", ...}`.
 
-The application uses these defaults:
+## Account deletion
 
-- documentation is enabled outside production;
-- documentation is disabled when `APP_ENV=production`;
-- an explicit `API_DOCS_ENABLED=true` enables documentation in any environment;
-- an explicit false value disables documentation in any environment.
-
-When documentation is disabled, the following endpoints are not registered:
-
-- `/docs`
-- `/docs/oauth2-redirect`
-- `/redoc`
-- `/openapi.json`
-
-The Cloud Run production service sets `API_DOCS_ENABLED=false` explicitly. Public
-production deployments must keep this setting disabled unless API documentation
-exposure has been deliberately reviewed and approved.
-
-Local development requires no additional configuration because documentation is
-enabled by default. Set `API_DOCS_ENABLED=false` locally to test the disabled
-behavior.
-
-## Account deletion configuration
-
-Production account deletion requires `SUPABASE_SERVICE_ROLE_KEY` on the backend
-service. This secret authorizes the backend to remove the authenticated user's
-Supabase Auth identity after the user's application data has been deleted.
-
-Requirements:
-
-- configure the service-role key only on Cloud Run or another trusted backend;
-- never expose it through a `VITE_` variable or frontend bundle;
-- never commit it to the repository or include it in logs;
-- rotate it immediately if it is exposed;
-- verify the Settings account-deletion flow after changing Supabase projects.
-
-If the variable is absent, the deletion endpoint returns a controlled
-configuration error and does not claim that the account identity was removed.
-
-Set `VITE_PRIVACY_CONTACT_EMAIL` in the Vercel frontend environment to the
-monitored address that handles privacy requests. This value is public and must
-not contain credentials or private operational information.
+In `AUTH_MODE=google`, deleting an account removes the user's application data and signs the browser out; the
+Google identity is not ours to delete. (In the legacy `supabase` mode it also needs `SUPABASE_SERVICE_ROLE_KEY`
+on the backend, never in a `VITE_` variable.)

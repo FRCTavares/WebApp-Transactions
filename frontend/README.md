@@ -8,15 +8,15 @@ full environment variable reference and setup walkthrough.
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in real values, see below
 npm run dev                  # http://localhost:5173
 ```
 
-**Read [`../docs/auth-options.md`](../docs/auth-options.md) before assuming
-"local" means "no Supabase needed"** — it doesn't. The backend requires a
-real Supabase-verified JWT on every request regardless of
-`VITE_SUPABASE_AUTH_ENABLED`; that flag only controls whether the frontend
-shows a login screen.
+The app needs a signed-in session even locally: the backend requires a valid
+bearer token on every request and there is no bypass. The quickest local setup
+is the API in `AUTH_MODE=google` against SQLite with a session token you mint
+yourself; the steps are in [`../docs/deployment.md`](../docs/deployment.md#local-development).
+Build-time variables (`VITE_API_BASE_URL`, `VITE_AUTH_MODE`, `VITE_GOOGLE_CLIENT_ID`)
+are listed there too.
 
 ## Commands
 
@@ -32,10 +32,11 @@ shows a login screen.
 
 ## Running the e2e suite locally
 
-The e2e suite needs a real backend running with real Supabase config (see
-[`../docs/auth-options.md`](../docs/auth-options.md) — there's no
-auth-bypass mode). `frontend/e2e/global-setup.ts` mints a real
-Supabase-shaped JWT locally rather than driving an actual OAuth flow.
+The e2e suite runs against the legacy `supabase` auth mode (see
+[`../docs/auth-options.md`](../docs/auth-options.md); there's no auth-bypass
+mode). `frontend/e2e/global-setup.ts` mints a Supabase-shaped JWT locally
+rather than driving an actual OAuth flow. No Supabase project is involved: the
+backend just verifies a token signed with the shared test secret.
 
 1. `frontend/e2e/.env.e2e.local` (gitignored) needs `SUPABASE_JWT_SECRET`,
    `E2E_TEST_EMAIL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
@@ -56,7 +57,7 @@ skip (the offline test).
   presentation preferences, online status, etc.)
 - `src/api/` — all backend API calls; components never call `fetch`
   directly
-- `src/auth/` — Supabase Auth client and the `AuthProvider` context
+- `src/auth/` — Google sign-in (`GoogleAuthProvider`), the legacy Supabase client and the auth context
 - `src/i18n/` — English/Portuguese translation strings
 - `src/utils/` — date, currency, and amount formatting
 - `public/sw.js` — the offline-support service worker, see

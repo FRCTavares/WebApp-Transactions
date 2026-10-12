@@ -6,20 +6,20 @@ stack, and build versioning. This folder holds the detailed docs it links to.
 ## Architecture and data model
 
 - [`multi-user-data-model.md`](multi-user-data-model.md) — ownership, ownership enforcement, shared vs. per-user data
-- [`auth-options.md`](auth-options.md) — Supabase Auth configuration, JWKS vs. legacy secret, what "local mode" actually does
+- [`auth-options.md`](auth-options.md) — Google sign-in and the API's own session, allowlist/admin, the legacy Supabase mode
 
 ## Setup and operations
 
 - [`self-hosted.md`](self-hosted.md) — running on the home server (Google sign-in, Caddy, Postgres, releases)
-- [`deployment.md`](deployment.md) — full environment variable reference, local/production setup
-- [`backups-supabase.md`](backups-supabase.md) — backup and recovery policy and procedure
+- [`deployment.md`](deployment.md) — environment variable reference and local development setup
+- [`backups.md`](backups.md) — what the HomeServer backs up, retention, and how to recover
 - [`incident-response.md`](incident-response.md) — detection, triage, communication
 - [`release-and-rollback.md`](release-and-rollback.md) — how releases happen, how to roll one back
-- [`oauth-and-hosting-checklist.md`](oauth-and-hosting-checklist.md) — dashboard-only items the owner must verify directly
+- [`oauth-and-hosting-checklist.md`](oauth-and-hosting-checklist.md) — Google OAuth client and server checks, common sign-in failures
 
 ## Product and quality
 
-- [`production-roadmap.md`](production-roadmap.md) — readiness scorecard, verification evidence, resolved decisions
+- [`production-roadmap.md`](production-roadmap.md) — status, accepted constraints, resolved decisions
 - [`privacy.md`](privacy.md) — privacy and account deletion
 - [`internationalization.md`](internationalization.md) — locale, currency, translation
 - [`security-and-timeouts.md`](security-and-timeouts.md) — request/database timeouts, security hardening
