@@ -5,6 +5,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
+import { useState } from 'react'
 import type { OwedItem } from '../../types/api'
 import { formatDate, formatMoney } from '../../utils/format'
 import {
@@ -19,6 +20,8 @@ import { OwedInlineForm } from './OwedInlineForm'
 import type { OwedFormState } from './OwedInlineForm'
 
 export type { OwedFormState } from './OwedInlineForm'
+
+const COLLAPSED_ITEMS = 5
 
 function getPersonGroups(items: OwedItem[]) {
   const groups = new Map<string, { person: string; items: OwedItem[] }>()
@@ -134,6 +137,7 @@ export function OwedItemsTable({
   onCancelEdit,
 }: OwedItemsTableProps) {
   const personGroups = getPersonGroups(items)
+  const [expandedPeople, setExpandedPeople] = useState<ReadonlySet<string>>(new Set())
 
   return (
     <>
@@ -195,12 +199,12 @@ export function OwedItemsTable({
                   <strong>{formatMoney(group.totalRemaining.toFixed(2))}</strong>
                 </div>
 
-                {(personGroups.length > 1 || group.items.length > 5) && (
+                {(personGroups.length > 1 || group.items.length > COLLAPSED_ITEMS) && (
                   <div className="owed-person-card-hint">
                     {personGroups.length > 1 && (
                       <span>{groupIndex + 1} of {personGroups.length} · swipe sideways</span>
                     )}
-                    {group.items.length > 5 && (
+                    {group.items.length > COLLAPSED_ITEMS && (
                       <span>{group.items.length} items · scroll list</span>
                     )}
                   </div>
@@ -213,7 +217,7 @@ export function OwedItemsTable({
                   <span>Remaining</span>
                 </div>
 
-                <div className="owed-person-items">
+                <div className="owed-person-items" data-collapsed={group.items.length > COLLAPSED_ITEMS && !expandedPeople.has(group.person)}>
                   {group.items.map((item) => (
                     <details key={item.id} className="owed-person-item">
                       <summary className="owed-person-item-summary">
@@ -295,6 +299,25 @@ export function OwedItemsTable({
                     </details>
                   ))}
                 </div>
+
+                {group.items.length > COLLAPSED_ITEMS && (
+                  <button
+                    type="button"
+                    className="owed-person-more desktop-only"
+                    aria-expanded={expandedPeople.has(group.person)}
+                    onClick={() =>
+                      setExpandedPeople((current) => {
+                        const next = new Set(current)
+                        if (!next.delete(group.person)) next.add(group.person)
+                        return next
+                      })
+                    }
+                  >
+                    {expandedPeople.has(group.person)
+                      ? 'Show fewer'
+                      : `Show all ${group.items.length}`}
+                  </button>
+                )}
               </article>
             ))
           )}

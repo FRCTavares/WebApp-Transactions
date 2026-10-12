@@ -10,7 +10,6 @@ import { WealthPage } from './pages/WealthPage'
 import { ExportPage } from './pages/ExportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { PrivacyPage } from './pages/PrivacyPage'
-import { GlobalPeriodSelector } from './components/GlobalPeriodSelector'
 import { AppSidebar } from './components/AppSidebar'
 import { AppMobileNav } from './components/AppMobileNav'
 import { AppMobileMorePage } from './components/AppMobileMorePage'
@@ -106,12 +105,6 @@ function App() {
   const presentation = usePresentationPreferences(!isAuthEnabled || Boolean(session))
   const accessStatus = useAccessStatus(isAuthEnabled && Boolean(session))
   const isOnline = useOnlineStatus()
-  const shouldShowGlobalPeriodSelector =
-    page !== null
-    && page !== 'import'
-    && page !== 'categories'
-    && page !== 'export'
-    && page !== 'settings'
   const displayName = getUserDisplayName(user)
   const profileAvatarUrl = getUserAvatarUrl(user)
   const greeting = getGreeting()
@@ -283,12 +276,6 @@ function App() {
         />
 
         <main className={`app-main app-main-${page ?? 'not-found'}`}>
-          {shouldShowGlobalPeriodSelector && (
-            <div className="global-topbar">
-              <GlobalPeriodSelector />
-            </div>
-          )}
-
           {!isOnline && (
             <div className="backend-wake-notice offline-notice" role="status">
               <strong>You're offline</strong>

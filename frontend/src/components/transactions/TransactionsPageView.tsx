@@ -1,6 +1,7 @@
 import type { FormEvent } from "react"
 import { Download, Plus } from 'lucide-react'
 import { StatusMessage } from "../StatusMessage"
+import { GlobalPeriodSelector } from "../GlobalPeriodSelector"
 import { Button, PageHeader, SegmentedControl } from "../ui"
 import {
   TransactionFilters,
@@ -73,7 +74,6 @@ export type TransactionsPageViewProps = {
     field: keyof TransactionFilterState,
     value: string | boolean,
   ) => void
-  onApplyFilters: () => void
   onClearFilters: () => void
   onCreateSubmit: (event: FormEvent<HTMLFormElement>) => void
   onFormChange: (
@@ -150,6 +150,7 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
         }
         actions={
           <>
+            <GlobalPeriodSelector />
             <span className="desktop-only">
               <Button
                 type="button"
@@ -190,7 +191,6 @@ export function TransactionsPageView(props: TransactionsPageViewProps) {
         filters={props.filters}
         categoryOptions={props.categoryOptions}
         onChange={props.onFilterChange}
-        onApply={() => props.onApplyFilters()}
         onClear={props.onClearFilters}
       />
       {props.isCreateFormOpen ? (

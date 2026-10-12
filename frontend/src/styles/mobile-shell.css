@@ -273,10 +273,6 @@
 
 /* More page structure polish: mobile only. */
 @media (max-width: 800px) {
-  .app-main-wealth .global-topbar,
-  .app-main-more .global-topbar {
-    display: none !important;
-  }
 
   .app-main-more {
     padding-top: 1.05rem;

@@ -205,6 +205,32 @@ describe('transactions page workflows', () => {
     expect(dateHeader).toHaveAttribute('aria-sort', 'descending')
   })
 
+  it('applies filters as they change, with no Apply button, and shows Clear only once one is set', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findAllByText('Grocery store')
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
+
+    mocks.listTransactions.mockClear()
+    await user.selectOptions(screen.getByLabelText('Source'), 'revolut')
+    await waitFor(() =>
+      expect(mocks.listTransactions).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'revolut' }),
+      ),
+    )
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy()
+
+    mocks.listTransactions.mockClear()
+    await user.type(screen.getByPlaceholderText('Search expenses...'), 'gro')
+    await waitFor(() =>
+      expect(mocks.listTransactions).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'gro' }),
+      ),
+    )
+    expect(mocks.listTransactions.mock.calls.length).toBe(1)
+  })
+
   it('labels the create toggle "Add" with a single plus (the icon), not "+ Add"', async () => {
     renderPage()
 

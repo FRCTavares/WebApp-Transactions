@@ -143,61 +143,6 @@ body {
     padding: 1.65rem 1.55rem 2.5rem;
     overflow-x: hidden;
   }
-
-  .global-topbar {
-    top: 1rem;
-  }
-
-  .global-period-selector {
-    gap: 0.45rem;
-    padding: 0.45rem 0.55rem;
-    border-color: var(--color-border-glass-strong);
-    border-radius: 1.05rem;
-    background: var(--color-surface-glass-elevated);
-    box-shadow:
-      0 18px 44px var(--shadow-color-medium),
-      inset 0 0 0 1px var(--color-surface-glass-wash);
-    backdrop-filter: blur(18px);
-  }
-
-  .global-period-selector label {
-    gap: 0.45rem;
-  }
-
-  .global-period-selector label span {
-    color: var(--color-text-muted);
-    font-size: 0.78rem;
-    font-weight: 720;
-  }
-
-  .global-period-selector input {
-    height: 2.35rem;
-    width: 9rem;
-    min-width: 0;
-    border-color: var(--color-accent-border-subtle);
-    border-radius: 0.75rem;
-    background: var(--color-surface);
-    color: var(--color-text);
-    font-size: 0.95rem;
-    font-weight: 650;
-  }
-
-  .global-period-selector button {
-    min-width: 2.35rem;
-    height: 2.35rem;
-    padding: 0 0.7rem;
-    border-color: var(--color-accent-border-subtle);
-    border-radius: 0.75rem;
-    background: var(--color-surface);
-    color: var(--color-text);
-    font-weight: 750;
-  }
-
-  .global-period-selector button:hover {
-    border-color: var(--color-accent-border);
-    background: var(--color-accent-subtle-hover);
-    color: var(--color-accent-hover);
-  }
 }
 
 @media (max-width: 800px) {
@@ -224,16 +169,6 @@ body {
 
   main {
     background: var(--color-bg);
-  }
-
-  .global-topbar {
-    top: 0.6rem;
-  }
-
-  .global-period-selector {
-    background: var(--color-surface-glass-opaque);
-    box-shadow: 0 10px 28px var(--shadow-color-medium);
-    backdrop-filter: blur(18px);
   }
 }
 
@@ -500,52 +435,4 @@ body {
     stroke-width: 2.35;
   }
 
-}
-
-/* The global period pill is `position: absolute; left: 50%`, so it is out of
-   flow and floats over whatever the page header puts underneath it. Page
-   headers lay their actions out against the right edge, so on pages with wide
-   action groups the actions slid under the pill: Owed clipped "Export CSV" by
-   19px and Investments clipped "Resolve FX" by 51px.
-
-   Reserving a centre column in the header grid keeps the actions clear of it.
-   Equal `1fr` side columns make the reserved column centre on the same axis
-   the pill is centred on, so the clearance holds at any width. Scoped with
-   `:has()` to the pages that actually render a pill - Import and Settings do
-   not, and should keep the plain two-part header. */
-@media (min-width: 801px) {
-  .app-main:has(> .global-topbar) .ui-page-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 24rem minmax(0, 1fr);
-    align-items: start;
-  }
-
-  /* The pill only covers the first line of the header. Letting the title block
-     span the full width lets a long description use it, while the eyebrow and
-     title - the parts level with the pill - are clamped short of it. Wealth's
-     description was otherwise squeezed into three cramped lines. */
-  .app-main:has(> .global-topbar) .ui-page-header-titles {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .app-main:has(> .global-topbar) .ui-page-header-eyebrow,
-  .app-main:has(> .global-topbar) .ui-page-header-title {
-    max-width: calc(50% - 13rem);
-  }
-
-  /* Clearance under the pill. Without it the description's box started 1px
-     above the pill's bottom edge - invisible today only because the glyphs sit
-     lower in the line box, and one font-size change away from a real overlap. */
-  .app-main:has(> .global-topbar) .ui-page-header-description,
-  .app-main:has(> .global-topbar) .ui-page-header-meta {
-    margin-top: var(--space-2);
-  }
-
-  .app-main:has(> .global-topbar) .ui-page-header-actions {
-    grid-column: 3;
-    grid-row: 1;
-    justify-content: flex-end;
-    justify-self: end;
-  }
 }

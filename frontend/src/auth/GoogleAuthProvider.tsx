@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { setAccessTokenProvider, setUnauthorizedHandler } from '../api/client'
 import { AuthContext, type AuthContextValue, type AuthSession } from './authContext'
@@ -32,7 +32,8 @@ function toAuthSession(session: GoogleSession | null): AuthSession | null {
 export function GoogleAuthProvider({ children }: { children: ReactNode }) {
   const [stored, setStored] = useState<GoogleSession | null>(() => currentGoogleSession())
 
-  useEffect(() => {
+  // A layout effect: children's effects (the first data loads) run before a plain effect here, and would go out without the token.
+  useLayoutEffect(() => {
     setAccessTokenProvider(async () => currentGoogleSession()?.token ?? null)
     setUnauthorizedHandler(async () => {
       clearGoogleSession()

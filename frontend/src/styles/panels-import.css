@@ -376,3 +376,9 @@
   display: grid;
   gap: 18px;
 }
+
+/* Import and Export are plain sections, so their header needs its own gap above the first card. */
+.import-page > .ui-page-header,
+.export-page > .ui-page-header {
+  margin-bottom: var(--space-6);
+}

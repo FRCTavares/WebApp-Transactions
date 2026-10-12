@@ -380,10 +380,6 @@
   main {
     padding-top: 12px;
   }
-
-  .global-period-selector {
-    border-radius: var(--radius-lg);
-  }
 }
 
 @media (max-width: 800px) {

@@ -38,7 +38,6 @@ type TransactionFiltersProps = {
   filters: TransactionFilterState
   categoryOptions: TransactionCategory[]
   onChange: (field: keyof TransactionFilterState, value: string | boolean) => void
-  onApply: () => void
   onClear: () => void
 }
 
@@ -47,7 +46,6 @@ export function TransactionFilters({
   filters,
   categoryOptions,
   onChange,
-  onApply,
   onClear,
 }: TransactionFiltersProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -188,18 +186,11 @@ export function TransactionFilters({
             </span>
           )}
 
-          <Button
-            type="button"
-            size="sm"
-            variant="primary"
-            onClick={onApply}
-          >
-            Apply
-          </Button>
-
-          <Button type="button" size="sm" onClick={onClear}>
-            Clear
-          </Button>
+          {activeFilterCount > 0 && (
+            <Button type="button" size="sm" onClick={onClear}>
+              Clear
+            </Button>
+          )}
         </div>
       </div>
       </div>

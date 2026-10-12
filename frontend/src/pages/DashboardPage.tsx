@@ -22,6 +22,8 @@ import { RecentTransactionsList } from '../components/dashboard/RecentTransactio
 import { CategoryDetailPanel } from '../components/dashboard/CategoryDetailPanel'
 import { Card, PageHeader, Skeleton } from '../components/ui'
 import { useAuth } from '../hooks/useAuth'
+import { MonthlyTrendPanel } from '../components/dashboard/MonthlyTrendPanel'
+import { GlobalPeriodSelector } from '../components/GlobalPeriodSelector'
 import { usePeriod } from '../hooks/usePeriod'
 
 type CategoryRollup = {
@@ -246,6 +248,7 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
             {monthLabel}
           </p>
         }
+        actions={<GlobalPeriodSelector />}
       />
 
       <StatusMessage error={error} />
@@ -311,6 +314,8 @@ export function DashboardPage({ greeting, displayName }: DashboardPageProps) {
               monthLabel={monthLabel}
             />
           </div>
+
+          <MonthlyTrendPanel year={year} month={month} />
 
           {selectedCategory && (
             <CategoryDetailPanel

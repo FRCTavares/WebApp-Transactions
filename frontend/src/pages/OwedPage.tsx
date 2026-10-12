@@ -532,7 +532,13 @@ export function OwedPage() {
         <div>
           <h2>Owed items</h2>
           <p className="muted small">
-            Showing {visibleItems.length} of {items.length} owed items.
+            Showing {visibleItems.length} of {items.length} owed items
+            {' · '}
+            {formatMoney(
+              visibleItems
+                .reduce((total, item) => total + Number(item.amount_remaining), 0)
+                .toFixed(2),
+            )} remaining.
           </p>
         </div>
 
