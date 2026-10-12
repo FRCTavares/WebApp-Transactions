@@ -330,16 +330,6 @@ export function ImportPage() {
       <PageHeader
         title="Import CSV/XLSX"
         description="Preview first, check duplicates, then commit only the new rows."
-        actions={(
-          <Button
-            type="button"
-            size="sm"
-            iconLeft={RefreshCw}
-            onClick={loadBatches}
-          >
-            Refresh history
-          </Button>
-        )}
       />
 
       <div className="panel-card import-upload-panel">

@@ -10,6 +10,11 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Changed (desktop)
+
+- Owed: the duplicate full table under the person cards is gone. Each item's expanded detail in its card now carries everything the table had: status, due date, total, paid, linked transaction, notes and the Edit / Mark paid / Delete actions.
+- Import: the duplicate "Refresh history" button in the page header is removed (the history card keeps its own).
+
 ### Changed (UI polish)
 
 - Owed: the person cards sit in two balanced columns (each card goes in the shorter one), so a tall card no longer leaves a hole beside the next. On a phone they still swipe as one list in the same order.
