@@ -279,9 +279,17 @@ export function OwedItemsTable({
                           {item.due_date && (
                             <span className="muted small">Due {formatDate(item.due_date)}</span>
                           )}
+                          <span className="muted small">
+                            Total {formatMoney(item.amount_total)}
+                          </span>
                           {item.amount_paid !== '0.00' && (
                             <span className="muted small">
                               Paid {formatMoney(item.amount_paid)}
+                            </span>
+                          )}
+                          {item.linked_transaction_id !== null && (
+                            <span className="muted small">
+                              Transaction #{item.linked_transaction_id}
                             </span>
                           )}
                         </div>
@@ -306,7 +314,7 @@ export function OwedItemsTable({
                               onClick={() => onMarkPaid(item)}
                               aria-label={`Mark ${item.reason} as paid`}
                             >
-                              Paid
+                              Mark paid
                             </Button>
                           )}
                           <Button
@@ -349,90 +357,6 @@ export function OwedItemsTable({
             ))
           )}
         </div>
-      <div className="content-card table-wrap owed-table-wrap owed-desktop-table-wrap">
-        <table className="owed-table">
-        <thead>
-          <tr>
-            <th>Person</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Due</th>
-            <th>Linked Tx</th>
-            <th className="right">Total</th>
-            <th className="right">Paid</th>
-            <th className="right">Remaining</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.length === 0 ? (
-            <tr>
-              <td colSpan={9}>
-                <EmptyState
-                  icon={HandCoins}
-                  title="No owed items in this view"
-                  description="Add a new item when someone owes you money, or switch the view or status filters."
-                />
-              </td>
-            </tr>
-          ) : (
-            items.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.person}</td>
-                  <td>
-                    <div>{item.reason}</div>
-                    {item.notes && <div className="muted small">{item.notes}</div>}
-                  </td>
-                  <td>
-                    <Badge tone={getStatusTone(item)} size="sm">
-                      {getStatusLabel(item)}
-                    </Badge>
-                  </td>
-                  <td>{formatDate(item.due_date)}</td>
-                  <td>{item.linked_transaction_id ?? '-'}</td>
-                  <td className="right">{formatMoney(item.amount_total)}</td>
-                  <td className="right">{formatMoney(item.amount_paid)}</td>
-                  <td className="right">{formatMoney(item.amount_remaining)}</td>
-                  <td>
-                    <div className="action-group">
-                      <Button
-                        type="button"
-                        size="sm"
-                        iconLeft={Pencil}
-                        onClick={() => onStartEdit(item)}
-                        aria-label={`Edit ${item.reason}`}
-                      >
-                        Edit
-                      </Button>
-                      {item.status !== 'paid' && item.status !== 'cancelled' && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          iconLeft={CircleDollarSign}
-                          onClick={() => onMarkPaid(item)}
-                          aria-label={`Mark ${item.reason} as paid`}
-                        >
-                          Mark Paid
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="danger"
-                        iconLeft={Trash2}
-                        onClick={() => onDelete(item)}
-                        aria-label={`Delete ${item.reason}`}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-      </div>
     </>
   )
 }

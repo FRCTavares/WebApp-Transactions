@@ -106,6 +106,18 @@ describe('owed page payment workflow', () => {
     expect(container.querySelectorAll('[data-collapsed="true"]')).toHaveLength(0)
   })
 
+  it('shows total and linked transaction in the card details, and no separate table', async () => {
+    mocks.listOwedItems.mockResolvedValue([{ ...OPEN_OWED_ITEM, linked_transaction_id: 1365, amount_total: '40.00' }])
+    const { container } = render(<OwedPage />)
+
+    await screen.findByRole('heading', { name: 'Maria' })
+    expect(container.querySelector('table')).toBeNull()
+    expect(screen.getByText('Total €40.00')).toBeTruthy()
+    expect(screen.getByText('Transaction #1365')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Edit Dinner split' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Mark Dinner split as paid' })).toBeTruthy()
+  })
+
   it('records a payment with a manual allocation', async () => {
     mocks.createOwedPayment.mockResolvedValue({ unallocated_amount: '0.00' })
     const user = userEvent.setup()
