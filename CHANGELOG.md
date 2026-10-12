@@ -10,6 +10,10 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Docs
+
+- The retired Vercel / Cloud Run / Supabase docs are replaced by current ones: `backups.md` (the HomeServer's backups, retention and recovery; replaces `backups-supabase.md`), `deployment.md` (environment reference and a local setup that needs no Google or Supabase account), `release-and-rollback.md` (package, `deploy-finance`, rollback), `auth-options.md` (Google session vs the legacy Supabase mode), `incident-response.md`, `oauth-and-hosting-checklist.md` and `privacy.md`. `production-roadmap.md` is now a short status and decisions page; the README, frontend README and TODO list no longer describe the old hosting.
+
 ### Changed (iPhone pass)
 
 - Owed: person cards stack down the page at their natural height instead of a swipe carousel of fixed-height cards (which hid everyone but the first person and left empty space under short lists); long lists show five items and "Show all N", on the phone too.

@@ -2,8 +2,10 @@
 
 This is the app side of running F - Transactions on the home server with **no
 Supabase, no Google Cloud and no Vercel**. The server side (Postgres, compose,
-Tailscale, backups) lives in the HomeServer repository. Everything here is **off
-by default**: with `AUTH_MODE` unset the app behaves exactly as before.
+Tailscale, backups) lives in the HomeServer repository. This is how the app has
+run since 2026-10-11. In the code the self-hosted behaviour is still switched by
+`AUTH_MODE=google`; with it unset the app falls back to the legacy Supabase mode,
+which is kept for local use.
 
 ## What is replaced
 
@@ -60,11 +62,12 @@ hostname means rebuilding.
 `deploy/package-release.sh` packages the exact committed source
 (`finance-g<sha>`); the HomeServer's `deploy-finance` builds the two images
 (`backend/Dockerfile`, `deploy/web/Dockerfile`), runs the migrate job, then swaps
-the containers. Take a fresh backup before any release that adds a migration.
+the containers. Take a fresh backup before any release that adds a migration. The
+full steps and rollback are in [release-and-rollback.md](release-and-rollback.md).
 
 ## Not covered
 
 - Supabase Auth accounts are not in the `public` dump: access is the invite list.
 - Anything outside the tailnet cannot reach the app by design.
-- The GitHub Actions backup and keep-warm workflows belong to the Supabase
-  deployment; on the home server the HomeServer backup job replaces them.
+- There are no hosted scheduled jobs or CI: backups are the HomeServer's
+  ([backups.md](backups.md)) and tests run locally ([release-and-rollback.md](release-and-rollback.md)).
