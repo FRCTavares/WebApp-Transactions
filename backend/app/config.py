@@ -95,8 +95,6 @@ def validate_production_config() -> None:
     errors: list[str] = []
 
     database_url = os.getenv("DATABASE_URL", "").strip()
-    supabase_url = os.getenv("SUPABASE_URL", "").strip()
-    auth_mode = os.getenv("AUTH_MODE", "supabase").strip().lower() or "supabase"
     allowed_user_emails = os.getenv("ALLOWED_USER_EMAILS", "").strip()
     admin_user_emails = os.getenv("ADMIN_USER_EMAILS", "").strip()
     cors_origins = get_cors_origins()
@@ -104,21 +102,14 @@ def validate_production_config() -> None:
     if not database_url:
         errors.append("DATABASE_URL is required when APP_ENV=production")
 
-    if auth_mode not in {"supabase", "google"}:
-        errors.append("AUTH_MODE must be supabase or google")
-    elif auth_mode == "google":
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-        session_secret = os.getenv("SESSION_SECRET", "").strip()
+    google_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    session_secret = os.getenv("SESSION_SECRET", "").strip()
 
-        if not google_client_id.endswith(".apps.googleusercontent.com"):
-            errors.append(
-                "AUTH_MODE=google requires GOOGLE_CLIENT_ID (…apps.googleusercontent.com)"
-            )
+    if not google_client_id.endswith(".apps.googleusercontent.com"):
+        errors.append("GOOGLE_CLIENT_ID is required when APP_ENV=production (…apps.googleusercontent.com)")
 
-        if len(session_secret) < 32:
-            errors.append("AUTH_MODE=google requires SESSION_SECRET of at least 32 characters")
-    elif not supabase_url:
-        errors.append("SUPABASE_URL is required when APP_ENV=production")
+    if len(session_secret) < 32:
+        errors.append("SESSION_SECRET of at least 32 characters is required when APP_ENV=production")
 
     if not allowed_user_emails:
         errors.append("ALLOWED_USER_EMAILS is required when APP_ENV=production")

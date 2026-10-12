@@ -15,9 +15,9 @@ breaks. Finance and Fitness sign in through the **same Google OAuth client** (pr
 
 ## Home server
 
-- [ ] `finance.env` has `AUTH_MODE=google`, `GOOGLE_CLIENT_ID` (same id as the build), a `SESSION_SECRET` of at least
+- [ ] `finance.env` has `GOOGLE_CLIENT_ID` (same id as the build), a `SESSION_SECRET` of at least
       32 characters, `ALLOWED_USER_EMAILS`, `ADMIN_USER_EMAILS` and `CORS_ORIGINS=https://finance.<tailnet>.ts.net`.
-- [ ] `finance-build.env` has `VITE_API_BASE_URL`, `VITE_AUTH_MODE=google` and the same client id.
+- [ ] `finance-build.env` has `VITE_API_BASE_URL` and the same client id as `VITE_GOOGLE_CLIENT_ID`.
 - [ ] The Tailscale sidecar is up (the node `finance` shows in the tailnet admin console) and the device you use is on
       the tailnet. Nothing outside the tailnet can reach the app by design.
 - [ ] `GET /api/health` through the site reports the expected commit; `GET /api/ready` is OK.

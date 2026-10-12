@@ -158,7 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Atomically migrate all user-owned rows from a legacy owner "
-            "identifier to a Supabase subject."
+            "identifier to the user id a person signs in with."
         )
     )
     parser.add_argument(
@@ -174,7 +174,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--to-user-id",
         required=True,
-        help="Target Supabase sub value.",
+        help="Target user id (the session's sub).",
     )
     parser.add_argument(
         "--apply",

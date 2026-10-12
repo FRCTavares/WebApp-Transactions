@@ -1,13 +1,12 @@
 import json
 import logging
 import re
-import time
 
-import jwt
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.testclient import TestClient
 
+from tests.session_tokens import make_session_token
 from app.auth.current_user import CurrentUser, get_current_user
 from app.main import app as production_app
 from app.middleware.request_logging import (
@@ -93,20 +92,11 @@ def test_authenticated_user_log_identifier_is_safe(
     monkeypatch,
     caplog,
 ):
-    secret = "test-secret"
+    secret = "test-secret-at-least-thirty-two-bytes-long"
     subject = "00000000-0000-0000-0000-000000000123"
-    token = jwt.encode(
-        {
-            "sub": subject,
-            "email": "person@example.com",
-            "aud": "authenticated",
-            "exp": int(time.time()) + 300,
-        },
-        secret,
-        algorithm="HS256",
-    )
+    token = make_session_token("person@example.com", secret, subject)
 
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "person@example.com")
 
     app = FastAPI()
@@ -209,7 +199,7 @@ def test_real_app_logs_access_control_rejection(
     monkeypatch,
     caplog,
 ):
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+    monkeypatch.setenv("SESSION_SECRET", "test-secret-at-least-thirty-two-bytes-long")
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "person@example.com")
 
     caplog.set_level(logging.INFO, logger=REQUEST_LOGGER_NAME)
@@ -244,9 +234,7 @@ def test_real_app_logs_upload_rejection_without_body(
     monkeypatch,
     caplog,
 ):
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_URL", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+    monkeypatch.delenv("SESSION_SECRET", raising=False)
     monkeypatch.delenv("ALLOWED_USER_EMAILS", raising=False)
 
     sensitive_body = b"private-financial-upload"

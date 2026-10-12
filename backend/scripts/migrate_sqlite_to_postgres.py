@@ -217,7 +217,7 @@ def main() -> None:
     if not sqlite_path.exists():
         raise FileNotFoundError(f"SQLite database not found: {sqlite_path}")
 
-    database_url = getpass("Supabase DATABASE_URL: ").strip()
+    database_url = getpass("Target PostgreSQL DATABASE_URL: ").strip()
     if not database_url:
         raise RuntimeError("DATABASE_URL is required.")
 

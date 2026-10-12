@@ -34,7 +34,7 @@ if [[ -f "${env_file}" ]]; then
   set +a
 fi
 
-for required in SUPABASE_JWT_SECRET E2E_TEST_EMAIL VITE_SUPABASE_URL; do
+for required in SESSION_SECRET E2E_TEST_EMAIL; do
   if [[ -z "${!required:-}" ]]; then
     echo "Missing ${required}; set it in ${env_file} or the environment." >&2
     exit 1
@@ -45,6 +45,7 @@ db_path="$(mktemp -t e2e-backend-XXXXXX).db"
 export APP_ENV="e2e"
 export DATABASE_URL="sqlite:///${db_path}"
 export ALLOWED_USER_EMAILS="${E2E_TEST_EMAIL}"
+export GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-e2e.apps.googleusercontent.com}"
 export CORS_ORIGINS="http://127.0.0.1:${frontend_port},http://localhost:${frontend_port}"
 
 echo "Throwaway database: ${db_path}"

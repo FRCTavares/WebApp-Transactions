@@ -3,17 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.auth.current_user import (
     CurrentUser,
-    get_authenticated_supabase_user,
+    get_authenticated_user,
     get_current_user,
 )
 from app.database import get_db
 from app.repositories.account_deletion_repository import AccountDeletionRepository
 from app.repositories.pending_signup_repository import PendingSignupRepository
 from app.schemas.pending_signup import AccessStatusRead
-from app.services.account_deletion_service import (
-    AccountDeletionService,
-    SupabaseAuthIdentityDeletionClient,
-)
+from app.services.account_deletion_service import AccountDeletionService
 from app.services.pending_signup_service import PendingSignupService
 
 
@@ -23,10 +20,7 @@ router = APIRouter(prefix="/api", tags=["auth"])
 def get_account_deletion_service(
     db: Session = Depends(get_db),
 ) -> AccountDeletionService:
-    return AccountDeletionService(
-        repository=AccountDeletionRepository(db),
-        identity_client=SupabaseAuthIdentityDeletionClient(),
-    )
+    return AccountDeletionService(repository=AccountDeletionRepository(db))
 
 
 def get_pending_signup_service(
@@ -38,12 +32,12 @@ def get_pending_signup_service(
 @router.get("/me/access-status", response_model=AccessStatusRead)
 def read_access_status(
     service: PendingSignupService = Depends(get_pending_signup_service),
-    current_user: CurrentUser = Depends(get_authenticated_supabase_user),
+    current_user: CurrentUser = Depends(get_authenticated_user),
 ) -> AccessStatusRead:
     """Report whether the signed-in Google account can use the app.
 
     Unlike every other endpoint, this one accepts any validly-signed
-    Supabase JWT - including an email that isn't on the allow-list yet -
+    session token - including an email that isn't on the allow-list yet -
     so a brand-new sign-up can be told they're pending approval instead of
     just getting an opaque 403 from every request.
     """

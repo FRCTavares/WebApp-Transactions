@@ -1,6 +1,4 @@
-import time
 
-import jwt
 import pytest
 
 from app.auth.current_user import get_current_user, get_privileged_user
@@ -8,6 +6,7 @@ from app.models.pending_signup import PendingSignup
 from app.repositories.pending_signup_repository import PendingSignupRepository
 from app.services import signup_notifier
 from app.services.pending_signup_service import PendingSignupService
+from tests.session_tokens import make_session_token
 
 
 def make_pending_signup_token(
@@ -15,20 +14,7 @@ def make_pending_signup_token(
     secret: str = "test-secret-at-least-thirty-two-bytes-long",
     subject: str = "00000000-0000-0000-0000-000000000000",
 ) -> str:
-    now = int(time.time())
-
-    return jwt.encode(
-        {
-            "aud": "authenticated",
-            "exp": now + 3600,
-            "iat": now,
-            "sub": subject,
-            "email": email,
-            "role": "authenticated",
-        },
-        secret,
-        algorithm="HS256",
-    )
+    return make_session_token(email, secret, subject)
 
 
 def use_real_auth(client) -> None:
@@ -147,7 +133,7 @@ def test_access_status_endpoint_reports_allowed_for_allow_listed_email(
     monkeypatch,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     use_real_auth(client)
 
@@ -167,7 +153,7 @@ def test_access_status_endpoint_creates_and_reports_pending_for_new_email(
     monkeypatch,
 ):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "someone-else@example.com")
     use_real_auth(client)
 
@@ -191,7 +177,7 @@ def test_access_status_endpoint_creates_and_reports_pending_for_new_email(
 
 def test_admin_pending_signups_require_privileged_access(client, monkeypatch):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_auth(client)
@@ -209,7 +195,7 @@ def test_admin_pending_signups_require_privileged_access(client, monkeypatch):
 
 def test_admin_can_approve_pending_signup_and_grant_real_access(client, monkeypatch):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_auth(client)
@@ -273,7 +259,7 @@ def test_admin_can_approve_pending_signup_and_grant_real_access(client, monkeypa
 
 def test_admin_can_deny_pending_signup(client, monkeypatch):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_auth(client)
@@ -314,7 +300,7 @@ def test_admin_can_deny_pending_signup(client, monkeypatch):
 
 def test_approve_missing_pending_signup_returns_404(client, monkeypatch):
     secret = "test-secret-at-least-thirty-two-bytes-long"
-    monkeypatch.setenv("SUPABASE_JWT_SECRET", secret)
+    monkeypatch.setenv("SESSION_SECRET", secret)
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "admin@example.com")
     monkeypatch.setenv("ADMIN_USER_EMAILS", "admin@example.com")
     use_real_auth(client)

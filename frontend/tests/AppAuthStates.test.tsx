@@ -16,7 +16,6 @@ const mocked = vi.hoisted(() => ({
     isAuthEnabled: false,
     isLoading: false,
     session: null as object | null,
-    signInWithGoogle: vi.fn(),
     signOut: vi.fn(),
     user: null as { email: string } | null,
   },
@@ -55,13 +54,13 @@ describe('application authentication states', () => {
     mocked.auth.isAuthEnabled = true
     mocked.auth.isAuthConfigured = false
     renderApp()
-    expect(screen.getByRole('heading', { name: 'Supabase auth is not configured' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Google sign-in is not configured' })).toBeInTheDocument()
   })
 
   it('requires sign-in when auth is configured without a session', () => {
     mocked.auth.isAuthEnabled = true
     renderApp()
-    expect(screen.getByRole('button', { name: 'Sign in with Google' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Sign in to your finance dashboard' })).toBeInTheDocument()
   })
 
   it('blocks a signed-in account still awaiting approval', () => {
@@ -71,7 +70,7 @@ describe('application authentication states', () => {
     mocked.accessStatus.status = 'pending'
     renderApp()
     expect(screen.getByRole('heading', { name: 'Waiting for approval' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Sign in with Google' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Sign in to your finance dashboard' })).not.toBeInTheDocument()
   })
 
   it('blocks a signed-in account that was denied', () => {

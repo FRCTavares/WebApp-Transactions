@@ -24,8 +24,8 @@ The former Vercel / Google Cloud Run / Supabase deployment was decommissioned on
   Alembic migrations run by a one-shot job before each release. Backups are
   taken by the HomeServer backup job and restore-tested.
 - **Authentication**: Google sign-in verified once by the API, which issues its
-  own signed session (`AUTH_MODE=google`), plus an email allowlist and a pending
-  sign-up approval flow. (The Supabase mode remains in the code for local use.)
+  own signed session, plus an email allowlist and a pending sign-up approval
+  flow.
 - **Releases**: manual. `deploy/package-release.sh`, then `deploy-finance` on the
   server. Merging to `main` deploys nothing.
 

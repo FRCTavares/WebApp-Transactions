@@ -273,10 +273,7 @@ def test_export_json_uses_explicit_authenticated_user(db_session):
         assert len(table_rows) == 1
         assert table_rows[0]["user_id"] == current_user.id
 
-def test_export_json_requires_auth_when_supabase_auth_is_enabled(monkeypatch):
-    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
-    monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.delenv("SUPABASE_JWKS_URL", raising=False)
+def test_export_json_requires_auth(monkeypatch):
     monkeypatch.setenv("ALLOWED_USER_EMAILS", "me@example.com")
 
     with TestClient(app) as client:

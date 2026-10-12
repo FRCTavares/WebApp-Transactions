@@ -1,4 +1,3 @@
-import { usesGoogleAuth } from '../auth/authMode'
 
 const PRIVACY_CONTACT =
   import.meta.env.VITE_PRIVACY_CONTACT_EMAIL ?? 'the deployment owner'
@@ -44,18 +43,10 @@ export function PrivacyPage() {
 
         <h2>Processors and hosting</h2>
         <ul>
-          {usesGoogleAuth ? (
-            <li>
-              The application and its PostgreSQL database run on the operator&apos;s own
-              server and are reachable only over a private network.
-            </li>
-          ) : (
-            <>
-              <li>Supabase provides authentication and the production database (hosted in the EU).</li>
-              <li>Google Cloud Run hosts the backend API in europe-west1.</li>
-              <li>Vercel hosts the static frontend (global edge network).</li>
-            </>
-          )}
+          <li>
+            The application and its PostgreSQL database run on the operator&apos;s own
+            server and are reachable only over a private network.
+          </li>
           <li>Google provides OAuth authentication when Google sign-in is used.</li>
         </ul>
 
