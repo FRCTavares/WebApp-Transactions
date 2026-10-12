@@ -56,7 +56,7 @@ export function ExportPage() {
     <section className="export-page">
       <PageHeader
         title="Export / Backup"
-        description="Download a JSON backup of your personal data from the production database."
+        description="Download a JSON backup of your personal data from the server."
       />
 
       <StatusMessage error={error} message={message} />
