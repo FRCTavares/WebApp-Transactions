@@ -1,0 +1,77 @@
+import { useEffect, useState } from 'react'
+import { getMonthlySummary } from '../../api/summary'
+import { usePeriod } from '../../hooks/usePeriod'
+import { formatMoney, formatMonthLabel } from '../../utils/format'
+import { Card } from '../ui'
+import '../../styles/monthly-trend.css'
+
+const MONTHS = 6
+
+type TrendMonth = { year: number; month: number; key: string; moneyIn: number; spent: number }
+
+function monthsEndingAt(year: number, month: number) {
+  return Array.from({ length: MONTHS }, (_, index) => {
+    const date = new Date(year, month - 1 - (MONTHS - 1 - index), 1)
+    const y = date.getFullYear()
+    const m = date.getMonth() + 1
+    return { year: y, month: m, key: `${y}-${String(m).padStart(2, '0')}` }
+  })
+}
+
+/** Money in against personal spending for the six months ending at the chosen one; a column selects that month. */
+export function MonthlyTrendPanel({ year, month }: { year: number; month: number }) {
+  const { setPeriod } = usePeriod()
+  const [months, setMonths] = useState<TrendMonth[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.all(
+      monthsEndingAt(year, month).map(async (entry) => {
+        try {
+          const summary = await getMonthlySummary(entry.year, entry.month)
+          return { ...entry, moneyIn: Number(summary.money_in), spent: Number(summary.personal_money_out) }
+        } catch {
+          return { ...entry, moneyIn: 0, spent: 0 }
+        }
+      }),
+    ).then((loaded) => {
+      if (!cancelled) setMonths(loaded)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [year, month])
+
+  if (!months || months.every((entry) => entry.moneyIn === 0 && entry.spent === 0)) return null
+  const peak = Math.max(...months.map((entry) => Math.max(entry.moneyIn, entry.spent)), 1)
+
+  return (
+    <Card as="section" padding="md" className="monthly-trend" aria-label="Last six months">
+      <div className="monthly-trend-header">
+        <h2>Last 6 months</h2>
+        <span className="monthly-trend-legend">
+          <i className="monthly-trend-dot is-in" /> In
+          <i className="monthly-trend-dot is-out" /> Spent
+        </span>
+      </div>
+      <div className="monthly-trend-columns">
+        {months.map((entry) => (
+          <button
+            key={entry.key}
+            type="button"
+            className={`monthly-trend-column${entry.year === year && entry.month === month ? ' is-selected' : ''}`}
+            aria-label={`${formatMonthLabel(entry.key, 'long')}: in ${formatMoney(entry.moneyIn.toFixed(2))}, spent ${formatMoney(entry.spent.toFixed(2))}`}
+            onClick={() => setPeriod(entry.year, entry.month)}
+          >
+            <span className="monthly-trend-bars">
+              <span className="monthly-trend-bar is-in" style={{ height: `${(entry.moneyIn / peak) * 100}%` }} />
+              <span className="monthly-trend-bar is-out" style={{ height: `${(entry.spent / peak) * 100}%` }} />
+            </span>
+            <span className="monthly-trend-spent">{formatMoney(entry.spent.toFixed(0))}</span>
+            <span className="monthly-trend-label">{new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(entry.year, entry.month - 1, 1))}</span>
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}

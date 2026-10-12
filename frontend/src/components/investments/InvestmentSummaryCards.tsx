@@ -22,7 +22,11 @@ function formatCurrencyTotals(totals: InvestmentCurrencyTotal[]) {
     return '-'
   }
 
-  return totals
+  // A currency with nothing in it (US$0.00 beside a euro gain) is noise; show it only when everything is zero.
+  const nonZero = totals.filter((total) => Number(total.amount) !== 0)
+  const shown = nonZero.length > 0 ? nonZero : totals.slice(0, 1)
+
+  return shown
     .map((total) => formatMoney(total.amount, total.currency))
     .join(' / ')
 }

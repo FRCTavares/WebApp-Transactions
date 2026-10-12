@@ -147,7 +147,6 @@ export function SettingsPage({
   return (
     <section className="settings-page-redesigned">
       <PageHeader
-        eyebrow={t('settings')}
         title={t('settings')}
         description={t('settingsSubtitle')}
       />

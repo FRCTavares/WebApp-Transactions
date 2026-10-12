@@ -326,7 +326,7 @@ export function ImportPage() {
   }
 
   return (
-    <section>
+    <section className="import-page">
       <PageHeader
         title="Import CSV/XLSX"
         description="Preview first, check duplicates, then commit only the new rows."
@@ -367,7 +367,7 @@ export function ImportPage() {
             >
               {SOURCES.map((item) => (
                 <option key={item} value={item}>
-                  {item}
+                  {formatSource(item)}
                 </option>
               ))}
             </select>

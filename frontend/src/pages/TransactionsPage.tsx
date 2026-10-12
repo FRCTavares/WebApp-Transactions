@@ -45,6 +45,10 @@ export function TransactionsPage() {
     searchParams.get('direction') === 'in' ? 'in' : 'out',
   )
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const filterTimerRef = useRef<number | null>(null)
+  useEffect(() => () => {
+    if (filterTimerRef.current !== null) window.clearTimeout(filterTimerRef.current)
+  }, [])
   const [filters, setFilters] = useState<TransactionFilterState>(() =>
     getFiltersFromUrl(searchParams),
   )
@@ -231,24 +235,32 @@ export function TransactionsPage() {
       })
   }
 
+  // Filters apply as they change; typing in the search box waits for a short pause.
   function updateFilters(field: keyof TransactionFilterState, value: string | boolean) {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      [field]: value,
-    }))
+    const next = { ...filters, [field]: value }
+    setFilters(next)
+    if (filterTimerRef.current !== null) window.clearTimeout(filterTimerRef.current)
+    filterTimerRef.current = window.setTimeout(
+      () => {
+        filterTimerRef.current = null
+        applyFilters(next)
+      },
+      field === 'search' ? 350 : 0,
+    )
   }
 
   function clearFilters() {
+    if (filterTimerRef.current !== null) window.clearTimeout(filterTimerRef.current)
     const initialFilters = getInitialFilterState(direction)
     setFilters(initialFilters)
     setSearchParams(direction === 'in' ? { direction: 'in' } : {}, { replace: true })
     loadTransactions(initialFilters)
   }
 
-  function applyFilters() {
-    const nextParams = buildTransactionFilterUrl(filters, direction)
+  function applyFilters(next: TransactionFilterState) {
+    const nextParams = buildTransactionFilterUrl(next, direction)
     setSearchParams(nextParams, { replace: true })
-    loadTransactions(filters)
+    loadTransactions(next)
   }
 
   function changeDirection(nextDirection: Direction) {
@@ -526,7 +538,6 @@ export function TransactionsPage() {
     onResetCreateForm: resetCreateFormState,
     onSetCreateFormOpen: setIsCreateFormOpen,
     onFilterChange: updateFilters,
-    onApplyFilters: applyFilters,
     onClearFilters: clearFilters,
     onCreateSubmit: handleCreateTransactionSubmit,
     onFormChange: updateForm,

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { Transaction, TransactionCategory } from '../types/api'
 import { formatDate, formatMoney } from '../utils/format'
-import { Badge, Button, EmptyState, Icon } from './ui'
+import { Badge, Button, EmptyState, Icon, IconButton } from './ui'
 import type { BadgeTone } from './ui'
 import {
   formatCashflowType,
@@ -504,38 +504,29 @@ export function TransactionTable({
                   <td>
                     <div className="action-group">
                       {!transaction.is_grouped && onEdit && (
-                        <Button
-                          type="button"
+                        <IconButton
+                          icon={Pencil}
                           size="sm"
-                          iconLeft={Pencil}
+                          label={`Edit ${transaction.description}`}
                           onClick={() => onEdit(transaction)}
-                          aria-label={`Edit ${transaction.description}`}
-                        >
-                          Edit
-                        </Button>
+                        />
                       )}
                       {!transaction.is_grouped && onMarkOwed && canCreateOwedShare(transaction) && (
-                        <Button
-                          type="button"
+                        <IconButton
+                          icon={HandCoins}
                           size="sm"
-                          iconLeft={HandCoins}
+                          label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
                           onClick={() => onMarkOwed(transaction)}
-                          aria-label={`${getOwedActionLabel(transaction)} ${transaction.description}`}
-                        >
-                          {getOwedActionLabel(transaction)}
-                        </Button>
+                        />
                       )}
                       {!transaction.is_grouped && onDelete && (
-                        <Button
-                          type="button"
+                        <IconButton
+                          icon={Trash2}
                           size="sm"
                           variant="danger"
-                          iconLeft={Trash2}
+                          label={`Delete ${transaction.description}`}
                           onClick={() => onDelete(transaction)}
-                          aria-label={`Delete ${transaction.description}`}
-                        >
-                          Delete
-                        </Button>
+                        />
                       )}
                       {transaction.is_grouped && (
                         <span className="muted small">Grouped</span>

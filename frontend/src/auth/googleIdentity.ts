@@ -97,7 +97,8 @@ export async function renderGoogleButton(
     size: 'large',
     text: 'continue_with',
     shape: 'pill',
-    width: 280,
+    // Google allows 200-400 px: fill the card up to that.
+    width: Math.min(400, Math.max(200, Math.round(parent.clientWidth) || 280)),
   })
 }
 

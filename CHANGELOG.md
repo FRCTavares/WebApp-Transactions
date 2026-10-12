@@ -10,6 +10,18 @@ that's generated. The current running build's commit is shown in
 
 ## Unreleased
 
+### Fixed
+
+- **Settings showed "Missing bearer token" and preferences could fail to load** after opening the app: the first data requests left before the Google sign-in attached its session token. The token is now in place before any page loads data.
+
+### Changed (UI)
+
+- The month switcher moved into the page header and only appears on Dashboard and Transactions (the pages that use it). It no longer floats over the page, shows the full "October 2026", and "Today" only appears once you have left the current month.
+- Transactions: Edit, Owed and Delete are compact icon buttons; filters apply as you change them (search after a short pause), so Apply is gone and Clear shows only while a filter is set.
+- Owed: cards grow to their content instead of scrolling inside themselves; a person with more than five items shows five and "Show all N"; the header shows the total still owed.
+- Dashboard: a "Last 6 months" panel (money in against spending, click a month to open it) fills the empty space under the cards.
+- Consistent page headers (Settings no longer repeats its title, Import and Export have space under the header); Import's source list shows proper names; Investments shows one realised/unrealised amount instead of "€20.65 / US$0.00"; the Google sign-in button fills its card.
+
 ### Removed
 
 - GitHub Actions CI is removed (no hosted workflows remain); run the backend tests, frontend lint/tests/build and e2e locally before merging.

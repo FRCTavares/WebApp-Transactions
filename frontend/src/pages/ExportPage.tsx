@@ -53,7 +53,7 @@ export function ExportPage() {
   }
 
   return (
-    <section>
+    <section className="export-page">
       <PageHeader
         title="Export / Backup"
         description="Download a JSON backup of your personal data from the production database."

@@ -1,0 +1,101 @@
+.monthly-trend-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.monthly-trend-header h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.monthly-trend-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.monthly-trend-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: var(--space-3);
+  border-radius: 999px;
+}
+
+.monthly-trend-dot.is-in,
+.monthly-trend-bar.is-in {
+  background: var(--color-positive, #22c55e);
+}
+
+.monthly-trend-dot.is-out,
+.monthly-trend-bar.is-out {
+  background: var(--color-negative, #ef4444);
+}
+
+.monthly-trend-columns {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.monthly-trend-column {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.monthly-trend-column:hover {
+  background: var(--color-surface-hover);
+}
+
+.monthly-trend-column.is-selected {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
+}
+
+.monthly-trend-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 100%;
+  height: 6.5rem;
+}
+
+.monthly-trend-bar {
+  width: 32%;
+  max-width: 1.4rem;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+.monthly-trend-spent {
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+
+.monthly-trend-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs, 0.75rem);
+  text-transform: capitalize;
+}
+
+@media (max-width: 800px) {
+  .monthly-trend-bars {
+    height: 4.5rem;
+  }
+
+  .monthly-trend-spent {
+    font-size: 0.7rem;
+  }
+}

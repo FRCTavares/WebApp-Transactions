@@ -1,0 +1,49 @@
+.period-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.period-switcher button,
+.period-switcher input {
+  height: 2.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.period-switcher-step {
+  width: 2.5rem;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.period-switcher-today {
+  padding: 0 var(--space-4);
+}
+
+.period-switcher-month {
+  width: 11.5rem;
+  min-width: 0;
+  padding: 0 var(--space-3);
+  text-align: center;
+}
+
+.period-switcher button:hover {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle-hover);
+}
+
+@media (max-width: 800px) {
+  .period-switcher {
+    width: 100%;
+  }
+
+  .period-switcher-month {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}

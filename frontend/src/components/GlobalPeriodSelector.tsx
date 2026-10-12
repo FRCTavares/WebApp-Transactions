@@ -1,38 +1,35 @@
 import { usePeriod } from '../hooks/usePeriod'
-import { formatMonthLabel } from '../utils/format'
+import './GlobalPeriodSelector.css'
 
-function getMonthLabel(monthKey: string) {
-  return formatMonthLabel(monthKey)
-}
-
+/**
+ * Month switcher for the pages that are about one month (Dashboard, Transactions).
+ * It sits in the page header's actions; "Today" only shows once you have moved away from the current month.
+ */
 export function GlobalPeriodSelector() {
   const { monthKey, setMonthKey, shiftMonth, resetToCurrentMonth } = usePeriod()
+  const now = new Date()
+  const isCurrentMonth = monthKey === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
   return (
-    <div className="global-period-selector" aria-label="Global month selector">
-      <button type="button" onClick={() => shiftMonth(-1)}>
+    <div className="period-switcher" role="group" aria-label="Month">
+      <button type="button" className="period-switcher-step" aria-label="Previous month" onClick={() => shiftMonth(-1)}>
         ‹
       </button>
-
-      <label>
-        <span>Period</span>
-        <input
-          type="month"
-          value={monthKey}
-          onChange={(event) => setMonthKey(event.target.value)}
-          aria-label="Selected app period"
-        />
-      </label>
-
-      <button type="button" onClick={() => shiftMonth(1)}>
+      <input
+        className="period-switcher-month"
+        type="month"
+        value={monthKey}
+        onChange={(event) => event.target.value && setMonthKey(event.target.value)}
+        aria-label="Selected app period"
+      />
+      <button type="button" className="period-switcher-step" aria-label="Next month" onClick={() => shiftMonth(1)}>
         ›
       </button>
-
-      <button type="button" onClick={resetToCurrentMonth}>
-        Today
-      </button>
-
-      <strong>{getMonthLabel(monthKey)}</strong>
+      {!isCurrentMonth && (
+        <button type="button" className="period-switcher-today" onClick={resetToCurrentMonth}>
+          Today
+        </button>
+      )}
     </div>
   )
 }
